@@ -1,32 +1,35 @@
-# Blender
+# Brender
 
-Blenderでレンダリングをサーバサイドで実行する
+Blenderでレンダリングを非同期実行する為のプロジェクトです。
+
+クライアントモードでは、自分のマシンでレンダリングしますが、
+サーバモードでの接続を行うと別のマシンで簡単にレンダリングできるようになります。
+
+## Caution
+
+開発者はBlenderに関しては素人です。
+こういうのがあった方が使いやすいということがあれば言ってください。
+
 
 # Version
 
 Blender 3.5.1
 
-## Settings
-
 ## UI
 
 プロジェクト一覧
-
   ワークスペース一覧
-  バージョン一覧
+    ジョブ一覧
 
 ## Project
 
 Blenderファイルを準備
-フレームを設定（カメラを設定できるか）
 
 ## プロジェクト内でどうするか？
 
-ワークススペースを作成し、画像を保存しておく 動画にしてあげる
+ワークススペースを作成し、画像を保存しておく
 
 プロジェクトを作成してWebでアップロード
-ファイルのバージョンを日付にする
-  ワークスーペースに作成バージョンとフレーム、カメラを設定
 
 ## サーバを作るのと、分散するのを同居させる
 
@@ -34,45 +37,57 @@ Blenderファイルを準備
 ローカル実行の場合、アップロードの手間が省ける
 利用するサーバ選択するか？
 
+# ファイルシステム
 
-
-# コマンド
-
-カメラ切り替えってできんのかな？
-pythonで切り替える
-
-アップロードされたファイルで１フレーム出す
-
-projects/{ProjectID}/
-  contents/
-
+{BrenderRoot}/{ProjectID}/
+  brender.db
+  content/
     blender ファイルの置き場所
-    zip展開？
+    アーカイブまたはサーバモード時
 
-  thumbnails/
-    project.png
-    {workspace}.png
+  thumbnail/
 
-//変更した場合にどうするか？
+    project_thumb.jpg
+    workspace_thumb_{workspaceId}.jpg
 
-  workspaces/
+    -- 作成中
+    project_thumb_########.png
+    workspace_thumb_{workspaceId}_########.png
+
+  workspace/
     {workspace_id}
       results/
-        *.png
-        render.mp4
-      logs/
-        日付.log
-        実ログとパースした値を残す
+        ########.png
+  logs/
+サムネ用
+    project_thumb.log
+    project_thumb.lock
 
-実行するコマンド
-  /Applications/Blender.app/Contents/MacOS/Blender -b 1685151874333534000.blend -f 10
-  /Applications/Blender.app/Contents/MacOS/Blender -b 1685151874333534000.blend -a
+    workspace_thumb_{workspaceId}.log
+    workspace_thumb_{workspaceId}.lock
 
-
-## ログについての解析
+レンダリング用
+    日付_{workspaceId}.log
+    日付_{workspaceId}.lock
 
 ## コマンドの実行結果をWebに表示
 
-Jenkins
+# モジュール
+
+- core : クライアント、サーバどちらでも利用する共通部分
+- server : サーバモード(Web)
+- client : クライアント実行部分(Wails)
 
 
+# Brender API
+
+
+React -> 
+
+      Web   I/F
+
+          Server API -> core
+
+      Wails I/F
+
+          Client API -> core

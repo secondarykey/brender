@@ -1,14 +1,80 @@
-package brender
+package exec
 
 import (
 	"bufio"
 	"bytes"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
+
+	"golang.org/x/xerrors"
 )
+
+type jobWriter struct {
+	projectId   string
+	workspaceId int
+
+	JobID string
+
+	logFP  *os.File
+	lockFP *ProcessingWriter
+
+	lockFile string
+}
+
+func createJobWriter(pId string, wId int, jobId string, start, end int) (*jobWriter, error) {
+
+	var err error
+
+	var jw jobWriter
+	jw.projectId = pId
+	jw.workspaceId = wId
+	jw.JobID = jobId
+
+	logDir := filepath.Join(getLogDir(pId))
+
+	jw.logFP, err = os.Create(filepath.Join(logDir, jobId+".log"))
+	if err != nil {
+		return nil, xerrors.Errorf("create log file error: %w", err)
+	}
+
+	jw.lockFile = filepath.Join(logDir, jobId+".lock")
+	fp, err := os.Create(jw.lockFile)
+	if err != nil {
+		return nil, xerrors.Errorf("create processing lock file error: %w", err)
+	}
+
+	jw.lockFP = newProcessingWriter(fp, start, end)
+
+	return &jw, nil
+}
+
+func (w *jobWriter) Write(b []byte) (int, error) {
+	v, err := w.logFP.Write(b)
+	v, err = w.lockFP.Write(b)
+	return v, err
+}
+
+func (w *jobWriter) Close() error {
+	w.logFP.Close()
+	w.lockFP.Close()
+	os.Remove(w.lockFile)
+	return nil
+}
+
+func (w *jobWriter) GetThumbnailID() (string, int) {
+
+	if strings.Index(w.lockFile, ProjectThumbPrefix) != -1 {
+		return w.projectId, -1
+	} else if strings.Index(w.lockFile, WorkspaceThumbPrefix) != -1 {
+		return w.projectId, w.workspaceId
+	}
+	return "", -1
+}
 
 type ProcessingWriter struct {
 	body       io.Writer
@@ -25,10 +91,12 @@ const (
 	Error = "Error:"
 	Warn  = "WARN"
 
-	Frame  = "Fra:"
-	Sample = "Sample"
-	Quit   = "Blender quit"
-	Remain = "Remaining"
+	FrameFlag = "Fra:"
+	Sample    = "Sample"
+	Quit      = "Blender quit"
+	Remain    = "Remaining"
+
+	ProcessingTimeFormat = "2006-01-02 15:04:05.000Z0700"
 )
 
 func newProcessingWriter(body io.Writer, start, end int) *ProcessingWriter {
@@ -53,8 +121,9 @@ func (w *ProcessingWriter) Write(b []byte) (int, error) {
 }
 
 func (w *ProcessingWriter) Close() error {
-	//closer?
-	//w.body.Close()
+	if c, ok := w.body.(io.Closer); ok {
+		return c.Close()
+	}
 	return nil
 }
 
@@ -70,6 +139,7 @@ func (w *ProcessingWriter) write(b []byte) error {
 		return err
 	}
 
+	//TODO 途中までの読み込みってあるのかな、、、
 	w.buffer.Reset()
 	w.buffer.WriteString(remain)
 
@@ -80,18 +150,17 @@ func (w *ProcessingWriter) writeBuffer() (string, error) {
 
 	buf := bytes.NewBufferString(w.buffer.String())
 	scanner := bufio.NewScanner(buf)
-	//TODO 途中までの読み込みってあるのかな、、、
 
 	for scanner.Scan() {
 
 		line := scanner.Text()
-		idx := strings.Index(line, Frame)
+		idx := strings.Index(line, FrameFlag)
 		if idx == 0 {
 			w.status = 1
 			f := 0
 			s := ""
 
-			f, s = w.parseLine(line[len(Frame):])
+			f, s = w.parseLine(line[len(FrameFlag):])
 			if s != "" {
 				w.sample = s
 			} else {
@@ -111,7 +180,7 @@ func (w *ProcessingWriter) writeBuffer() (string, error) {
 
 	frames := w.endFrame - w.startFrame + 1
 	nowFrame := w.frame - w.startFrame + 1
-	now := time.Now().Format("2006-01-02 15:04:05")
+	now := time.Now().Format(ProcessingTimeFormat)
 
 	w.body.Write([]byte(fmt.Sprintf("%s,%d,%d,%d,%s,%s\n", now, w.status, nowFrame, frames, w.sample, w.samples)))
 

@@ -1,0 +1,237 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no">
+    <link href="https://unpkg.com/tailwindcss@^2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+      div.cards {
+          float:left;
+          margin:5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+
+      <div v-for="stream in streams" class="cards">
+        <card v-bind:stream="stream" @my-click="captureImage"/>
+      </div>
+
+      <progress ref="progress"></progress>
+
+      <a @click="displayCanvas()" href="#" class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+        Display(Debug)
+        <svg aria-hidden="true" class="w-4 h-4 ml-2 -mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+      </a>
+      <canvas ref="canvas" style="display:none;"></canvas>
+
+    </div>
+
+    <script src="https://unpkg.com/vue@3.3.4/dist/vue.global.prod.js"></script>
+    <script src='https://unpkg.com/tesseract.js@v3.0.3/dist/tesseract.min.js'></script>
+
+      <script>
+
+var app = Vue.createApp({
+  data() {
+    return { video: null, canvas: null, context: null ,streams:[] ,progress:null}
+  },
+  methods: {
+
+    initialize() {
+
+      this.progress = this.$refs.progress;
+      this.canvas   = this.$refs.canvas;
+      this.context  = this.canvas.getContext('2d');
+
+      console.log(this.progress);
+
+      var self = this;
+
+      //const display = navigator.mediaDevices.getDisplayMedia({video:true}).then(d => {
+        //self.captureImage(d.getVideoTracks()[0].getSettings().deviceId);
+      //});
+
+      const devices = navigator.mediaDevices.enumerateDevices().then(devices => {
+        for ( var dev of devices ) {
+          this.addStreams(dev)
+        }
+      }).catch( err => {
+        console.debug(err);
+      });
+    },
+    displayCanvas() {
+      if ( this.canvas.style.display == "none" )  {
+        this.canvas.style.display = "block";
+      } else {
+        this.canvas.style.display = "none";
+      }
+    },
+    addStreams(dev) {
+      var mediaArg = {
+        video: {
+          width:{ideal:5000},
+          deviceId: { exact: dev.deviceId }
+        },
+        audio: false
+      };
+      var self = this;
+      navigator.mediaDevices.getUserMedia(mediaArg).then(stream => {
+        self.streams.push(stream);
+      }).catch(err => console.debug(dev));
+    },
+
+    captureImage(id) {
+
+      var mediaArg = {
+        video: {
+          width:{ideal:5000},
+          deviceId: { exact: id }
+        },
+        audio: false
+      };
+
+      console.debug(mediaArg)
+
+      navigator.mediaDevices.getUserMedia(mediaArg).then(stream => {
+
+        console.debug(stream);
+        this.video = document.createElement('video');
+        this.video.addEventListener('loadedmetadata', () => {
+          this.canvas.width = this.video.videoWidth;
+          this.canvas.height = this.video.videoHeight;
+          this.analytics();
+        });
+        this.video.srcObject = stream;
+        this.video.play();
+      }).catch( err => {console.debug(err)});
+    },
+    analytics() {
+
+      if(this.video.readyState !== this.video.HAVE_ENOUGH_DATA) {
+        return;
+      }
+
+      this.context.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
+      var data = this.canvas.toDataURL();
+      this.video.pause();
+
+      var self = this;
+      console.debug("analyticsStart");
+
+      console.log(this.progress);
+      //start
+      Tesseract.recognize(data, 'eng', {
+        logger: log => {
+          //console.log(self.progress.setValue);
+          //self.progress.setValue(log);
+        }
+      }).then(result => {
+        console.debug(result)
+        console.log(self.progress.setValue);
+        self.setResult(result)
+      }).catch(error => console.log(error));
+    },
+
+    setResult(result) {
+      var words = result.data.words;
+      for ( var i = 0; i < words.length; ++i ) {
+        var word = words[i].text;
+        if ( word.indexOf("https") == 0 ) {
+          console.log(word);
+        }
+      }
+    },
+  },
+  mounted() {
+    this.initialize();
+  }
+});
+
+app.component('card', {
+  data() {
+    return { video: null,name: null,deviceId: null }
+  },
+  props: ['stream'],
+  template: `
+  <div class="max-w-sm bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+    <a href="#">
+      <video ref="video" width="720" height="480"/>
+    </a>
+    <div class="p-5">
+      <p class="mb-3 font-normal text-gray-700 dark:text-gray-400">{{ name }}</p>
+      <a @click="clickEvent(deviceId)" href="#" class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+        Analytics
+        <svg aria-hidden="true" class="w-4 h-4 ml-2 -mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+      </a>
+    </div>
+  </div>
+`,
+  methods: {
+    initialize() {
+      var tracks = this.stream.getVideoTracks();
+      var track = tracks[0];
+      var setting = track.getSettings();
+
+      this.name = track.label;
+      this.deviceId = setting.deviceId;
+
+      this.video = this.$refs['video'];
+      //this.video.addEventListener('loadedmetadata', () => {
+      //});
+      this.video.srcObject = this.stream;
+      this.video.play();
+    },
+    clickEvent(id) {
+      this.$emit('my-click',id);
+    }
+  },
+  mounted() {
+    this.initialize();
+  }
+});
+
+app.component('progress', {
+  data() {
+    return { max: 100,min: 0,val: 0 }
+  },
+  template: `
+<div class="w-full bg-gray-200 max-w-sm my-12 mx-auto rounded-lg overflow-hidden border border-gray-300">
+         <div class="bg-green-500 text-xs leading-none py-1" style="width: {{val}}%"></div>
+</div> 
+`,
+  methods: {
+    initialize() {
+    },
+    setValue(l) {
+       const core = "loading tesseract core";
+                  //userJobId "Job-0-2a7ed"
+       const init = "initializing tesseract";
+                  //userJobId "Job-0-2a7ed"
+                  //workerId Worker-0-9ae54
+       const langLoading = "loading language traineddata";
+                  //userJobId "Job-1-21617"
+                  //workerId Worker-0-9ae54
+       const langLoaded  = "loaded language traineddata";
+       const initAPI = "initializing api";
+                  //userJobId "Job-2-13ce2"
+                  //workerId Worker-0-9ae54
+       const record = "recognizing text"
+
+       var stat = l.status;
+       var prog = l.progress;
+       if ( stat == record ) {
+         this.val = prog * 100;
+       }
+    }
+  },
+  mounted() {
+    this.initialize();
+  }
+});
+
+app.mount('#app');
+      </script>
+    </div>
+  </body>
+</html>

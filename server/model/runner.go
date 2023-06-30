@@ -6,7 +6,4 @@ import (
 
 type Runner struct {
 	gorm.Model
-	Name    string
-	LocalId string
-	Cmd     string
 }

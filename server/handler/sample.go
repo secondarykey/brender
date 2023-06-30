@@ -1,4 +1,4 @@
-package brender
+package handler
 
 import (
 	"fmt"
@@ -10,8 +10,16 @@ import (
 )
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("request")
 	w.Header().Add("Content-Type", "text/html")
 	http.ServeFile(w, r, "index.html")
+}
+
+func ocrHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Content-Type", "text/html")
+	//fmt.Println(generateOwnHash())
+	//fmt.Println(makeRandString(16))
+	http.ServeFile(w, r, "ocr.html")
 }
 
 func uploadHandler(w http.ResponseWriter, r *http.Request) {
