@@ -188,7 +188,7 @@ func CreateProjectThumbnail(pId string) error {
 		return xerrors.Errorf("Blender command error: %w", err)
 	}
 
-	err = model.CreateJob(jobId, p.ID, processId)
+	err = model.CreateJob(jobId, p.ID, 0, processId)
 	if err != nil {
 		return xerrors.Errorf("model.CreateJon() error: %w", err)
 	}
@@ -286,7 +286,7 @@ func CreateWorkspaceThumbnail(pId string, wId int) error {
 		return xerrors.Errorf("Blender command error: %w", err)
 	}
 
-	err = model.CreateJob(jobId, p.ID, processId)
+	err = model.CreateJob(jobId, p.ID, w.ID, processId)
 	if err != nil {
 		return xerrors.Errorf("CreateJob() error: %w", err)
 	}
@@ -363,7 +363,7 @@ func RunWorkspace(pId string, wId int) (string, error) {
 		return "", xerrors.Errorf("Blender command error: %w", err)
 	}
 
-	err = model.CreateJob(jobId, pId, processId)
+	err = model.CreateJob(jobId, pId, wId, processId)
 	if err != nil {
 		return "", xerrors.Errorf("CreateJob() error: %w", err)
 	}

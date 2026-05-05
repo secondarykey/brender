@@ -1,0 +1,19 @@
+import bpy
+
+def printScenes():
+
+    current = bpy.context.scene
+    scenes = bpy.data.scenes
+
+    print("{{ .SceneStartFlag }}")
+    for key, value in scenes.items():
+        cur = 0
+        if key == current.name:
+          cur = 1
+        print(f"{cur} {value.frame_start} {value.frame_end} {key}")
+    print("{{ .SceneEndFlag }}")
+
+if __name__ == "__main__":
+    print("{{ .ToolStartFlag }}")
+    printScenes()
+    print("{{ .ToolEndFlag }}")

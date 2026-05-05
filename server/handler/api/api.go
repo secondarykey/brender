@@ -102,6 +102,7 @@ func newHandle(prefix string, mux *http.ServeMux) *Handle {
 func RegisterHandler(prefix string, mux *http.ServeMux) error {
 
 	h := newHandle(prefix, mux)
+
 	h.addRoute("/v1/setting", settingHandler)
 	h.addRoute("/v1/setting/edit", settingEditHandler)
 	h.addRoute("/v1/project/list", projectListHandler)

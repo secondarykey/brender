@@ -41,6 +41,7 @@ type WorkspaceViewReq struct {
 
 type WorkspaceViewRes struct {
 	Workspace *model.Workspace `json:"workspace"`
+	Jobs      []*model.Job     `json:"jobs"`
 	Lock      bool             `json:"lock"`
 	Rendering bool             `json:"rendering"`
 	Paging    *model.Paging    `json:"paging"`
@@ -64,8 +65,11 @@ func workspaceViewHandler(r *http.Request) (*Response, error) {
 	result.Workspace = w
 
 	//ジョブの検索
+	jobs, err := model.SelectJobs(req.ProjectId, req.WorkspaceId, req.Paging)
+	if err != nil {
+		return nil, xerrors.Errorf("SelectJobs() error: %w", err)
+	}
 
-	//サムネイル作成確認
 	//ロックファイルが存在するかを確認
 	lock := exec.IsWorkspaceThumbnailLock(req.ProjectId, req.WorkspaceId)
 	if lock {
@@ -79,8 +83,8 @@ func workspaceViewHandler(r *http.Request) (*Response, error) {
 		res.addMessage("Still workspace rendering.")
 	}
 	result.Rendering = rendering
-
 	result.Paging = req.Paging
+	result.Jobs = jobs
 
 	res.setSuccess()
 	res.setResult(&result)

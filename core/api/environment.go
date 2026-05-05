@@ -1,6 +1,7 @@
 package api
 
-func GetEnvironment() *model.Environment {
+import "github.com/ikascrew/brender/core/model"
 
+func GetEnvironment() *model.Environment {
 	return nil
 }

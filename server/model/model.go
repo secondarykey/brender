@@ -18,7 +18,7 @@ type MetaFields struct {
 func init() {
 
 	var err error
-	db, err = gorm.Open(sqlite.Open("../test3.db"), &gorm.Config{})
+	db, err = gorm.Open(sqlite.Open("../test4.db"), &gorm.Config{})
 	if err != nil {
 		panic(err)
 	}

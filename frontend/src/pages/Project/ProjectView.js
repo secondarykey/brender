@@ -9,7 +9,6 @@ import {
   Button, Card, CardActionArea, CardContent, CardMedia, Container, FormControl, FormGroup, Grid, Tab, Tabs
 } from '@mui/material';
 
-import FlexTable from "../../components/FlexTable";
 import InputDialog from "../../components/InputDialog";
 import { callPostAPI,callPatchAPI, Confirm ,SetWarning} from "../Layout";
 import { withParams } from "../Pages";
@@ -40,20 +39,11 @@ class ProjectView extends React.Component {
       navigate : "",
       editable : false,
       workspaces:[],
+      showWorkspaceThumbs:[],
       tab:"workspace",
       paging : Paging.create()
     }
 
-    this.columns = [
-      { id: 'name', label: 'Name', minWidth: 100,
-        format: (val, row) => this.workspaceLink(val, row) },
-      { id: 'created_at', label: 'Created At', minWidth: 80,
-        format: (value) => Util.formatDate(value) },
-      { id: 'updated_at', label: 'Updated At', minWidth: 80,
-        format: (value) => Util.formatDate(value) },
-    ];
-
-    this.table = React.createRef();
     this.registerDialog = React.createRef();
 
     this.workspaceNameTxt = React.createRef();
@@ -92,10 +82,25 @@ class ProjectView extends React.Component {
       let wk = result.workspaces;
       let paging = result.paging;
 
+      var thumbs = [];
+      wk.map((elm,idx) => {
+        thumbs[idx] = false;
+        const img = new Image();
+        img.src = "/thumb/" + elm.projectId + "/" + elm.id;
+        img.onload = () => {
+          thumbs[idx] = true
+          this.setState({
+            showWorkspaceThumbs : thumbs
+          })
+        }
+        img.onerror = (e) => {
+        }
+      });
       //this.table.current.set(wk,paging);
       this.setState({
         dbName : pro.name,
         workspaces:wk,
+        showWorkspaceThumbs:thumbs,
         project : pro
       });
     }).catch((err) => {
@@ -118,7 +123,9 @@ class ProjectView extends React.Component {
       projectId : this.props.params.id
     }
 
+    var self = this;
     callPatchAPI("/api/v1/workspace/register",args).then( (res) => {
+      self.view(self.state.paging);
       this.registerDialog.current.close();
     }).catch( (err) => {
       console.log(err);
@@ -208,11 +215,15 @@ class ProjectView extends React.Component {
     }
 
     return (<>
+
+    {/** プロジェクト編集 */}
     <Grid container>
       <Grid item xs={8}>
 
+        {/** 名称 */}
         <span>{this.state.dbName}</span>
 
+        {/** 編集展開 */}
         <Button onClick={this.handleEditable}>
           <FontAwesomeIcon icon="edit" size="lg"/>
         </Button>
@@ -253,6 +264,8 @@ class ProjectView extends React.Component {
           </FormGroup>
         </Collapse>
       </Grid>
+
+      {/** サムネイル表示 */}
       <Grid item xs={4}>
         <Thumbnail project={this.props.params.id} />
       </Grid>
@@ -277,41 +290,56 @@ class ProjectView extends React.Component {
       </Tabs>
 
 
+{/** ワークスペースタグ */}
 {this.state.tab === "workspace" &&
 <>
-      <Button className="float-button" variant="contained" onClick={this.handleOpenRegister}>
-        <FontAwesomeIcon icon="plus" size="lg"/>
-      </Button>
+  {/** 新規追加ボタン(右下) */}
+  <Button className="float-button" variant="contained" onClick={this.handleOpenRegister}>
+    <FontAwesomeIcon icon="plus" size="lg"/>
+  </Button>
 
-      <Grid container spacing={2} className="fadeIn">
+  <Grid container spacing={2} className="fadeIn">
 {this.state.workspaces.map((w,idx) => {
-      var imageUrl = base +  this.props.params.id + "/" + w.id;
+    var imageUrl = base +  this.props.params.id + "/" + w.id;
+    var show = this.state.showWorkspaceThumbs[idx];
       return (<>
       <Grid item xs={4} key={idx}>
         <Card sx={{ minWidth : 180,maxWidth: 360 , minHeight: 120,maxHeight: 240}} onClick={() => this.handleClick(w)} key={w.id}>
-            <CardActionArea>
-              <CardMedia component="img" image={imageUrl}/>
-              <CardContent className="cardText">
-                {w.name}
-              </CardContent>
+          <CardActionArea>
+{show &&
+            <CardMedia component="img" image={imageUrl}/>
+}
+{!show &&
+            <CardMedia style={{display:"flex",justifyContent:"center"}}>
+              <FontAwesomeIcon style={{minWidth:180,minHeight:100,maxWidth:320,maxHeight:200}} icon="video-slash" size="4x"/>
+            </CardMedia>
+}
+
+            <CardContent className="cardText">
+              {w.name}
+            </CardContent>
           </CardActionArea>
         </Card>
       </Grid>
-      </>);
-})}
+    </>);
+    })
+}
       </Grid>
 </>
 }
 
+{/** アーカイブ切り替え */}
 {this.state.tab === "archive" &&
 <>
 <Grid container className="fadeIn">
 
+  {/** アーカイブ用のボタン */}
   <Grid item xs={4}>
     <Button variant="contained" onClick={this.handleArchive}>Archive</Button>
     Size : {Util.kibi(size,2)}B
   </Grid>
 
+  {/** ツリー表示 */}
   <Grid item xs={8}>
     <ProjectTree id={this.props.params.id} onChange={this.onChangeTree}/>
   </Grid>
@@ -319,11 +347,6 @@ class ProjectView extends React.Component {
 </Grid>
 </>
 }
-
-{/**
-      <FlexTable className="blenderColor" columns={this.columns} paging={this.state.paging} ref={this.table}/>
- */}
-
     </Container>
     </>);
   }

@@ -15,6 +15,8 @@ import { library } from '@fortawesome/fontawesome-svg-core'
 import { faArrowUp,faFolderOpen,faEdit,faSave,faBlender,faFilm } from "@fortawesome/free-solid-svg-icons";
 import Thumbnail from "../Thumbnail";
 import ResultDialog from "./ResultDialog.js";
+import FlexTable from "../../components/FlexTable.js";
+import Util from "../../Util.js";
 library.add(faEdit,faSave,faBlender,faFilm,faFolderOpen,faArrowUp);
 
 class WorkspaceView extends React.Component {
@@ -29,6 +31,19 @@ class WorkspaceView extends React.Component {
     w.start = "";
     w.end = "";
 
+    this.columns = [
+      { id: 'complated', label: 'Complated', minWidth: 80,
+        format: (value) => this.formatComplated(value) },
+      { id: 'success', label: 'Success', minWidth: 80,
+        format: (value) => this.formatSuccess(value) },
+      { id: 'updated_at', label: 'Updated At', minWidth: 80,
+        format: (value) => Util.formatDate(value) },
+      { id: 'created_at', label: 'Created At', minWidth: 80,
+        format: (value) => Util.formatDate(value) },
+    ];
+
+    this.table = React.createRef();
+
     this.state = {
       dbName : "",
       editable:false,
@@ -42,6 +57,15 @@ class WorkspaceView extends React.Component {
     this.handleEdit = this.handleEdit.bind(this);
     this.handleRender = this.handleRender.bind(this);
     this.handleResult = this.handleResult.bind(this);
+
+  }
+
+  formatComplated(v) {
+    return String(v);
+  }
+
+  formatSuccess(v) {
+    return String(v);
   }
 
   componentDidMount() {
@@ -61,8 +85,10 @@ class WorkspaceView extends React.Component {
     }
 
     callPostAPI("/api/v1/workspace/view", args).then((res) => {
-
       var result = res.data;
+
+      this.table.current.set(result.jobs,result.paging);
+
       this.setState({
         dbName : result.workspace.name,
         workspace:result.workspace,
@@ -149,8 +175,11 @@ class WorkspaceView extends React.Component {
     return (<>
 
 <Grid container>
+
+  {/** ワークスペース */}
   <Grid item xs={8}>
 
+    {/** プロジェクトに戻る */}
     <a href="#" className='fa-layers fa-fw' onClick={() => global.history.back() } style={{marginRight:"10px"}}>
       <FontAwesomeIcon icon='folder-open' />
       <FontAwesomeIcon icon='arrow-up' transform="shrink-2 left-14" />
@@ -158,14 +187,17 @@ class WorkspaceView extends React.Component {
 
     <span style={{marginRight:"10px"}}>{this.state.dbName}</span>
 
+    {/** 表示等のコントローラー */}
     <Button onClick={this.handleEditable}  style={{marginRight:"10px"}}>
       <FontAwesomeIcon icon="edit" size="lg"/>
     </Button>
 
+    {/** レンダリング */}
     <Button variant="contained" color="primary" onClick={this.handleRender}>
       <FontAwesomeIcon icon="blender" size="lg"/>
     </Button>
 
+    {/** 編集用の表示部分 */}
     <Collapse in={this.state.editable} collapsedSize={0}>
       <FormGroup>
 
@@ -204,14 +236,16 @@ class WorkspaceView extends React.Component {
     </Collapse>
   </Grid>
 
-<Grid item xs={4}>
-  <Thumbnail project={this.props.params.id} workspace={this.props.params.wId}/>
-  <Container style={{marginTop:"10px"}}>
-    <Button variant="contained" color="secondary" onClick={this.handleResult}>
-      <FontAwesomeIcon icon="film" size="lg"/>
-    </Button>
-  </Container>
-</Grid>
+  {/** サムネイル表示 */}
+  <Grid item xs={4}>
+    <Thumbnail project={this.props.params.id} workspace={this.props.params.wId}/>
+    <Container style={{marginTop:"10px"}}>
+      {/** 結果表示用 */}
+      <Button variant="contained" color="secondary" onClick={this.handleResult}>
+        <FontAwesomeIcon icon="film" size="lg"/>
+      </Button>
+    </Container>
+  </Grid>
 
 </Grid>
 
@@ -219,7 +253,7 @@ class WorkspaceView extends React.Component {
               project={this.props.params.id} workspace={this.props.params.wId}/>
 
     {/** ジョブ一覧 */}
-
+    <FlexTable className="blenderColor" columns={this.columns} paging={this.state.paging} ref={this.table}/>
     </>);
   }
 

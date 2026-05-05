@@ -135,12 +135,10 @@ func selectWorkspaces(projectId string, pg *Paging) ([]*Workspace, error) {
 
 	res := db.Model(&Workspace{}).Where("project_id = ?", projectId).Count(&cnt)
 	pg.Count = int(cnt)
-
-	var wk []*Workspace
-
 	offset := (pg.Current - 1) * pg.Limit
 	limit := pg.Limit
 
+	var wk []*Workspace
 	res = db.Where("project_id = ?", projectId).Offset(offset).Limit(limit).Find(&wk)
 
 	if res.Error != nil {

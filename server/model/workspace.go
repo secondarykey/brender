@@ -8,7 +8,7 @@ import (
 
 type Workspace struct {
 	ID         int    `gorm:"primaryKey" json:"id"`
-	ProjectId  string `json:"project_id"`
+	ProjectId  string `json:"projectId"`
 	Name       string `json:"name"`
 	Scene      string `json:"scene"`
 	Frame      int    `json:"frame"`
