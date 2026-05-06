@@ -1,4 +1,4 @@
-package brender
+package server
 
 import (
 	"fmt"
