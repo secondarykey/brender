@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/ikascrew/brender/exec"
@@ -165,7 +166,7 @@ func workspaceGenerateThumbHandler(r *http.Request) (*Response, error) {
 	pId := req.ProjectId
 	wId := req.WorkspaceId
 
-	err = exec.CreateWorkspaceThumbnail(pId, wId)
+	err = exec.CreateWorkspaceThumbnail(context.Background(), pId, wId)
 	if err != nil {
 		return nil, xerrors.Errorf("CreateWorkspaceThumnnail() error: %w", err)
 	}
@@ -182,7 +183,7 @@ func workspaceRenderHandler(r *http.Request) (*Response, error) {
 		return nil, xerrors.Errorf("parseJSONBody() error: %w", err)
 	}
 
-	jobId, err := exec.RunWorkspace(req.ProjectId, req.WorkspaceId)
+	jobId, err := exec.RunWorkspace(context.Background(), req.ProjectId, req.WorkspaceId)
 	if err != nil {
 		return nil, xerrors.Errorf("Runworkspace() error: %w", err)
 	}

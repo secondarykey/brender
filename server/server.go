@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/ikascrew/brender/exec"
-	"github.com/ikascrew/brender/handler"
+	"github.com/ikascrew/brender/server/handler"
 )
 
 func Listen() error {

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"os"
 
@@ -151,7 +152,7 @@ func projectGenerateThumbHandler(r *http.Request) (*Response, error) {
 		return nil, xerrors.Errorf("parseJSONBody() error: %w", err)
 	}
 
-	err = exec.CreateProjectThumbnail(req.ProjectId)
+	err = exec.CreateProjectThumbnail(context.Background(), req.ProjectId)
 	if err != nil {
 		return nil, xerrors.Errorf("CreateProjectThumnnail() error: %w", err)
 	}

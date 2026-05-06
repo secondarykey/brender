@@ -3,7 +3,7 @@ package handler
 import (
 	"net/http"
 
-	"github.com/ikascrew/brender/handler/api"
+	"github.com/ikascrew/brender/server/handler/api"
 )
 
 func CreateMux() *http.ServeMux {

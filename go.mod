@@ -1,6 +1,5 @@
 module github.com/ikascrew/brender
 
-replace github.com/ikascrew/brender/core/exec => ./core/exec
 
 go 1.21.0
 

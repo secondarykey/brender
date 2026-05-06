@@ -49,8 +49,9 @@ func settingEditHandler(r *http.Request) (*Response, error) {
 		return res, nil
 	}
 
+	b, err := exec.NewBlender(req.Cmd)
 	//バージョンでブレンダの実行
-	ver, err := exec.RunVersion(req.Cmd)
+	ver := b.Version()
 	if err != nil {
 		return nil, xerrors.Errorf("blender version error: %w", err)
 	}
