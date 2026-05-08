@@ -294,12 +294,13 @@ function SettingsTab({ fileID, fileName, onUpdated, onDeleted }) {
             value={blenderInstallID}
             onChange={e => setBlenderID(Number(e.target.value))}
           >
-            <option value={0}>— 未選択（一番上のBlenderを使用）—</option>
+            <option value={0}>— 未設定 —</option>
             {blenders.map(b => (
               <option key={b.id} value={b.id}>{b.name} ({b.version || 'バージョン不明'})</option>
             ))}
           </select>
         )}
+        <span className="form-hint">未設定の場合: Blender一覧の先頭が使用されます</span>
       </div>
 
       <div className="form-field">
@@ -311,7 +312,7 @@ function SettingsTab({ fileID, fileName, onUpdated, onDeleted }) {
             onChange={e => setScene(e.target.value)}
             disabled={scenesLoading}
           >
-            <option value="">— Blenderのデフォルト —</option>
+            <option value="">— 未設定 —</option>
             {scenes.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
         ) : (
@@ -319,9 +320,10 @@ function SettingsTab({ fileID, fileName, onUpdated, onDeleted }) {
             className="form-input"
             value={scene}
             onChange={e => setScene(e.target.value)}
-            placeholder="空白の場合はBlenderのデフォルト"
+            placeholder="未設定"
           />
         )}
+        <span className="form-hint">未設定の場合: .blend ファイルのデフォルトシーンが使用されます</span>
       </div>
 
       {error && <p className="form-error">{error}</p>}

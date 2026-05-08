@@ -95,35 +95,38 @@ function SettingsTab({ projectID, workspaceID, detail, onUpdated, onDeleted }) {
       <div className="form-field">
         <label className="form-label">Blender</label>
         <select className="form-select" value={form.blenderInstallID} onChange={e => set('blenderInstallID', Number(e.target.value))}>
-          <option value={0}>ファイルのデフォルト</option>
+          <option value={0}>— 未設定 —</option>
           {blenders.map(b => (
             <option key={b.id} value={b.id}>{b.name} ({b.version || 'バージョン不明'})</option>
           ))}
         </select>
+        <span className="form-hint">未設定の場合: ファイルのデフォルト → Blender一覧の先頭 の順で使用されます</span>
       </div>
 
       <div className="form-field">
         <label className="form-label">シーン</label>
         {scenes.length > 0 ? (
           <select className="form-select" value={form.scene} onChange={e => set('scene', e.target.value)} disabled={scenesLoading}>
-            <option value="">ファイルのデフォルト</option>
+            <option value="">— 未設定 —</option>
             {scenes.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
         ) : (
-          <input className="form-input" value={form.scene} onChange={e => set('scene', e.target.value)} placeholder="空白の場合はファイルのデフォルト" />
+          <input className="form-input" value={form.scene} onChange={e => set('scene', e.target.value)} placeholder="未設定" />
         )}
+        <span className="form-hint">未設定の場合: ファイルのデフォルト → .blend ファイルのデフォルト の順で使用されます</span>
       </div>
 
       <div className="form-field">
         <label className="form-label">レンダーエンジン</label>
         {engines.length > 0 ? (
           <select className="form-select" value={form.engine} onChange={e => set('engine', e.target.value)} disabled={enginesLoading}>
-            <option value="">ファイルのデフォルト</option>
+            <option value="">— 未設定 —</option>
             {engines.map(eng => <option key={eng} value={eng}>{eng}</option>)}
           </select>
         ) : (
-          <input className="form-input" value={form.engine} onChange={e => set('engine', e.target.value)} placeholder="空白の場合はBlenderデフォルト (例: CYCLES)" />
+          <input className="form-input" value={form.engine} onChange={e => set('engine', e.target.value)} placeholder="未設定（例: CYCLES）" />
         )}
+        <span className="form-hint">未設定の場合: .blend ファイルのデフォルトエンジンが使用されます</span>
       </div>
 
       <div className="form-row">
