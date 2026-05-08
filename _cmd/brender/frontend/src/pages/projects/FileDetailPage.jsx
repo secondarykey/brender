@@ -150,7 +150,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
             </div>
             <div className="dialog-actions">
               <button className="btn btn-ghost" onClick={() => setConfirm(null)}>キャンセル</button>
-              <button className="btn btn-primary" onClick={handleEnqueue} disabled={enqueuing}>
+              <button className="btn btn-run" onClick={handleEnqueue} disabled={enqueuing}>
                 {enqueuing ? '追加中...' : '実行'}
               </button>
             </div>
