@@ -27,6 +27,10 @@ func (s *ProjectService) Update(id, name string, blenderInstallID uint, scene st
 	return api.UpdateProject(id, name, blenderInstallID, scene)
 }
 
+func (s *ProjectService) UpdateFile(fileID uint, name string) (*model.ProjectFile, error) {
+	return api.UpdateProjectFile(fileID, name)
+}
+
 func (s *ProjectService) AddFile(projectID, path string) (*model.ProjectFile, error) {
 	return api.AddProjectFile(projectID, path)
 }

@@ -79,6 +79,17 @@ export function Update(id, name, blenderInstallID, scene) {
     }));
 }
 
+/**
+ * @param {number} fileID
+ * @param {string} name
+ * @returns {$CancellablePromise<model$0.ProjectFile | null>}
+ */
+export function UpdateFile(fileID, name) {
+    return $Call.ByID(3043174895, fileID, name).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType1($result);
+    }));
+}
+
 // Private type creation functions
 const $$createType0 = model$0.ProjectFile.createFrom;
 const $$createType1 = $Create.Nullable($$createType0);

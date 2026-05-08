@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { WorkspaceService, QueueService } from '../../../bindings/changeme'
+import { WorkspaceService, QueueService, ProjectService } from '../../../bindings/changeme'
 import JobDetailDialog from '../../components/JobDetailDialog'
 
 const STATUS_LABELS = {
@@ -205,9 +205,26 @@ function HistoryTab({ projectID, fileID }) {
   )
 }
 
-// ── 設定タブ（UI のみ）────────────────────────────────────
-function SettingsTab({ fileName }) {
+// ── 設定タブ ─────────────────────────────────────────────
+function SettingsTab({ fileID, fileName, onUpdated }) {
   const [name, setName] = useState(fileName)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(null)
+
+  const dirty = name.trim() !== fileName && name.trim() !== ''
+
+  const handleSave = async () => {
+    setSaving(true)
+    setError(null)
+    try {
+      const updated = await ProjectService.UpdateFile(fileID, name.trim())
+      if (onUpdated) onUpdated(updated)
+    } catch (e) {
+      setError(e?.message ?? '保存に失敗しました')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
     <div className="form" style={{ maxWidth: 480 }}>
@@ -220,8 +237,11 @@ function SettingsTab({ fileName }) {
         />
         <span className="form-hint">レンダリング設定グループの表示名</span>
       </div>
+      {error && <p className="form-error">{error}</p>}
       <div className="form-actions" style={{ justifyContent: 'flex-end' }}>
-        <button className="btn" disabled>保存</button>
+        <button className="btn" onClick={handleSave} disabled={!dirty || saving}>
+          {saving ? '保存中...' : '保存'}
+        </button>
       </div>
     </div>
   )
@@ -230,6 +250,7 @@ function SettingsTab({ fileName }) {
 // ── ページ本体 ────────────────────────────────────────────
 function FileDetailPage({ projectID, projectName, fileID, fileName, navigate }) {
   const [tab, setTab] = useState('workspace')
+  const [currentFileName, setCurrentFileName] = useState(fileName)
 
   return (
     <div className="page">
@@ -239,7 +260,7 @@ function FileDetailPage({ projectID, projectName, fileID, fileName, navigate }) 
           <span className="breadcrumb-sep">›</span>
           <button className="breadcrumb-link" onClick={() => navigate('project', { id: projectID })}>{projectName}</button>
           <span className="breadcrumb-sep">›</span>
-          <span>{fileName}</span>
+          <span>{currentFileName}</span>
         </div>
       </div>
 
@@ -261,7 +282,7 @@ function FileDetailPage({ projectID, projectName, fileID, fileName, navigate }) 
             projectID={projectID}
             projectName={projectName}
             fileID={fileID}
-            fileName={fileName}
+            fileName={currentFileName}
             navigate={navigate}
             onEnqueued={() => navigate('queue')}
           />
@@ -270,7 +291,11 @@ function FileDetailPage({ projectID, projectName, fileID, fileName, navigate }) 
           <HistoryTab projectID={projectID} fileID={fileID} />
         )}
         {tab === 'settings' && (
-          <SettingsTab fileName={fileName} />
+          <SettingsTab
+            fileID={fileID}
+            fileName={currentFileName}
+            onUpdated={f => setCurrentFileName(f.name)}
+          />
         )}
       </div>
     </div>

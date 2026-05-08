@@ -143,6 +143,18 @@ func UpdateProject(id, name string, blenderInstallID uint, scene string) (*Proje
 	return loadProjectDetail(&p)
 }
 
+func UpdateProjectFile(fileID uint, name string) (*ProjectFile, error) {
+	var f ProjectFile
+	if res := db.First(&f, fileID); res.Error != nil {
+		return nil, xerrors.Errorf("UpdateProjectFile find: %w", res.Error)
+	}
+	f.Name = name
+	if res := db.Save(&f); res.Error != nil {
+		return nil, xerrors.Errorf("UpdateProjectFile save: %w", res.Error)
+	}
+	return &f, nil
+}
+
 func AddProjectFile(projectID, path string) (*ProjectFile, error) {
 	var modAt *time.Time
 	if info, err := os.Stat(path); err == nil {

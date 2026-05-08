@@ -22,6 +22,13 @@ func UpdateProject(id, name string, blenderInstallID uint, scene string) (*model
 	return model.UpdateProject(id, name, blenderInstallID, scene)
 }
 
+func UpdateProjectFile(fileID uint, name string) (*model.ProjectFile, error) {
+	if name == "" {
+		return nil, xerrors.New("file name is required")
+	}
+	return model.UpdateProjectFile(fileID, name)
+}
+
 func AddProjectFile(projectID, path string) (*model.ProjectFile, error) {
 	if _, err := os.Stat(path); err != nil {
 		return nil, xerrors.Errorf("file not found: %s", path)
