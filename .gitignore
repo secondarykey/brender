@@ -1,5 +1,3 @@
 *.db
 *.exe
-projects/*
-upload_files/*
-client/*
+.*
