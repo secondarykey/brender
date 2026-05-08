@@ -58,6 +58,16 @@ export function Get(id) {
 }
 
 /**
+ * @param {number} fileID
+ * @returns {$CancellablePromise<model$0.ProjectFile | null>}
+ */
+export function GetFile(fileID) {
+    return $Call.ByID(1334031842, fileID).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType1($result);
+    }));
+}
+
+/**
  * @returns {$CancellablePromise<(model$0.ProjectDetail | null)[]>}
  */
 export function List() {
@@ -77,12 +87,10 @@ export function RemoveFile(fileID) {
 /**
  * @param {string} id
  * @param {string} name
- * @param {number} blenderInstallID
- * @param {string} scene
  * @returns {$CancellablePromise<model$0.ProjectDetail | null>}
  */
-export function Update(id, name, blenderInstallID, scene) {
-    return $Call.ByID(2713121225, id, name, blenderInstallID, scene).then(/** @type {($result: any) => any} */(($result) => {
+export function Update(id, name) {
+    return $Call.ByID(2713121225, id, name).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType3($result);
     }));
 }
@@ -90,10 +98,12 @@ export function Update(id, name, blenderInstallID, scene) {
 /**
  * @param {number} fileID
  * @param {string} name
+ * @param {number} blenderInstallID
+ * @param {string} scene
  * @returns {$CancellablePromise<model$0.ProjectFile | null>}
  */
-export function UpdateFile(fileID, name) {
-    return $Call.ByID(3043174895, fileID, name).then(/** @type {($result: any) => any} */(($result) => {
+export function UpdateFile(fileID, name, blenderInstallID, scene) {
+    return $Call.ByID(3043174895, fileID, name, blenderInstallID, scene).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType1($result);
     }));
 }

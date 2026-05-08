@@ -341,20 +341,6 @@ export class Project {
              */
             this["name"] = "";
         }
-        if (!("blender_install_id" in $$source)) {
-            /**
-             * @member
-             * @type {number}
-             */
-            this["blender_install_id"] = 0;
-        }
-        if (!("scene" in $$source)) {
-            /**
-             * @member
-             * @type {string}
-             */
-            this["scene"] = "";
-        }
         if (!("created_at" in $$source)) {
             /**
              * @member
@@ -411,13 +397,6 @@ export class ProjectDetail {
              */
             this["files"] = [];
         }
-        if (!("blender" in $$source)) {
-            /**
-             * @member
-             * @type {BlenderInstall | null}
-             */
-            this["blender"] = null;
-        }
 
         Object.assign(this, $$source);
     }
@@ -430,16 +409,12 @@ export class ProjectDetail {
     static createFrom($$source = {}) {
         const $$createField0_0 = $$createType1;
         const $$createField1_0 = $$createType4;
-        const $$createField2_0 = $$createType6;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("project" in $$parsedSource) {
             $$parsedSource["project"] = $$createField0_0($$parsedSource["project"]);
         }
         if ("files" in $$parsedSource) {
             $$parsedSource["files"] = $$createField1_0($$parsedSource["files"]);
-        }
-        if ("blender" in $$parsedSource) {
-            $$parsedSource["blender"] = $$createField2_0($$parsedSource["blender"]);
         }
         return new ProjectDetail(/** @type {Partial<ProjectDetail>} */($$parsedSource));
     }
@@ -481,6 +456,20 @@ export class ProjectFile {
              * @type {string}
              */
             this["name"] = "";
+        }
+        if (!("blender_install_id" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["blender_install_id"] = 0;
+        }
+        if (!("scene" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["scene"] = "";
         }
         if (!("file_modified_at" in $$source)) {
             /**
@@ -753,7 +742,7 @@ export class WorkspaceDetail {
      * @returns {WorkspaceDetail}
      */
     static createFrom($$source = {}) {
-        const $$createField0_0 = $$createType8;
+        const $$createField0_0 = $$createType6;
         const $$createField1_0 = $$createType4;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("workspace" in $$parsedSource) {
@@ -800,7 +789,7 @@ export class WorkspacesByFile {
      */
     static createFrom($$source = {}) {
         const $$createField0_0 = $$createType3;
-        const $$createField1_0 = $$createType9;
+        const $$createField1_0 = $$createType7;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("file" in $$parsedSource) {
             $$parsedSource["file"] = $$createField0_0($$parsedSource["file"]);
@@ -818,8 +807,6 @@ const $$createType1 = $Create.Nullable($$createType0);
 const $$createType2 = ProjectFile.createFrom;
 const $$createType3 = $Create.Nullable($$createType2);
 const $$createType4 = $Create.Array($$createType3);
-const $$createType5 = BlenderInstall.createFrom;
+const $$createType5 = Workspace.createFrom;
 const $$createType6 = $Create.Nullable($$createType5);
-const $$createType7 = Workspace.createFrom;
-const $$createType8 = $Create.Nullable($$createType7);
-const $$createType9 = $Create.Array($$createType8);
+const $$createType7 = $Create.Array($$createType6);

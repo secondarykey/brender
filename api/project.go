@@ -15,18 +15,22 @@ func GetProject(id string) (*model.ProjectDetail, error) {
 	return model.GetProject(id)
 }
 
-func UpdateProject(id, name string, blenderInstallID uint, scene string) (*model.ProjectDetail, error) {
+func UpdateProject(id, name string) (*model.ProjectDetail, error) {
 	if name == "" {
 		return nil, xerrors.New("project name is required")
 	}
-	return model.UpdateProject(id, name, blenderInstallID, scene)
+	return model.UpdateProject(id, name)
 }
 
-func UpdateProjectFile(fileID uint, name string) (*model.ProjectFile, error) {
+func UpdateProjectFile(fileID uint, name string, blenderInstallID uint, scene string) (*model.ProjectFile, error) {
 	if name == "" {
 		return nil, xerrors.New("file name is required")
 	}
-	return model.UpdateProjectFile(fileID, name)
+	return model.UpdateProjectFile(fileID, name, blenderInstallID, scene)
+}
+
+func GetFile(fileID uint) (*model.ProjectFile, error) {
+	return model.GetProjectFile(fileID)
 }
 
 func AddProjectFile(projectID, path string) (*model.ProjectFile, error) {
@@ -64,5 +68,5 @@ func CreateProject(name string) (*model.ProjectDetail, error) {
 	if name == "" {
 		return nil, xerrors.New("project name is required")
 	}
-	return model.CreateProject(name, 0, nil)
+	return model.CreateProject(name, nil)
 }

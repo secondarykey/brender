@@ -95,7 +95,7 @@ function SettingsTab({ projectID, workspaceID, detail, onUpdated, onDeleted }) {
       <div className="form-field">
         <label className="form-label">Blender</label>
         <select className="form-select" value={form.blenderInstallID} onChange={e => set('blenderInstallID', Number(e.target.value))}>
-          <option value={0}>プロジェクトのデフォルト</option>
+          <option value={0}>ファイルのデフォルト</option>
           {blenders.map(b => (
             <option key={b.id} value={b.id}>{b.name} ({b.version || 'バージョン不明'})</option>
           ))}
@@ -106,11 +106,11 @@ function SettingsTab({ projectID, workspaceID, detail, onUpdated, onDeleted }) {
         <label className="form-label">シーン</label>
         {scenes.length > 0 ? (
           <select className="form-select" value={form.scene} onChange={e => set('scene', e.target.value)} disabled={scenesLoading}>
-            <option value="">プロジェクトのデフォルト</option>
+            <option value="">ファイルのデフォルト</option>
             {scenes.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
         ) : (
-          <input className="form-input" value={form.scene} onChange={e => set('scene', e.target.value)} placeholder="空白の場合はプロジェクトのデフォルト" />
+          <input className="form-input" value={form.scene} onChange={e => set('scene', e.target.value)} placeholder="空白の場合はファイルのデフォルト" />
         )}
       </div>
 

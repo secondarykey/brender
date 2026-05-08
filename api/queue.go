@@ -32,7 +32,18 @@ func Enqueue(projectID string, workspaceID string) (*model.Queue, error) {
 		return nil, xerrors.New("作業ディレクトリが設定されていません（システム設定で設定してください）")
 	}
 
-	blenderPath, err := resolveBlenderPath(w.BlenderInstallID, p.BlenderInstallID)
+	// Load the project file for blender/scene fallback
+	var fileBlenderID uint
+	var fileScene string
+	if w.ProjectFileID != 0 {
+		pf, pfErr := model.GetProjectFile(w.ProjectFileID)
+		if pfErr == nil && pf != nil {
+			fileBlenderID = pf.BlenderInstallID
+			fileScene = pf.Scene
+		}
+	}
+
+	blenderPath, err := resolveBlenderPath(w.BlenderInstallID, fileBlenderID)
 	if err != nil {
 		return nil, xerrors.Errorf("resolveBlenderPath: %w", err)
 	}
@@ -44,7 +55,7 @@ func Enqueue(projectID string, workspaceID string) (*model.Queue, error) {
 
 	scene := w.Scene
 	if scene == "" {
-		scene = p.Scene
+		scene = fileScene
 	}
 
 	// Generate shared UUID v7 for both Job and Queue

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { WorkspaceService, QueueService, ProjectService } from '../../../bindings/changeme'
+import { WorkspaceService, QueueService, ProjectService, BlenderService } from '../../../bindings/changeme'
 import JobDetailDialog from '../../components/JobDetailDialog'
 
 const STATUS_LABELS = {
@@ -211,18 +211,35 @@ function HistoryTab({ projectID, fileID }) {
 
 // ── 設定タブ ─────────────────────────────────────────────
 function SettingsTab({ fileID, fileName, onUpdated, onDeleted }) {
-  const [name, setName]       = useState(fileName)
-  const [saving, setSaving]   = useState(false)
-  const [deleting, setDeleting] = useState(false)
-  const [confirm, setConfirm] = useState(false)
-  const [error, setError]     = useState(null)
+  const [name, setName]                   = useState(fileName)
+  const [blenderInstallID, setBlenderID]  = useState(0)
+  const [scene, setScene]                 = useState('')
+  const [blenders, setBlenders]           = useState([])
+  const [saving, setSaving]               = useState(false)
+  const [deleting, setDeleting]           = useState(false)
+  const [confirm, setConfirm]             = useState(false)
+  const [error, setError]                 = useState(null)
+
+  useEffect(() => {
+    ProjectService.GetFile(fileID)
+      .then(f => {
+        if (!f) return
+        setName(f.name || fileName)
+        setBlenderID(f.blender_install_id || 0)
+        setScene(f.scene || '')
+      })
+      .catch(() => {})
+    BlenderService.List()
+      .then(list => setBlenders(list || []))
+      .catch(() => {})
+  }, [fileID])
 
   const handleSave = async () => {
     if (!name.trim()) return
     setSaving(true)
     setError(null)
     try {
-      const updated = await ProjectService.UpdateFile(fileID, name.trim())
+      const updated = await ProjectService.UpdateFile(fileID, name.trim(), blenderInstallID, scene)
       if (onUpdated) onUpdated(updated)
     } catch (e) {
       setError(e?.message ?? '保存に失敗しました')
@@ -256,6 +273,35 @@ function SettingsTab({ fileID, fileName, onUpdated, onDeleted }) {
         />
         <span className="form-hint">レンダリング設定グループの表示名</span>
       </div>
+
+      <div className="form-field">
+        <label className="form-label">デフォルト Blender</label>
+        {blenders.length === 0 ? (
+          <p className="setting-desc">Blenderが登録されていません（システム設定で追加してください）</p>
+        ) : (
+          <select
+            className="form-select"
+            value={blenderInstallID}
+            onChange={e => setBlenderID(Number(e.target.value))}
+          >
+            <option value={0}>— 未選択（一番上のBlenderを使用）—</option>
+            {blenders.map(b => (
+              <option key={b.id} value={b.id}>{b.name} ({b.version || 'バージョン不明'})</option>
+            ))}
+          </select>
+        )}
+      </div>
+
+      <div className="form-field">
+        <label className="form-label">デフォルトシーン</label>
+        <input
+          className="form-input"
+          value={scene}
+          onChange={e => setScene(e.target.value)}
+          placeholder="空白の場合はBlenderのデフォルト"
+        />
+      </div>
+
       {error && <p className="form-error">{error}</p>}
       <div className="form-actions">
         <button className="btn btn-danger" onClick={() => setConfirm(true)}>削除</button>

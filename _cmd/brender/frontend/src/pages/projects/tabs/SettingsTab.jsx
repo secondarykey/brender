@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
-import { ProjectService, BlenderService } from '../../../../bindings/changeme'
+import { ProjectService } from '../../../../bindings/changeme'
 
 function SettingsTab({ detail, onUpdated, onDeleted }) {
-  const [blenders, setBlenders] = useState([])
   const [form, setForm]         = useState(null)
   const [saving, setSaving]     = useState(false)
   const [error, setError]       = useState('')
@@ -11,20 +10,10 @@ function SettingsTab({ detail, onUpdated, onDeleted }) {
   const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
-    setForm({
-      name:             detail.project.name,
-      blenderInstallID: detail.project.blender_install_id,
-      scene:            detail.project.scene || '',
-    })
+    setForm({ name: detail.project.name })
     setSaved(false)
     setError('')
   }, [detail])
-
-  useEffect(() => {
-    BlenderService.List()
-      .then(list => setBlenders(list || []))
-      .catch(() => {})
-  }, [])
 
   const set = (key, val) => {
     setSaved(false)
@@ -37,12 +26,7 @@ function SettingsTab({ detail, onUpdated, onDeleted }) {
     if (!form.name.trim()) { setError('プロジェクト名を入力してください'); return }
     setSaving(true)
     try {
-      await ProjectService.Update(
-        detail.project.id,
-        form.name.trim(),
-        form.blenderInstallID,
-        form.scene,
-      )
+      await ProjectService.Update(detail.project.id, form.name.trim())
       setSaved(true)
       onUpdated()
     } catch (err) {
@@ -75,36 +59,6 @@ function SettingsTab({ detail, onUpdated, onDeleted }) {
           className="form-input"
           value={form.name}
           onChange={e => set('name', e.target.value)}
-        />
-      </div>
-
-      <div className="form-field">
-        <label className="form-label">デフォルト Blender</label>
-        {blenders.length === 0 ? (
-          <p className="setting-desc">Blenderが登録されていません（システム設定で追加してください）</p>
-        ) : (
-          <select
-            className="form-select"
-            value={form.blenderInstallID}
-            onChange={e => set('blenderInstallID', Number(e.target.value))}
-          >
-            <option value={0}>— 未選択（一番上のBlenderを使用）—</option>
-            {blenders.map(b => (
-              <option key={b.id} value={b.id}>
-                {b.name} ({b.version || 'バージョン不明'})
-              </option>
-            ))}
-          </select>
-        )}
-      </div>
-
-      <div className="form-field">
-        <label className="form-label">デフォルトシーン</label>
-        <input
-          className="form-input"
-          value={form.scene}
-          onChange={e => set('scene', e.target.value)}
-          placeholder="空白の場合はBlenderのデフォルト"
         />
       </div>
 

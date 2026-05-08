@@ -189,7 +189,9 @@ func CreateProjectThumbnail(ctx context.Context, pId string) error {
 	b.ErrorWriter = jw
 
 	b.File = GetBlenderFile(p)
-	b.Scene = p.Scene
+	if f, ferr := model.FirstFile(p.ID); ferr == nil && f != nil {
+		b.Scene = f.Scene
+	}
 
 	b.Result = target
 	b.SetFrame(1)
@@ -273,8 +275,10 @@ func CreateWorkspaceThumbnail(ctx context.Context, pId string, wId string) error
 	b.Writer = jw
 	b.ErrorWriter = jw
 	b.Scene = w.Scene
-	if b.Scene != "" {
-		b.Scene = p.Scene
+	if b.Scene == "" {
+		if f, ferr := model.FirstFile(p.ID); ferr == nil && f != nil {
+			b.Scene = f.Scene
+		}
 	}
 	b.Result = target
 	b.SetFrame(w.StartFrame)
@@ -334,7 +338,9 @@ func RunWorkspace(ctx context.Context, pId string, wId string) (string, error) {
 	b.ErrorWriter = jw
 	b.Scene = w.Scene
 	if b.Scene == "" {
-		b.Scene = p.Scene
+		if f, ferr := model.FirstFile(p.ID); ferr == nil && f != nil {
+			b.Scene = f.Scene
+		}
 	}
 
 	_, errCh, err := b.run(ctx)

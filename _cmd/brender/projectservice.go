@@ -23,12 +23,16 @@ func (s *ProjectService) Delete(id string) error {
 	return api.DeleteProject(id)
 }
 
-func (s *ProjectService) Update(id, name string, blenderInstallID uint, scene string) (*model.ProjectDetail, error) {
-	return api.UpdateProject(id, name, blenderInstallID, scene)
+func (s *ProjectService) Update(id, name string) (*model.ProjectDetail, error) {
+	return api.UpdateProject(id, name)
 }
 
-func (s *ProjectService) UpdateFile(fileID uint, name string) (*model.ProjectFile, error) {
-	return api.UpdateProjectFile(fileID, name)
+func (s *ProjectService) UpdateFile(fileID uint, name string, blenderInstallID uint, scene string) (*model.ProjectFile, error) {
+	return api.UpdateProjectFile(fileID, name, blenderInstallID, scene)
+}
+
+func (s *ProjectService) GetFile(fileID uint) (*model.ProjectFile, error) {
+	return api.GetFile(fileID)
 }
 
 func (s *ProjectService) AddFile(projectID, path string) (*model.ProjectFile, error) {

@@ -12,27 +12,26 @@ import (
 )
 
 type Project struct {
-	ID               string `gorm:"primaryKey" json:"id"`
-	Name             string `json:"name"`
-	BlenderInstallID uint   `json:"blender_install_id"`
-	Scene            string `json:"scene"`
-	MetaFields       `gorm:"embedded"`
+	ID         string `gorm:"primaryKey" json:"id"`
+	Name       string `json:"name"`
+	MetaFields `gorm:"embedded"`
 }
 
 // プロジェクトに属する .blend ファイル
 type ProjectFile struct {
-	ID             uint       `gorm:"primaryKey" json:"id"`
-	ProjectID      string     `json:"project_id"`
-	Path           string     `json:"path"`
-	Name           string     `json:"name"`
-	FileModifiedAt *time.Time `json:"file_modified_at"`
-	MetaFields     `gorm:"embedded"`
+	ID               uint       `gorm:"primaryKey" json:"id"`
+	ProjectID        string     `json:"project_id"`
+	Path             string     `json:"path"`
+	Name             string     `json:"name"`
+	BlenderInstallID uint       `json:"blender_install_id"`
+	Scene            string     `json:"scene"`
+	FileModifiedAt   *time.Time `json:"file_modified_at"`
+	MetaFields       `gorm:"embedded"`
 }
 
 type ProjectDetail struct {
 	Project *Project       `json:"project"`
 	Files   []*ProjectFile `json:"files"`
-	Blender *BlenderInstall `json:"blender"`
 }
 
 func newProjectID() string {
@@ -77,17 +76,7 @@ func loadProjectDetail(p *Project) (*ProjectDetail, error) {
 	if res := db.Where("project_id = ?", p.ID).Find(&files); res.Error != nil {
 		return nil, xerrors.Errorf("loadProjectFiles: %w", res.Error)
 	}
-
-	var blender *BlenderInstall
-	if p.BlenderInstallID > 0 {
-		blender = &BlenderInstall{}
-		res := db.First(blender, p.BlenderInstallID)
-		if res.Error != nil {
-			blender = nil
-		}
-	}
-
-	return &ProjectDetail{Project: p, Files: files, Blender: blender}, nil
+	return &ProjectDetail{Project: p, Files: files}, nil
 }
 
 // SelectProject は exec パッケージとの互換性のために残す
@@ -129,26 +118,26 @@ func FirstFile(projectID string) (*ProjectFile, error) {
 	return &f, nil
 }
 
-func UpdateProject(id, name string, blenderInstallID uint, scene string) (*ProjectDetail, error) {
+func UpdateProject(id, name string) (*ProjectDetail, error) {
 	var p Project
 	if res := db.First(&p, "id = ?", id); res.Error != nil {
 		return nil, xerrors.Errorf("UpdateProject find: %w", res.Error)
 	}
 	p.Name = name
-	p.BlenderInstallID = blenderInstallID
-	p.Scene = scene
 	if res := db.Save(&p); res.Error != nil {
 		return nil, xerrors.Errorf("UpdateProject save: %w", res.Error)
 	}
 	return loadProjectDetail(&p)
 }
 
-func UpdateProjectFile(fileID uint, name string) (*ProjectFile, error) {
+func UpdateProjectFile(fileID uint, name string, blenderInstallID uint, scene string) (*ProjectFile, error) {
 	var f ProjectFile
 	if res := db.First(&f, fileID); res.Error != nil {
 		return nil, xerrors.Errorf("UpdateProjectFile find: %w", res.Error)
 	}
 	f.Name = name
+	f.BlenderInstallID = blenderInstallID
+	f.Scene = scene
 	if res := db.Save(&f); res.Error != nil {
 		return nil, xerrors.Errorf("UpdateProjectFile save: %w", res.Error)
 	}
@@ -190,11 +179,10 @@ func DeleteProject(id string) error {
 	return nil
 }
 
-func CreateProject(name string, blenderInstallID uint, paths []string) (*ProjectDetail, error) {
+func CreateProject(name string, paths []string) (*ProjectDetail, error) {
 	p := &Project{
-		ID:               newProjectID(),
-		Name:             name,
-		BlenderInstallID: blenderInstallID,
+		ID:   newProjectID(),
+		Name: name,
 	}
 	if res := db.Create(p); res.Error != nil {
 		return nil, xerrors.Errorf("CreateProject: %w", res.Error)
