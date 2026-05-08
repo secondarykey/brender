@@ -188,3 +188,104 @@ export class QueueItem {
         return new QueueItem(/** @type {Partial<QueueItem>} */($$parsedSource));
     }
 }
+
+/**
+ * RenderPreview はレンダリング実行前に解決された確定パラメータ
+ */
+export class RenderPreview {
+    /**
+     * Creates a new RenderPreview instance.
+     * @param {Partial<RenderPreview>} [$$source = {}] - The source object to create the RenderPreview.
+     */
+    constructor($$source = {}) {
+        if (!("project_name" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["project_name"] = "";
+        }
+        if (!("workspace_name" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["workspace_name"] = "";
+        }
+        if (!("project_file_id" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["project_file_id"] = 0;
+        }
+        if (!("blender_path" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["blender_path"] = "";
+        }
+        if (!("blender_file" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["blender_file"] = "";
+        }
+        if (!("scene" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["scene"] = "";
+        }
+        if (!("engine" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["engine"] = "";
+        }
+        if (!("start_frame" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["start_frame"] = 0;
+        }
+        if (!("end_frame" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["end_frame"] = 0;
+        }
+        if (!("frame_step" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["frame_step"] = 0;
+        }
+        if (!("thread" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["thread"] = 0;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new RenderPreview instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {RenderPreview}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new RenderPreview(/** @type {Partial<RenderPreview>} */($$parsedSource));
+    }
+}

@@ -7,6 +7,14 @@ import (
 
 type QueueService struct{}
 
+func (s *QueueService) PreviewRender(projectID string, workspaceID string) (*api.RenderPreview, error) {
+	return api.PreviewRender(projectID, workspaceID)
+}
+
+func (s *QueueService) EnqueueWithPreview(projectID string, workspaceID string, preview *api.RenderPreview) (*model.Queue, error) {
+	return api.EnqueueWithPreview(projectID, workspaceID, preview)
+}
+
 func (s *QueueService) Enqueue(projectID string, workspaceID string) (*model.Queue, error) {
 	return api.Enqueue(projectID, workspaceID)
 }

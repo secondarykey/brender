@@ -33,6 +33,18 @@ export function Enqueue(projectID, workspaceID) {
 }
 
 /**
+ * @param {string} projectID
+ * @param {string} workspaceID
+ * @param {api$0.RenderPreview | null} preview
+ * @returns {$CancellablePromise<model$0.Queue | null>}
+ */
+export function EnqueueWithPreview(projectID, workspaceID, preview) {
+    return $Call.ByID(2833902284, projectID, workspaceID, preview).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType1($result);
+    }));
+}
+
+/**
  * @param {string} id
  * @returns {$CancellablePromise<model$0.Queue | null>}
  */
@@ -102,6 +114,17 @@ export function ListJobsByWorkspace(projectID, workspaceID) {
     }));
 }
 
+/**
+ * @param {string} projectID
+ * @param {string} workspaceID
+ * @returns {$CancellablePromise<api$0.RenderPreview | null>}
+ */
+export function PreviewRender(projectID, workspaceID) {
+    return $Call.ByID(2016776806, projectID, workspaceID).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType10($result);
+    }));
+}
+
 // Private type creation functions
 const $$createType0 = model$0.Queue.createFrom;
 const $$createType1 = $Create.Nullable($$createType0);
@@ -112,3 +135,5 @@ const $$createType5 = $Create.Array($$createType4);
 const $$createType6 = model$0.Job.createFrom;
 const $$createType7 = $Create.Nullable($$createType6);
 const $$createType8 = $Create.Array($$createType7);
+const $$createType9 = api$0.RenderPreview.createFrom;
+const $$createType10 = $Create.Nullable($$createType9);

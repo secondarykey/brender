@@ -14,7 +14,24 @@ import (
 )
 
 
-func Enqueue(projectID string, workspaceID string) (*model.Queue, error) {
+// RenderPreview はレンダリング実行前に解決された確定パラメータ
+type RenderPreview struct {
+	ProjectName   string `json:"project_name"`
+	WorkspaceName string `json:"workspace_name"`
+	ProjectFileID uint   `json:"project_file_id"`
+	BlenderPath   string `json:"blender_path"`
+	BlenderFile   string `json:"blender_file"`
+	Scene         string `json:"scene"`
+	Engine        string `json:"engine"`
+	StartFrame    int    `json:"start_frame"`
+	EndFrame      int    `json:"end_frame"`
+	FrameStep     int    `json:"frame_step"`
+	Thread        int    `json:"thread"`
+}
+
+// PreviewRender はToolを実行してレンダリングパラメータを解決・検証する。
+// シーン名が存在しない場合などはここでエラーを返す。
+func PreviewRender(projectID, workspaceID string) (*RenderPreview, error) {
 	w, err := model.SelectWorkspace(projectID, workspaceID)
 	if err != nil || w == nil {
 		return nil, xerrors.Errorf("workspace not found: %w", err)
@@ -24,15 +41,6 @@ func Enqueue(projectID string, workspaceID string) (*model.Queue, error) {
 		return nil, xerrors.Errorf("project not found: %w", err)
 	}
 
-	env, err := model.GetEnv()
-	if err != nil {
-		return nil, xerrors.Errorf("GetEnv: %w", err)
-	}
-	if env == nil || env.ProjectRoot == "" {
-		return nil, xerrors.New("作業ディレクトリが設定されていません（システム設定で設定してください）")
-	}
-
-	// Load the project file for blender/scene fallback
 	var fileBlenderID uint
 	var fileScene string
 	if w.ProjectFileID != 0 {
@@ -47,7 +55,6 @@ func Enqueue(projectID string, workspaceID string) (*model.Queue, error) {
 	if err != nil {
 		return nil, xerrors.Errorf("resolveBlenderPath: %w", err)
 	}
-
 	blenderFile, err := resolveBlenderFile(w.ProjectFileID, projectID)
 	if err != nil {
 		return nil, xerrors.Errorf("resolveBlenderFile: %w", err)
@@ -58,32 +65,50 @@ func Enqueue(projectID string, workspaceID string) (*model.Queue, error) {
 		scene = fileScene
 	}
 
-	// 常にToolを実行してシーン・フレーム情報を検証する
-	resolvedStart, resolvedEnd, toolErr := exec.ResolveFrameRange(blenderPath, blenderFile, scene)
+	// Tool を実行してシーンを検証し、フレーム範囲を取得
+	st, toolErr := exec.ResolveScene(blenderPath, blenderFile, scene)
 	if toolErr != nil {
-		log.Printf("ResolveFrameRange warning (rendering continues): %v", toolErr)
+		return nil, xerrors.Errorf("レンダリング前検証エラー: %w", toolErr)
 	}
 
-	// フレーム範囲の決定: 未指定 (sentinel 0,-1) の場合はツール結果を使用
+	// フレーム範囲: 未指定 (0,-1) はツール結果を使用、明示指定はそのまま
 	startFrame := w.StartFrame
 	endFrame := w.EndFrame
 	if startFrame == 0 && endFrame == -1 {
-		if toolErr == nil && resolvedStart != -1 {
-			startFrame = resolvedStart
-			endFrame = resolvedEnd
-		} else {
-			startFrame = -1
-			endFrame = -1
-		}
+		startFrame = st.Start
+		endFrame = st.End
 	}
 
-	// Generate shared UUID v7 for both Job and Queue
+	return &RenderPreview{
+		ProjectName:   p.Name,
+		WorkspaceName: w.Name,
+		ProjectFileID: w.ProjectFileID,
+		BlenderPath:   blenderPath,
+		BlenderFile:   blenderFile,
+		Scene:         st.Name, // 常に実際のシーン名
+		Engine:        w.Engine,
+		StartFrame:    startFrame,
+		EndFrame:      endFrame,
+		FrameStep:     w.FrameStep,
+		Thread:        w.Thread,
+	}, nil
+}
+
+// EnqueueWithPreview は解決済みの RenderPreview を使ってジョブを作成・実行する。
+func EnqueueWithPreview(projectID, workspaceID string, preview *RenderPreview) (*model.Queue, error) {
+	env, err := model.GetEnv()
+	if err != nil {
+		return nil, xerrors.Errorf("GetEnv: %w", err)
+	}
+	if env == nil || env.ProjectRoot == "" {
+		return nil, xerrors.New("作業ディレクトリが設定されていません（システム設定で設定してください）")
+	}
+
 	id, err := model.NewQueueID()
 	if err != nil {
 		return nil, xerrors.Errorf("NewQueueID: %w", err)
 	}
 
-	// Output dir: {projectRoot}/{projectID}/{workspaceID}/{id}/
 	outputDir := filepath.Join(env.ProjectRoot, projectID, workspaceID, id)
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
 		return nil, xerrors.Errorf("MkdirAll: %w", err)
@@ -91,30 +116,28 @@ func Enqueue(projectID string, workspaceID string) (*model.Queue, error) {
 
 	now := time.Now()
 
-	// Insert Job first (history record, persists forever)
 	job := &model.Job{
 		ID:            id,
 		ProjectID:     projectID,
-		ProjectName:   p.Name,
+		ProjectName:   preview.ProjectName,
 		WorkspaceID:   workspaceID,
-		WorkspaceName: w.Name,
-		ProjectFileID: w.ProjectFileID,
-		BlenderPath:   blenderPath,
-		BlenderFile:   blenderFile,
+		WorkspaceName: preview.WorkspaceName,
+		ProjectFileID: preview.ProjectFileID,
+		BlenderPath:   preview.BlenderPath,
+		BlenderFile:   preview.BlenderFile,
 		OutputDir:     outputDir,
-		Scene:         scene,
-		Engine:        w.Engine,
-		StartFrame:    startFrame,
-		EndFrame:      endFrame,
-		FrameStep:     w.FrameStep,
-		Thread:        w.Thread,
+		Scene:         preview.Scene,
+		Engine:        preview.Engine,
+		StartFrame:    preview.StartFrame,
+		EndFrame:      preview.EndFrame,
+		FrameStep:     preview.FrameStep,
+		Thread:        preview.Thread,
 		EnqueuedAt:    &now,
 	}
 	if err := model.CreateJob(job); err != nil {
 		return nil, xerrors.Errorf("CreateJob: %w", err)
 	}
 
-	// Insert Queue (ephemeral active-execution record)
 	q := &model.Queue{
 		ID:          id,
 		ProjectID:   projectID,
@@ -128,6 +151,15 @@ func Enqueue(projectID string, workspaceID string) (*model.Queue, error) {
 	go executeQueue(q, job)
 
 	return q, nil
+}
+
+// Enqueue は PreviewRender + EnqueueWithPreview のショートカット（後方互換用）
+func Enqueue(projectID string, workspaceID string) (*model.Queue, error) {
+	preview, err := PreviewRender(projectID, workspaceID)
+	if err != nil {
+		return nil, err
+	}
+	return EnqueueWithPreview(projectID, workspaceID, preview)
 }
 
 func resolveBlenderPath(workspaceBlenderID, projectBlenderID uint) (string, error) {

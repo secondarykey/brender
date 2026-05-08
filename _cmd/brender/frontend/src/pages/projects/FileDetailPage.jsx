@@ -62,7 +62,8 @@ function CreateForm({ projectID, fileID, onSaved, onCancel }) {
 function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEnqueued }) {
   const [workspaces, setWorkspaces] = useState([])
   const [creating, setCreating]     = useState(false)
-  const [confirm, setConfirm]       = useState(null) // workspace object
+  const [confirm, setConfirm]       = useState(null) // { ws, preview }
+  const [resolving, setResolving]   = useState(false)
   const [enqueuing, setEnqueuing]   = useState(false)
   const [enqueueMsg, setEnqueueMsg] = useState('')
 
@@ -82,12 +83,25 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
     navigate('workspace', { projectID, projectName, fileID, fileName, workspaceID: ws.id })
   }
 
+  const handleRunClick = async (ws) => {
+    setEnqueueMsg('')
+    setResolving(true)
+    try {
+      const preview = await QueueService.PreviewRender(projectID, ws.id)
+      setConfirm({ ws, preview })
+    } catch (err) {
+      setEnqueueMsg(`エラー: ${String(err)}`)
+    } finally {
+      setResolving(false)
+    }
+  }
+
   const handleEnqueue = async () => {
     if (!confirm) return
     setEnqueuing(true)
     setEnqueueMsg('')
     try {
-      await QueueService.Enqueue(projectID, confirm.id)
+      await QueueService.EnqueueWithPreview(projectID, confirm.ws.id, confirm.preview)
       onEnqueued()
     } catch (err) {
       setEnqueueMsg(`エラー: ${String(err)}`)
@@ -121,9 +135,10 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
             <div className="ws-item-actions">
               <button
                 className="btn btn-run btn-sm"
-                onClick={() => setConfirm(ws)}
+                onClick={() => handleRunClick(ws)}
+                disabled={resolving}
               >
-                ▶ 実行
+                {resolving ? '...' : '▶ 実行'}
               </button>
               <span className="ws-item-arrow" onClick={() => navigate('workspace', { projectID, projectName, fileID, fileName, workspaceID: ws.id })}>›</span>
             </div>
@@ -150,10 +165,14 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
           <div className="dialog" onClick={e => e.stopPropagation()}>
             <h3 className="dialog-title">レンダリングを実行しますか？</h3>
             <div className="dialog-body">
-              <p><span className="dialog-label">ワークスペース</span>{confirm.name}</p>
-              {confirm.scene && <p><span className="dialog-label">シーン</span>{confirm.scene}</p>}
-              {confirm.engine && <p><span className="dialog-label">エンジン</span>{confirm.engine}</p>}
-              <p><span className="dialog-label">フレーム</span>{(confirm.start === 0 && confirm.end === -1) ? '.blend ファイルの設定' : `${confirm.start} – ${confirm.end}`}</p>
+              <p><span className="dialog-label">ワークスペース</span>{confirm.ws.name}</p>
+              <p><span className="dialog-label">シーン</span>{confirm.preview.scene}</p>
+              {confirm.preview.engine
+                ? <p><span className="dialog-label">エンジン</span>{confirm.preview.engine}</p>
+                : <p><span className="dialog-label">エンジン</span><span style={{ opacity: 0.5 }}>.blend のデフォルト</span></p>
+              }
+              <p><span className="dialog-label">フレーム</span>{confirm.preview.start_frame} – {confirm.preview.end_frame}</p>
+              {confirm.preview.frame_step > 1 && <p><span className="dialog-label">ステップ</span>{confirm.preview.frame_step}</p>}
             </div>
             <div className="dialog-actions">
               <button className="btn btn-ghost" onClick={() => setConfirm(null)}>キャンセル</button>

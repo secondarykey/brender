@@ -52,33 +52,37 @@ func RunScenes(cmd, filePath string) ([]string, error) {
 	return names, nil
 }
 
-// ResolveFrameRange は .blend ファイルからシーンのフレーム範囲を取得する。
+// ResolveScene は .blend ファイルを Tool で解析し指定シーンの情報を返す。
 // scene が空の場合はアクティブシーンを使用する。
-func ResolveFrameRange(cmd, filePath, scene string) (start, end int, err error) {
-	b, newErr := NewBlender(cmd)
-	if newErr != nil {
-		return -1, -1, xerrors.Errorf("NewBlender: %w", newErr)
+// シーン名が指定されていて存在しない場合はエラーを返す。
+func ResolveScene(cmd, filePath, scene string) (SceneTool, error) {
+	b, err := NewBlender(cmd)
+	if err != nil {
+		return NewSceneTool(), xerrors.Errorf("NewBlender: %w", err)
 	}
 	b.File = filePath
-	if toolErr := b.RunTool(); toolErr != nil {
-		return -1, -1, xerrors.Errorf("RunTool: %w", toolErr)
+	if err := b.RunTool(); err != nil {
+		return NewSceneTool(), xerrors.Errorf("RunTool: %w", err)
 	}
-	var st SceneTool
 	if scene != "" {
 		for _, s := range b.Tool.Scenes {
 			if s.Name == scene {
-				st = s
-				break
+				return s, nil
 			}
 		}
+		return NewSceneTool(), xerrors.Errorf("シーン '%s' が .blend ファイルに存在しません", scene)
 	}
+	st := b.Tool.ActiveScene()
 	if st.Start == -1 {
-		st = b.Tool.ActiveScene()
+		return st, xerrors.New("アクティブシーンが見つかりません")
 	}
-	if st.Start == -1 {
-		return -1, -1, xerrors.New("scene not found in .blend")
-	}
-	return st.Start, st.End, nil
+	return st, nil
+}
+
+// ResolveFrameRange は後方互換のためのラッパー
+func ResolveFrameRange(cmd, filePath, scene string) (start, end int, err error) {
+	st, err := ResolveScene(cmd, filePath, scene)
+	return st.Start, st.End, err
 }
 
 func RunEngines(cmd string) ([]string, error) {
