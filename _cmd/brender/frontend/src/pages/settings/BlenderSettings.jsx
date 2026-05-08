@@ -6,6 +6,8 @@ function BlenderSettings() {
   const [blenders, setBlenders] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [confirm, setConfirm] = useState(null) // BlenderInstall object
+  const [deleting, setDeleting] = useState(false)
   const dragIndex = useRef(null)
   const [dragOver, setDragOver] = useState(null)
 
@@ -35,13 +37,19 @@ function BlenderSettings() {
     }
   }
 
-  const handleDelete = async (id) => {
+  const handleDelete = async () => {
+    if (!confirm) return
+    setDeleting(true)
     setError('')
     try {
-      await BlenderService.Delete(id)
+      await BlenderService.Delete(confirm.id)
+      setConfirm(null)
       load()
     } catch (err) {
       setError(String(err))
+      setConfirm(null)
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -136,7 +144,7 @@ function BlenderSettings() {
                   <td>{b.version || '—'}</td>
                   <td className="path-cell">{b.path}</td>
                   <td>
-                    <button className="btn btn-danger" onClick={() => handleDelete(b.id)}>
+                    <button className="btn btn-danger" onClick={() => setConfirm(b)}>
                       削除
                     </button>
                   </td>
@@ -145,6 +153,25 @@ function BlenderSettings() {
             </tbody>
           </table>
         </>
+      )}
+
+      {confirm && (
+        <div className="dialog-overlay" onClick={() => setConfirm(null)}>
+          <div className="dialog" onClick={e => e.stopPropagation()}>
+            <h3 className="dialog-title">Blenderを削除しますか？</h3>
+            <div className="dialog-body">
+              <p><span className="dialog-label">名前</span>{confirm.name}</p>
+              <p><span className="dialog-label">バージョン</span>{confirm.version || '—'}</p>
+              <p><span className="dialog-label">パス</span>{confirm.path}</p>
+            </div>
+            <div className="dialog-actions">
+              <button className="btn btn-ghost" onClick={() => setConfirm(null)}>キャンセル</button>
+              <button className="btn btn-danger" onClick={handleDelete} disabled={deleting}>
+                {deleting ? '削除中...' : '削除'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

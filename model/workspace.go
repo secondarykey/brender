@@ -123,6 +123,14 @@ func SelectWorkspace(pId string, wId string) (*Workspace, error) {
 	return &w, nil
 }
 
+func CountWorkspacesByBlender(blenderID uint) (int64, error) {
+	var count int64
+	if res := db.Model(&Workspace{}).Where("blender_install_id = ?", blenderID).Count(&count); res.Error != nil {
+		return 0, xerrors.Errorf("CountWorkspacesByBlender: %w", res.Error)
+	}
+	return count, nil
+}
+
 func DeleteWorkspace(projectID, workspaceID string) error {
 	if res := db.Delete(&Workspace{}, "id = ? AND project_id = ?", workspaceID, projectID); res.Error != nil {
 		return xerrors.Errorf("DeleteWorkspace: %w", res.Error)

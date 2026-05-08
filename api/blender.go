@@ -34,6 +34,13 @@ func ListBlenders() ([]*model.BlenderInstall, error) {
 }
 
 func DeleteBlender(id uint) error {
+	count, err := model.CountWorkspacesByBlender(id)
+	if err != nil {
+		return xerrors.Errorf("DeleteBlender check: %w", err)
+	}
+	if count > 0 {
+		return xerrors.Errorf("このBlenderを参照しているワークスペースが %d 件あります。先にワークスペースの設定を変更してください。", count)
+	}
 	return model.RemoveBlenderInstall(id)
 }
 
