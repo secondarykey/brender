@@ -639,9 +639,27 @@ body {
 
 .ws-item:hover { background: rgba(255,255,255,0.04); }
 
+.ws-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
 .ws-item-name {
   font-size: 0.9rem;
-  flex: 1;
+}
+
+.ws-item-meta {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ws-meta-chip {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.4);
 }
 
 .ws-item-arrow {

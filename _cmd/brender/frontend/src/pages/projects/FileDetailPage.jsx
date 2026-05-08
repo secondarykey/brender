@@ -105,12 +105,16 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
         )}
         {workspaces.map(ws => (
           <div key={ws.id} className="ws-item ws-item-run">
-            <span
-              className="ws-item-name ws-item-link"
+            <div
+              className="ws-item-info ws-item-link"
               onClick={() => navigate('workspace', { projectID, projectName, fileID, fileName, workspaceID: ws.id })}
             >
-              {ws.name}
-            </span>
+              <span className="ws-item-name">{ws.name}</span>
+              <div className="ws-item-meta">
+                {ws.engine && <span className="ws-meta-chip">{ws.engine}</span>}
+                <span className="ws-meta-chip">{ws.start ?? 1} – {ws.end ?? 250} f</span>
+              </div>
+            </div>
             <div className="ws-item-actions">
               <button
                 className="btn btn-run btn-sm"
