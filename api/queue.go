@@ -58,6 +58,22 @@ func Enqueue(projectID string, workspaceID string) (*model.Queue, error) {
 		scene = fileScene
 	}
 
+	// フレーム範囲が未指定 (sentinel 0,-1) の場合は .blend ファイルから解決する
+	startFrame := w.StartFrame
+	endFrame := w.EndFrame
+	if startFrame == 0 && endFrame == -1 {
+		s, e, ferr := exec.ResolveFrameRange(blenderPath, blenderFile, scene)
+		if ferr == nil && s != -1 {
+			startFrame = s
+			endFrame = e
+		}
+		// 解決失敗時は Blender に任せる (-a のみ渡す) ため -1,-1 を使う
+		if ferr != nil || s == -1 {
+			startFrame = -1
+			endFrame = -1
+		}
+	}
+
 	// Generate shared UUID v7 for both Job and Queue
 	id, err := model.NewQueueID()
 	if err != nil {
@@ -85,8 +101,8 @@ func Enqueue(projectID string, workspaceID string) (*model.Queue, error) {
 		OutputDir:     outputDir,
 		Scene:         scene,
 		Engine:        w.Engine,
-		StartFrame:    w.StartFrame,
-		EndFrame:      w.EndFrame,
+		StartFrame:    startFrame,
+		EndFrame:      endFrame,
 		FrameStep:     w.FrameStep,
 		Thread:        w.Thread,
 		EnqueuedAt:    &now,

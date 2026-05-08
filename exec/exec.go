@@ -52,6 +52,35 @@ func RunScenes(cmd, filePath string) ([]string, error) {
 	return names, nil
 }
 
+// ResolveFrameRange は .blend ファイルからシーンのフレーム範囲を取得する。
+// scene が空の場合はアクティブシーンを使用する。
+func ResolveFrameRange(cmd, filePath, scene string) (start, end int, err error) {
+	b, newErr := NewBlender(cmd)
+	if newErr != nil {
+		return -1, -1, xerrors.Errorf("NewBlender: %w", newErr)
+	}
+	b.File = filePath
+	if toolErr := b.RunTool(); toolErr != nil {
+		return -1, -1, xerrors.Errorf("RunTool: %w", toolErr)
+	}
+	var st SceneTool
+	if scene != "" {
+		for _, s := range b.Tool.Scenes {
+			if s.Name == scene {
+				st = s
+				break
+			}
+		}
+	}
+	if st.Start == -1 {
+		st = b.Tool.ActiveScene()
+	}
+	if st.Start == -1 {
+		return -1, -1, xerrors.New("scene not found in .blend")
+	}
+	return st.Start, st.End, nil
+}
+
 func RunEngines(cmd string) ([]string, error) {
 
 	b, err := NewBlender(cmd)
