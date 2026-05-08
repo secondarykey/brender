@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { WorkspaceService, BlenderService } from '../../../bindings/changeme'
 
 
+const isFrameDefault = (start, end) => start === 0 && end === -1
+
 // ── 設定タブ ──────────────────────────────────────────────
 function SettingsTab({ projectID, workspaceID, detail, onUpdated, onDeleted }) {
   const [blenders, setBlenders]             = useState([])
@@ -10,6 +12,7 @@ function SettingsTab({ projectID, workspaceID, detail, onUpdated, onDeleted }) {
   const [scenes, setScenes]                 = useState([])
   const [scenesLoading, setScenesLoading]   = useState(false)
   const [form, setForm]                     = useState(null)
+  const [specifyFrames, setSpecifyFrames]   = useState(false)
   const [saving, setSaving]                 = useState(false)
   const [error, setError]                   = useState('')
   const [saved, setSaved]                   = useState(false)
@@ -17,19 +20,31 @@ function SettingsTab({ projectID, workspaceID, detail, onUpdated, onDeleted }) {
   const [deleting, setDeleting]             = useState(false)
 
   useEffect(() => {
+    const start = detail.workspace.start ?? 0
+    const end   = detail.workspace.end   ?? -1
     setForm({
       name:             detail.workspace.name,
       blenderInstallID: detail.workspace.blender_install_id,
       scene:            detail.workspace.scene || '',
       engine:           detail.workspace.engine || '',
-      startFrame:       detail.workspace.start ?? 1,
-      endFrame:         detail.workspace.end   ?? 250,
+      startFrame:       start,
+      endFrame:         end,
       frameStep:        detail.workspace.frame_step || 1,
       thread:           detail.workspace.thread || 0,
     })
+    setSpecifyFrames(!isFrameDefault(start, end))
     setSaved(false)
     setError('')
   }, [detail])
+
+  const handleSpecifyFrames = (checked) => {
+    setSpecifyFrames(checked)
+    if (!checked) {
+      setForm(prev => ({ ...prev, startFrame: 0, endFrame: -1 }))
+    } else if (isFrameDefault(form.startFrame, form.endFrame)) {
+      setForm(prev => ({ ...prev, startFrame: 1, endFrame: 250 }))
+    }
+  }
 
   useEffect(() => {
     BlenderService.List()
@@ -129,28 +144,36 @@ function SettingsTab({ projectID, workspaceID, detail, onUpdated, onDeleted }) {
         <span className="form-hint">未設定の場合: .blend ファイルのデフォルトエンジンが使用されます</span>
       </div>
 
-      <div className="form-row">
-        <div className="form-field">
-          <label className="form-label">開始フレーム</label>
-          <input className="form-input" style={{ width: 120 }} type="number" min={0} value={form.startFrame} onChange={e => set('startFrame', Number(e.target.value))} />
-        </div>
-        <div className="form-field">
-          <label className="form-label">終了フレーム</label>
-          <input className="form-input" style={{ width: 120 }} type="number" min={0} value={form.endFrame} onChange={e => set('endFrame', Number(e.target.value))} />
-        </div>
+      <div className="form-field">
+        <label className="form-label">フレーム範囲</label>
+        <label className="form-checkbox-label">
+          <input type="checkbox" checked={specifyFrames} onChange={e => handleSpecifyFrames(e.target.checked)} />
+          フレームを指定する
+        </label>
+        {specifyFrames && (
+          <div className="form-row" style={{ marginTop: 8 }}>
+            <div className="form-field">
+              <label className="form-label">開始</label>
+              <input className="form-input" style={{ width: 100 }} type="number" min={0} value={form.startFrame} onChange={e => set('startFrame', Number(e.target.value))} />
+            </div>
+            <div className="form-field">
+              <label className="form-label">終了</label>
+              <input className="form-input" style={{ width: 100 }} type="number" min={0} value={form.endFrame} onChange={e => set('endFrame', Number(e.target.value))} />
+            </div>
+            <div className="form-field">
+              <label className="form-label">ステップ</label>
+              <input className="form-input" style={{ width: 80 }} type="number" min={1} value={form.frameStep} onChange={e => set('frameStep', Number(e.target.value))} />
+              <span className="form-hint">1 = 毎フレーム</span>
+            </div>
+          </div>
+        )}
+        <span className="form-hint">未指定の場合: .blend ファイルのフレーム設定が使用されます</span>
       </div>
 
-      <div className="form-row">
-        <div className="form-field">
-          <label className="form-label">フレームステップ</label>
-          <input className="form-input" style={{ width: 120 }} type="number" min={1} value={form.frameStep} onChange={e => set('frameStep', Number(e.target.value))} />
-          <span className="form-hint">1 = 毎フレーム</span>
-        </div>
-        <div className="form-field">
-          <label className="form-label">スレッド数</label>
-          <input className="form-input" style={{ width: 120 }} type="number" min={0} value={form.thread} onChange={e => set('thread', Number(e.target.value))} />
-          <span className="form-hint">0 = 自動</span>
-        </div>
+      <div className="form-field">
+        <label className="form-label">スレッド数</label>
+        <input className="form-input" style={{ width: 120 }} type="number" min={0} value={form.thread} onChange={e => set('thread', Number(e.target.value))} />
+        <span className="form-hint">0 = 自動</span>
       </div>
 
       {error && <div className="error-msg">{error}</div>}

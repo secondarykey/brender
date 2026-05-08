@@ -112,7 +112,10 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
               <span className="ws-item-name">{ws.name}</span>
               <div className="ws-item-meta">
                 {ws.engine && <span className="ws-meta-chip">{ws.engine}</span>}
-                <span className="ws-meta-chip">{ws.start ?? 1} – {ws.end ?? 250} f</span>
+                {(ws.start === 0 && ws.end === -1)
+                  ? <span className="ws-meta-chip">.blend フレーム</span>
+                  : <span className="ws-meta-chip">{ws.start} – {ws.end} f</span>
+                }
               </div>
             </div>
             <div className="ws-item-actions">
@@ -150,7 +153,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
               <p><span className="dialog-label">ワークスペース</span>{confirm.name}</p>
               {confirm.scene && <p><span className="dialog-label">シーン</span>{confirm.scene}</p>}
               {confirm.engine && <p><span className="dialog-label">エンジン</span>{confirm.engine}</p>}
-              <p><span className="dialog-label">フレーム</span>{confirm.start ?? 1} – {confirm.end ?? 250}</p>
+              <p><span className="dialog-label">フレーム</span>{(confirm.start === 0 && confirm.end === -1) ? '.blend ファイルの設定' : `${confirm.start} – ${confirm.end}`}</p>
             </div>
             <div className="dialog-actions">
               <button className="btn btn-ghost" onClick={() => setConfirm(null)}>キャンセル</button>

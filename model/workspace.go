@@ -89,6 +89,8 @@ func CreateWorkspace(projectID string, projectFileID uint, name string) (*Worksp
 		ProjectId:     projectID,
 		ProjectFileID: projectFileID,
 		Name:          name,
+		StartFrame:    0,
+		EndFrame:      -1,
 	}
 	if res := db.Create(w); res.Error != nil {
 		return nil, xerrors.Errorf("CreateWorkspace: %w", res.Error)
