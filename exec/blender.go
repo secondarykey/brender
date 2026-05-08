@@ -110,6 +110,11 @@ func (b *Blender) RunAsync(ctx context.Context, args ...string) (chan error, err
 	return errCh, err
 }
 
+// RunWithPID はBlenderを非同期実行しPIDとエラーチャネルを返す
+func (b *Blender) RunWithPID(ctx context.Context) (int, chan error, error) {
+	return b.run(ctx)
+}
+
 func (b *Blender) run(ctx context.Context, args ...string) (int, chan error, error) {
 
 	if args == nil {

@@ -1,110 +1,104 @@
 package model
 
 import (
-	"errors"
-	"fmt"
-	"strings"
+	"time"
 
 	"golang.org/x/xerrors"
-	"gorm.io/gorm"
 )
 
+const (
+	JobCompleted = "completed"
+	JobError     = "error"
+	JobCancelled = "cancelled"
+)
+
+// Job はレンダリング実行の完了済み履歴レコード。
+// Queue と同じ UUID v7 の ID を持つ。
 type Job struct {
-	ID          int    `gorm:"primaryKey" json:"id"`
-	JobId       string `json:"jobId"`
-	ProjectId   string `json:"projectId"`
-	WorkspaceId int    `json:"workspaceId"`
-	ProcessId   int    `json:"ProcessId"`
-	Complated   bool   `json:"complated"`
-	Success     bool   `json:"success"`
-	Detail      string `json:"detail"`
-	MetaFields  `gorm:"embedded"`
+	ID            string     `gorm:"primaryKey" json:"id"` // UUID v7, Queue と共通
+	ProjectID     string     `json:"project_id"`
+	ProjectName   string     `json:"project_name"`
+	WorkspaceID   string     `json:"workspace_id"`
+	WorkspaceName string     `json:"workspace_name"`
+	ProjectFileID uint       `json:"project_file_id"`
+	BlenderPath   string     `json:"blender_path"`
+	BlenderFile   string     `json:"blender_file"`
+	OutputDir     string     `json:"output_dir"`
+	Scene         string     `json:"scene"`
+	Engine        string     `json:"engine"`
+	StartFrame    int        `json:"start_frame"`
+	EndFrame      int        `json:"end_frame"`
+	FrameStep     int        `json:"frame_step"`
+	Thread        int        `json:"thread"`
+	Status        string     `json:"status"` // completed / error / cancelled
+	ErrorMsg      string     `json:"error_msg"`
+	StartedAt     *time.Time `json:"started_at"`
+	CompletedAt   *time.Time `json:"completed_at"`
+	EnqueuedAt    *time.Time `json:"enqueued_at"` // キュー登録時刻
 }
 
-func CreateJob(jobId string, pId string, wId int, processId int) error {
-
-	//ジョブがサムネイルだった場合、削除を行う
-	if strings.Index(jobId, "thumb") != -1 {
-
-		job, err := SelectByJobId(jobId)
-		if err != nil {
-			if !errors.Is(err, gorm.ErrRecordNotFound) {
-				return xerrors.Errorf("SelectByJobId() error: %w", err)
-			}
-		}
-
-		if job != nil {
-			res := db.Where("job_id = ?", job.JobId).Delete(job)
-			if res.Error != nil {
-				return xerrors.Errorf("Job delete error: %w", res.Error)
-			}
-		}
+func CreateJob(j *Job) error {
+	if res := db.Create(j); res.Error != nil {
+		return xerrors.Errorf("CreateJob: %w", res.Error)
 	}
-
-	var job Job
-	job.JobId = jobId
-	job.ProjectId = pId
-	job.WorkspaceId = wId
-	job.ProcessId = processId
-	job.Complated = false
-	job.Success = false
-	job.Detail = ""
-
-	db.Create(&job)
-	if db.Error != nil {
-		return xerrors.Errorf("Job Register error: %w", db.Error)
-	}
-
 	return nil
 }
 
-func SelectByJobId(jobId string) (*Job, error) {
-	var job Job
-	db.First(&job, "job_id = ?", jobId)
-	if db.Error != nil {
-		return nil, xerrors.Errorf("Select Job: %w", db.Error)
+func GetJob(id string) (*Job, error) {
+	var j Job
+	if res := db.First(&j, "id = ?", id); res.Error != nil {
+		return nil, xerrors.Errorf("GetJob: %w", res.Error)
 	}
-	return &job, nil
+	return &j, nil
 }
 
-func ComplateJob(jobId string, jobError error) error {
-
-	job, err := SelectByJobId(jobId)
-	if err != nil {
-		return xerrors.Errorf("SelectByJobId() error: %w", err)
+func ListJobs() ([]*Job, error) {
+	var list []*Job
+	if res := db.Order("enqueued_at desc").Find(&list); res.Error != nil {
+		return nil, xerrors.Errorf("ListJobs: %w", res.Error)
 	}
+	return list, nil
+}
 
-	job.Complated = true
-	job.Success = true
-	if jobError != nil {
-		job.Success = false
-		job.Detail = fmt.Sprintf("%+v", jobError)
+func ListJobsByWorkspace(projectID string, workspaceID string) ([]*Job, error) {
+	var list []*Job
+	if res := db.Where("project_id = ? AND workspace_id = ?", projectID, workspaceID).
+		Order("enqueued_at desc").Find(&list); res.Error != nil {
+		return nil, xerrors.Errorf("ListJobsByWorkspace: %w", res.Error)
 	}
+	return list, nil
+}
 
-	res := db.Save(job)
-	if res.Error != nil {
-		return xerrors.Errorf("Save Job: %w", res.Error)
+func DeleteJobsByWorkspace(workspaceID string) error {
+	if res := db.Delete(&Job{}, "workspace_id = ?", workspaceID); res.Error != nil {
+		return xerrors.Errorf("DeleteJobsByWorkspace: %w", res.Error)
 	}
-
 	return nil
 }
 
-func SelectJobs(pId string, wId int, pg *Paging) ([]*Job, error) {
-
-	var cnt int64
-	res := db.Model(&Job{}).Where("project_id = ? AND workspace_id = ?", pId, wId).Count(&cnt)
-	fmt.Println(cnt)
-	pg.Count = int(cnt)
-	offset := (pg.Current - 1) * pg.Limit
-	limit := pg.Limit
-
-	var jobs []*Job
-	res = db.Where("project_id = ? AND workspace_id = ?", pId, wId).Offset(offset).Limit(limit).Find(&jobs)
-	if res.Error != nil {
-		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
-			return nil, nil
-		}
-		return nil, xerrors.Errorf("Jobs error: %w", res.Error)
+func ListJobsByProjectFile(projectID string, projectFileID uint) ([]*Job, error) {
+	var list []*Job
+	if res := db.Where("project_id = ? AND project_file_id = ?", projectID, projectFileID).
+		Order("enqueued_at desc").Find(&list); res.Error != nil {
+		return nil, xerrors.Errorf("ListJobsByProjectFile: %w", res.Error)
 	}
-	return jobs, nil
+	return list, nil
+}
+
+func DeleteJobsByProject(projectID string) error {
+	if res := db.Delete(&Job{}, "project_id = ?", projectID); res.Error != nil {
+		return xerrors.Errorf("DeleteJobsByProject: %w", res.Error)
+	}
+	return nil
+}
+
+func UpdateJobDone(id string, status string, errMsg string, completedAt *time.Time) error {
+	if res := db.Model(&Job{}).Where("id = ?", id).Updates(map[string]any{
+		"status":       status,
+		"error_msg":    errMsg,
+		"completed_at": completedAt,
+	}); res.Error != nil {
+		return xerrors.Errorf("UpdateJobDone: %w", res.Error)
+	}
+	return nil
 }

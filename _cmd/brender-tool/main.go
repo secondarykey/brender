@@ -2,14 +2,13 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
 	"os"
 	"time"
 
-	"github.com/ikascrew/brender/core/exec"
+	"github.com/ikascrew/brender/exec"
 	"golang.org/x/xerrors"
 )
 
@@ -243,10 +242,6 @@ func rendering(f string) error {
 	pw.SetMode(ana)
 	w = append(w, pw)
 
-	//TODO 全出力
-	//ジョブログ
-	//開発者ログ
-
 	//Writer指定で処理
 	mw := io.MultiWriter(w...)
 	b.Writer = mw
@@ -281,23 +276,12 @@ func rendering(f string) error {
 		return xerrors.Errorf("blender running error: %w", err)
 	}
 
-	// 処理結果をJSONで出力
-	result := pw.Result()
-	data, jerr := json.MarshalIndent(result, "", "  ")
-	if jerr != nil {
-		return xerrors.Errorf("json.MarshalIndent() error: %w", jerr)
-	}
-	fmt.Println(string(data))
-
 	return nil
 }
 
 // runTerminalDisplay はProcessingWriterの状態をポーリングしてターミナルに表示します。
 func runTerminalDisplay(pw *exec.ProcessingWriter, stop <-chan struct{}) {
-	t, err := exec.NewTerminal(exec.LineNum)
-	if err != nil {
-		return
-	}
+	t, _ := exec.NewTerminal(exec.LineNum)
 	t.Refresh = true
 
 	ticker := time.NewTicker(200 * time.Millisecond)

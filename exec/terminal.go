@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"golang.org/x/term"
-	"golang.org/x/xerrors"
 )
 
 type Terminal struct {
@@ -25,11 +24,11 @@ func NewTerminal(h int) (*Terminal, error) {
 	term.lines = make([]string, h)
 	term.height = h
 	term.Refresh = false
-	err := term.setWidth()
-	if err != nil {
-		return &term, xerrors.Errorf("setWidth() error: %w", err)
-	}
 	term.writer = os.Stdout
+	term.width = 80 // default fallback
+	if err := term.setWidth(); err != nil {
+		slog.Warn("terminal width detection failed, using 80")
+	}
 	return &term, nil
 }
 

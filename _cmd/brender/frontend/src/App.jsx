@@ -1,55 +1,71 @@
 import { useState, useEffect } from 'react'
-import {Events, WML} from "@wailsio/runtime";
-import {GreetService} from "../bindings/changeme";
+import MainLayout from './layouts/MainLayout'
+import ProjectListPage from './pages/projects/ProjectListPage'
+import ProjectDetailPage from './pages/projects/ProjectDetailPage'
+import FileDetailPage from './pages/projects/FileDetailPage'
+import WorkspaceDetailPage from './pages/projects/WorkspaceDetailPage'
+import QueuePage from './pages/queue/QueuePage'
+import SettingsPage from './pages/settings/SettingsPage'
+import { EnvironmentService } from '../bindings/changeme'
 
 function App() {
-  const [name, setName] = useState('');
-  const [result, setResult] = useState('Please enter your name below 👇');
-  const [time, setTime] = useState('Listening for Time event...');
-
-  const doGreet = () => {
-    let localName = name;
-    if (!localName) {
-      localName = 'anonymous';
-    }
-    GreetService.Greet(localName).then((resultValue) => {
-      setResult(resultValue);
-    }).catch((err) => {
-      console.log(err);
-    });
-  }
+  const [nav, setNav] = useState({ page: 'projects', params: {} })
 
   useEffect(() => {
-    Events.On('time', (timeValue) => {
-      setTime(timeValue.data);
-    });
-    // Reload WML so it picks up the wml tags
-    WML.Reload();
-  }, []);
+    EnvironmentService.Get()
+      .then(env => {
+        if (!env || !env.root) {
+          setNav({ page: 'settings', params: {} })
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  const navigate = (page, params = {}) => setNav({ page, params })
+
+  const renderPage = () => {
+    const p = nav.params
+    switch (nav.page) {
+      case 'projects':
+        return <ProjectListPage navigate={navigate} />
+      case 'project':
+        return <ProjectDetailPage id={p.id} navigate={navigate} />
+      case 'file':
+        return (
+          <FileDetailPage
+            projectID={p.projectID}
+            projectName={p.projectName}
+            fileID={p.fileID}
+            fileName={p.fileName}
+            navigate={navigate}
+          />
+        )
+      case 'workspace':
+        return (
+          <WorkspaceDetailPage
+            projectID={p.projectID}
+            projectName={p.projectName}
+            fileID={p.fileID}
+            fileName={p.fileName}
+            workspaceID={p.workspaceID}
+            navigate={navigate}
+          />
+        )
+      case 'queue':
+        return <QueuePage navigate={navigate} />
+      case 'settings':
+        return <SettingsPage />
+      default:
+        return <ProjectListPage navigate={navigate} />
+    }
+  }
+
+  const section = ['project', 'file', 'workspace'].includes(nav.page) ? 'projects' : nav.page
 
   return (
-    <div className="container">
-      <div>
-        <a data-wml-openURL="https://wails.io">
-          <img src="/wails.png" className="logo" alt="Wails logo"/>
-        </a>
-        <a data-wml-openURL="https://reactjs.org">
-          <img src='/react.svg' className="logo react" alt="React logo"/>
-        </a>
-      </div>
-      <h1>Wails + React</h1>
-      <div className="result">{result}</div>
-      <div className="card">
-        <div className="input-box">
-          <input className="input" value={name} onChange={(e) => setName(e.target.value)} type="text" autoComplete="off"/>
-          <button className="btn" onClick={doGreet}>Greet</button>
-        </div>
-      </div>
-      <div className="footer">
-        <div><p>Click on the Wails logo to learn more</p></div>
-        <div><p>{time}</p></div>
-      </div>
-    </div>
+    <MainLayout currentPage={section} onNavigate={(p) => navigate(p)}>
+      {renderPage()}
+    </MainLayout>
   )
 }
 

@@ -36,6 +36,22 @@ func parseVersion(b *strings.Builder) (string, error) {
 /**
  * Blender のエンジンリストを取得する
  */
+func RunScenes(cmd, filePath string) ([]string, error) {
+	b, err := NewBlender(cmd)
+	if err != nil {
+		return nil, xerrors.Errorf("NewBlender: %w", err)
+	}
+	b.File = filePath
+	if err := b.RunTool(); err != nil {
+		return nil, xerrors.Errorf("RunTool: %w", err)
+	}
+	names := make([]string, 0, len(b.Tool.Scenes))
+	for _, s := range b.Tool.Scenes {
+		names = append(names, s.Name)
+	}
+	return names, nil
+}
+
 func RunEngines(cmd string) ([]string, error) {
 
 	b, err := NewBlender(cmd)
@@ -85,7 +101,7 @@ func IsProjectThumbnailLock(pId string) bool {
 	return false
 }
 
-func IsWorkspaceThumbnailLock(pId string, wId int) bool {
+func IsWorkspaceThumbnailLock(pId string, wId string) bool {
 	logDir := getLogDir(pId)
 	jobId := fmt.Sprintf(WorkspaceThumbJobName, wId)
 	lockFile := filepath.Join(logDir, jobId+".lock")
@@ -95,7 +111,7 @@ func IsWorkspaceThumbnailLock(pId string, wId int) bool {
 	return false
 }
 
-func getWorkspaceRenderingFile(pId string, wId int) string {
+func getWorkspaceRenderingFile(pId string, wId string) string {
 	logDir := getLogDir(pId)
 	reg := fmt.Sprintf(RenderingJobNameGlob, wId)
 
@@ -113,7 +129,7 @@ func getWorkspaceRenderingFile(pId string, wId int) string {
 	return files[0]
 }
 
-func IsWorkspaceRendering(pId string, wId int) bool {
+func IsWorkspaceRendering(pId string, wId string) bool {
 	file := getWorkspaceRenderingFile(pId, wId)
 	if file == "" {
 		return false
@@ -121,13 +137,11 @@ func IsWorkspaceRendering(pId string, wId int) bool {
 	return true
 }
 
-func GetRenderingTime(pId string, wId int) *RenderingTime {
-
+func GetRenderingTime(pId string, wId string) *RenderingTime {
 	file := getWorkspaceRenderingFile(pId, wId)
 	if file == "" {
 		return nil
 	}
-
 	rt, err := createRenderingTime(file)
 	if err != nil {
 		return nil
@@ -137,12 +151,12 @@ func GetRenderingTime(pId string, wId int) *RenderingTime {
 
 func CreateProjectThumbnail(ctx context.Context, pId string) error {
 
-	env, err := model.GetEnv()
-	if err != nil {
-		return xerrors.Errorf("get environment error: %w", err)
+	bi, err := model.FirstBlender()
+	if err != nil || bi == nil {
+		return xerrors.New("Blenderが登録されていません")
 	}
 
-	b, err := NewBlender(env.BlenderCmd)
+	b, err := NewBlender(bi.Path)
 	if err != nil {
 		return xerrors.Errorf("NewBlender() error: %w", err)
 	}
@@ -166,7 +180,7 @@ func CreateProjectThumbnail(ctx context.Context, pId string) error {
 	target := filepath.Join(dir, ProjectThumbWorkFile)
 
 	jobId := ProjectThumbJobName
-	jw, err := createJobWriter(p.ID, 0, jobId, 1, 1)
+	jw, err := createJobWriter(p.ID, "", jobId, 1, 1)
 	if err != nil {
 		return xerrors.Errorf("createJobWriter() error: %w", err)
 	}
@@ -177,28 +191,18 @@ func CreateProjectThumbnail(ctx context.Context, pId string) error {
 	b.File = GetBlenderFile(p)
 	b.Scene = p.Scene
 
-	//args = append(args, "--log", "*")
-	//args = append(args, "--log-level", "-1")
-	//args = append(args, "--log-file", logFile)
-
 	b.Result = target
-	b.SetFrame(p.Frame)
+	b.SetFrame(1)
 
-	processId, errCh, err := b.run(ctx)
+	_, errCh, err := b.run(ctx)
 	if err != nil {
 		return xerrors.Errorf("Blender command error: %w", err)
 	}
 
-	err = model.CreateJob(jobId, p.ID, 0, processId)
-	if err != nil {
-		return xerrors.Errorf("model.CreateJon() error: %w", err)
-	}
-
 	go func() {
 		//サムネイル作成処理
-		err = complateJob(errCh, jw)
-		if err != nil {
-			log.Println("complateJob() error:", err)
+		if completeErr := complateJob(errCh, jw); completeErr != nil {
+			log.Println("complateJob() error:", completeErr)
 		}
 	}()
 
@@ -218,28 +222,22 @@ func ArchiveProjectFiles(pId string) error {
 		return xerrors.Errorf("CopyBranch() error: %w", err)
 	}
 
-	err = model.SetProjectArchive(pId)
-	if err != nil {
-		return xerrors.Errorf("CreateProjectTree() error: %w", err)
-	}
 	return nil
 }
 
 func GetBlenderFile(p *model.Project) string {
-	if p.Archive {
-		base := filepath.Base(p.BlenderFile)
-		dir := getContentDir(p.ID)
-		return filepath.Join(dir, base)
+	f, err := model.FirstFile(p.ID)
+	if err != nil || f == nil {
+		return ""
 	}
-	return p.BlenderFile
+	return f.Path
 }
 
-func CreateWorkspaceThumbnail(ctx context.Context, pId string, wId int) error {
+func CreateWorkspaceThumbnail(ctx context.Context, pId string, wId string) error {
 
-	//すべてのワークファイルを削除
-	env, err := model.GetEnv()
-	if err != nil {
-		return xerrors.Errorf("get environment error: %w", err)
+	bi, err := model.FirstBlender()
+	if err != nil || bi == nil {
+		return xerrors.New("Blenderが登録されていません")
 	}
 
 	p, err := model.SelectProject(pId)
@@ -251,7 +249,6 @@ func CreateWorkspaceThumbnail(ctx context.Context, pId string, wId int) error {
 		return xerrors.Errorf("SelectWorkspace() error: %w", err)
 	}
 
-	//サムネイルが存在するなら削除
 	thumb := GetWorkspaceThumbnailFileName(pId, w.ID)
 	if _, err = os.Stat(thumb); err == nil {
 		err = os.Remove(thumb)
@@ -260,10 +257,9 @@ func CreateWorkspaceThumbnail(ctx context.Context, pId string, wId int) error {
 		}
 	}
 
-	//TODO ワークファイルを削除
 	target := GetWorkspaceThumbnailPath(pId, w.ID, WorkspaceThumbWorkFile)
 
-	b, err := NewBlender(env.BlenderCmd)
+	b, err := NewBlender(bi.Path)
 	if err != nil {
 		return xerrors.Errorf("NewBlender() error: %w", err)
 	}
@@ -281,36 +277,30 @@ func CreateWorkspaceThumbnail(ctx context.Context, pId string, wId int) error {
 		b.Scene = p.Scene
 	}
 	b.Result = target
-	b.SetFrame(w.Frame)
+	b.SetFrame(w.StartFrame)
 
-	processId, errCh, err := b.run(ctx)
+	_, errCh, err := b.run(ctx)
 	if err != nil {
 		return xerrors.Errorf("Blender command error: %w", err)
 	}
 
-	err = model.CreateJob(jobId, p.ID, w.ID, processId)
-	if err != nil {
-		return xerrors.Errorf("CreateJob() error: %w", err)
-	}
-
 	go func() {
-		err = complateJob(errCh, jw)
-		if err != nil {
-			log.Println("complateJob() error:", err)
+		if completeErr := complateJob(errCh, jw); completeErr != nil {
+			log.Println("complateJob() error:", completeErr)
 		}
 	}()
 
 	return nil
 }
 
-func RunWorkspace(ctx context.Context, pId string, wId int) (string, error) {
+func RunWorkspace(ctx context.Context, pId string, wId string) (string, error) {
 
-	env, err := model.GetEnv()
-	if err != nil {
-		return "", xerrors.Errorf("environment error: %w", err)
+	bi, err := model.FirstBlender()
+	if err != nil || bi == nil {
+		return "", xerrors.New("Blenderが登録されていません")
 	}
 
-	b, err := NewBlender(env.BlenderCmd)
+	b, err := NewBlender(bi.Path)
 	if err != nil {
 		return "", xerrors.Errorf("NewBlender() error: %w", err)
 	}
@@ -328,7 +318,7 @@ func RunWorkspace(ctx context.Context, pId string, wId int) (string, error) {
 	b.End = w.EndFrame
 	b.File = GetBlenderFile(p)
 
-	resultDir := filepath.Join(getResultDir(pId, wId))
+	resultDir := getResultDir(pId, wId)
 	b.Result = filepath.Join(resultDir, RenderResultFile)
 
 	//JobID を発行
@@ -347,21 +337,14 @@ func RunWorkspace(ctx context.Context, pId string, wId int) (string, error) {
 		b.Scene = p.Scene
 	}
 
-	processId, errCh, err := b.run(ctx)
+	_, errCh, err := b.run(ctx)
 	if err != nil {
 		return "", xerrors.Errorf("Blender command error: %w", err)
 	}
 
-	err = model.CreateJob(jobId, pId, wId, processId)
-	if err != nil {
-		return "", xerrors.Errorf("CreateJob() error: %w", err)
-	}
-
 	go func() {
-		err = complateJob(errCh, jw)
-		if err != nil {
-			log.Println("complateJob() error:", err)
-			return
+		if completeErr := complateJob(errCh, jw); completeErr != nil {
+			log.Println("complateJob() error:", completeErr)
 		}
 	}()
 
@@ -372,31 +355,21 @@ func complateJob(errCh chan error, w *jobWriter) error {
 
 	err := <-errCh
 	if err != nil {
-		return xerrors.Errorf("Command run error() error: %w", err)
+		_ = w.Close()
+		return xerrors.Errorf("Command run error: %w", err)
 	}
 
-	if err == nil {
-		pId, wId := w.GetThumbnailID()
-		//サムネイルの変換処理を行う
-		if pId != "" && wId > 0 {
-			err = createWorkspaceThumbnail(pId, wId)
-		} else if pId != "" {
-			err = createProjectThumbnail(pId)
-		}
+	pId, wId := w.GetThumbnailID()
+	if pId != "" && wId != "" {
+		err = createWorkspaceThumbnail(pId, wId)
+	} else if pId != "" {
+		err = createProjectThumbnail(pId)
 	}
 
-	if err == nil {
-		err = w.Close()
-		if err != nil {
-			return xerrors.Errorf("CompalteJob() error: %w", err)
-		}
+	if closeErr := w.Close(); closeErr != nil && err == nil {
+		err = xerrors.Errorf("complateJob close: %w", closeErr)
 	}
-
-	err = model.ComplateJob(w.JobID, err)
-	if err != nil {
-		return xerrors.Errorf("CompalteJob() error: %w", err)
-	}
-	return nil
+	return err
 }
 
 func generateDateId() string {

@@ -27,13 +27,13 @@ const (
 	ProjectThumbnailFile     = ProjectThumbPrefix + ".jpg"
 
 	WorkspaceThumbPrefix       = "workspace_thumb"
-	WorkspaceThumbJobName      = WorkspaceThumbPrefix + "_%d"
-	WorkspaceThumbWorkFile     = WorkspaceThumbPrefix + "_%d_########.png"
-	WorkspaceThumbWorkFileGlob = WorkspaceThumbPrefix + "_%d_*.png"
-	WorkspaceThumbnailFile     = WorkspaceThumbPrefix + "_%d.jpg"
+	WorkspaceThumbJobName      = WorkspaceThumbPrefix + "_%s"
+	WorkspaceThumbWorkFile     = WorkspaceThumbPrefix + "_%s_########.png"
+	WorkspaceThumbWorkFileGlob = WorkspaceThumbPrefix + "_%s_*.png"
+	WorkspaceThumbnailFile     = WorkspaceThumbPrefix + "_%s.jpg"
 
-	RenderingJobName     = "%s_%d"
-	RenderingJobNameGlob = "*_%d.lock"
+	RenderingJobName     = "%s_%s"
+	RenderingJobNameGlob = "*_%s.lock"
 
 	RenderResultFile     = "########.png"
 	RenderResultFileGlob = "*.png"
@@ -80,31 +80,24 @@ func getThumbnailDir(id string) string {
 }
 
 func searchProjectThumbnailWorkFile(id string) string {
-
 	p := getThumbnailDir(id)
-
 	files, err := filepath.Glob(filepath.Join(p, ProjectThumbWorkFileGlob))
 	if err != nil {
 		log.Println(err)
 		return ""
 	}
-
 	if len(files) <= 0 {
 		log.Println("thumbnail work file not found.")
 		return ""
 	}
-
 	if len(files) > 1 {
 		log.Println("thumbnail work file to many")
 	}
-
 	return files[0]
 }
 
-func searchWorkspaceThumbnailWorkFile(id string, wId int) string {
-
+func searchWorkspaceThumbnailWorkFile(id string, wId string) string {
 	p := getThumbnailDir(id)
-
 	files, err := filepath.Glob(filepath.Join(p, fmt.Sprintf(WorkspaceThumbWorkFileGlob, wId)))
 	if err != nil {
 		log.Println(err)
@@ -114,35 +107,28 @@ func searchWorkspaceThumbnailWorkFile(id string, wId int) string {
 		log.Println("thumbnail work file not found.")
 		return ""
 	}
-
 	if len(files) > 1 {
 		log.Println("thumbnail work file to many")
 	}
-
 	return files[0]
 }
 
-func SearchResultFiles(id string, wId int, r bool) ([]string, int64) {
-
+func SearchResultFiles(id string, wId string, r bool) ([]string, int64) {
 	dir := getResultDir(id, wId)
 	files, err := filepath.Glob(filepath.Join(dir, RenderResultFileGlob))
 	if err != nil {
 		return nil, 0
 	}
-
 	if r {
 		return files, 0
 	}
-
 	names := make([]string, len(files))
 	var sz int64
 	for idx, fn := range files {
 		info, _ := os.Stat(fn)
-
 		sz += info.Size()
 		names[idx] = filepath.Base(fn)
 	}
-
 	return names, sz
 }
 
@@ -152,22 +138,21 @@ func GetProjectThumbnailFileName(id string) string {
 	return rtn
 }
 
-func GetWorkspaceThumbnailFileName(id string, wId int) string {
+func GetWorkspaceThumbnailFileName(id string, wId string) string {
 	return GetWorkspaceThumbnailPath(id, wId, WorkspaceThumbnailFile)
 }
 
-func GetResultFileName(id string, wId int, fn string) string {
+func GetResultFileName(id string, wId string, fn string) string {
 	dir := getResultDir(id, wId)
 	return filepath.Join(dir, fn)
 }
 
-func GetWorkspaceThumbnailPath(id string, wId int, base string) string {
+func GetWorkspaceThumbnailPath(id string, wId string, base string) string {
 	dir := getThumbnailDir(id)
 	return filepath.Join(dir, fmt.Sprintf(base, wId))
 }
 
 func createImageFile(n string, img image.Image) error {
-
 	fp, err := os.Create(n)
 	if err != nil {
 		return xerrors.Errorf("os.Create() error: %w", err)
@@ -181,147 +166,116 @@ func createImageFile(n string, img image.Image) error {
 	return nil
 }
 
-func getWorkspaceDir(id string, wId int) string {
-	workspace := fmt.Sprintf("%d", wId)
-	rtn := filepath.Join(getProjectDir(id), "workspace", workspace)
+func getWorkspaceDir(id string, wId string) string {
+	rtn := filepath.Join(getProjectDir(id), "workspace", wId)
 	os.MkdirAll(rtn, 0666)
 	return rtn
 }
 
-func getResultDir(id string, wId int) string {
+func getResultDir(id string, wId string) string {
 	rtn := filepath.Join(getWorkspaceDir(id, wId), "result")
 	os.MkdirAll(rtn, 0666)
 	return rtn
 }
 
 func RemoveLockFiles() error {
-
 	env := getEnv()
 	if env == nil {
 		return nil
 	}
-
 	ptn := filepath.Join(env.ProjectRoot, "*", "logs", "*.lock")
 	files, err := filepath.Glob(ptn)
 	if err != nil {
 		return xerrors.Errorf("lock file glob error: %w", err)
 	}
-
 	if len(files) != 0 {
 		log.Println("Remove lock file")
 	}
-
 	for _, file := range files {
 		log.Println(file)
 		os.Remove(file)
 	}
-
 	return nil
 }
 
 func createProjectThumbnail(id string) error {
-
 	fn := searchProjectThumbnailWorkFile(id)
 	if fn == "" {
 		return fmt.Errorf("work file not found rror")
 	}
-
 	n := GetProjectThumbnailFileName(id)
-
 	err := createThumbnailFile(n, fn)
 	if err != nil {
 		return xerrors.Errorf("createThumbnailFile() error: %w", err)
 	}
-
-	//TODO ロックファイルも削除
-
 	return nil
 }
 
-func createWorkspaceThumbnail(id string, wId int) error {
-
+func createWorkspaceThumbnail(id string, wId string) error {
 	fn := searchWorkspaceThumbnailWorkFile(id, wId)
 	if fn == "" {
 		return fmt.Errorf("work file not found rror")
 	}
-
 	n := GetWorkspaceThumbnailFileName(id, wId)
-
 	err := createThumbnailFile(n, fn)
 	if err != nil {
 		return xerrors.Errorf("createThumbnailFile() error: %w", err)
 	}
-
 	return nil
 }
 
 // 元ファイルを削除するので注意
 func createThumbnailFile(dst, src string) error {
-
 	img, err := CreateAroundImage(src, ThumbnailWidth, ThumbnailHeight)
 	if err != nil {
 		return xerrors.Errorf("parseJSONBody() error: %w", err)
 	}
-
 	err = createImageFile(dst, img)
 	if err != nil {
 		return xerrors.Errorf("CreateThumbnail() error: %w", err)
 	}
-
 	err = os.Remove(src)
 	if err != nil {
 		log.Println(err)
 	}
-
 	return nil
 }
 
-func WriteResultZIP(w io.Writer, pId string, wId int) error {
-
+func WriteResultZIP(w io.Writer, pId string, wId string) error {
 	files, _ := SearchResultFiles(pId, wId, true)
 	if files == nil {
 		return fmt.Errorf("ResultFiles NotFound")
 	}
-
 	zw := zip.NewWriter(w)
-
 	for _, fn := range files {
-
 		err := writeZIP(zw, fn)
 		if err != nil {
 			return xerrors.Errorf("zip.NewWriter() error: %w", err)
 		}
-
 		zw.Flush()
 	}
-
 	err := zw.Close()
 	if err != nil {
 		return xerrors.Errorf("zip.NewWriter() error: %w", err)
 	}
-
 	return nil
 }
 
 func writeZIP(w *zip.Writer, fn string) error {
-
 	n := filepath.Base(fn)
 	f, err := w.Create(n)
 	if err != nil {
 		return xerrors.Errorf("Create() error: %w", err)
 	}
-
 	fp, err := os.Open(fn)
 	if err != nil {
 		return xerrors.Errorf("os.Open() error: %w", err)
 	}
 	defer fp.Close()
-
 	_, err = io.Copy(f, fp)
 	if err != nil {
 		return xerrors.Errorf("io.Copy() error: %w", err)
 	}
-
 	return nil
 }
 
@@ -337,24 +291,18 @@ func (b *Branch) AddChild(child *Branch) {
 }
 
 func CreateProjectTree(pId string, abs bool) (*Branch, error) {
-
 	p, err := model.SelectProject(pId)
 	if err != nil {
 		return nil, xerrors.Errorf("model.SelectProject() error: %w", err)
 	}
-
 	var b Branch
 	b.ID = ""
 	b.Name = pId
-
-	// アーカイブ側かを設定
-	rootDir := filepath.Dir(p.BlenderFile)
-
+	rootDir := filepath.Dir(GetBlenderFile(p))
 	err = searchProjectTree(&b, rootDir)
 	if err != nil {
 		return nil, xerrors.Errorf("searchProjectTree() error: %w", err)
 	}
-
 	if abs {
 		b.ID = rootDir
 	} else {
@@ -364,35 +312,26 @@ func CreateProjectTree(pId string, abs bool) (*Branch, error) {
 }
 
 func copyProject(dst string, tree *Branch) error {
-
 	p := tree.ID
-
-	//TODO 削除する
-
 	for _, b := range tree.Children {
 		err := copyBranch(dst, p, b)
 		if err != nil {
 			return xerrors.Errorf("copyBranch() error: %w", err)
 		}
 	}
-
 	return nil
 }
 
 func copyBranch(dst string, root string, tree *Branch) error {
-
 	children := tree.Children
 	id := tree.ID
 	p := filepath.Join(root, id)
 	out := filepath.Join(dst, id)
-
 	if len(children) == 0 {
-
 		err := copyFile(out, p)
 		if err != nil {
 			return xerrors.Errorf("copyFile() error: %w", err)
 		}
-
 	} else {
 		os.Mkdir(out, 0666)
 		for _, b := range children {
@@ -402,41 +341,33 @@ func copyBranch(dst string, root string, tree *Branch) error {
 			}
 		}
 	}
-
 	return nil
 }
 
 func copyFile(dst string, src string) error {
-
 	fp, err := os.Open(src)
 	if err != nil {
 		return xerrors.Errorf("os.Open() error: %w", err)
 	}
 	defer fp.Close()
-
 	op, err := os.Create(dst)
 	if err != nil {
 		return xerrors.Errorf("os.Create() error: %w", err)
 	}
 	defer op.Close()
-
 	_, err = io.Copy(op, fp)
 	if err != nil {
 		return xerrors.Errorf("io.Copy() error: %w", err)
 	}
-
 	return nil
 }
 
 func searchProjectTree(parent *Branch, dir string) error {
-
 	infos, err := os.ReadDir(dir)
 	if err != nil {
 		return xerrors.Errorf("os.ReadDir() error: %w", err)
 	}
-
 	for _, info := range infos {
-
 		var b Branch
 		n := info.Name()
 		b.ID = parent.ID + "/" + n
@@ -447,7 +378,6 @@ func searchProjectTree(parent *Branch, dir string) error {
 		} else {
 			b.Size = i.Size()
 		}
-
 		if info.IsDir() {
 			p := filepath.Join(dir, n)
 			err = searchProjectTree(&b, p)
@@ -457,13 +387,11 @@ func searchProjectTree(parent *Branch, dir string) error {
 		}
 		parent.AddChild(&b)
 	}
-
 	var s int64
 	for _, child := range parent.Children {
 		s += child.Size
 	}
 	parent.Size += s
-
 	return nil
 }
 

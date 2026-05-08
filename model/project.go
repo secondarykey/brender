@@ -2,6 +2,8 @@ package model
 
 import (
 	"errors"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/google/uuid"
@@ -10,31 +12,30 @@ import (
 )
 
 type Project struct {
-	ID                 string    `gorm:"primaryKey" json:"id"`
-	Name               string    `json:"name"`
-	BlenderFile        string    `json:"blender_file"`
-	BlenderLastUpdated time.Time `json:"blender_file_late_updated"`
-	Scene              string    `json:"scene"`
-	Frame              int       `json:"frame"`
-	Archive            bool      `json:"archive"`
-	MetaFields         `gorm:"embedded"`
+	ID               string `gorm:"primaryKey" json:"id"`
+	Name             string `json:"name"`
+	BlenderInstallID uint   `json:"blender_install_id"`
+	Scene            string `json:"scene"`
+	MetaFields       `gorm:"embedded"`
 }
 
-type ProjectWorkspaces struct {
-	Project    *Project     `json:"project"`
-	Workspaces []*Workspace `json:"workspaces"`
-	Lock       bool         `json:"lock"`
-	Paging     *Paging      `json:"paging"`
+// プロジェクトに属する .blend ファイル
+type ProjectFile struct {
+	ID             uint       `gorm:"primaryKey" json:"id"`
+	ProjectID      string     `json:"project_id"`
+	Path           string     `json:"path"`
+	Name           string     `json:"name"`
+	FileModifiedAt *time.Time `json:"file_modified_at"`
+	MetaFields     `gorm:"embedded"`
 }
 
-func newProject(name string) *Project {
-	var p Project
-	p.ID = p.generateId()
-	p.Name = name
-	return &p
+type ProjectDetail struct {
+	Project *Project       `json:"project"`
+	Files   []*ProjectFile `json:"files"`
+	Blender *BlenderInstall `json:"blender"`
 }
 
-func (p *Project) generateId() string {
+func newProjectID() string {
 	id, err := uuid.NewUUID()
 	if err != nil {
 		panic(err)
@@ -42,127 +43,161 @@ func (p *Project) generateId() string {
 	return id.String()
 }
 
-func SelectProjects(p *Paging) ([]*Project, error) {
-
-	var cnt int64
-	res := db.Model(&Project{}).Count(&cnt)
-	if res.Error != nil {
-		return nil, xerrors.Errorf("Project count error: %w", res.Error)
-	}
-	p.Count = int(cnt)
-
+func ListProjects() ([]*ProjectDetail, error) {
 	var projects []*Project
-	offset := (p.Current - 1) * p.Limit
-	limit := p.Limit
+	if res := db.Order("created_at desc").Find(&projects); res.Error != nil {
+		return nil, xerrors.Errorf("ListProjects: %w", res.Error)
+	}
 
-	db.Offset(offset).Limit(limit).Find(&projects)
-	if res.Error != nil {
-		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
-			return nil, nil
+	details := make([]*ProjectDetail, 0, len(projects))
+	for _, p := range projects {
+		d, err := loadProjectDetail(p)
+		if err != nil {
+			return nil, err
 		}
-		return nil, xerrors.Errorf("Project count error: %w", res.Error)
+		details = append(details, d)
 	}
-	return projects, nil
+	return details, nil
 }
 
-func PutProject(name string, file string) error {
-
-	p := newProject(name)
-	p.BlenderFile = file
-
-	db.Create(&p)
-	if db.Error != nil {
-		return xerrors.Errorf("project Register error: %w", db.Error)
+func GetProject(id string) (*ProjectDetail, error) {
+	var p Project
+	res := db.First(&p, "id = ?", id)
+	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+		return nil, nil
 	}
-
-	return nil
-}
-
-func EditProject(p *Project) error {
-
-	dbP, err := SelectProject(p.ID)
-	if err != nil {
-		return xerrors.Errorf("SelectProject() error: %w", err)
-	}
-
-	dbP.Name = p.Name
-
-	dbP.BlenderFile = p.BlenderFile
-	dbP.Frame = p.Frame
-	dbP.Scene = p.Scene
-
-	res := db.Save(dbP)
 	if res.Error != nil {
-		return xerrors.Errorf("Save() error: %w", res.Error)
+		return nil, xerrors.Errorf("GetProject: %w", res.Error)
 	}
-
-	return nil
+	return loadProjectDetail(&p)
 }
 
+func loadProjectDetail(p *Project) (*ProjectDetail, error) {
+	var files []*ProjectFile
+	if res := db.Where("project_id = ?", p.ID).Find(&files); res.Error != nil {
+		return nil, xerrors.Errorf("loadProjectFiles: %w", res.Error)
+	}
+
+	var blender *BlenderInstall
+	if p.BlenderInstallID > 0 {
+		blender = &BlenderInstall{}
+		res := db.First(blender, p.BlenderInstallID)
+		if res.Error != nil {
+			blender = nil
+		}
+	}
+
+	return &ProjectDetail{Project: p, Files: files, Blender: blender}, nil
+}
+
+// SelectProject は exec パッケージとの互換性のために残す
 func SelectProject(id string) (*Project, error) {
 	var p Project
-
-	db.First(&p, "id = ?", id)
-	if db.Error != nil {
-		return nil, xerrors.Errorf("Select Project: %w", db.Error)
+	res := db.First(&p, "id = ?", id)
+	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if res.Error != nil {
+		return nil, xerrors.Errorf("SelectProject: %w", res.Error)
 	}
 	return &p, nil
 }
 
-func SelectWorkspaces(projectId string, pg *Paging) (*ProjectWorkspaces, error) {
 
-	var rtn ProjectWorkspaces
-
-	p, err := SelectProject(projectId)
-	if err != nil {
-		return nil, xerrors.Errorf("SelectProject() error: %w", err)
+func GetProjectFile(fileID uint) (*ProjectFile, error) {
+	var f ProjectFile
+	res := db.First(&f, fileID)
+	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+		return nil, nil
 	}
-	rtn.Project = p
-
-	wk, err := selectWorkspaces(projectId, pg)
-	if err != nil {
-		return nil, xerrors.Errorf("selectWorkspaces() error: %w", err)
+	if res.Error != nil {
+		return nil, xerrors.Errorf("GetProjectFile: %w", res.Error)
 	}
-	rtn.Workspaces = wk
-	rtn.Paging = pg
-
-	return &rtn, nil
+	return &f, nil
 }
 
-func selectWorkspaces(projectId string, pg *Paging) ([]*Workspace, error) {
-
-	var cnt int64
-
-	res := db.Model(&Workspace{}).Where("project_id = ?", projectId).Count(&cnt)
-	pg.Count = int(cnt)
-	offset := (pg.Current - 1) * pg.Limit
-	limit := pg.Limit
-
-	var wk []*Workspace
-	res = db.Where("project_id = ?", projectId).Offset(offset).Limit(limit).Find(&wk)
-
-	if res.Error != nil {
-		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
-			return nil, nil
-		}
-		return nil, xerrors.Errorf("Project count error: %w", res.Error)
+// FirstFile はプロジェクトの最初の ProjectFile を返す（exec パッケージ用）
+func FirstFile(projectID string) (*ProjectFile, error) {
+	var f ProjectFile
+	res := db.Where("project_id = ?", projectID).First(&f)
+	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+		return nil, nil
 	}
-
-	return wk, nil
+	if res.Error != nil {
+		return nil, xerrors.Errorf("FirstFile: %w", res.Error)
+	}
+	return &f, nil
 }
 
-func SetProjectArchive(id string) error {
-
-	dbP, err := SelectProject(id)
-	if err != nil {
-		return xerrors.Errorf("SelectProject() error: %w", err)
+func UpdateProject(id, name string, blenderInstallID uint, scene string) (*ProjectDetail, error) {
+	var p Project
+	if res := db.First(&p, "id = ?", id); res.Error != nil {
+		return nil, xerrors.Errorf("UpdateProject find: %w", res.Error)
 	}
+	p.Name = name
+	p.BlenderInstallID = blenderInstallID
+	p.Scene = scene
+	if res := db.Save(&p); res.Error != nil {
+		return nil, xerrors.Errorf("UpdateProject save: %w", res.Error)
+	}
+	return loadProjectDetail(&p)
+}
 
-	dbP.Archive = true
+func AddProjectFile(projectID, path string) (*ProjectFile, error) {
+	var modAt *time.Time
+	if info, err := os.Stat(path); err == nil {
+		t := info.ModTime()
+		modAt = &t
+	}
+	f := &ProjectFile{
+		ProjectID:      projectID,
+		Path:           path,
+		Name:           filepath.Base(path),
+		FileModifiedAt: modAt,
+	}
+	if res := db.Create(f); res.Error != nil {
+		return nil, xerrors.Errorf("AddProjectFile: %w", res.Error)
+	}
+	return f, nil
+}
 
-	res := db.Save(dbP)
-	if res.Error != nil {
-		return xerrors.Errorf("Save() error: %w", res.Error)
+func RemoveProjectFile(fileID uint) error {
+	if res := db.Delete(&ProjectFile{}, fileID); res.Error != nil {
+		return xerrors.Errorf("RemoveProjectFile: %w", res.Error)
 	}
 	return nil
+}
+
+func DeleteProject(id string) error {
+	if res := db.Delete(&Project{}, "id = ?", id); res.Error != nil {
+		return xerrors.Errorf("DeleteProject: %w", res.Error)
+	}
+	if res := db.Delete(&ProjectFile{}, "project_id = ?", id); res.Error != nil {
+		return xerrors.Errorf("DeleteProject files: %w", res.Error)
+	}
+	return nil
+}
+
+func CreateProject(name string, blenderInstallID uint, paths []string) (*ProjectDetail, error) {
+	p := &Project{
+		ID:               newProjectID(),
+		Name:             name,
+		BlenderInstallID: blenderInstallID,
+	}
+	if res := db.Create(p); res.Error != nil {
+		return nil, xerrors.Errorf("CreateProject: %w", res.Error)
+	}
+
+	for _, path := range paths {
+		f := &ProjectFile{
+			ProjectID: p.ID,
+			Path:      path,
+			Name:      filepath.Base(path),
+		}
+		if res := db.Create(f); res.Error != nil {
+			return nil, xerrors.Errorf("CreateProjectFile: %w", res.Error)
+		}
+	}
+
+	return loadProjectDetail(p)
 }

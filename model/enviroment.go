@@ -8,12 +8,9 @@ import (
 )
 
 type Environment struct {
-	ID             uint   `gorm:"primaryKey" json:"id"`
-	BlenderCmd     string `json:"command"`
-	ProjectRoot    string `json:"root"`
-	Server         bool   `json:"server"`
-	BlenderVersion string `json:"version"`
-	Hash           string `json:"hash"`
+	ID          uint   `gorm:"primaryKey" json:"id"`
+	ProjectRoot string `json:"root"`
+	Server      bool   `json:"server"`
 	MetaFields
 }
 
