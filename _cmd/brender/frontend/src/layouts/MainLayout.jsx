@@ -1,3 +1,5 @@
+import TitleBar from '../components/TitleBar'
+
 function NavItem({ label, icon, active, onClick }) {
   return (
     <button
@@ -22,10 +24,11 @@ function MainLayout({ currentPage, onNavigate, children }) {
   ]
 
   return (
-    <div className="layout">
+    <div className="app-frame">
+      <TitleBar />
+      <div className="layout">
       <aside className="sidebar">
         <div className="sidebar-top">
-          <div className="app-logo">BR</div>
           <nav className="nav-top">
             {topNav.map(item => (
               <NavItem
@@ -51,6 +54,7 @@ function MainLayout({ currentPage, onNavigate, children }) {
       <main className="content">
         {children}
       </main>
+      </div>
     </div>
   )
 }

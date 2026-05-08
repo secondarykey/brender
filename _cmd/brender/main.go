@@ -55,13 +55,13 @@ func main() {
 	})
 
 	app.Window.NewWithOptions(application.WebviewWindowOptions{
-		Title:  "brender",
-		Width:  1280,
-		Height: 800,
+		Title:     "brender",
+		Width:     1280,
+		Height:    800,
+		Frameless: true,
 		Mac: application.MacWindow{
-			InvisibleTitleBarHeight: 50,
-			Backdrop:                application.MacBackdropTranslucent,
-			TitleBar:                application.MacTitleBarHiddenInset,
+			Backdrop: application.MacBackdropTranslucent,
+			TitleBar: application.MacTitleBarHidden,
 		},
 		BackgroundColour: application.NewRGB(27, 38, 54),
 		URL:              "/",
