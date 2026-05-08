@@ -113,7 +113,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
             </span>
             <div className="ws-item-actions">
               <button
-                className="btn btn-primary btn-sm"
+                className="btn btn-run btn-sm"
                 onClick={() => setConfirm(ws)}
               >
                 ▶ 実行
