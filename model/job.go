@@ -99,6 +99,13 @@ func DeleteJobsByProject(projectID string) error {
 	return nil
 }
 
+func UpdateJobStarted(id string, startedAt *time.Time) error {
+	if res := db.Model(&Job{}).Where("id = ?", id).Update("started_at", startedAt); res.Error != nil {
+		return xerrors.Errorf("UpdateJobStarted: %w", res.Error)
+	}
+	return nil
+}
+
 func UpdateJobDone(id string, status string, errMsg string, completedAt *time.Time) error {
 	if res := db.Model(&Job{}).Where("id = ?", id).Updates(map[string]any{
 		"status":       status,

@@ -171,8 +171,12 @@ func executeQueue(q *model.Queue, job *model.Job) {
 		return
 	}
 
+	now := time.Now()
 	if updateErr := model.UpdateQueueRunning(q.ID, pid); updateErr != nil {
 		log.Println("UpdateQueueRunning error:", updateErr)
+	}
+	if updateErr := model.UpdateJobStarted(q.ID, &now); updateErr != nil {
+		log.Println("UpdateJobStarted error:", updateErr)
 	}
 
 	blenderErr := <-errCh
