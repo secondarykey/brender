@@ -835,12 +835,12 @@ body {
 }
 
 .btn-run {
-  background: #e67e22;
+  background: #f56500;
   color: #fff;
   font-weight: 600;
   padding: 0 20px;
 }
-.btn-run:hover:not(:disabled) { background: #f39c12; }
+.btn-run:hover:not(:disabled) { background: #ff7a1a; }
 
 .btn-primary {
   background: #4a7cdc;
