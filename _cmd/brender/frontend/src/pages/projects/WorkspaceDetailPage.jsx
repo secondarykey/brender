@@ -118,7 +118,7 @@ function SettingsTab({ projectID, workspaceID, detail, onUpdated, onDeleted }) {
         <label className="form-label">レンダーエンジン</label>
         {engines.length > 0 ? (
           <select className="form-select" value={form.engine} onChange={e => set('engine', e.target.value)} disabled={enginesLoading}>
-            <option value="">Blenderデフォルト</option>
+            <option value="">ファイルのデフォルト</option>
             {engines.map(eng => <option key={eng} value={eng}>{eng}</option>)}
           </select>
         ) : (
