@@ -1,4 +1,5 @@
 import bpy
+from collections import defaultdict
 
 def printScenes():
 
@@ -13,7 +14,26 @@ def printScenes():
         print(f"{cur} {value.frame_start} {value.frame_end} {key}")
     print("{{ .SceneEndFlag }}")
 
+def printCameras():
+
+    camera_usage = defaultdict(list)
+    for scene in bpy.data.scenes:
+        # そのシーン内の全オブジェクトをループ
+        for obj in scene.objects:
+            # オブジェクトがカメラだった場合
+            if obj.type == 'CAMERA':
+                camera_usage[obj.name].append(scene.name)
+
+    print("{{ .CameraStartFlag }}")
+
+    for cam_name, scene_names in camera_usage.items():
+        scenes_str = ",".join(scene_names)
+        print(f"{cam_name}  {scenes_str}")
+
+    print("{{ .CameraEndFlag }}")
+
 if __name__ == "__main__":
     print("{{ .ToolStartFlag }}")
     printScenes()
+    printCameras()
     print("{{ .ToolEndFlag }}")

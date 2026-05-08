@@ -18,18 +18,21 @@ import (
 var assetsEmb embed.FS
 
 const (
-	ToolFlag  = "=BRENDER PYTHON TOOL %s"
-	SceneFlag = "==SCENES %s"
-	StartFlag = "START"
-	EndFlag   = "END"
-	FileName  = "brender-tool_*.py"
+	ToolFlag   = "=BRENDER PYTHON TOOL %s"
+	SceneFlag  = "==SCENES %s"
+	CameraFlag = "==CAMERA %s"
+	StartFlag  = "START"
+	EndFlag    = "END"
+	FileName   = "brender-tool_*.py"
 )
 
 var (
-	ToolStart  = fmt.Sprintf(ToolFlag, StartFlag)
-	ToolEnd    = fmt.Sprintf(ToolFlag, EndFlag)
-	SceneStart = fmt.Sprintf(SceneFlag, StartFlag)
-	SceneEnd   = fmt.Sprintf(SceneFlag, EndFlag)
+	ToolStart   = fmt.Sprintf(ToolFlag, StartFlag)
+	ToolEnd     = fmt.Sprintf(ToolFlag, EndFlag)
+	SceneStart  = fmt.Sprintf(SceneFlag, StartFlag)
+	SceneEnd    = fmt.Sprintf(SceneFlag, EndFlag)
+	CameraStart = fmt.Sprintf(CameraFlag, StartFlag)
+	CameraEnd   = fmt.Sprintf(CameraFlag, EndFlag)
 )
 
 /**
@@ -43,13 +46,16 @@ func createToolPythonFile() (string, error) {
 	}
 
 	dto := struct {
-		ToolStartFlag  string
-		ToolEndFlag    string
-		SceneStartFlag string
-		SceneEndFlag   string
+		ToolStartFlag   string
+		ToolEndFlag     string
+		SceneStartFlag  string
+		SceneEndFlag    string
+		CameraStartFlag string
+		CameraEndFlag   string
 	}{
 		ToolStart, ToolEnd,
 		SceneStart, SceneEnd,
+		CameraStart, CameraEnd,
 	}
 
 	fp, err := os.CreateTemp("", FileName)
