@@ -211,9 +211,8 @@ function SettingsTab({ fileID, fileName, onUpdated }) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
 
-  const dirty = name.trim() !== fileName && name.trim() !== ''
-
   const handleSave = async () => {
+    if (!name.trim()) return
     setSaving(true)
     setError(null)
     try {
@@ -239,7 +238,7 @@ function SettingsTab({ fileID, fileName, onUpdated }) {
       </div>
       {error && <p className="form-error">{error}</p>}
       <div className="form-actions" style={{ justifyContent: 'flex-end' }}>
-        <button className="btn" onClick={handleSave} disabled={!dirty || saving}>
+        <button className="btn" onClick={handleSave} disabled={saving}>
           {saving ? '保存中...' : '保存'}
         </button>
       </div>
