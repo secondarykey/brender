@@ -215,6 +215,8 @@ function SettingsTab({ fileID, fileName, onUpdated, onDeleted }) {
   const [blenderInstallID, setBlenderID]  = useState(0)
   const [scene, setScene]                 = useState('')
   const [blenders, setBlenders]           = useState([])
+  const [scenes, setScenes]               = useState([])
+  const [scenesLoading, setScenesLoading] = useState(false)
   const [saving, setSaving]               = useState(false)
   const [deleting, setDeleting]           = useState(false)
   const [confirm, setConfirm]             = useState(false)
@@ -233,6 +235,14 @@ function SettingsTab({ fileID, fileName, onUpdated, onDeleted }) {
       .then(list => setBlenders(list || []))
       .catch(() => {})
   }, [fileID])
+
+  useEffect(() => {
+    setScenesLoading(true)
+    BlenderService.GetScenes(blenderInstallID, fileID)
+      .then(list => setScenes(list || []))
+      .catch(() => setScenes([]))
+      .finally(() => setScenesLoading(false))
+  }, [blenderInstallID, fileID])
 
   const handleSave = async () => {
     if (!name.trim()) return
@@ -294,12 +304,24 @@ function SettingsTab({ fileID, fileName, onUpdated, onDeleted }) {
 
       <div className="form-field">
         <label className="form-label">デフォルトシーン</label>
-        <input
-          className="form-input"
-          value={scene}
-          onChange={e => setScene(e.target.value)}
-          placeholder="空白の場合はBlenderのデフォルト"
-        />
+        {scenes.length > 0 ? (
+          <select
+            className="form-select"
+            value={scene}
+            onChange={e => setScene(e.target.value)}
+            disabled={scenesLoading}
+          >
+            <option value="">— Blenderのデフォルト —</option>
+            {scenes.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+        ) : (
+          <input
+            className="form-input"
+            value={scene}
+            onChange={e => setScene(e.target.value)}
+            placeholder="空白の場合はBlenderのデフォルト"
+          />
+        )}
       </div>
 
       {error && <p className="form-error">{error}</p>}
