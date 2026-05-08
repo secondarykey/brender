@@ -58,17 +58,20 @@ func Enqueue(projectID string, workspaceID string) (*model.Queue, error) {
 		scene = fileScene
 	}
 
-	// フレーム範囲が未指定 (sentinel 0,-1) の場合は .blend ファイルから解決する
+	// 常にToolを実行してシーン・フレーム情報を検証する
+	resolvedStart, resolvedEnd, toolErr := exec.ResolveFrameRange(blenderPath, blenderFile, scene)
+	if toolErr != nil {
+		log.Printf("ResolveFrameRange warning (rendering continues): %v", toolErr)
+	}
+
+	// フレーム範囲の決定: 未指定 (sentinel 0,-1) の場合はツール結果を使用
 	startFrame := w.StartFrame
 	endFrame := w.EndFrame
 	if startFrame == 0 && endFrame == -1 {
-		s, e, ferr := exec.ResolveFrameRange(blenderPath, blenderFile, scene)
-		if ferr == nil && s != -1 {
-			startFrame = s
-			endFrame = e
-		}
-		// 解決失敗時は Blender に任せる (-a のみ渡す) ため -1,-1 を使う
-		if ferr != nil || s == -1 {
+		if toolErr == nil && resolvedStart != -1 {
+			startFrame = resolvedStart
+			endFrame = resolvedEnd
+		} else {
 			startFrame = -1
 			endFrame = -1
 		}
