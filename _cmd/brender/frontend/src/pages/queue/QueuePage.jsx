@@ -281,11 +281,7 @@ function QueuePage({ navigate }) {
 
   return (
     <div className="page">
-      <div className="page-header">
-        <h1 className="page-title">キュー</h1>
-      </div>
-
-      <div className="tab-nav">
+<div className="tab-nav">
         <button
           className={`tab-btn${tab === 'active' ? ' active' : ''}`}
           onClick={() => setTab('active')}

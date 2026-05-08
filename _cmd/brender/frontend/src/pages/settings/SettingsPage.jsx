@@ -12,8 +12,7 @@ function SettingsPage() {
 
   return (
     <div className="page">
-      <h1 className="page-title">設定</h1>
-      <div className="tab-nav">
+<div className="tab-nav">
         {TABS.map(t => (
           <button
             key={t.id}

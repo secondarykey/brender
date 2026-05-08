@@ -54,8 +54,7 @@ function ProjectListPage({ navigate }) {
   return (
     <div className="page">
       <div className="page-header">
-        <h1 className="page-title">プロジェクト</h1>
-        {!creating && (
+{!creating && (
           <button className="btn" onClick={handleStartCreate} disabled={!hasRoot}>+ 新規作成</button>
         )}
       </div>
