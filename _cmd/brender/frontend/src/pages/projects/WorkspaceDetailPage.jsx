@@ -42,7 +42,7 @@ function SettingsTab({ projectID, workspaceID, detail, onUpdated, onDeleted }) {
     if (!checked) {
       setForm(prev => ({ ...prev, startFrame: 0, endFrame: -1 }))
     } else if (isFrameDefault(form.startFrame, form.endFrame)) {
-      setForm(prev => ({ ...prev, startFrame: 1, endFrame: 250 }))
+      setForm(prev => ({ ...prev, startFrame: 1, endFrame: 1, frameStep: 1 }))
     }
   }
 
