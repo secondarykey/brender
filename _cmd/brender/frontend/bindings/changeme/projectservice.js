@@ -40,6 +40,14 @@ export function Delete(id) {
 }
 
 /**
+ * @param {number} fileID
+ * @returns {$CancellablePromise<void>}
+ */
+export function DeleteFile(fileID) {
+    return $Call.ByID(1843196909, fileID);
+}
+
+/**
  * @param {string} id
  * @returns {$CancellablePromise<model$0.ProjectDetail | null>}
  */

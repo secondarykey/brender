@@ -85,6 +85,13 @@ func ListJobsByProjectFile(projectID string, projectFileID uint) ([]*Job, error)
 	return list, nil
 }
 
+func DeleteJobsByProjectFile(fileID uint) error {
+	if res := db.Delete(&Job{}, "project_file_id = ?", fileID); res.Error != nil {
+		return xerrors.Errorf("DeleteJobsByProjectFile: %w", res.Error)
+	}
+	return nil
+}
+
 func DeleteJobsByProject(projectID string) error {
 	if res := db.Delete(&Job{}, "project_id = ?", projectID); res.Error != nil {
 		return xerrors.Errorf("DeleteJobsByProject: %w", res.Error)

@@ -38,3 +38,7 @@ func (s *ProjectService) AddFile(projectID, path string) (*model.ProjectFile, er
 func (s *ProjectService) RemoveFile(fileID uint) error {
 	return api.RemoveProjectFile(fileID)
 }
+
+func (s *ProjectService) DeleteFile(fileID uint) error {
+	return api.DeleteProjectFile(fileID)
+}

@@ -130,6 +130,13 @@ func DeleteWorkspace(projectID, workspaceID string) error {
 	return nil
 }
 
+func DeleteWorkspacesByProjectFile(fileID uint) error {
+	if res := db.Delete(&Workspace{}, "project_file_id = ?", fileID); res.Error != nil {
+		return xerrors.Errorf("DeleteWorkspacesByProjectFile: %w", res.Error)
+	}
+	return nil
+}
+
 func DeleteWorkspacesByProject(projectID string) error {
 	if res := db.Delete(&Workspace{}, "project_id = ?", projectID); res.Error != nil {
 		return xerrors.Errorf("DeleteWorkspacesByProject: %w", res.Error)

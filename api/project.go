@@ -40,6 +40,16 @@ func RemoveProjectFile(fileID uint) error {
 	return model.RemoveProjectFile(fileID)
 }
 
+func DeleteProjectFile(fileID uint) error {
+	if err := model.DeleteJobsByProjectFile(fileID); err != nil {
+		return xerrors.Errorf("DeleteProjectFile jobs: %w", err)
+	}
+	if err := model.DeleteWorkspacesByProjectFile(fileID); err != nil {
+		return xerrors.Errorf("DeleteProjectFile workspaces: %w", err)
+	}
+	return model.RemoveProjectFile(fileID)
+}
+
 func DeleteProject(id string) error {
 	if err := model.DeleteJobsByProject(id); err != nil {
 		return xerrors.Errorf("DeleteProject jobs: %w", err)

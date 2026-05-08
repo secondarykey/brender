@@ -206,10 +206,12 @@ function HistoryTab({ projectID, fileID }) {
 }
 
 // ── 設定タブ ─────────────────────────────────────────────
-function SettingsTab({ fileID, fileName, onUpdated }) {
-  const [name, setName] = useState(fileName)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState(null)
+function SettingsTab({ fileID, fileName, onUpdated, onDeleted }) {
+  const [name, setName]       = useState(fileName)
+  const [saving, setSaving]   = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [confirm, setConfirm] = useState(false)
+  const [error, setError]     = useState(null)
 
   const handleSave = async () => {
     if (!name.trim()) return
@@ -225,6 +227,20 @@ function SettingsTab({ fileID, fileName, onUpdated }) {
     }
   }
 
+  const handleDelete = async () => {
+    setDeleting(true)
+    setError(null)
+    try {
+      await ProjectService.DeleteFile(fileID)
+      if (onDeleted) onDeleted()
+    } catch (e) {
+      setError(e?.message ?? '削除に失敗しました')
+      setConfirm(false)
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   return (
     <div className="form" style={{ maxWidth: 480 }}>
       <div className="form-field">
@@ -237,11 +253,32 @@ function SettingsTab({ fileID, fileName, onUpdated }) {
         <span className="form-hint">レンダリング設定グループの表示名</span>
       </div>
       {error && <p className="form-error">{error}</p>}
-      <div className="form-actions" style={{ justifyContent: 'flex-end' }}>
+      <div className="form-actions">
+        <button className="btn btn-danger" onClick={() => setConfirm(true)}>削除</button>
         <button className="btn" onClick={handleSave} disabled={saving}>
           {saving ? '保存中...' : '保存'}
         </button>
       </div>
+
+      {confirm && (
+        <div className="dialog-overlay" onClick={() => setConfirm(false)}>
+          <div className="dialog" onClick={e => e.stopPropagation()}>
+            <h3 className="dialog-title">ファイルを削除しますか？</h3>
+            <div className="dialog-body">
+              <p><span className="dialog-label">ファイル</span>{fileName}</p>
+              <p style={{ marginTop: 10, color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>
+                関連するワークスペースおよびジョブ履歴も削除されます。物理ファイルは削除されません。この操作は取り消せません。
+              </p>
+            </div>
+            <div className="dialog-actions">
+              <button className="btn btn-ghost" onClick={() => setConfirm(false)}>キャンセル</button>
+              <button className="btn btn-danger" onClick={handleDelete} disabled={deleting}>
+                {deleting ? '削除中...' : '削除'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -294,6 +331,7 @@ function FileDetailPage({ projectID, projectName, fileID, fileName, navigate }) 
             fileID={fileID}
             fileName={currentFileName}
             onUpdated={f => setCurrentFileName(f.name)}
+            onDeleted={() => navigate('project', { id: projectID })}
           />
         )}
       </div>
