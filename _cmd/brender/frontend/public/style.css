@@ -137,8 +137,8 @@ body {
 }
 
 .nav-item {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border: none;
   border-radius: 8px;
   background: transparent;
@@ -161,7 +161,7 @@ body {
 }
 
 .nav-icon {
-  font-size: 18px;
+  font-size: 32px;
   line-height: 1;
 }
 
