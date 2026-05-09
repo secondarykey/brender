@@ -1,6 +1,6 @@
 const PAGE_SIZE_OPTIONS = [5, 10, 20, 100]
 
-function Pagination({ page, totalPages, onChange, pageSize, onPageSizeChange }) {
+function Pagination({ page, totalPages, onChange, pageSize, onPageSizeChange, total }) {
   const showSizer = pageSize != null && onPageSizeChange != null
 
   if (totalPages <= 1 && !showSizer) return null
@@ -32,6 +32,9 @@ function Pagination({ page, totalPages, onChange, pageSize, onPageSizeChange }) 
     <div className="pagination">
       {showSizer ? (
         <div className="pagination-sizer">
+          {total != null && (
+            <span className="pagination-info">{total} 件</span>
+          )}
           <span className="pagination-info">表示件数</span>
           <select
             className="pagination-size-select"

@@ -236,7 +236,7 @@ function HistoryTab({ projectID, fileID }) {
           </div>
         ))}
       </div>
-      <Pagination page={currentPage} totalPages={totalPages} onChange={p => { setPage(p); setSelected(null) }} pageSize={pageSize} onPageSizeChange={p => { setPageSize(p); setPage(1) }} />
+      <Pagination page={currentPage} totalPages={totalPages} onChange={p => { setPage(p); setSelected(null) }} pageSize={pageSize} onPageSizeChange={p => { setPageSize(p); setPage(1) }} total={jobs.length} />
       <JobDetailDialog job={selected} onClose={() => setSelected(null)} onDeleted={() => { setSelected(null); load() }} />
     </>
   )
