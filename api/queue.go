@@ -79,6 +79,12 @@ func PreviewRender(projectID, workspaceID string) (*RenderPreview, error) {
 		endFrame = st.End
 	}
 
+	// エンジン: ワークスペース指定 → シーンのデフォルト（ツール取得）の順でフォールバック
+	engine := w.Engine
+	if engine == "" {
+		engine = st.Engine
+	}
+
 	return &RenderPreview{
 		ProjectName:   p.Name,
 		WorkspaceName: w.Name,
@@ -86,7 +92,7 @@ func PreviewRender(projectID, workspaceID string) (*RenderPreview, error) {
 		BlenderPath:   blenderPath,
 		BlenderFile:   blenderFile,
 		Scene:         st.Name, // 常に実際のシーン名
-		Engine:        w.Engine,
+		Engine:        engine,
 		StartFrame:    startFrame,
 		EndFrame:      endFrame,
 		FrameStep:     w.FrameStep,
