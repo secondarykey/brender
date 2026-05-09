@@ -56,7 +56,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 0 0 16px;
+  padding: 0 0 0 13px;
   flex-shrink: 0;
   --wails-draggable: drag;
   user-select: none;
@@ -74,6 +74,8 @@ body {
   object-fit: contain;
   pointer-events: none;
   flex-shrink: 0;
+  margin-top: 6px;
+  opacity: 0.7;
 }
 
 .titlebar-controls {
