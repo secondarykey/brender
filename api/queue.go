@@ -423,6 +423,21 @@ func ListJobs() ([]*model.Job, error) {
 	return model.ListJobs()
 }
 
+func DeleteJob(id string) error {
+	j, err := model.GetJob(id)
+	if err != nil {
+		return xerrors.Errorf("DeleteJob GetJob: %w", err)
+	}
+	if j.OutputDir != "" {
+		if _, statErr := os.Stat(j.OutputDir); statErr == nil {
+			if rmErr := os.RemoveAll(j.OutputDir); rmErr != nil {
+				log.Println("DeleteJob RemoveAll:", rmErr)
+			}
+		}
+	}
+	return model.DeleteJob(id)
+}
+
 func ListJobsByWorkspace(projectID string, workspaceID string) ([]*model.Job, error) {
 	return model.ListJobsByWorkspace(projectID, workspaceID)
 }

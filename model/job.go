@@ -70,6 +70,13 @@ func ListJobsByWorkspace(projectID string, workspaceID string) ([]*Job, error) {
 	return list, nil
 }
 
+func DeleteJob(id string) error {
+	if res := db.Delete(&Job{}, "id = ?", id); res.Error != nil {
+		return xerrors.Errorf("DeleteJob: %w", res.Error)
+	}
+	return nil
+}
+
 func DeleteJobsByWorkspace(workspaceID string) error {
 	if res := db.Delete(&Job{}, "workspace_id = ?", workspaceID); res.Error != nil {
 		return xerrors.Errorf("DeleteJobsByWorkspace: %w", res.Error)

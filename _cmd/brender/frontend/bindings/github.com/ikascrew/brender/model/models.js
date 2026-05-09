@@ -284,6 +284,14 @@ export class Job {
              */
             this["error_msg"] = "";
         }
+        if (!("disk_size" in $$source)) {
+            /**
+             * 出力フォルダの容量（バイト）
+             * @member
+             * @type {number}
+             */
+            this["disk_size"] = 0;
+        }
         if (!("started_at" in $$source)) {
             /**
              * @member

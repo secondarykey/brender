@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { WorkspaceService, QueueService, ProjectService, BlenderService } from '../../../bindings/changeme'
 import JobDetailDialog from '../../components/JobDetailDialog'
 
@@ -189,14 +189,16 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
 
 // ── 履歴タブ ──────────────────────────────────────────────
 function HistoryTab({ projectID, fileID }) {
-  const [jobs, setJobs]       = useState([])
+  const [jobs, setJobs]         = useState([])
   const [selected, setSelected] = useState(null)
 
-  useEffect(() => {
+  const load = useCallback(() => {
     QueueService.ListJobsByProjectFile(projectID, fileID)
       .then(list => setJobs(list || []))
       .catch(() => {})
   }, [projectID, fileID])
+
+  useEffect(() => { load() }, [load])
 
   if (jobs.length === 0) {
     return <p className="empty-msg">まだ実行履歴がありません</p>
@@ -226,7 +228,7 @@ function HistoryTab({ projectID, fileID }) {
           </div>
         ))}
       </div>
-      <JobDetailDialog job={selected} onClose={() => setSelected(null)} />
+      <JobDetailDialog job={selected} onClose={() => setSelected(null)} onDeleted={() => { setSelected(null); load() }} />
     </>
   )
 }

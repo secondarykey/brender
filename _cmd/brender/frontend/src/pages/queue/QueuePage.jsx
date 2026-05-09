@@ -318,7 +318,7 @@ function HistoryTab({ navigate }) {
           <Pagination page={currentPage} totalPages={totalPages} onChange={handlePageChange} />
         </>
       )}
-      <JobDetailDialog job={selected} onClose={() => setSelected(null)} />
+      <JobDetailDialog job={selected} onClose={() => setSelected(null)} onDeleted={() => { setSelected(null); load() }} />
     </>
   )
 }

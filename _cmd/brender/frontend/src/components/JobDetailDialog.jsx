@@ -1,3 +1,6 @@
+import { useState } from 'react'
+import { QueueService } from '../../bindings/changeme'
+
 const STATUS_LABELS = {
   completed: '完了',
   error:     'エラー',
@@ -32,13 +35,32 @@ function Row({ label, value }) {
   )
 }
 
-function JobDetailDialog({ job, onClose }) {
+function JobDetailDialog({ job, onClose, onDeleted }) {
+  const [confirm, setConfirm]   = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [error, setError]       = useState('')
+
   if (!job) return null
 
   const status = job.status || 'running'
 
+  const handleDelete = async () => {
+    setDeleting(true)
+    setError('')
+    try {
+      await QueueService.DeleteJob(job.id)
+      setConfirm(false)
+      onClose()
+      if (onDeleted) onDeleted(job.id)
+    } catch (err) {
+      setError(String(err))
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   return (
-    <div className="dialog-overlay" onClick={onClose}>
+    <div className="dialog-overlay" onClick={() => { if (!confirm) onClose() }}>
       <div className="dialog dialog-wide" onClick={e => e.stopPropagation()}>
         <h3 className="dialog-title">ジョブ詳細</h3>
 
@@ -72,11 +94,25 @@ function JobDetailDialog({ job, onClose }) {
           {status === 'error' && job.error_msg && (
             <div className="job-detail-error">{job.error_msg}</div>
           )}
+          {error && <div className="error-msg" style={{ marginTop: 8 }}>{error}</div>}
         </div>
 
-        <div className="dialog-actions">
-          <button className="btn btn-ghost" onClick={onClose}>閉じる</button>
-        </div>
+        {confirm ? (
+          <div className="job-delete-confirm">
+            <span className="job-delete-confirm-msg">出力フォルダも含めて削除します。この操作は取り消せません。</span>
+            <div className="dialog-actions" style={{ marginTop: 12 }}>
+              <button className="btn btn-ghost" onClick={() => setConfirm(false)} disabled={deleting}>キャンセル</button>
+              <button className="btn btn-danger" onClick={handleDelete} disabled={deleting}>
+                {deleting ? '削除中...' : '削除する'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="dialog-actions">
+            <button className="btn btn-danger" onClick={() => setConfirm(true)}>削除</button>
+            <button className="btn btn-ghost" onClick={onClose}>閉じる</button>
+          </div>
+        )}
       </div>
     </div>
   )

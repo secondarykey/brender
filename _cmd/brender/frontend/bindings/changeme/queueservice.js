@@ -22,6 +22,14 @@ export function Cancel(id) {
 }
 
 /**
+ * @param {string} id
+ * @returns {$CancellablePromise<void>}
+ */
+export function DeleteJob(id) {
+    return $Call.ByID(3644669520, id);
+}
+
+/**
  * @param {string} projectID
  * @param {string} workspaceID
  * @returns {$CancellablePromise<model$0.Queue | null>}

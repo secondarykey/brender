@@ -50,3 +50,7 @@ func (s *QueueService) ListJobsByWorkspace(projectID string, workspaceID string)
 func (s *QueueService) ListJobsByProjectFile(projectID string, fileID uint) ([]*model.Job, error) {
 	return api.ListJobsByProjectFile(projectID, fileID)
 }
+
+func (s *QueueService) DeleteJob(id string) error {
+	return api.DeleteJob(id)
+}
