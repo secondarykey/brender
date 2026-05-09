@@ -11,7 +11,6 @@ const STATUS_LABELS = {
 
 const TABS = [
   { id: 'workspace', label: 'ワークスペース' },
-  { id: 'history',   label: '履歴' },
   { id: 'settings',  label: '設定' },
 ]
 
@@ -426,17 +425,22 @@ function FileDetailPage({ projectID, projectName, fileID, fileName, navigate }) 
 
       <div className="tab-content">
         {tab === 'workspace' && (
-          <WorkspaceTab
-            projectID={projectID}
-            projectName={projectName}
-            fileID={fileID}
-            fileName={currentFileName}
-            navigate={navigate}
-            onEnqueued={() => navigate('queue')}
-          />
-        )}
-        {tab === 'history' && (
-          <HistoryTab projectID={projectID} fileID={fileID} />
+          <div className="ws-detail-split">
+            <div className="ws-detail-left">
+              <WorkspaceTab
+                projectID={projectID}
+                projectName={projectName}
+                fileID={fileID}
+                fileName={currentFileName}
+                navigate={navigate}
+                onEnqueued={() => navigate('queue')}
+              />
+            </div>
+            <div className="ws-detail-right">
+              <h3 className="ws-detail-section-title">実行履歴</h3>
+              <HistoryTab projectID={projectID} fileID={fileID} />
+            </div>
+          </div>
         )}
         {tab === 'settings' && (
           <SettingsTab

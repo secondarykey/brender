@@ -194,6 +194,12 @@ body {
   overflow-y: auto;
 }
 
+/* tab-content 内に ws-detail-split がある場合は overflow を hidden にして分割スクロールを有効化 */
+.tab-content:has(.ws-detail-split) {
+  overflow: hidden;
+  display: flex;
+}
+
 /* ワークスペース詳細 左右分割 */
 .ws-detail-split {
   display: flex;
