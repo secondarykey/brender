@@ -8,7 +8,6 @@ function NavItem({ label, icon, active, onClick }) {
       title={label}
     >
       <span className="nav-icon">{icon}</span>
-      <span className="nav-label">{label}</span>
     </button>
   )
 }
