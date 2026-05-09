@@ -244,27 +244,32 @@ function SettingsTab({ fileID, fileName, onUpdated, onDeleted }) {
   const [confirm, setConfirm]             = useState(false)
   const [error, setError]                 = useState(null)
 
-  useEffect(() => {
-    ProjectService.GetFile(fileID)
-      .then(f => {
-        if (!f) return
-        setName(f.name || fileName)
-        setBlenderID(f.blender_install_id || 0)
-        setScene(f.scene || '')
-      })
-      .catch(() => {})
-    BlenderService.List()
-      .then(list => setBlenders(list || []))
-      .catch(() => {})
-  }, [fileID])
-
-  useEffect(() => {
+  const fetchScenes = (installID) => {
     setScenesLoading(true)
-    BlenderService.GetScenes(blenderInstallID, fileID)
+    BlenderService.GetScenes(installID, fileID)
       .then(list => setScenes(list || []))
       .catch(() => setScenes([]))
       .finally(() => setScenesLoading(false))
-  }, [blenderInstallID, fileID])
+  }
+
+  useEffect(() => {
+    Promise.all([
+      ProjectService.GetFile(fileID).catch(() => null),
+      BlenderService.List().catch(() => []),
+    ]).then(([f, list]) => {
+      setBlenders(list || [])
+      const installID = f?.blender_install_id || 0
+      setName(f?.name || fileName)
+      setBlenderID(installID)
+      setScene(f?.scene || '')
+      fetchScenes(installID)
+    })
+  }, [fileID])
+
+  const handleBlenderChange = (installID) => {
+    setBlenderID(installID)
+    fetchScenes(installID)
+  }
 
   const handleSave = async () => {
     if (!name.trim()) return
@@ -314,7 +319,7 @@ function SettingsTab({ fileID, fileName, onUpdated, onDeleted }) {
           <select
             className="form-select"
             value={blenderInstallID}
-            onChange={e => setBlenderID(Number(e.target.value))}
+            onChange={e => handleBlenderChange(Number(e.target.value))}
           >
             <option value={0}>— 未設定 —</option>
             {blenders.map(b => (
