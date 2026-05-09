@@ -48,14 +48,12 @@ function Pagination({ page, totalPages, onChange, pageSize, onPageSizeChange, to
         </div>
       ) : <div />}
 
-      {totalPages > 1 && (
-        <div className="pagination-pages">
-          <button className="pagination-btn" onClick={() => onChange(page - 1)} disabled={page <= 1}>‹</button>
-          {buttons}
-          <button className="pagination-btn" onClick={() => onChange(page + 1)} disabled={page >= totalPages}>›</button>
-          <span className="pagination-info">{page} / {totalPages} ページ</span>
-        </div>
-      )}
+      <div className="pagination-pages">
+        <button className="pagination-btn" onClick={() => onChange(page - 1)} disabled={page <= 1}>‹</button>
+        {buttons}
+        <button className="pagination-btn" onClick={() => onChange(page + 1)} disabled={page >= totalPages}>›</button>
+        <span className="pagination-info">{page} / {totalPages} ページ</span>
+      </div>
     </div>
   )
 }
