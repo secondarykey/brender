@@ -1044,6 +1044,7 @@ body {
 }
 .queue-history-id   { font-size: 0.78rem; color: rgba(255,255,255,0.35); }
 .queue-history-name { font-size: 0.88rem; font-weight: 500; }
+.queue-history-date { font-size: 0.78rem; color: rgba(255,255,255,0.4); }
 .queue-history-detail {
   display: flex;
   gap: 10px;

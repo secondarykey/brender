@@ -1,8 +1,72 @@
 import { useState, useEffect, useCallback } from 'react'
-import { WorkspaceService, BlenderService } from '../../../bindings/changeme'
+import { WorkspaceService, BlenderService, QueueService } from '../../../bindings/changeme'
+import JobDetailDialog from '../../components/JobDetailDialog'
+import Pagination from '../../components/Pagination'
 
 
 const isFrameDefault = (start, end) => start === 0 && end === -1
+
+const STATUS_LABELS = {
+  completed: '完了',
+  error:     'エラー',
+  cancelled: 'キャンセル',
+}
+
+const HISTORY_PAGE_SIZE = 5
+
+// ── 履歴タブ ──────────────────────────────────────────────
+function HistoryTab({ projectID, workspaceID }) {
+  const [jobs, setJobs]         = useState([])
+  const [selected, setSelected] = useState(null)
+  const [page, setPage]         = useState(1)
+
+  const load = useCallback(() => {
+    QueueService.ListJobsByWorkspace(projectID, workspaceID)
+      .then(list => setJobs(list || []))
+      .catch(() => {})
+  }, [projectID, workspaceID])
+
+  useEffect(() => { load() }, [load])
+
+  const totalPages  = Math.max(1, Math.ceil(jobs.length / HISTORY_PAGE_SIZE))
+  const currentPage = Math.min(page, totalPages)
+  const pageJobs    = jobs.slice((currentPage - 1) * HISTORY_PAGE_SIZE, currentPage * HISTORY_PAGE_SIZE)
+
+  if (jobs.length === 0) {
+    return <p className="empty-msg">まだ実行履歴がありません</p>
+  }
+
+  return (
+    <>
+      <div className="queue-history-list">
+        {pageJobs.map(j => (
+          <div key={j.id} className="queue-history-item queue-history-item-clickable" onClick={() => setSelected(j)}>
+            <div className="queue-history-top">
+              <span className={`status-badge status-${j.status}`}>{STATUS_LABELS[j.status] ?? j.status}</span>
+              {j.enqueued_at && (
+                <span className="queue-history-date">
+                  {new Date(j.enqueued_at).toLocaleString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                </span>
+              )}
+            </div>
+            <div className="queue-history-detail">
+              <span>{j.start_frame}–{j.end_frame}f</span>
+              {j.engine && <span>{j.engine}</span>}
+              {j.scene  && <span>{j.scene}</span>}
+            </div>
+            {j.status === 'error' && j.error_msg && (
+              <div className="queue-history-error">
+                {j.error_msg.slice(0, 80)}{j.error_msg.length > 80 ? '...' : ''}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+      <Pagination page={currentPage} totalPages={totalPages} onChange={p => { setPage(p); setSelected(null) }} />
+      <JobDetailDialog job={selected} onClose={() => setSelected(null)} onDeleted={() => { setSelected(null); load() }} />
+    </>
+  )
+}
 
 // ── 設定タブ ──────────────────────────────────────────────
 function SettingsTab({ projectID, workspaceID, detail, onUpdated, onDeleted }) {
@@ -229,6 +293,7 @@ function SettingsTab({ projectID, workspaceID, detail, onUpdated, onDeleted }) {
 function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspaceID, navigate }) {
   const [detail, setDetail] = useState(null)
   const [error, setError]   = useState('')
+  const [tab, setTab]       = useState('settings')
 
   const load = useCallback(() => {
     WorkspaceService.Get(projectID, workspaceID)
@@ -260,17 +325,23 @@ function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspa
       </div>
 
       <div className="tab-nav">
-        <button className="tab-btn active">設定</button>
+        <button className={`tab-btn${tab === 'settings' ? ' active' : ''}`} onClick={() => setTab('settings')}>設定</button>
+        <button className={`tab-btn${tab === 'history'  ? ' active' : ''}`} onClick={() => setTab('history')}>履歴</button>
       </div>
 
       <div className="tab-content">
-        <SettingsTab
-          projectID={projectID}
-          workspaceID={workspaceID}
-          detail={detail}
-          onUpdated={() => navigate('file', { projectID, projectName, fileID, fileName })}
-          onDeleted={() => navigate('file', { projectID, projectName, fileID, fileName })}
-        />
+        {tab === 'settings' && (
+          <SettingsTab
+            projectID={projectID}
+            workspaceID={workspaceID}
+            detail={detail}
+            onUpdated={() => navigate('file', { projectID, projectName, fileID, fileName })}
+            onDeleted={() => navigate('file', { projectID, projectName, fileID, fileName })}
+          />
+        )}
+        {tab === 'history' && (
+          <HistoryTab projectID={projectID} workspaceID={workspaceID} />
+        )}
       </div>
     </div>
   )
