@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Events } from '@wailsio/runtime'
 import { QueueService } from '../../bindings/changeme'
+import { onAppEvent } from '../lib/appEvents'
 import TitleBar from '../components/TitleBar'
 
 function NavItem({ label, icon, active, onClick, badge }) {
@@ -23,7 +23,7 @@ function MainLayout({ currentPage, onNavigate, children }) {
     // 初期件数取得
     QueueService.List().then(list => setQueueCount((list || []).length)).catch(() => {})
     // イベント購読
-    const off = Events.On('queue:changed', e => setQueueCount(Number(e.data) || 0))
+    const off = onAppEvent('queue:changed', data => setQueueCount(Number(data) || 0))
     return off
   }, [])
 
