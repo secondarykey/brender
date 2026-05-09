@@ -194,7 +194,7 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: 32px 40px;
+  padding: 24px 24px;
 }
 
 /* ── Page ── */
@@ -263,7 +263,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .page-header .page-title { margin-bottom: 0; }
@@ -553,6 +553,10 @@ body {
 }
 
 /* ── Workspace tab ── */
+.workspace {
+  padding-top: 20px;
+}
+
 .ws-files-header {
   margin-bottom: 20px;
 }

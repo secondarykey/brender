@@ -16,6 +16,7 @@ const HISTORY_PAGE_SIZE = 5
 
 // ── 履歴タブ ──────────────────────────────────────────────
 function HistoryTab({ projectID, workspaceID }) {
+
   const [jobs, setJobs]         = useState([])
   const [selected, setSelected] = useState(null)
   const [page, setPage]         = useState(1)
@@ -170,7 +171,7 @@ function SettingsTab({ projectID, workspaceID, detail, onUpdated, onDeleted }) {
   if (!form) return null
 
   return (
-    <div className="form" style={{ maxWidth: 520 }}>
+    <div className="form workspace" style={{ maxWidth: 520 }}>
       <div className="form-field">
         <label className="form-label">ワークスペース名 <span className="required">*</span></label>
         <input className="form-input" value={form.name} onChange={e => set('name', e.target.value)} />
