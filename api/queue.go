@@ -218,6 +218,12 @@ func executeQueue(q *model.Queue, job *model.Job) {
 	b.Thread = job.Thread
 	b.Result = filepath.Join(job.OutputDir, "frame_####")
 
+	if runScript, rsErr := exec.GetRunPythonFile(); rsErr == nil {
+		b.RunScript = runScript
+	} else {
+		log.Println("GetRunPythonFile error (rendering continues without script):", rsErr)
+	}
+
 	pw := exec.NewProcessingWriter(job.StartFrame, job.EndFrame)
 	exec.RegisterProgress(q.ID, pw)
 	defer exec.UnregisterProgress(q.ID)

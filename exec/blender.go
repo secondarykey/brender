@@ -29,9 +29,10 @@ type Blender struct {
 	Writer      io.Writer
 	ErrorWriter io.Writer
 
-	Scene  string
-	Engine string
-	Skip   int
+	Scene     string
+	Engine    string
+	Skip      int
+	RunScript string // レンダリング実行時に渡す Python スクリプト（-P）
 
 	Tool Tool
 }
@@ -154,6 +155,12 @@ func (b *Blender) createArguments() []string {
 		args = append(args, "-P")
 		args = append(args, b.Python)
 		return args
+	}
+
+	// レンダリング実行時スクリプト（ツール専用モードでない通常レンダー時のみ）
+	if b.RunScript != "" {
+		args = append(args, "-P")
+		args = append(args, b.RunScript)
 	}
 
 	//シーン指定がある場合
