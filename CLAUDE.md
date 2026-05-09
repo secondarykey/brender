@@ -73,6 +73,8 @@ go test ./exec/...
 ```
 _cmd/brender/  (Wails3 desktop app)
     frontend/  (React + Vite)
+        src/lib/api/       ← API ラッパー層（Wails/HTTP 切り替え）
+        src/lib/appEvents.js ← イベントバス（Wails Events/SSE 切り替え）
         ↕ Wails3 JS bindings (frontend/bindings/)
     *service.go  (thin Wails service wrappers)
         ↓
@@ -103,6 +105,8 @@ server/        (legacy HTTP server, still functional but handler/api/ is stale)
 
 Services are registered in `main.go`. After adding or changing a service, run `wails3 generate bindings` to update the frontend JS bindings.
 
+`BlenderService.OpenFile(installID, filePath)` — Blender を GUI モードで起動（`-b` なし、`cmd.Start()` で非同期）。
+
 ## Data Model
 
 ### Hierarchy
@@ -113,11 +117,15 @@ Services are registered in `main.go`. After adding or changing a service, run `w
 - `Project`: `ID string` (UUID), `Name`, `BlenderInstallID uint`, `Scene string`. No `Archive` or `ThumbnailFrame` fields (removed).
 - `ProjectFile`: `ID uint`, `ProjectID`, `Path`, `Name`, `FileModifiedAt *time.Time`. `FileModifiedAt` is set from `os.Stat().ModTime()` on add; intended for future "file changed?" detection.
 - `Workspace`: `ProjectFileID uint` is set at creation and never changed by Update (file association is fixed). `BlenderInstallID=0` means use project default.
-- `Job`: permanent history record. Shares UUID v7 with its `Queue` record. Has `ProjectFileID uint` for direct file-based query. Status: `completed` / `error` / `cancelled`.
+- `Job`: permanent history record. Shares UUID v7 with its `Queue` record. Has `ProjectFileID uint` for direct file-based query.
+  - `Status`: `completed` / `error` / `cancelled`
+  - `DiskSize int64`: 完了時に出力ディレクトリの容量を保存
+  - `DataStatus string`: `none`（実行中・エラー）/ `available`（完了）/ `deleted`（データのみ削除）/ `locked`（ロック）
+  - `OutputDir string`: 出力先ディレクトリパス
 - `Queue`: ephemeral active-execution record. Deleted by `finishJob()` on completion/error/cancel.
 
 ### Navigation hierarchy (frontend)
-プロジェクト一覧 → プロジェクト詳細（ファイル一覧タブ） → ファイル詳細（ワークスペース/履歴/設定タブ） → ワークスペース設定
+プロジェクト一覧 → プロジェクト詳細（ファイル一覧タブ） → ファイル詳細（ワークスペース左/履歴右の分割レイアウト・設定タブ） → ワークスペース設定（設定左/履歴右の分割レイアウト）
 
 ## Key Concepts
 
@@ -127,6 +135,23 @@ Services are registered in `main.go`. After adding or changing a service, run `w
 Output directory: `{env.ProjectRoot}/{projectID}/{workspaceID}/{queueID}/`
 - `frame_####.png` — rendered frames
 - `render.log` — full Blender output
+
+`finishJob()` は完了時に `calcDirSize()` で出力ディレクトリ容量を計算して `Job.DiskSize` に保存する。
+
+### Queue changed hook (`api/queue.go`)
+```go
+var QueueChangedHook func(count int64)
+```
+キューの件数が変化したとき（Enqueue・finishJob・CancelQueue 後）に呼ばれる。`main.go` で Wails イベント送信にセットしている：
+```go
+api.QueueChangedHook = func(count int64) {
+    application.Get().Event.Emit("queue:changed", count)
+}
+```
+将来のサーバモードでは SSE ブロードキャストに差し替えるだけで `api/queue.go` 本体は変更不要。
+
+### Job deletion (`api/queue.go`)
+`DeleteJob(id)` — ジョブの `OutputDir` を `os.RemoveAll` で削除してから DB レコードを削除する（ディレクトリが存在する場合のみ）。
 
 ### ProcessingWriter (`exec/writer.go`)
 Parses Blender's stdout/stderr in real time. Thread-safe — `Result()` returns a `ProcessingResult` snapshot.
@@ -174,13 +199,13 @@ pct = ((framesDone + subFramePct(q)) / totalFrames) * 100
 Progress displays with 2 decimal places. Log text (`q.log2`) is shown as-is from Blender output.
 
 ### Environment setup guard
-On startup, `App.jsx` calls `EnvironmentService.Get()`. If `ProjectRoot` is not set, it automatically navigates to the settings page. `ProjectListPage` also shows a warning banner and disables project creation until a root directory is configured.
+On startup, `App.jsx` calls `EnvironmentApi.get()`. If `ProjectRoot` is not set, it automatically navigates to the settings page. `ProjectListPage` also shows a warning banner and disables project creation until a root directory is configured.
 
-`EnvironmentService.GetWorkDir()` returns `os.Getwd()` for use as the default directory in the folder picker dialog.
+`EnvironmentApi.getWorkDir()` returns `os.Getwd()` for use as the default directory in the folder picker dialog.
 
 ### Scene / engine discovery
-- `BlenderService.GetScenes(installID, fileID)` — runs `exec.RunTool()` (Python `--tool` script) on the `.blend` file to extract scene names.
-- `BlenderService.GetEngines(installID)` — runs `blender -E help -b` and parses the engine list.
+- `BlenderApi.getScenes({ installID, fileID })` — runs `exec.RunTool()` (Python `--tool` script) on the `.blend` file to extract scene names.
+- `BlenderApi.getEngines({ installID })` — runs `blender -E help -b` and parses the engine list.
 - Both fall back to `model.FirstBlender()` when `installID == 0`.
 
 ### CLI terminal display (`_cmd/brender-tool/main.go`)
@@ -190,14 +215,17 @@ On startup, `App.jsx` calls `EnvironmentService.Get()`. If `ProjectRoot` is not 
 
 ```
 App.jsx
-  MainLayout (sidebar nav)
+  MainLayout (sidebar nav + queue badge)
     ProjectListPage        (/projects)
     ProjectDetailPage      (/project/:id)
       tabs: ファイル一覧 / 設定
+        ファイル一覧: 各ファイル行に「開く」(オレンジ)・名称・›
     FileDetailPage         (/file)
-      tabs: ワークスペース / 履歴 / 設定
+      tab: ワークスペース → 左右分割（左: ワークスペース一覧, 右: 実行履歴）
+      tab: 設定
+        ワークスペース一覧: 各行に「▶ 実行」(オレンジ)・名称・›
     WorkspaceDetailPage    (/workspace)
-      tab: 設定（削除左・保存右）
+      左右分割（左: 設定フォーム, 右: 実行履歴）
     QueuePage              (/queue)
       tabs: 実行中 / 実行履歴
     SettingsPage           (/settings)
@@ -208,8 +236,78 @@ Breadcrumb: プロジェクト › プロジェクト名 › ファイル名 ›
 
 After `Enqueue()` succeeds, the app navigates to the queue page (`navigate('queue')`).
 
+### サイドバー
+- アイコンのみ表示（ラベルなし）、`title` 属性でツールチップ
+- アイコンサイズ 32px、ナビアイテム 48×48px
+- キューアイコン右上に実行中件数バッジ（オレンジ丸）を表示
+  - 初期値は `QueueApi.list()` で取得、以後 `queue:changed` イベントで更新
+
+### ページネーション (`src/components/Pagination.jsx`)
+- `page`, `totalPages`, `onChange` に加えて `pageSize`, `onPageSizeChange`, `total` を受け付ける
+- `pageSize` / `onPageSizeChange` が渡された場合、左端に表示件数セレクタ（5/10/20/100）と全件数を表示
+- `totalPages` が 1 でもページ情報行は常に表示
+
+## Frontend API Layer (`src/lib/api/`)
+
+**重要**: フロントエンドから Wails Service を直接呼ばないこと。必ずこのラッパー経由で呼ぶ。
+
+```
+src/lib/api/
+  _client.js      isWails() 判定 + serverCall() fetch ヘルパー
+  blender.js      BlenderApi
+  environment.js  EnvironmentApi
+  project.js      ProjectApi
+  workspace.js    WorkspaceApi
+  queue.js        QueueApi
+  index.js        re-export
+```
+
+- **Wailsモード** (`window._wails` が存在): `@wailsio/runtime` を動的インポートして既存 Service を呼ぶ
+- **サーバモード**: `POST /api/{service}/{method}` + JSON ボディ、レスポンス `{ data } | { error }` 形式
+- 引数は常にオブジェクト形式: `ProjectApi.get({ id })`, `QueueApi.cancel({ id })` など
+- サーバモードの REST エンドポイントは snake_case: `list_by_project`, `get_engines` など
+
+## Event Bus (`src/lib/appEvents.js`)
+
+```js
+import { onAppEvent } from '../lib/appEvents'
+const off = onAppEvent('queue:changed', data => { ... })
+return off  // useEffect cleanup
+```
+
+- **Wailsモード**: `@wailsio/runtime` の `Events.On` を動的インポートして使用
+- **サーバモード**: `EventSource('/events')` のシングルトンを維持し SSE で受信
+  - 複数コンポーネントが `onAppEvent` を呼んでも接続は 1 本のみ
+- 現在使用しているイベント名: `queue:changed` (data: number — アクティブキュー件数)
+
 ## CSS Conventions (`frontend/public/style.css`)
-- `.page:has(.tab-nav)` → flex column, overflow hidden; `.tab-content` → flex:1, min-height:0, overflow-y:auto (tab content scrolls, header fixed)
-- `.page` without tabs → overflow-y:auto (whole page scrolls)
-- `.form-actions` → `justify-content: space-between` (delete left, save right)
+
+### カラーパレット（黒系）
+- 本体背景: `#1a1a1a`
+- サイドバー/タイトルバー: `#111111`
+- 入力・セレクト背景: `#1e1e1e`
+- アクセント（青）: `#4a7cdc`
+- 実行ボタン（オレンジ）: `#d15904` / hover `#e86a10`
+- エラー赤: `#c0392b`
+
+### レイアウトルール
+- `.page:has(.tab-nav)` → flex column, overflow hidden; `.tab-content` → flex:1, min-height:0, overflow-y:auto (タブコンテンツのみスクロール、ヘッダ固定)
+- `.page` without tabs → overflow-y:auto (ページ全体スクロール)
+- `.form-actions` → `justify-content: space-between` (削除ボタン左・保存ボタン右)
 - `#app, #root` must both have `width/height: 100%` for the height chain to work
+
+### 左右分割レイアウト (`.ws-detail-split`)
+ファイル詳細・ワークスペース詳細で使用：
+```css
+.ws-detail-split  { display: flex; gap: 32px; flex: 1; min-height: 0; overflow: hidden; }
+.ws-detail-left   { flex: 3; min-width: 0; overflow-y: auto; }   /* 約60% */
+.ws-detail-right  { flex: 2; min-width: 0; overflow-y: auto; }   /* 約40% */
+```
+- `.page:has(.ws-detail-split)` → `display: flex; flex-direction: column; overflow: hidden`
+- `.tab-content:has(.ws-detail-split)` → `overflow: hidden; display: flex`
+
+### ボタンスタイル
+- `.btn-run` — オレンジ (`#d15904`)、実行・開くボタン共用
+- `.btn-sm` — 高さ 28px、小型ボタン
+- `.btn-ghost` — 透明背景、キャンセル等
+- `.btn-danger` — 赤、削除操作
