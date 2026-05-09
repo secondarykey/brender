@@ -45,6 +45,8 @@ func RemoveProjectFile(fileID uint) error {
 }
 
 func DeleteProjectFile(fileID uint) error {
+	dirs, _ := model.ListOutputDirsByProjectFile(fileID)
+	removeOutputDirs(dirs)
 	if err := model.DeleteJobsByProjectFile(fileID); err != nil {
 		return xerrors.Errorf("DeleteProjectFile jobs: %w", err)
 	}
@@ -55,6 +57,8 @@ func DeleteProjectFile(fileID uint) error {
 }
 
 func DeleteProject(id string) error {
+	dirs, _ := model.ListOutputDirsByProject(id)
+	removeOutputDirs(dirs)
 	if err := model.DeleteJobsByProject(id); err != nil {
 		return xerrors.Errorf("DeleteProject jobs: %w", err)
 	}

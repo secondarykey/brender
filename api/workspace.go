@@ -28,6 +28,8 @@ func UpdateWorkspace(projectID string, workspaceID string, name string, blenderI
 }
 
 func DeleteWorkspace(projectID, workspaceID string) error {
+	dirs, _ := model.ListOutputDirsByWorkspace(workspaceID)
+	removeOutputDirs(dirs)
 	if err := model.DeleteJobsByWorkspace(workspaceID); err != nil {
 		return xerrors.Errorf("DeleteWorkspace jobs: %w", err)
 	}

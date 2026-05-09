@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"io"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
@@ -205,7 +206,7 @@ func resolveBlenderFile(projectFileID uint, projectID string) (string, error) {
 func executeQueue(q *model.Queue, job *model.Job) {
 	b, err := exec.NewBlender(job.BlenderPath)
 	if err != nil {
-		finishJob(q.ID, false, err.Error())
+		finishJob(q.ID, false, err.Error(), 0)
 		return
 	}
 
@@ -241,7 +242,7 @@ func executeQueue(q *model.Queue, job *model.Job) {
 
 	pid, errCh, err := b.RunWithPID(context.Background())
 	if err != nil {
-		finishJob(q.ID, false, err.Error())
+		finishJob(q.ID, false, err.Error(), 0)
 		return
 	}
 
@@ -254,21 +255,52 @@ func executeQueue(q *model.Queue, job *model.Job) {
 	}
 
 	blenderErr := <-errCh
+	diskSize := calcDirSize(job.OutputDir)
 	if blenderErr != nil {
-		finishJob(q.ID, false, blenderErr.Error())
+		finishJob(q.ID, false, blenderErr.Error(), diskSize)
 	} else {
-		finishJob(q.ID, true, "")
+		finishJob(q.ID, true, "", diskSize)
+	}
+}
+
+// calcDirSize はディレクトリ以下の全ファイルサイズ合計をバイトで返す。
+func calcDirSize(dir string) int64 {
+	var total int64
+	filepath.WalkDir(dir, func(_ string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return nil
+		}
+		info, err := d.Info()
+		if err == nil {
+			total += info.Size()
+		}
+		return nil
+	})
+	return total
+}
+
+// removeOutputDirs は出力フォルダ一覧を存在確認の上で削除する。
+func removeOutputDirs(dirs []string) {
+	for _, dir := range dirs {
+		if dir == "" {
+			continue
+		}
+		if _, err := os.Stat(dir); err == nil {
+			if err := os.RemoveAll(dir); err != nil {
+				log.Println("removeOutputDirs:", err)
+			}
+		}
 	}
 }
 
 // finishJob updates the Job status, sets CompletedAt, then deletes the Queue record.
-func finishJob(id string, success bool, errMsg string) {
+func finishJob(id string, success bool, errMsg string, diskSize int64) {
 	now := time.Now()
 	status := model.JobCompleted
 	if !success {
 		status = model.JobError
 	}
-	if err := model.UpdateJobDone(id, status, errMsg, &now); err != nil {
+	if err := model.UpdateJobDone(id, status, errMsg, &now, diskSize); err != nil {
 		log.Println("UpdateJobDone error:", err)
 	}
 	if err := model.DeleteQueue(id); err != nil {
@@ -376,7 +408,12 @@ func CancelQueue(id string) error {
 		}
 	}
 	now := time.Now()
-	if err := model.UpdateJobDone(q.ID, model.JobCancelled, "", &now); err != nil {
+	j, _ := model.GetJob(q.ID)
+	var diskSize int64
+	if j != nil {
+		diskSize = calcDirSize(j.OutputDir)
+	}
+	if err := model.UpdateJobDone(q.ID, model.JobCancelled, "", &now, diskSize); err != nil {
 		log.Println("UpdateJobDone(cancelled) error:", err)
 	}
 	return model.DeleteQueue(q.ID)

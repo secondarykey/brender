@@ -32,6 +32,7 @@ type Job struct {
 	Thread        int        `json:"thread"`
 	Status        string     `json:"status"` // completed / error / cancelled
 	ErrorMsg      string     `json:"error_msg"`
+	DiskSize      int64      `json:"disk_size"` // 出力フォルダの容量（バイト）
 	StartedAt     *time.Time `json:"started_at"`
 	CompletedAt   *time.Time `json:"completed_at"`
 	EnqueuedAt    *time.Time `json:"enqueued_at"` // キュー登録時刻
@@ -106,13 +107,41 @@ func UpdateJobStarted(id string, startedAt *time.Time) error {
 	return nil
 }
 
-func UpdateJobDone(id string, status string, errMsg string, completedAt *time.Time) error {
+func UpdateJobDone(id string, status string, errMsg string, completedAt *time.Time, diskSize int64) error {
 	if res := db.Model(&Job{}).Where("id = ?", id).Updates(map[string]any{
 		"status":       status,
 		"error_msg":    errMsg,
 		"completed_at": completedAt,
+		"disk_size":    diskSize,
 	}); res.Error != nil {
 		return xerrors.Errorf("UpdateJobDone: %w", res.Error)
 	}
 	return nil
+}
+
+// ListOutputDirsByWorkspace はワークスペースに紐づくジョブの出力フォルダ一覧を返す。
+func ListOutputDirsByWorkspace(workspaceID string) ([]string, error) {
+	var dirs []string
+	if res := db.Model(&Job{}).Where("workspace_id = ?", workspaceID).Pluck("output_dir", &dirs); res.Error != nil {
+		return nil, xerrors.Errorf("ListOutputDirsByWorkspace: %w", res.Error)
+	}
+	return dirs, nil
+}
+
+// ListOutputDirsByProjectFile はファイルに紐づくジョブの出力フォルダ一覧を返す。
+func ListOutputDirsByProjectFile(fileID uint) ([]string, error) {
+	var dirs []string
+	if res := db.Model(&Job{}).Where("project_file_id = ?", fileID).Pluck("output_dir", &dirs); res.Error != nil {
+		return nil, xerrors.Errorf("ListOutputDirsByProjectFile: %w", res.Error)
+	}
+	return dirs, nil
+}
+
+// ListOutputDirsByProject はプロジェクトに紐づくジョブの出力フォルダ一覧を返す。
+func ListOutputDirsByProject(projectID string) ([]string, error) {
+	var dirs []string
+	if res := db.Model(&Job{}).Where("project_id = ?", projectID).Pluck("output_dir", &dirs); res.Error != nil {
+		return nil, xerrors.Errorf("ListOutputDirsByProject: %w", res.Error)
+	}
+	return dirs, nil
 }
