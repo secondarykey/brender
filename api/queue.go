@@ -15,6 +15,18 @@ import (
 )
 
 
+// QueueChangedHook はキューの件数が変化したときに呼ばれるフック。
+// 呼び出し元（Wails サービス層など）で設定する。
+var QueueChangedHook func(count int64)
+
+func notifyQueueChanged() {
+	if QueueChangedHook == nil {
+		return
+	}
+	count, _ := model.CountQueues()
+	QueueChangedHook(count)
+}
+
 // RenderPreview はレンダリング実行前に解決された確定パラメータ
 type RenderPreview struct {
 	ProjectName   string `json:"project_name"`
@@ -156,6 +168,7 @@ func EnqueueWithPreview(projectID, workspaceID string, preview *RenderPreview) (
 	}
 
 	go executeQueue(q, job)
+	notifyQueueChanged()
 
 	return q, nil
 }
@@ -308,6 +321,7 @@ func finishJob(id string, success bool, errMsg string, diskSize int64) {
 	if err := model.DeleteQueue(id); err != nil {
 		log.Println("DeleteQueue error:", err)
 	}
+	notifyQueueChanged()
 }
 
 // QueueItem combines Queue (active state) with Job (parameters/names) for display.
@@ -418,7 +432,11 @@ func CancelQueue(id string) error {
 	if err := model.UpdateJobDone(q.ID, model.JobCancelled, "", &now, diskSize, model.JobDataNone); err != nil {
 		log.Println("UpdateJobDone(cancelled) error:", err)
 	}
-	return model.DeleteQueue(q.ID)
+	if err := model.DeleteQueue(q.ID); err != nil {
+		return err
+	}
+	notifyQueueChanged()
+	return nil
 }
 
 func ListJobs() ([]*model.Job, error) {

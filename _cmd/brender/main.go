@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/ikascrew/brender/api"
 	"github.com/ikascrew/brender/model"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
@@ -66,6 +67,11 @@ func main() {
 		BackgroundColour: application.NewRGB(27, 38, 54),
 		URL:              "/",
 	})
+
+	// キュー変化イベントをフロントエンドへ通知
+	api.QueueChangedHook = func(count int64) {
+		application.Get().Event.Emit("queue:changed", count)
+	}
 
 	if err := app.Run(); err != nil {
 		log.Fatal(err)

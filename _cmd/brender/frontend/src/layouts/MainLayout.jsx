@@ -1,6 +1,9 @@
+import { useState, useEffect } from 'react'
+import { Events } from '@wailsio/runtime'
+import { QueueService } from '../../bindings/changeme'
 import TitleBar from '../components/TitleBar'
 
-function NavItem({ label, icon, active, onClick }) {
+function NavItem({ label, icon, active, onClick, badge }) {
   return (
     <button
       className={`nav-item${active ? ' active' : ''}`}
@@ -8,14 +11,25 @@ function NavItem({ label, icon, active, onClick }) {
       title={label}
     >
       <span className="nav-icon">{icon}</span>
+      {badge > 0 && <span className="nav-badge">{badge}</span>}
     </button>
   )
 }
 
 function MainLayout({ currentPage, onNavigate, children }) {
+  const [queueCount, setQueueCount] = useState(0)
+
+  useEffect(() => {
+    // 初期件数取得
+    QueueService.List().then(list => setQueueCount((list || []).length)).catch(() => {})
+    // イベント購読
+    const off = Events.On('queue:changed', e => setQueueCount(Number(e.data) || 0))
+    return off
+  }, [])
+
   const topNav = [
     { id: 'projects', label: 'プロジェクト', icon: '▦' },
-    { id: 'queue',    label: 'キュー',         icon: '⏱' },
+    { id: 'queue',    label: 'キュー',         icon: '⏱', badge: queueCount },
   ]
 
   const bottomNav = [
@@ -35,6 +49,7 @@ function MainLayout({ currentPage, onNavigate, children }) {
                 {...item}
                 active={currentPage === item.id}
                 onClick={() => onNavigate(item.id)}
+                badge={item.badge || 0}
               />
             ))}
           </nav>

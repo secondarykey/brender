@@ -64,6 +64,14 @@ func GetQueue(id string) (*Queue, error) {
 	return &q, nil
 }
 
+func CountQueues() (int64, error) {
+	var count int64
+	if res := db.Model(&Queue{}).Count(&count); res.Error != nil {
+		return 0, xerrors.Errorf("CountQueues: %w", res.Error)
+	}
+	return count, nil
+}
+
 func ListQueues() ([]*Queue, error) {
 	var list []*Queue
 	if res := db.Order("id desc").Find(&list); res.Error != nil {
