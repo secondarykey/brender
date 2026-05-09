@@ -1,5 +1,6 @@
 import { Window } from '@wailsio/runtime'
 import { useState, useEffect } from 'react'
+import appIcon from './appicon.png'
 
 function TitleBar() {
   const [isMac, setIsMac] = useState(false)
@@ -13,7 +14,7 @@ function TitleBar() {
 
   return (
     <div className={`titlebar${isMac ? ' mac' : ''}`}>
-      <span className="titlebar-title">Brender</span>
+      <img src={appIcon} className="titlebar-icon" alt="Brender" />
       {!isMac && (
         <div className="titlebar-controls">
           <button className="titlebar-btn titlebar-btn-min"   onClick={() => Window.Minimise()}       title="最小化">&#8211;</button>
