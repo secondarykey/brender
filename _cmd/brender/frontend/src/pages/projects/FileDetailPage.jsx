@@ -119,6 +119,13 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
         )}
         {workspaces.map(ws => (
           <div key={ws.id} className="ws-item ws-item-run">
+            <button
+              className="btn btn-run btn-sm ws-item-run-btn"
+              onClick={() => handleRunClick(ws)}
+              disabled={resolving}
+            >
+              {resolving ? '...' : '▶ 実行'}
+            </button>
             <div
               className="ws-item-info ws-item-link"
               onClick={() => navigate('workspace', { projectID, projectName, fileID, fileName, workspaceID: ws.id })}
@@ -132,16 +139,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
                 }
               </div>
             </div>
-            <div className="ws-item-actions">
-              <button
-                className="btn btn-run btn-sm"
-                onClick={() => handleRunClick(ws)}
-                disabled={resolving}
-              >
-                {resolving ? '...' : '▶ 実行'}
-              </button>
-              <span className="ws-item-arrow" onClick={() => navigate('workspace', { projectID, projectName, fileID, fileName, workspaceID: ws.id })}>›</span>
-            </div>
+            <span className="ws-item-arrow" onClick={() => navigate('workspace', { projectID, projectName, fileID, fileName, workspaceID: ws.id })}>›</span>
           </div>
         ))}
       </div>
