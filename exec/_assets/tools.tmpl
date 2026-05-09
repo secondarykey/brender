@@ -32,19 +32,8 @@ def printCameras():
 
     print("{{ .CameraEndFlag }}")
 
-def printEngines():
-
-    print("{{ .EngineStartFlag }}")
-    try:
-        for item in bpy.types.RenderSettings.bl_rna.properties['engine'].enum_items:
-            print(item.identifier)
-    except Exception:
-        pass
-    print("{{ .EngineEndFlag }}")
-
 if __name__ == "__main__":
     print("{{ .ToolStartFlag }}")
     printScenes()
     printCameras()
-    printEngines()
     print("{{ .ToolEndFlag }}")

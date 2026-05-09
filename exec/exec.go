@@ -36,32 +36,6 @@ func parseVersion(b *strings.Builder) (string, error) {
 /**
  * Blender のエンジンリストを取得する
  */
-// FileToolInfo はツール1回実行で取得できるファイル情報
-type FileToolInfo struct {
-	Scenes  []string
-	Engines []string
-}
-
-// RunFileInfo はBlenderツールを1回だけ実行してシーン一覧とエンジン一覧を返す
-func RunFileInfo(cmd, filePath string) (*FileToolInfo, error) {
-	b, err := NewBlender(cmd)
-	if err != nil {
-		return nil, xerrors.Errorf("NewBlender: %w", err)
-	}
-	b.File = filePath
-	if err := b.RunTool(); err != nil {
-		return nil, xerrors.Errorf("RunTool: %w", err)
-	}
-	scenes := make([]string, 0, len(b.Tool.Scenes))
-	for _, s := range b.Tool.Scenes {
-		scenes = append(scenes, s.Name)
-	}
-	return &FileToolInfo{
-		Scenes:  scenes,
-		Engines: b.Tool.Engines,
-	}, nil
-}
-
 func RunScenes(cmd, filePath string) ([]string, error) {
 	b, err := NewBlender(cmd)
 	if err != nil {

@@ -11,52 +11,6 @@ import { Create as $Create } from "@wailsio/runtime";
 import * as time$0 from "../../../../time/models.js";
 
 /**
- * FileInfo はツール1回実行で取得するシーン・エンジン一覧
- */
-export class FileInfo {
-    /**
-     * Creates a new FileInfo instance.
-     * @param {Partial<FileInfo>} [$$source = {}] - The source object to create the FileInfo.
-     */
-    constructor($$source = {}) {
-        if (!("scenes" in $$source)) {
-            /**
-             * @member
-             * @type {string[]}
-             */
-            this["scenes"] = [];
-        }
-        if (!("engines" in $$source)) {
-            /**
-             * @member
-             * @type {string[]}
-             */
-            this["engines"] = [];
-        }
-
-        Object.assign(this, $$source);
-    }
-
-    /**
-     * Creates a new FileInfo instance from a string or object.
-     * @param {any} [$$source = {}]
-     * @returns {FileInfo}
-     */
-    static createFrom($$source = {}) {
-        const $$createField0_0 = $$createType0;
-        const $$createField1_0 = $$createType0;
-        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
-        if ("scenes" in $$parsedSource) {
-            $$parsedSource["scenes"] = $$createField0_0($$parsedSource["scenes"]);
-        }
-        if ("engines" in $$parsedSource) {
-            $$parsedSource["engines"] = $$createField1_0($$parsedSource["engines"]);
-        }
-        return new FileInfo(/** @type {Partial<FileInfo>} */($$parsedSource));
-    }
-}
-
-/**
  * QueueItem combines Queue (active state) with Job (parameters/names) for display.
  */
 export class QueueItem {
@@ -335,6 +289,3 @@ export class RenderPreview {
         return new RenderPreview(/** @type {Partial<RenderPreview>} */($$parsedSource));
     }
 }
-
-// Private type creation functions
-const $$createType0 = $Create.Array($Create.Any);

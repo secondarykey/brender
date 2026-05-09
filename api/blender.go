@@ -48,50 +48,6 @@ func ReorderBlenders(ids []uint) error {
 	return model.ReorderBlenders(ids)
 }
 
-// FileInfo はツール1回実行で取得するシーン・エンジン一覧
-type FileInfo struct {
-	Scenes  []string `json:"scenes"`
-	Engines []string `json:"engines"`
-}
-
-// GetFileInfo はBlenderツールを1回だけ実行してシーン・エンジン一覧をまとめて返す
-func GetFileInfo(installID uint, fileID uint) (*FileInfo, error) {
-	blenderPath, err := resolveBlenderPath2(installID)
-	if err != nil {
-		return nil, err
-	}
-	file, err := model.GetProjectFile(fileID)
-	if err != nil {
-		return nil, xerrors.Errorf("GetProjectFile: %w", err)
-	}
-	if file == nil {
-		return nil, xerrors.Errorf("project file not found: %d", fileID)
-	}
-	info, err := exec.RunFileInfo(blenderPath, file.Path)
-	if err != nil {
-		return nil, err
-	}
-	return &FileInfo{Scenes: info.Scenes, Engines: info.Engines}, nil
-}
-
-func resolveBlenderPath2(installID uint) (string, error) {
-	if installID != 0 {
-		install, err := model.GetBlenderInstall(installID)
-		if err != nil {
-			return "", xerrors.Errorf("GetBlenderInstall: %w", err)
-		}
-		if install == nil {
-			return "", xerrors.Errorf("blender install not found: %d", installID)
-		}
-		return install.Path, nil
-	}
-	b, err := model.FirstBlender()
-	if err != nil || b == nil {
-		return "", xerrors.New("Blenderが登録されていません")
-	}
-	return b.Path, nil
-}
-
 func GetScenes(installID uint, fileID uint) ([]string, error) {
 	var blenderPath string
 	if installID != 0 {

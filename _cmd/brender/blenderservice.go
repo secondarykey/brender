@@ -30,7 +30,3 @@ func (s *BlenderService) GetEngines(installID uint) ([]string, error) {
 func (s *BlenderService) GetScenes(installID uint, fileID uint) ([]string, error) {
 	return api.GetScenes(installID, fileID)
 }
-
-func (s *BlenderService) GetFileInfo(installID uint, fileID uint) (*api.FileInfo, error) {
-	return api.GetFileInfo(installID, fileID)
-}

@@ -21,7 +21,6 @@ const (
 	ToolFlag   = "=BRENDER PYTHON TOOL %s"
 	SceneFlag  = "==SCENES %s"
 	CameraFlag = "==CAMERA %s"
-	EngineFlag = "==ENGINES %s"
 	StartFlag  = "START"
 	EndFlag    = "END"
 	FileName   = "brender-tool_*.py"
@@ -34,8 +33,6 @@ var (
 	SceneEnd    = fmt.Sprintf(SceneFlag, EndFlag)
 	CameraStart = fmt.Sprintf(CameraFlag, StartFlag)
 	CameraEnd   = fmt.Sprintf(CameraFlag, EndFlag)
-	EngineStart = fmt.Sprintf(EngineFlag, StartFlag)
-	EngineEnd   = fmt.Sprintf(EngineFlag, EndFlag)
 )
 
 /**
@@ -78,7 +75,6 @@ type Tool struct {
 	Version string
 	Build   string
 	Scenes  []SceneTool
-	Engines []string
 }
 
 func (t Tool) ActiveScene() SceneTool {
@@ -104,7 +100,6 @@ func parseTool(stdout string) Tool {
 	version := false
 	tool := false
 	scene := false
-	engine := false
 	ended := false
 	rtn := Tool{}
 
@@ -112,6 +107,8 @@ func parseTool(stdout string) Tool {
 
 		line := scanner.Text()
 
+		//slog.Info(line)
+		//ツール用に出力しているセパレータを判定
 		switch {
 		case strings.Index(line, ToolStart) == 0:
 			tool = true
@@ -122,18 +119,10 @@ func parseTool(stdout string) Tool {
 			scene = true
 		case strings.Index(line, SceneEnd) == 0:
 			scene = false
-		case strings.Index(line, EngineStart) == 0:
-			engine = true
-		case strings.Index(line, EngineEnd) == 0:
-			engine = false
 		case tool:
 			if scene {
 				s := parseScene(line)
 				rtn.Scenes = append(rtn.Scenes, s)
-			} else if engine {
-				if v := strings.TrimSpace(line); v != "" {
-					rtn.Engines = append(rtn.Engines, v)
-				}
 			}
 		case !version && strings.Index(line, "Blender") == 0:
 			csv := strings.Split(line, " ")

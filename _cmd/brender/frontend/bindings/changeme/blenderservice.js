@@ -8,9 +8,6 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as api$0 from "../github.com/ikascrew/brender/api/models.js";
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore: Unused imports
 import * as model$0 from "../github.com/ikascrew/brender/model/models.js";
 
 /**
@@ -34,17 +31,6 @@ export function GetEngines(installID) {
 /**
  * @param {number} installID
  * @param {number} fileID
- * @returns {$CancellablePromise<api$0.FileInfo | null>}
- */
-export function GetFileInfo(installID, fileID) {
-    return $Call.ByID(488602929, installID, fileID).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType2($result);
-    }));
-}
-
-/**
- * @param {number} installID
- * @param {number} fileID
  * @returns {$CancellablePromise<string[]>}
  */
 export function GetScenes(installID, fileID) {
@@ -58,7 +44,7 @@ export function GetScenes(installID, fileID) {
  */
 export function List() {
     return $Call.ByID(4031984705).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType5($result);
+        return $$createType3($result);
     }));
 }
 
@@ -68,7 +54,7 @@ export function List() {
  */
 export function Register(path) {
     return $Call.ByID(3741754752, path).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType4($result);
+        return $$createType2($result);
     }));
 }
 
@@ -82,8 +68,6 @@ export function Reorder(ids) {
 
 // Private type creation functions
 const $$createType0 = $Create.Array($Create.Any);
-const $$createType1 = api$0.FileInfo.createFrom;
+const $$createType1 = model$0.BlenderInstall.createFrom;
 const $$createType2 = $Create.Nullable($$createType1);
-const $$createType3 = model$0.BlenderInstall.createFrom;
-const $$createType4 = $Create.Nullable($$createType3);
-const $$createType5 = $Create.Array($$createType4);
+const $$createType3 = $Create.Array($$createType2);
