@@ -51,7 +51,7 @@ body {
 
 /* ── Title Bar ── */
 .titlebar {
-  height: 36px;
+  height: 48px;
   background: #151e2b;
   display: flex;
   align-items: center;
@@ -82,8 +82,8 @@ body {
 }
 
 .titlebar-btn {
-  width: 46px;
-  height: 36px;
+  width: 48px;
+  height: 48px;
   border: none;
   background: transparent;
   color: rgba(255,255,255,0.55);
