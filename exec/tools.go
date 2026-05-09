@@ -75,6 +75,7 @@ type Tool struct {
 	Version string
 	Build   string
 	Scenes  []SceneTool
+	Cameras []CameraTool
 }
 
 func (t Tool) ActiveScene() SceneTool {
@@ -91,16 +92,29 @@ type SceneTool struct {
 	Name   string
 	Start  int
 	End    int
+	Camera string
+	X      int
+	Y      int
+	Engine string
+	Output string
+}
+
+type CameraTool struct {
+	Name   string
+	Scenes []string
 	Output string
 }
 
 func parseTool(stdout string) Tool {
 
 	scanner := bufio.NewScanner(strings.NewReader(stdout))
+
 	version := false
 	tool := false
 	scene := false
+	camera := false
 	ended := false
+
 	rtn := Tool{}
 
 	for scanner.Scan() {
@@ -119,10 +133,17 @@ func parseTool(stdout string) Tool {
 			scene = true
 		case strings.Index(line, SceneEnd) == 0:
 			scene = false
+		case strings.Index(line, CameraStart) == 0:
+			camera = true
+		case strings.Index(line, CameraEnd) == 0:
+			camera = false
 		case tool:
 			if scene {
 				s := parseScene(line)
 				rtn.Scenes = append(rtn.Scenes, s)
+			} else if camera {
+				c := parseCamera(line)
+				rtn.Cameras = append(rtn.Cameras, c)
 			}
 		case !version && strings.Index(line, "Blender") == 0:
 			csv := strings.Split(line, " ")
@@ -156,9 +177,12 @@ func NewSceneTool() SceneTool {
 }
 
 func parseScene(line string) SceneTool {
+
 	s := NewSceneTool()
-	csv := strings.Split(line, " ")
-	if len(csv) < 3 {
+	s.Output = line
+
+	csv := strings.Split(line, "\t")
+	if len(csv) < 8 {
 		return s
 	}
 
@@ -170,7 +194,39 @@ func parseScene(line string) SceneTool {
 	s.Start = v
 	v, _ = strconv.Atoi(csv[2])
 	s.End = v
+
 	s.Name = csv[3]
-	s.Output = strings.Join(csv[4:], " ")
+
+	s.Camera = csv[4]
+	v, _ = strconv.Atoi(csv[5])
+	s.X = v
+	v, _ = strconv.Atoi(csv[6])
+	s.Y = v
+
+	s.Engine = csv[7]
+
 	return s
+}
+
+func NewCameraTool() CameraTool {
+	var c CameraTool
+	c.Name = ""
+	c.Scenes = nil
+	return c
+}
+
+func parseCamera(line string) CameraTool {
+
+	c := NewCameraTool()
+	c.Output = line
+
+	csv := strings.Split(line, "\t")
+	if len(csv) < 2 {
+		return c
+	}
+
+	c.Name = csv[0]
+	c.Scenes = strings.Split(csv[1], ",")
+
+	return c
 }

@@ -11,12 +11,33 @@ def printScenes():
         cur = 0
         if key == current.name:
           cur = 1
-        print(f"{cur} {value.frame_start} {value.frame_end} {key}")
+
+        row = []
+        start = value.frame_start
+        end   = value.frame_end
+
+        cam   = value.camera.name
+        x     = value.render.resolution_x
+        y     = value.render.resolution_y
+        eng   = value.render.engine
+
+        row.append(str(cur))
+        row.append(str(start))
+        row.append(str(end))
+        row.append(key)
+        row.append(cam)
+        row.append(str(x))
+        row.append(str(y))
+        row.append(eng)
+
+        print("\t".join(row))
+
     print("{{ .SceneEndFlag }}")
 
 def printCameras():
 
     camera_usage = defaultdict(list)
+
     for scene in bpy.data.scenes:
         # そのシーン内の全オブジェクトをループ
         for obj in scene.objects:
@@ -27,8 +48,12 @@ def printCameras():
     print("{{ .CameraStartFlag }}")
 
     for cam_name, scene_names in camera_usage.items():
+
+        row = []
         scenes_str = ",".join(scene_names)
-        print(f"{cam_name}  {scenes_str}")
+        row.append(cam_name)
+        row.append(scenes_str)
+        print("\t".join(row))
 
     print("{{ .CameraEndFlag }}")
 
