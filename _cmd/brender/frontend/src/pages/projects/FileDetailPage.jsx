@@ -244,27 +244,38 @@ function SettingsTab({ fileID, fileName, onUpdated, onDeleted }) {
   const [confirm, setConfirm]             = useState(false)
   const [error, setError]                 = useState(null)
 
+  // GetFile + BlenderList を同時取得し、完了後に GetFileInfo を1回だけ呼ぶ
   useEffect(() => {
-    ProjectService.GetFile(fileID)
-      .then(f => {
-        if (!f) return
-        setName(f.name || fileName)
-        setBlenderID(f.blender_install_id || 0)
-        setScene(f.scene || '')
-      })
-      .catch(() => {})
-    BlenderService.List()
-      .then(list => setBlenders(list || []))
-      .catch(() => {})
+    let cancelled = false
+    Promise.all([
+      ProjectService.GetFile(fileID),
+      BlenderService.List(),
+    ]).then(([f, list]) => {
+      if (cancelled) return
+      const bid = f?.blender_install_id || 0
+      setName(f?.name || fileName)
+      setBlenderID(bid)
+      setScene(f?.scene || '')
+      setBlenders(list || [])
+      // ファイル情報取得後に1回だけツール実行
+      setScenesLoading(true)
+      BlenderService.GetFileInfo(bid, fileID)
+        .then(info => { if (!cancelled) setScenes(info?.scenes || []) })
+        .catch(() => { if (!cancelled) setScenes([]) })
+        .finally(() => { if (!cancelled) setScenesLoading(false) })
+    }).catch(() => {})
+    return () => { cancelled = true }
   }, [fileID])
 
-  useEffect(() => {
+  // Blender 選択変更時のみ再取得
+  const handleBlenderChange = (bid) => {
+    setBlenderID(bid)
     setScenesLoading(true)
-    BlenderService.GetScenes(blenderInstallID, fileID)
-      .then(list => setScenes(list || []))
+    BlenderService.GetFileInfo(bid, fileID)
+      .then(info => setScenes(info?.scenes || []))
       .catch(() => setScenes([]))
       .finally(() => setScenesLoading(false))
-  }, [blenderInstallID, fileID])
+  }
 
   const handleSave = async () => {
     if (!name.trim()) return
@@ -314,7 +325,7 @@ function SettingsTab({ fileID, fileName, onUpdated, onDeleted }) {
           <select
             className="form-select"
             value={blenderInstallID}
-            onChange={e => setBlenderID(Number(e.target.value))}
+            onChange={e => handleBlenderChange(Number(e.target.value))}
           >
             <option value={0}>— 未設定 —</option>
             {blenders.map(b => (

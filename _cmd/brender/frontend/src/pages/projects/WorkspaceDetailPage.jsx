@@ -52,24 +52,20 @@ function SettingsTab({ projectID, workspaceID, detail, onUpdated, onDeleted }) {
       .catch(() => {})
   }, [])
 
-  useEffect(() => {
-    if (!form) return
-    setEnginesLoading(true)
-    BlenderService.GetEngines(form.blenderInstallID)
-      .then(list => setEngines(list || []))
-      .catch(() => setEngines([]))
-      .finally(() => setEnginesLoading(false))
-  }, [form?.blenderInstallID])
-
+  // GetEngines + GetScenes を GetFileInfo 1回に統合
   useEffect(() => {
     if (!form) return
     const fid = detail?.workspace?.project_file_id
-    if (!fid || fid === 0) { setScenes([]); return }
+    if (!fid || fid === 0) { setScenes([]); setEngines([]); return }
     setScenesLoading(true)
-    BlenderService.GetScenes(form.blenderInstallID, fid)
-      .then(list => setScenes(list || []))
-      .catch(() => setScenes([]))
-      .finally(() => setScenesLoading(false))
+    setEnginesLoading(true)
+    BlenderService.GetFileInfo(form.blenderInstallID, fid)
+      .then(info => {
+        setScenes(info?.scenes || [])
+        setEngines(info?.engines || [])
+      })
+      .catch(() => { setScenes([]); setEngines([]) })
+      .finally(() => { setScenesLoading(false); setEnginesLoading(false) })
   }, [form?.blenderInstallID, detail?.workspace?.project_file_id])
 
   const set = (key, val) => {
