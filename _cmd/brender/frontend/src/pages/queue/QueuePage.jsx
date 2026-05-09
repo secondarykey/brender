@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { QueueService } from '../../../bindings/changeme'
+import { QueueApi } from '../../lib/api'
 import JobDetailDialog from '../../components/JobDetailDialog'
 import Pagination from '../../components/Pagination'
 
@@ -103,7 +103,7 @@ function ActiveTab({ navigate }) {
   const [cancelling, setCancelling] = useState(false)
 
   const load = useCallback(() => {
-    QueueService.ListItems()
+    QueueApi.listItems()
       .then(list => setItems(list || []))
       .catch(err => setError(String(err)))
   }, [])
@@ -118,7 +118,7 @@ function ActiveTab({ navigate }) {
   const handleCancel = async () => {
     setCancelling(true)
     try {
-      await QueueService.Cancel(confirmId)
+      await QueueApi.cancel({ id: confirmId })
       setConfirmId(null)
       load()
     } catch (err) {
@@ -218,7 +218,7 @@ function HistoryTab({ navigate }) {
   const [pageSize, setPageSize] = useState(PAGE_SIZE)
 
   const load = useCallback(() => {
-    QueueService.ListJobs()
+    QueueApi.listJobs()
       .then(list => setJobs(list || []))
       .catch(err => setError(String(err)))
   }, [])

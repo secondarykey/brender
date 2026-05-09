@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { ProjectService, EnvironmentService } from '../../../bindings/changeme'
+import { ProjectApi, EnvironmentApi } from '../../lib/api'
 
 function ProjectListPage({ navigate }) {
   const [projects, setProjects]   = useState([])
@@ -11,13 +11,13 @@ function ProjectListPage({ navigate }) {
   const [hasRoot, setHasRoot]     = useState(true)
 
   const load = () => {
-    ProjectService.List()
+    ProjectApi.list()
       .then(list => setProjects(list || []))
       .catch(err => setError(String(err)))
   }
 
   useEffect(() => {
-    EnvironmentService.Get()
+    EnvironmentApi.get()
       .then(env => setHasRoot(!!(env && env.root)))
       .catch(() => setHasRoot(false))
     load()
@@ -35,7 +35,7 @@ function ProjectListPage({ navigate }) {
     if (!name.trim()) { setCreateError('プロジェクト名を入力してください'); return }
     setSaving(true)
     try {
-      const d = await ProjectService.Create(name.trim())
+      const d = await ProjectApi.create({ name: name.trim() })
       setCreating(false)
       load()
       navigate('project', { id: d.project.id })

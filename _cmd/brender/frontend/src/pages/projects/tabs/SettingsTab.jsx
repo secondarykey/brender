@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { ProjectService } from '../../../../bindings/changeme'
+import { ProjectApi } from '../../../lib/api'
 
 function SettingsTab({ detail, onUpdated, onDeleted }) {
   const [form, setForm]         = useState(null)
@@ -26,7 +26,7 @@ function SettingsTab({ detail, onUpdated, onDeleted }) {
     if (!form.name.trim()) { setError('プロジェクト名を入力してください'); return }
     setSaving(true)
     try {
-      await ProjectService.Update(detail.project.id, form.name.trim())
+      await ProjectApi.update({ id: detail.project.id, name: form.name.trim() })
       setSaved(true)
       onUpdated()
     } catch (err) {
@@ -39,7 +39,7 @@ function SettingsTab({ detail, onUpdated, onDeleted }) {
   const handleDelete = async () => {
     setDeleting(true)
     try {
-      await ProjectService.Delete(detail.project.id)
+      await ProjectApi.delete({ id: detail.project.id })
       onDeleted()
     } catch (err) {
       setError(String(err))

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { ProjectService } from '../../../bindings/changeme'
+import { ProjectApi } from '../../lib/api'
 import WorkspaceTab from './tabs/WorkspaceTab'
 import SettingsTab from './tabs/SettingsTab'
 
@@ -14,7 +14,7 @@ function ProjectDetailPage({ id, navigate }) {
   const [error, setError] = useState('')
 
   const load = () => {
-    ProjectService.Get(id)
+    ProjectApi.get({ id })
       .then(setDetail)
       .catch(err => setError(String(err)))
   }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Dialogs } from '@wailsio/runtime'
-import { WorkspaceService, ProjectService } from '../../../../bindings/changeme'
+import { WorkspaceApi, ProjectApi } from '../../../lib/api'
 
 function WorkspaceTab({ projectID, navigate, projectName }) {
   const [groups, setGroups]   = useState([])
@@ -8,7 +8,7 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
   const [fileError, setFileError] = useState('')
 
   const load = () => {
-    WorkspaceService.ListByProject(projectID)
+    WorkspaceApi.listByProject({ projectID })
       .then(list => setGroups(list || []))
       .catch(err => setError(String(err)))
   }
@@ -22,7 +22,7 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
         Filters: [{ DisplayName: 'Blender File', Pattern: '*.blend' }],
       })
       if (!path) return
-      await ProjectService.AddFile(projectID, path)
+      await ProjectApi.addFile({ projectID, path })
       load()
     } catch (err) {
       setFileError(String(err))

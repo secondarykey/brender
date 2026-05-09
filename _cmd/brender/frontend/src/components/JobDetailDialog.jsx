@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { QueueService } from '../../bindings/changeme'
+import { QueueApi } from '../lib/api'
 
 const STATUS_LABELS = {
   completed: '完了',
@@ -76,7 +76,7 @@ function JobDetailDialog({ job, onClose, onDeleted }) {
     setDeleting(true)
     setError('')
     try {
-      await QueueService.DeleteJob(job.id)
+      await QueueApi.deleteJob({ id: job.id })
       setConfirm(false)
       onClose()
       if (onDeleted) onDeleted(job.id)

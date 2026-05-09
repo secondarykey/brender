@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Dialogs } from '@wailsio/runtime'
-import { BlenderService } from '../../../bindings/changeme'
+import { BlenderApi } from '../../lib/api'
 
 function BlenderSettings() {
   const [blenders, setBlenders] = useState([])
@@ -12,7 +12,7 @@ function BlenderSettings() {
   const [dragOver, setDragOver] = useState(null)
 
   const load = () => {
-    BlenderService.List()
+    BlenderApi.list()
       .then(list => setBlenders(list || []))
       .catch(err => setError(String(err)))
   }
@@ -28,7 +28,7 @@ function BlenderSettings() {
       const result = await Dialogs.OpenFile({ Filters: filters })
       if (!result) return
       setLoading(true)
-      await BlenderService.Register(result)
+      await BlenderApi.register({ path: result })
       load()
     } catch (err) {
       setError(String(err))
@@ -42,7 +42,7 @@ function BlenderSettings() {
     setDeleting(true)
     setError('')
     try {
-      await BlenderService.Delete(confirm.id)
+      await BlenderApi.delete({ id: confirm.id })
       setConfirm(null)
       load()
     } catch (err) {
@@ -83,7 +83,7 @@ function BlenderSettings() {
     setBlenders(newList)
 
     try {
-      await BlenderService.Reorder(newList.map(b => b.id))
+      await BlenderApi.reorder({ ids: newList.map(b => b.id) })
     } catch (err) {
       setError(String(err))
       load()

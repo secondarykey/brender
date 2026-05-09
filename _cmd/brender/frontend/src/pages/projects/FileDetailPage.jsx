@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { WorkspaceService, QueueService, ProjectService, BlenderService } from '../../../bindings/changeme'
+import { WorkspaceApi, QueueApi, ProjectApi, BlenderApi } from '../../lib/api'
 import JobDetailDialog from '../../components/JobDetailDialog'
 import Pagination from '../../components/Pagination'
 
@@ -25,7 +25,7 @@ function CreateForm({ projectID, fileID, onSaved, onCancel }) {
     if (!name.trim()) { setError('名前を入力してください'); return }
     setSaving(true)
     try {
-      const ws = await WorkspaceService.Create(projectID, fileID, name.trim())
+      const ws = await WorkspaceApi.create({ projectID, projectFileID: fileID, name: name.trim() })
       onSaved(ws)
     } catch (err) {
       setError(String(err))
@@ -68,7 +68,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
   const [enqueueMsg, setEnqueueMsg] = useState('')
 
   const load = () => {
-    WorkspaceService.ListByProject(projectID)
+    WorkspaceApi.listByProject({ projectID })
       .then(list => {
         const group = (list || []).find(g => g.file.id === fileID)
         setWorkspaces(group ? group.workspaces : [])
@@ -87,7 +87,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
     setEnqueueMsg('')
     setResolving(true)
     try {
-      const preview = await QueueService.PreviewRender(projectID, ws.id)
+      const preview = await QueueApi.previewRender({ projectID, workspaceID: ws.id })
       setConfirm({ ws, preview })
     } catch (err) {
       setEnqueueMsg(`エラー: ${String(err)}`)
@@ -101,7 +101,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
     setEnqueuing(true)
     setEnqueueMsg('')
     try {
-      await QueueService.EnqueueWithPreview(projectID, confirm.ws.id, confirm.preview)
+      await QueueApi.enqueueWithPreview({ projectID, workspaceID: confirm.ws.id, preview: confirm.preview })
       onEnqueued()
     } catch (err) {
       setEnqueueMsg(`エラー: ${String(err)}`)
@@ -195,7 +195,7 @@ function HistoryTab({ projectID, fileID }) {
   const [pageSize, setPageSize] = useState(HISTORY_PAGE_SIZE)
 
   const load = useCallback(() => {
-    QueueService.ListJobsByProjectFile(projectID, fileID)
+    QueueApi.listJobsByProjectFile({ projectID, fileID })
       .then(list => setJobs(list || []))
       .catch(() => {})
   }, [projectID, fileID])
@@ -255,7 +255,7 @@ function SettingsTab({ fileID, fileName, onUpdated, onDeleted }) {
 
   const fetchScenes = (installID) => {
     setScenesLoading(true)
-    BlenderService.GetScenes(installID, fileID)
+    BlenderApi.getScenes({ installID, fileID })
       .then(list => setScenes(list || []))
       .catch(() => setScenes([]))
       .finally(() => setScenesLoading(false))
@@ -263,8 +263,8 @@ function SettingsTab({ fileID, fileName, onUpdated, onDeleted }) {
 
   useEffect(() => {
     Promise.all([
-      ProjectService.GetFile(fileID).catch(() => null),
-      BlenderService.List().catch(() => []),
+      ProjectApi.getFile({ fileID }).catch(() => null),
+      BlenderApi.list().catch(() => []),
     ]).then(([f, list]) => {
       setBlenders(list || [])
       const installID = f?.blender_install_id || 0
@@ -285,7 +285,7 @@ function SettingsTab({ fileID, fileName, onUpdated, onDeleted }) {
     setSaving(true)
     setError(null)
     try {
-      const updated = await ProjectService.UpdateFile(fileID, name.trim(), blenderInstallID, scene)
+      const updated = await ProjectApi.updateFile({ fileID, name: name.trim(), blenderInstallID, scene })
       if (onUpdated) onUpdated(updated)
     } catch (e) {
       setError(e?.message ?? '保存に失敗しました')
@@ -298,7 +298,7 @@ function SettingsTab({ fileID, fileName, onUpdated, onDeleted }) {
     setDeleting(true)
     setError(null)
     try {
-      await ProjectService.DeleteFile(fileID)
+      await ProjectApi.deleteFile({ fileID })
       if (onDeleted) onDeleted()
     } catch (e) {
       setError(e?.message ?? '削除に失敗しました')

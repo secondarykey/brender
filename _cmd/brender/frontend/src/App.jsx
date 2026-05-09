@@ -6,13 +6,13 @@ import FileDetailPage from './pages/projects/FileDetailPage'
 import WorkspaceDetailPage from './pages/projects/WorkspaceDetailPage'
 import QueuePage from './pages/queue/QueuePage'
 import SettingsPage from './pages/settings/SettingsPage'
-import { EnvironmentService } from '../bindings/changeme'
+import { EnvironmentApi } from './lib/api'
 
 function App() {
   const [nav, setNav] = useState({ page: 'projects', params: {} })
 
   useEffect(() => {
-    EnvironmentService.Get()
+    EnvironmentApi.get()
       .then(env => {
         if (!env || !env.root) {
           setNav({ page: 'settings', params: {} })

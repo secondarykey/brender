@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { QueueService } from '../../bindings/changeme'
+import { QueueApi } from '../lib/api'
 import { onAppEvent } from '../lib/appEvents'
 import TitleBar from '../components/TitleBar'
 
@@ -21,7 +21,7 @@ function MainLayout({ currentPage, onNavigate, children }) {
 
   useEffect(() => {
     // 初期件数取得
-    QueueService.List().then(list => setQueueCount((list || []).length)).catch(() => {})
+    QueueApi.list().then(list => setQueueCount((list || []).length)).catch(() => {})
     // イベント購読
     const off = onAppEvent('queue:changed', data => setQueueCount(Number(data) || 0))
     return off

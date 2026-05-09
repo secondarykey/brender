@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { WorkspaceService, BlenderService, QueueService } from '../../../bindings/changeme'
+import { WorkspaceApi, BlenderApi, QueueApi } from '../../lib/api'
 import JobDetailDialog from '../../components/JobDetailDialog'
 import Pagination from '../../components/Pagination'
 
@@ -22,7 +22,7 @@ function HistoryTab({ projectID, workspaceID }) {
   const [pageSize, setPageSize] = useState(HISTORY_PAGE_SIZE)
 
   const load = useCallback(() => {
-    QueueService.ListJobsByWorkspace(projectID, workspaceID)
+    QueueApi.listJobsByWorkspace({ projectID, workspaceID })
       .then(list => setJobs(list || []))
       .catch(() => {})
   }, [projectID, workspaceID])
@@ -112,7 +112,7 @@ function SettingsTab({ projectID, workspaceID, detail, onUpdated, onDeleted }) {
   }
 
   useEffect(() => {
-    BlenderService.List()
+    BlenderApi.list()
       .then(list => setBlenders(list || []))
       .catch(() => {})
   }, [])
@@ -124,7 +124,7 @@ function SettingsTab({ projectID, workspaceID, detail, onUpdated, onDeleted }) {
     const fid = detail?.workspace?.project_file_id
 
     setEnginesLoading(true)
-    BlenderService.GetEngines(form.blenderInstallID)
+    BlenderApi.getEngines({ installID: form.blenderInstallID })
       .then(list => setEngines(list || []))
       .catch(() => setEngines([]))
       .finally(() => setEnginesLoading(false))
@@ -134,7 +134,7 @@ function SettingsTab({ projectID, workspaceID, detail, onUpdated, onDeleted }) {
       return
     }
     setScenesLoading(true)
-    BlenderService.GetScenes(form.blenderInstallID, fid)
+    BlenderApi.getScenes({ installID: form.blenderInstallID, fileID: fid })
       .then(list => setScenes(list || []))
       .catch(() => setScenes([]))
       .finally(() => setScenesLoading(false))
@@ -151,12 +151,13 @@ function SettingsTab({ projectID, workspaceID, detail, onUpdated, onDeleted }) {
     if (!form.name.trim()) { setError('ワークスペース名を入力してください'); return }
     setSaving(true)
     try {
-      await WorkspaceService.Update(
-        projectID, workspaceID, form.name.trim(),
-        form.blenderInstallID,
-        form.scene, form.engine,
-        form.startFrame, form.endFrame, form.frameStep, form.thread,
-      )
+      await WorkspaceApi.update({
+        projectID, workspaceID, name: form.name.trim(),
+        blenderInstallID: form.blenderInstallID,
+        scene: form.scene, engine: form.engine,
+        startFrame: form.startFrame, endFrame: form.endFrame,
+        frameStep: form.frameStep, thread: form.thread,
+      })
       setSaved(true)
       onUpdated()
     } catch (err) {
@@ -269,7 +270,7 @@ function SettingsTab({ projectID, workspaceID, detail, onUpdated, onDeleted }) {
               <button className="btn btn-danger" onClick={async () => {
                 setDeleting(true)
                 try {
-                  await WorkspaceService.Delete(projectID, workspaceID)
+                  await WorkspaceApi.delete({ projectID, workspaceID })
                   onDeleted()
                 } catch (err) {
                   setError(String(err))
@@ -296,7 +297,7 @@ function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspa
   const [error, setError]   = useState('')
 
   const load = useCallback(() => {
-    WorkspaceService.Get(projectID, workspaceID)
+    WorkspaceApi.get({ projectID, workspaceID })
       .then(d => setDetail(d))
       .catch(err => setError(String(err)))
   }, [projectID, workspaceID])

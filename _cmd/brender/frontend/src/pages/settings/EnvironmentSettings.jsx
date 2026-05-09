@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Dialogs } from '@wailsio/runtime'
-import { EnvironmentService } from '../../../bindings/changeme'
+import { EnvironmentApi } from '../../lib/api'
 
 function EnvironmentSettings() {
   const [root, setRoot]       = useState('')
@@ -10,10 +10,10 @@ function EnvironmentSettings() {
   const [saved, setSaved]     = useState(false)
 
   useEffect(() => {
-    EnvironmentService.Get()
+    EnvironmentApi.get()
       .then(env => { if (env) setRoot(env.root || '') })
       .catch(err => setError(String(err)))
-    EnvironmentService.GetWorkDir()
+    EnvironmentApi.getWorkDir()
       .then(d => setWorkDir(d || ''))
       .catch(() => {})
   }, [])
@@ -30,7 +30,7 @@ function EnvironmentSettings() {
       })
       if (!dir) return
       setSaving(true)
-      await EnvironmentService.SetRoot(dir)
+      await EnvironmentApi.setRoot({ root: dir })
       setRoot(dir)
       setSaved(true)
     } catch (err) {
