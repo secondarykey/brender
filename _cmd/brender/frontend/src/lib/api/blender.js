@@ -43,4 +43,11 @@ export const BlenderApi = {
   getScenes: ({ installID, fileID }) =>
     isWails() ? svc().then(s => s.GetScenes(installID, fileID))
               : serverCall('blender', 'get_scenes', { install_id: installID, file_id: fileID }),
+
+  /** Blender GUI でファイルを開く（非同期・ノンブロッキング）
+   * @param {{ installID: number, filePath: string }} args
+   */
+  openFile: ({ installID, filePath }) =>
+    isWails() ? svc().then(s => s.OpenFile(installID, filePath))
+              : serverCall('blender', 'open_file', { install_id: installID, file_path: filePath }),
 }

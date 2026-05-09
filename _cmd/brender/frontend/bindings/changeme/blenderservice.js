@@ -49,6 +49,15 @@ export function List() {
 }
 
 /**
+ * @param {number} installID
+ * @param {string} filePath
+ * @returns {$CancellablePromise<void>}
+ */
+export function OpenFile(installID, filePath) {
+    return $Call.ByID(3673195439, installID, filePath);
+}
+
+/**
  * @param {string} path
  * @returns {$CancellablePromise<model$0.BlenderInstall | null>}
  */

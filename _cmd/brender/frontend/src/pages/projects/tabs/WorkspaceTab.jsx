@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import { Dialogs } from '@wailsio/runtime'
-import { WorkspaceApi, ProjectApi } from '../../../lib/api'
+import { WorkspaceApi, ProjectApi, BlenderApi } from '../../../lib/api'
 
 function WorkspaceTab({ projectID, navigate, projectName }) {
   const [groups, setGroups]   = useState([])
   const [error, setError]     = useState('')
   const [fileError, setFileError] = useState('')
+  const [openingFileID, setOpeningFileID] = useState(null)
 
   const load = () => {
     WorkspaceApi.listByProject({ projectID })
@@ -14,6 +15,18 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
   }
 
   useEffect(() => { load() }, [projectID])
+
+  const handleOpenFile = async (e, file) => {
+    e.stopPropagation()
+    setOpeningFileID(file.id)
+    try {
+      await BlenderApi.openFile({ installID: file.blender_install_id || 0, filePath: file.path })
+    } catch (err) {
+      setFileError(String(err))
+    } finally {
+      setOpeningFileID(null)
+    }
+  }
 
   const handleAddFile = async () => {
     setFileError('')
@@ -48,6 +61,14 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
                 fileName: g.file.name || g.file.path.split(/[/\\]/).pop(),
               })}
             >
+              <button
+                className="btn btn-run btn-sm file-item-open-btn"
+                onClick={e => handleOpenFile(e, g.file)}
+                disabled={openingFileID === g.file.id}
+                title="Blender で開く"
+              >
+                {openingFileID === g.file.id ? '...' : '開く'}
+              </button>
               <div className="file-item-info">
                 <span className="ws-file-name">{g.file.name || g.file.path.split(/[/\\]/).pop()}</span>
                 <span className="ws-file-path">{g.file.path}</span>

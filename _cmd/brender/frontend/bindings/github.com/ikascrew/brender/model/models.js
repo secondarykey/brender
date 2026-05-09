@@ -284,6 +284,14 @@ export class Job {
              */
             this["error_msg"] = "";
         }
+        if (!("data_status" in $$source)) {
+            /**
+             * none / available / deleted / locked
+             * @member
+             * @type {string}
+             */
+            this["data_status"] = "";
+        }
         if (!("disk_size" in $$source)) {
             /**
              * 出力フォルダの容量（バイト）

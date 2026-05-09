@@ -592,6 +592,11 @@ body {
 }
 .file-item-count { font-size: 0.82rem; }
 
+.file-item-open-btn {
+  flex-shrink: 0;
+  margin-right: 16px;
+}
+
 /* ファイル詳細ヘッダ */
 .file-detail-header {
   display: flex;

@@ -2,6 +2,7 @@ package api
 
 import (
 	"os"
+	osexec "os/exec"
 	"path/filepath"
 
 	"github.com/ikascrew/brender/exec"
@@ -74,6 +75,33 @@ func GetScenes(installID uint, fileID uint) ([]string, error) {
 		return nil, xerrors.Errorf("project file not found: %d", fileID)
 	}
 	return exec.RunScenes(blenderPath, file.Path)
+}
+
+// OpenBlenderFile は Blender GUI でファイルを開く。
+// -b を付けないので Blender がウィンドウ付きで起動する。
+// プロセスは非同期で起動し、呼び出し元はブロックされない。
+func OpenBlenderFile(installID uint, filePath string) error {
+	var blenderPath string
+	if installID != 0 {
+		install, err := model.GetBlenderInstall(installID)
+		if err != nil {
+			return xerrors.Errorf("GetBlenderInstall: %w", err)
+		}
+		if install == nil {
+			return xerrors.Errorf("blender install not found: %d", installID)
+		}
+		blenderPath = install.Path
+	} else {
+		b, err := model.FirstBlender()
+		if err != nil || b == nil {
+			// 登録済み Blender がなければシステムの blender コマンドを試みる
+			blenderPath = "blender"
+		} else {
+			blenderPath = b.Path
+		}
+	}
+	cmd := osexec.Command(blenderPath, filePath)
+	return cmd.Start()
 }
 
 func GetEngines(installID uint) ([]string, error) {

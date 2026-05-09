@@ -23,6 +23,10 @@ func (s *BlenderService) Reorder(ids []uint) error {
 	return api.ReorderBlenders(ids)
 }
 
+func (s *BlenderService) OpenFile(installID uint, filePath string) error {
+	return api.OpenBlenderFile(installID, filePath)
+}
+
 func (s *BlenderService) GetEngines(installID uint) ([]string, error) {
 	return api.GetEngines(installID)
 }
