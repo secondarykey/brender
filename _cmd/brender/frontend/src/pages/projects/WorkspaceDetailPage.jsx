@@ -52,19 +52,22 @@ function SettingsTab({ projectID, workspaceID, detail, onUpdated, onDeleted }) {
       .catch(() => {})
   }, [])
 
+  // GetEngines と GetScenes を1つの effect にまとめて同時並行で呼び出す
+  // （blenderInstallID 変化時に2つの effect が別々に発火するのを防ぐ）
   useEffect(() => {
     if (!form) return
+    const fid = detail?.workspace?.project_file_id
+
     setEnginesLoading(true)
     BlenderService.GetEngines(form.blenderInstallID)
       .then(list => setEngines(list || []))
       .catch(() => setEngines([]))
       .finally(() => setEnginesLoading(false))
-  }, [form?.blenderInstallID])
 
-  useEffect(() => {
-    if (!form) return
-    const fid = detail?.workspace?.project_file_id
-    if (!fid || fid === 0) { setScenes([]); return }
+    if (!fid || fid === 0) {
+      setScenes([])
+      return
+    }
     setScenesLoading(true)
     BlenderService.GetScenes(form.blenderInstallID, fid)
       .then(list => setScenes(list || []))
