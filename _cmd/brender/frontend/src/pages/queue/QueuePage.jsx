@@ -206,11 +206,50 @@ function ActiveTab({ navigate }) {
   )
 }
 
+const PAGE_SIZE = 10
+
+function Pagination({ page, totalPages, onChange }) {
+  if (totalPages <= 1) return null
+
+  const pages = []
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= page - 2 && i <= page + 2)) {
+      pages.push(i)
+    }
+  }
+  const buttons = []
+  let prev = null
+  for (const p of pages) {
+    if (prev !== null && p - prev > 1) {
+      buttons.push(<span key={`el-${p}`} className="pagination-info">…</span>)
+    }
+    buttons.push(
+      <button
+        key={p}
+        className={`pagination-btn${p === page ? ' active' : ''}`}
+        onClick={() => onChange(p)}
+        disabled={p === page}
+      >{p}</button>
+    )
+    prev = p
+  }
+
+  return (
+    <div className="pagination">
+      <button className="pagination-btn" onClick={() => onChange(page - 1)} disabled={page <= 1}>‹</button>
+      {buttons}
+      <button className="pagination-btn" onClick={() => onChange(page + 1)} disabled={page >= totalPages}>›</button>
+      <span className="pagination-info">{page} / {totalPages} ページ</span>
+    </div>
+  )
+}
+
 // ── 実行履歴タブ ──────────────────────────────────────────
 function HistoryTab({ navigate }) {
   const [jobs, setJobs]         = useState([])
   const [error, setError]       = useState('')
   const [selected, setSelected] = useState(null)
+  const [page, setPage]         = useState(1)
 
   const load = useCallback(() => {
     QueueService.ListJobs()
@@ -220,55 +259,64 @@ function HistoryTab({ navigate }) {
 
   useEffect(() => { load() }, [load])
 
+  const totalPages  = Math.max(1, Math.ceil(jobs.length / PAGE_SIZE))
+  const currentPage = Math.min(page, totalPages)
+  const pageJobs    = jobs.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+
+  const handlePageChange = (p) => { setPage(p); setSelected(null) }
+
   return (
     <>
       {error && <div className="error-msg" style={{ marginBottom: 12 }}>{error}</div>}
       {jobs.length === 0 ? (
         <p className="empty-msg">実行履歴がありません</p>
       ) : (
-        <table className="queue-table">
-          <thead>
-            <tr>
-              <th>ワークスペース</th>
-              <th>ステータス</th>
-              <th>プロジェクト</th>
-              <th>エンジン</th>
-              <th>フレーム</th>
-              <th>登録時刻</th>
-              <th>所要時間</th>
-            </tr>
-          </thead>
-          <tbody>
-            {jobs.map(j => (
-              <tr key={j.id} className={`${j.status === 'error' ? 'row-error' : ''} row-clickable`} onClick={() => setSelected(j)}>
-                <td>
-                  <button className="link-btn" onClick={e => { e.stopPropagation(); navigate && navigate('workspace', {
-                    projectID: j.project_id, projectName: j.project_name, workspaceID: j.workspace_id,
-                  })}}>
-                    {j.workspace_name || j.workspace_id}
-                  </button>
-                </td>
-                <td>
-                  <StatusBadge status={j.status || 'running'} />
-                  {j.status === 'error' && j.error_msg && (
-                    <div className="queue-history-error" title={j.error_msg}>
-                      {j.error_msg.slice(0, 60)}{j.error_msg.length > 60 ? '…' : ''}
-                    </div>
-                  )}
-                </td>
-                <td>
-                  <button className="link-btn" onClick={() => navigate && navigate('project', { id: j.project_id })}>
-                    {j.project_name || j.project_id}
-                  </button>
-                </td>
-                <td>{j.engine || 'デフォルト'}</td>
-                <td className="frames-cell">{j.start_frame}–{j.end_frame}</td>
-                <td className="date-cell">{formatDate(j.enqueued_at)}</td>
-                <td className="duration-cell">{duration(j.started_at, j.completed_at)}</td>
+        <>
+          <table className="queue-table">
+            <thead>
+              <tr>
+                <th>ワークスペース</th>
+                <th>ステータス</th>
+                <th>プロジェクト</th>
+                <th>エンジン</th>
+                <th>フレーム</th>
+                <th>登録時刻</th>
+                <th>所要時間</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {pageJobs.map(j => (
+                <tr key={j.id} className={`${j.status === 'error' ? 'row-error' : ''} row-clickable`} onClick={() => setSelected(j)}>
+                  <td>
+                    <button className="link-btn" onClick={e => { e.stopPropagation(); navigate && navigate('workspace', {
+                      projectID: j.project_id, projectName: j.project_name, workspaceID: j.workspace_id,
+                    })}}>
+                      {j.workspace_name || j.workspace_id}
+                    </button>
+                  </td>
+                  <td>
+                    <StatusBadge status={j.status || 'running'} />
+                    {j.status === 'error' && j.error_msg && (
+                      <div className="queue-history-error" title={j.error_msg}>
+                        {j.error_msg.slice(0, 60)}{j.error_msg.length > 60 ? '…' : ''}
+                      </div>
+                    )}
+                  </td>
+                  <td>
+                    <button className="link-btn" onClick={() => navigate && navigate('project', { id: j.project_id })}>
+                      {j.project_name || j.project_id}
+                    </button>
+                  </td>
+                  <td>{j.engine || 'デフォルト'}</td>
+                  <td className="frames-cell">{j.start_frame}–{j.end_frame}</td>
+                  <td className="date-cell">{formatDate(j.enqueued_at)}</td>
+                  <td className="duration-cell">{duration(j.started_at, j.completed_at)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <Pagination page={currentPage} totalPages={totalPages} onChange={handlePageChange} />
+        </>
       )}
       <JobDetailDialog job={selected} onClose={() => setSelected(null)} />
     </>
