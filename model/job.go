@@ -12,6 +12,13 @@ const (
 	JobCancelled = "cancelled"
 )
 
+const (
+	JobDataNone      = "none"      // 実行中・エラー・キャンセル（データなし）
+	JobDataAvailable = "available" // 正常完了（データあり）
+	JobDataDeleted   = "deleted"   // データのみ削除（履歴は残す）
+	JobDataLocked    = "locked"    // ロック（削除保護）
+)
+
 // Job はレンダリング実行の完了済み履歴レコード。
 // Queue と同じ UUID v7 の ID を持つ。
 type Job struct {
@@ -30,15 +37,19 @@ type Job struct {
 	EndFrame      int        `json:"end_frame"`
 	FrameStep     int        `json:"frame_step"`
 	Thread        int        `json:"thread"`
-	Status        string     `json:"status"` // completed / error / cancelled
+	Status        string     `json:"status"`      // completed / error / cancelled
 	ErrorMsg      string     `json:"error_msg"`
-	DiskSize      int64      `json:"disk_size"` // 出力フォルダの容量（バイト）
+	DataStatus    string     `json:"data_status"` // none / available / deleted / locked
+	DiskSize      int64      `json:"disk_size"`   // 出力フォルダの容量（バイト）
 	StartedAt     *time.Time `json:"started_at"`
 	CompletedAt   *time.Time `json:"completed_at"`
 	EnqueuedAt    *time.Time `json:"enqueued_at"` // キュー登録時刻
 }
 
 func CreateJob(j *Job) error {
+	if j.DataStatus == "" {
+		j.DataStatus = JobDataNone
+	}
 	if res := db.Create(j); res.Error != nil {
 		return xerrors.Errorf("CreateJob: %w", res.Error)
 	}
@@ -114,14 +125,22 @@ func UpdateJobStarted(id string, startedAt *time.Time) error {
 	return nil
 }
 
-func UpdateJobDone(id string, status string, errMsg string, completedAt *time.Time, diskSize int64) error {
+func UpdateJobDone(id string, status string, errMsg string, completedAt *time.Time, diskSize int64, dataStatus string) error {
 	if res := db.Model(&Job{}).Where("id = ?", id).Updates(map[string]any{
 		"status":       status,
 		"error_msg":    errMsg,
 		"completed_at": completedAt,
 		"disk_size":    diskSize,
+		"data_status":  dataStatus,
 	}); res.Error != nil {
 		return xerrors.Errorf("UpdateJobDone: %w", res.Error)
+	}
+	return nil
+}
+
+func UpdateJobDataStatus(id string, dataStatus string) error {
+	if res := db.Model(&Job{}).Where("id = ?", id).Update("data_status", dataStatus); res.Error != nil {
+		return xerrors.Errorf("UpdateJobDataStatus: %w", res.Error)
 	}
 	return nil
 }

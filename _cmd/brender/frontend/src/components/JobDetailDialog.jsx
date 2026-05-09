@@ -9,6 +9,26 @@ const STATUS_LABELS = {
   waiting:   '実行待ち',
 }
 
+const DATA_STATUS_LABELS = {
+  none:      'データなし',
+  available: 'あり',
+  deleted:   'データ削除',
+  locked:    'ロック',
+}
+
+const DATA_STATUS_CLASS = {
+  none:      'data-status-none',
+  available: 'data-status-available',
+  deleted:   'data-status-deleted',
+  locked:    'data-status-locked',
+}
+
+function DataStatusBadge({ status }) {
+  const label = DATA_STATUS_LABELS[status] ?? status
+  const cls   = DATA_STATUS_CLASS[status]  ?? ''
+  return <span className={`data-status-badge ${cls}`}>{label}</span>
+}
+
 function fmt(iso) {
   if (!iso) return '—'
   return new Date(iso).toLocaleString('ja-JP', {
@@ -67,6 +87,7 @@ function JobDetailDialog({ job, onClose, onDeleted }) {
         <div className="dialog-body job-detail-body">
           <div className="job-detail-section">
             <Row label="ステータス"    value={<span className={`status-badge status-${status}`}>{STATUS_LABELS[status] ?? status}</span>} />
+            <Row label="データ"        value={<DataStatusBadge status={job.data_status || 'none'} />} />
             <Row label="プロジェクト"  value={job.project_name} />
             <Row label="ワークスペース" value={job.workspace_name} />
           </div>

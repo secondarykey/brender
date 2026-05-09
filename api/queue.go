@@ -297,10 +297,12 @@ func removeOutputDirs(dirs []string) {
 func finishJob(id string, success bool, errMsg string, diskSize int64) {
 	now := time.Now()
 	status := model.JobCompleted
+	dataStatus := model.JobDataAvailable
 	if !success {
 		status = model.JobError
+		dataStatus = model.JobDataNone
 	}
-	if err := model.UpdateJobDone(id, status, errMsg, &now, diskSize); err != nil {
+	if err := model.UpdateJobDone(id, status, errMsg, &now, diskSize, dataStatus); err != nil {
 		log.Println("UpdateJobDone error:", err)
 	}
 	if err := model.DeleteQueue(id); err != nil {
@@ -413,7 +415,7 @@ func CancelQueue(id string) error {
 	if j != nil {
 		diskSize = calcDirSize(j.OutputDir)
 	}
-	if err := model.UpdateJobDone(q.ID, model.JobCancelled, "", &now, diskSize); err != nil {
+	if err := model.UpdateJobDone(q.ID, model.JobCancelled, "", &now, diskSize, model.JobDataNone); err != nil {
 		log.Println("UpdateJobDone(cancelled) error:", err)
 	}
 	return model.DeleteQueue(q.ID)

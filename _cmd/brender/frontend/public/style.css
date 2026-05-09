@@ -1188,6 +1188,19 @@ body {
   margin-top: 24px;
 }
 
+/* Data status badge */
+.data-status-badge {
+  display: inline-block;
+  font-size: 0.78rem;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-weight: 500;
+}
+.data-status-none      { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.4); }
+.data-status-available { background: rgba(74,180,100,0.18); color: #6dd98a; }
+.data-status-deleted   { background: rgba(200,100,50,0.18); color: #e0946a; }
+.data-status-locked    { background: rgba(74,124,220,0.18); color: #7baaf7; }
+
 /* Pagination */
 .pagination {
   display: flex;
