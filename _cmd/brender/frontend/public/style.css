@@ -708,7 +708,10 @@ body {
 
 .ws-item-run-btn {
   flex-shrink: 0;
-  margin-right: 12px;
+}
+
+.ws-item-run-btn + .ws-item-info {
+  margin-left: 16px;
 }
 
 .ws-item-link {
