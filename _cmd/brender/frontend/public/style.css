@@ -8,7 +8,7 @@
   font-weight: 400;
   color-scheme: dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: #1b2636;
+  background-color: #1a1a1a;
   -webkit-font-smoothing: antialiased;
   user-select: none;
   -webkit-user-select: none;
@@ -52,7 +52,7 @@ body {
 /* ── Title Bar ── */
 .titlebar {
   height: 48px;
-  background: #151e2b;
+  background: #111111;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -108,7 +108,7 @@ body {
 
 .sidebar {
   width: 56px;
-  background: #151e2b;
+  background: #111111;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -782,7 +782,7 @@ body {
   border-color: #4a7cdc;
 }
 
-.form-select option { background: #1b2636; }
+.form-select option { background: #1a1a1a; }
 
 .file-list {
   display: flex;
@@ -1216,7 +1216,7 @@ body {
   z-index: 200;
 }
 .dialog {
-  background: #1e2736;
+  background: #1e1e1e;
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 8px;
   padding: 28px 32px 24px;
@@ -1286,7 +1286,7 @@ body {
 .pagination-size-select:focus {
   border-color: #4a7cdc;
 }
-.pagination-size-select option { background: #1b2636; }
+.pagination-size-select option { background: #1a1a1a; }
 .pagination-pages {
   display: flex;
   align-items: center;
