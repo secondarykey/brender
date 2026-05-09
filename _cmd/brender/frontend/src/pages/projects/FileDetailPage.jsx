@@ -194,6 +194,7 @@ function HistoryTab({ projectID, fileID }) {
   const [jobs, setJobs]         = useState([])
   const [selected, setSelected] = useState(null)
   const [page, setPage]         = useState(1)
+  const [pageSize, setPageSize] = useState(HISTORY_PAGE_SIZE)
 
   const load = useCallback(() => {
     QueueService.ListJobsByProjectFile(projectID, fileID)
@@ -203,9 +204,9 @@ function HistoryTab({ projectID, fileID }) {
 
   useEffect(() => { load() }, [load])
 
-  const totalPages  = Math.max(1, Math.ceil(jobs.length / HISTORY_PAGE_SIZE))
+  const totalPages  = Math.max(1, Math.ceil(jobs.length / pageSize))
   const currentPage = Math.min(page, totalPages)
-  const pageJobs    = jobs.slice((currentPage - 1) * HISTORY_PAGE_SIZE, currentPage * HISTORY_PAGE_SIZE)
+  const pageJobs    = jobs.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 
   if (jobs.length === 0) {
     return <p className="empty-msg">まだ実行履歴がありません</p>
@@ -235,7 +236,7 @@ function HistoryTab({ projectID, fileID }) {
           </div>
         ))}
       </div>
-      <Pagination page={currentPage} totalPages={totalPages} onChange={p => { setPage(p); setSelected(null) }} />
+      <Pagination page={currentPage} totalPages={totalPages} onChange={p => { setPage(p); setSelected(null) }} pageSize={pageSize} onPageSizeChange={p => { setPageSize(p); setPage(1) }} />
       <JobDetailDialog job={selected} onClose={() => setSelected(null)} onDeleted={() => { setSelected(null); load() }} />
     </>
   )

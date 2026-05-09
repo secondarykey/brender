@@ -1241,10 +1241,32 @@ body {
 .pagination {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
+  justify-content: space-between;
   padding: 14px 0 4px;
   flex-shrink: 0;
+}
+.pagination-sizer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pagination-size-select {
+  background: #1e2736;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 4px;
+  color: rgba(255,255,255,0.75);
+  font-size: 0.82rem;
+  padding: 3px 6px;
+  cursor: pointer;
+}
+.pagination-size-select:focus {
+  outline: none;
+  border-color: rgba(74,124,220,0.6);
+}
+.pagination-pages {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 .pagination-btn {
   background: none;

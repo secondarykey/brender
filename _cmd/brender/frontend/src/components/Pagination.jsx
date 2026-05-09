@@ -1,5 +1,9 @@
-function Pagination({ page, totalPages, onChange }) {
-  if (totalPages <= 1) return null
+const PAGE_SIZE_OPTIONS = [5, 10, 20, 100]
+
+function Pagination({ page, totalPages, onChange, pageSize, onPageSizeChange }) {
+  const showSizer = pageSize != null && onPageSizeChange != null
+
+  if (totalPages <= 1 && !showSizer) return null
 
   const pages = []
   for (let i = 1; i <= totalPages; i++) {
@@ -26,10 +30,29 @@ function Pagination({ page, totalPages, onChange }) {
 
   return (
     <div className="pagination">
-      <button className="pagination-btn" onClick={() => onChange(page - 1)} disabled={page <= 1}>‹</button>
-      {buttons}
-      <button className="pagination-btn" onClick={() => onChange(page + 1)} disabled={page >= totalPages}>›</button>
-      <span className="pagination-info">{page} / {totalPages} ページ</span>
+      {showSizer ? (
+        <div className="pagination-sizer">
+          <span className="pagination-info">表示件数</span>
+          <select
+            className="pagination-size-select"
+            value={pageSize}
+            onChange={e => onPageSizeChange(Number(e.target.value))}
+          >
+            {PAGE_SIZE_OPTIONS.map(n => (
+              <option key={n} value={n}>{n}</option>
+            ))}
+          </select>
+        </div>
+      ) : <div />}
+
+      {totalPages > 1 && (
+        <div className="pagination-pages">
+          <button className="pagination-btn" onClick={() => onChange(page - 1)} disabled={page <= 1}>‹</button>
+          {buttons}
+          <button className="pagination-btn" onClick={() => onChange(page + 1)} disabled={page >= totalPages}>›</button>
+          <span className="pagination-info">{page} / {totalPages} ページ</span>
+        </div>
+      )}
     </div>
   )
 }

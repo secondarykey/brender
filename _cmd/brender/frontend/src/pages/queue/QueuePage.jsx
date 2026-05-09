@@ -215,6 +215,7 @@ function HistoryTab({ navigate }) {
   const [error, setError]       = useState('')
   const [selected, setSelected] = useState(null)
   const [page, setPage]         = useState(1)
+  const [pageSize, setPageSize] = useState(PAGE_SIZE)
 
   const load = useCallback(() => {
     QueueService.ListJobs()
@@ -224,9 +225,9 @@ function HistoryTab({ navigate }) {
 
   useEffect(() => { load() }, [load])
 
-  const totalPages  = Math.max(1, Math.ceil(jobs.length / PAGE_SIZE))
+  const totalPages  = Math.max(1, Math.ceil(jobs.length / pageSize))
   const currentPage = Math.min(page, totalPages)
-  const pageJobs    = jobs.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+  const pageJobs    = jobs.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 
   const handlePageChange = (p) => { setPage(p); setSelected(null) }
 
@@ -280,7 +281,7 @@ function HistoryTab({ navigate }) {
               ))}
             </tbody>
           </table>
-          <Pagination page={currentPage} totalPages={totalPages} onChange={handlePageChange} />
+          <Pagination page={currentPage} totalPages={totalPages} onChange={handlePageChange} pageSize={pageSize} onPageSizeChange={p => { setPageSize(p); setPage(1) }} />
         </>
       )}
       <JobDetailDialog job={selected} onClose={() => setSelected(null)} onDeleted={() => { setSelected(null); load() }} />
