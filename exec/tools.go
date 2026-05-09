@@ -7,10 +7,39 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"text/template"
 
 	"golang.org/x/xerrors"
 )
+
+// ツールスクリプトのキャッシュ（プロセス起動後に1回だけ作成、存在確認付き）
+var (
+	toolFileMu   sync.Mutex
+	toolFilePath string
+)
+
+// getToolPythonFile はキャッシュされたスクリプトファイルパスを返す。
+// ファイルが存在しない場合のみ再作成する。
+func getToolPythonFile() (string, error) {
+	toolFileMu.Lock()
+	defer toolFileMu.Unlock()
+
+	if toolFilePath != "" {
+		if _, err := os.Stat(toolFilePath); err == nil {
+			return toolFilePath, nil
+		}
+		// ファイルが消えていたらリセットして再作成
+		toolFilePath = ""
+	}
+
+	p, err := createToolPythonFile()
+	if err != nil {
+		return "", err
+	}
+	toolFilePath = p
+	return p, nil
+}
 
 //
 

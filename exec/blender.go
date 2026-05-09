@@ -217,9 +217,9 @@ func (b *Blender) createArguments() []string {
 
 func (b *Blender) RunTool() error {
 
-	p, err := createToolPythonFile()
+	p, err := getToolPythonFile()
 	if err != nil {
-		return xerrors.Errorf("CreateToolPython() error: %w", err)
+		return xerrors.Errorf("getToolPythonFile() error: %w", err)
 	}
 	b.Python = p
 	//defer os.Remove(p)
