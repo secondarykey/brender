@@ -29,6 +29,14 @@ function DataStatusBadge({ status }) {
   return <span className={`data-status-badge ${cls}`}>{label}</span>
 }
 
+function formatBytes(bytes) {
+  if (!bytes || bytes === 0) return '0 B'
+  const units = ['B', 'KB', 'MB', 'GB', 'TB']
+  const i = Math.min(Math.floor(Math.log2(bytes) / 10), units.length - 1)
+  const val = bytes / Math.pow(1024, i)
+  return `${i === 0 ? val : val.toFixed(2)} ${units[i]}`
+}
+
 function fmt(iso) {
   if (!iso) return '—'
   return new Date(iso).toLocaleString('ja-JP', {
@@ -103,6 +111,7 @@ function JobDetailDialog({ job, onClose, onDeleted }) {
             <Row label="Blender"  value={job.blender_path} />
             <Row label="ファイル" value={job.blender_file} />
             <Row label="出力先"   value={job.output_dir} />
+            <Row label="データ容量" value={formatBytes(job.disk_size)} />
           </div>
 
           <div className="job-detail-section">
