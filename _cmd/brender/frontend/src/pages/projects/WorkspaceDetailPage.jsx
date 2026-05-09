@@ -293,7 +293,6 @@ function SettingsTab({ projectID, workspaceID, detail, onUpdated, onDeleted }) {
 function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspaceID, navigate }) {
   const [detail, setDetail] = useState(null)
   const [error, setError]   = useState('')
-  const [tab, setTab]       = useState('settings')
 
   const load = useCallback(() => {
     WorkspaceService.Get(projectID, workspaceID)
@@ -324,13 +323,8 @@ function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspa
         </div>
       </div>
 
-      <div className="tab-nav">
-        <button className={`tab-btn${tab === 'settings' ? ' active' : ''}`} onClick={() => setTab('settings')}>設定</button>
-        <button className={`tab-btn${tab === 'history'  ? ' active' : ''}`} onClick={() => setTab('history')}>履歴</button>
-      </div>
-
-      <div className="tab-content">
-        {tab === 'settings' && (
+      <div className="ws-detail-split">
+        <div className="ws-detail-left">
           <SettingsTab
             projectID={projectID}
             workspaceID={workspaceID}
@@ -338,10 +332,11 @@ function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspa
             onUpdated={() => navigate('file', { projectID, projectName, fileID, fileName })}
             onDeleted={() => navigate('file', { projectID, projectName, fileID, fileName })}
           />
-        )}
-        {tab === 'history' && (
+        </div>
+        <div className="ws-detail-right">
+          <h3 className="ws-detail-section-title">実行履歴</h3>
           <HistoryTab projectID={projectID} workspaceID={workspaceID} />
-        )}
+        </div>
       </div>
     </div>
   )

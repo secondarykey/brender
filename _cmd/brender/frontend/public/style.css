@@ -194,6 +194,41 @@ body {
   overflow-y: auto;
 }
 
+/* ワークスペース詳細 左右分割 */
+.ws-detail-split {
+  display: flex;
+  gap: 32px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.ws-detail-left {
+  flex: 0 0 auto;
+  overflow-y: auto;
+}
+.ws-detail-right {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  border-left: 1px solid rgba(255,255,255,0.07);
+  padding-left: 32px;
+}
+.ws-detail-section-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin: 0 0 12px;
+}
+
+/* ws-detail-split を持つページはフレックス列 */
+.page:has(.ws-detail-split) {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 .page-header {
   display: flex;
   align-items: center;
