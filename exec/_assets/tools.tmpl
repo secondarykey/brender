@@ -16,7 +16,9 @@ def printScenes():
         start = value.frame_start
         end   = value.frame_end
 
-        cam   = value.camera.name
+        cam   = ""
+        if value.camera is not None:
+            cam   = value.camera.name
         x     = value.render.resolution_x
         y     = value.render.resolution_y
         eng   = value.render.engine
