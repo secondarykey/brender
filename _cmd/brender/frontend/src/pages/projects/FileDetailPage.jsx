@@ -259,8 +259,35 @@ function HistoryTab({ projectID, fileID }) {
   )
 }
 
+// ── サムネイルパネル ───────────────────────────────────────
+function ThumbnailPanel({ projectID, fileID }) {
+  const [src, setSrc]         = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    setLoading(true)
+    ProjectApi.getFileThumbnail({ projectID, fileID })
+      .then(data => setSrc(data || null))
+      .catch(() => setSrc(null))
+      .finally(() => setLoading(false))
+  }, [projectID, fileID])
+
+  return (
+    <div className="thumbnail-panel">
+      <h3 className="ws-detail-section-title">サムネイル</h3>
+      {loading ? (
+        <p className="thumbnail-placeholder">読み込み中...</p>
+      ) : src ? (
+        <img className="thumbnail-img" src={src} alt="thumbnail" />
+      ) : (
+        <p className="thumbnail-placeholder">サムネイルがありません</p>
+      )}
+    </div>
+  )
+}
+
 // ── 設定タブ ─────────────────────────────────────────────
-function SettingsTab({ fileID, fileName, onUpdated, onDeleted }) {
+function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
   const [name, setName]                   = useState(fileName)
   const [blenderInstallID, setBlenderID]  = useState(0)
   const [scene, setScene]                 = useState('')
@@ -328,86 +355,94 @@ function SettingsTab({ fileID, fileName, onUpdated, onDeleted }) {
   }
 
   return (
-    <div className="form" style={{ maxWidth: 480 }}>
-      <div className="form-field">
-        <label className="form-label">ファイル名称</label>
-        <input
-          className="form-input"
-          value={name}
-          onChange={e => setName(e.target.value)}
-        />
-        <span className="form-hint">レンダリング設定グループの表示名</span>
-      </div>
+    <div className="ws-detail-split">
+      <div className="ws-detail-left">
+        <div className="form" style={{ maxWidth: 480 }}>
+          <div className="form-field">
+            <label className="form-label">ファイル名称</label>
+            <input
+              className="form-input"
+              value={name}
+              onChange={e => setName(e.target.value)}
+            />
+            <span className="form-hint">レンダリング設定グループの表示名</span>
+          </div>
 
-      <div className="form-field">
-        <label className="form-label">デフォルト Blender</label>
-        {blenders.length === 0 ? (
-          <p className="setting-desc">Blenderが登録されていません（システム設定で追加してください）</p>
-        ) : (
-          <select
-            className="form-select"
-            value={blenderInstallID}
-            onChange={e => handleBlenderChange(Number(e.target.value))}
-          >
-            <option value={0}>— 未設定 —</option>
-            {blenders.map(b => (
-              <option key={b.id} value={b.id}>{b.name} ({b.version || 'バージョン不明'})</option>
-            ))}
-          </select>
-        )}
-        <span className="form-hint">未設定の場合: Blender一覧の先頭が使用されます</span>
-      </div>
+          <div className="form-field">
+            <label className="form-label">デフォルト Blender</label>
+            {blenders.length === 0 ? (
+              <p className="setting-desc">Blenderが登録されていません（システム設定で追加してください）</p>
+            ) : (
+              <select
+                className="form-select"
+                value={blenderInstallID}
+                onChange={e => handleBlenderChange(Number(e.target.value))}
+              >
+                <option value={0}>— 未設定 —</option>
+                {blenders.map(b => (
+                  <option key={b.id} value={b.id}>{b.name} ({b.version || 'バージョン不明'})</option>
+                ))}
+              </select>
+            )}
+            <span className="form-hint">未設定の場合: Blender一覧の先頭が使用されます</span>
+          </div>
 
-      <div className="form-field">
-        <label className="form-label">デフォルトシーン</label>
-        {scenes.length > 0 ? (
-          <select
-            className="form-select"
-            value={scene}
-            onChange={e => setScene(e.target.value)}
-            disabled={scenesLoading}
-          >
-            <option value="">— 未設定 —</option>
-            {scenes.map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
-        ) : (
-          <input
-            className="form-input"
-            value={scene}
-            onChange={e => setScene(e.target.value)}
-            placeholder="未設定"
-          />
-        )}
-        <span className="form-hint">未設定の場合: .blend ファイルのデフォルトシーンが使用されます</span>
-      </div>
+          <div className="form-field">
+            <label className="form-label">デフォルトシーン</label>
+            {scenes.length > 0 ? (
+              <select
+                className="form-select"
+                value={scene}
+                onChange={e => setScene(e.target.value)}
+                disabled={scenesLoading}
+              >
+                <option value="">— 未設定 —</option>
+                {scenes.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            ) : (
+              <input
+                className="form-input"
+                value={scene}
+                onChange={e => setScene(e.target.value)}
+                placeholder="未設定"
+              />
+            )}
+            <span className="form-hint">未設定の場合: .blend ファイルのデフォルトシーンが使用されます</span>
+          </div>
 
-      {error && <p className="form-error">{error}</p>}
-      <div className="form-actions">
-        <button className="btn btn-danger" onClick={() => setConfirm(true)}>削除</button>
-        <button className="btn" onClick={handleSave} disabled={saving}>
-          {saving ? '保存中...' : '保存'}
-        </button>
-      </div>
-
-      {confirm && (
-        <div className="dialog-overlay" onClick={() => setConfirm(false)}>
-          <div className="dialog" onClick={e => e.stopPropagation()}>
-            <h3 className="dialog-title">ファイルを削除しますか？</h3>
-            <div className="dialog-body">
-              <p><span className="dialog-label">ファイル</span>{fileName}</p>
-              <p style={{ marginTop: 10, color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>
-                関連するワークスペースおよびジョブ履歴も削除されます。物理ファイルは削除されません。この操作は取り消せません。
-              </p>
-            </div>
-            <div className="dialog-actions">
-              <button className="btn btn-ghost" onClick={() => setConfirm(false)}>キャンセル</button>
-              <button className="btn btn-danger" onClick={handleDelete} disabled={deleting}>
-                {deleting ? '削除中...' : '削除'}
-              </button>
-            </div>
+          {error && <p className="form-error">{error}</p>}
+          <div className="form-actions">
+            <button className="btn btn-danger" onClick={() => setConfirm(true)}>削除</button>
+            <button className="btn" onClick={handleSave} disabled={saving}>
+              {saving ? '保存中...' : '保存'}
+            </button>
           </div>
         </div>
-      )}
+
+        {confirm && (
+          <div className="dialog-overlay" onClick={() => setConfirm(false)}>
+            <div className="dialog" onClick={e => e.stopPropagation()}>
+              <h3 className="dialog-title">ファイルを削除しますか？</h3>
+              <div className="dialog-body">
+                <p><span className="dialog-label">ファイル</span>{fileName}</p>
+                <p style={{ marginTop: 10, color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>
+                  関連するワークスペースおよびジョブ履歴も削除されます。物理ファイルは削除されません。この操作は取り消せません。
+                </p>
+              </div>
+              <div className="dialog-actions">
+                <button className="btn btn-ghost" onClick={() => setConfirm(false)}>キャンセル</button>
+                <button className="btn btn-danger" onClick={handleDelete} disabled={deleting}>
+                  {deleting ? '削除中...' : '削除'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="ws-detail-right">
+        <ThumbnailPanel projectID={projectID} fileID={fileID} />
+      </div>
     </div>
   )
 }
@@ -462,6 +497,7 @@ function FileDetailPage({ projectID, projectName, fileID, fileName, navigate }) 
         )}
         {tab === 'settings' && (
           <SettingsTab
+            projectID={projectID}
             fileID={fileID}
             fileName={currentFileName}
             onUpdated={f => setCurrentFileName(f.name)}

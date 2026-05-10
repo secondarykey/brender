@@ -139,6 +139,18 @@ func UpdateWorkspace(projectID string, workspaceID string, name string, blenderI
 	return GetWorkspace(projectID, workspaceID)
 }
 
+func GetSystemWorkspaceByFile(projectFileID uint) (*Workspace, error) {
+	var w Workspace
+	res := db.Where("project_file_id = ? AND is_system = ?", projectFileID, true).First(&w)
+	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if res.Error != nil {
+		return nil, xerrors.Errorf("GetSystemWorkspaceByFile: %w", res.Error)
+	}
+	return &w, nil
+}
+
 func SelectWorkspace(pId string, wId string) (*Workspace, error) {
 	var w Workspace
 	if res := db.First(&w, "id = ? AND project_id = ?", wId, pId); res.Error != nil {

@@ -70,4 +70,11 @@ export const ProjectApi = {
   deleteFile: ({ fileID }) =>
     isWails() ? svc().then(s => s.DeleteFile(fileID))
               : serverCall('project', 'delete_file', { file_id: fileID }),
+
+  /** ファイルのサムネイル画像を base64 データURIで取得
+   * @param {{ projectID: string, fileID: number }} args
+   */
+  getFileThumbnail: ({ projectID, fileID }) =>
+    isWails() ? svc().then(s => s.GetFileThumbnail(projectID, fileID))
+              : serverCall('project', 'get_file_thumbnail', { project_id: projectID, file_id: fileID }),
 }

@@ -1,9 +1,11 @@
 package model
 
 import (
+	"errors"
 	"time"
 
 	"golang.org/x/xerrors"
+	"gorm.io/gorm"
 )
 
 const (
@@ -70,6 +72,19 @@ func ListJobs() ([]*Job, error) {
 		return nil, xerrors.Errorf("ListJobs: %w", res.Error)
 	}
 	return list, nil
+}
+
+func GetLatestCompletedJobByWorkspace(workspaceID string) (*Job, error) {
+	var j Job
+	res := db.Where("workspace_id = ? AND status = ? AND data_status = ?", workspaceID, JobCompleted, JobDataAvailable).
+		Order("enqueued_at desc").First(&j)
+	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if res.Error != nil {
+		return nil, xerrors.Errorf("GetLatestCompletedJobByWorkspace: %w", res.Error)
+	}
+	return &j, nil
 }
 
 func ListJobsByWorkspace(projectID string, workspaceID string) ([]*Job, error) {
