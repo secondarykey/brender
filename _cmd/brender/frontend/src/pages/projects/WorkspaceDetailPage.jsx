@@ -45,11 +45,9 @@ function HistoryTab({ projectID, workspaceID }) {
       <div className="queue-history-list">
         {pageJobs.map(j => (
           <div key={j.id} className="queue-history-item queue-history-item-clickable" onClick={() => setSelected(j)}>
-            <div className="queue-history-top" style={{ alignItems: 'flex-start' }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, minWidth: 0 }}>
-                {(j.data_status === 2 || j.data_status === 3) && (
-                  <button className="btn btn-sm" onClick={e => { e.stopPropagation(); setViewing(j) }}>表示</button>
-                )}
+            <div className="queue-history-top">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                <button className="btn btn-sm" onClick={e => { e.stopPropagation(); setViewing(j) }} disabled={!(j.data_status === 2 || j.data_status === 3)}>表示</button>
                 <div className="queue-history-detail" style={{ marginTop: 0 }}>
                   <span>{j.start_frame}–{j.end_frame}f</span>
                   {j.engine && <span>{j.engine}</span>}
