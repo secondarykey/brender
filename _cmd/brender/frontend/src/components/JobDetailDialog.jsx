@@ -138,7 +138,7 @@ function JobDetailDialog({ job, onClose, onDeleted }) {
             </div>
           </div>
         ) : (
-          <div className="dialog-actions">
+          <div className="dialog-actions" style={{ justifyContent: 'space-between' }}>
             <button className="btn btn-danger" onClick={() => setConfirm(true)}>削除</button>
             <button className="btn btn-ghost" onClick={onClose}>閉じる</button>
           </div>
