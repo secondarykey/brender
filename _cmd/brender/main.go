@@ -20,6 +20,9 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
+//go:embed version
+var appVersion string
+
 func initDB() error {
 	home, err := os.UserHomeDir()
 	if err != nil {

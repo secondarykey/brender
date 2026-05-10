@@ -1,6 +1,6 @@
 import { isWails, serverCall } from './_client'
 
-const svc = () => import('../../../bindings/changeme').then(m => m.WorkspaceService)
+const svc = () => import('../../../bindings/main').then(m => m.WorkspaceService)
 
 export const WorkspaceApi = {
   /** プロジェクト内のワークスペース一覧をファイルごとに取得

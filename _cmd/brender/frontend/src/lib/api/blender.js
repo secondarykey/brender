@@ -1,7 +1,7 @@
 import { isWails, serverCall } from './_client'
 
 // Wails Service を動的インポートしてサーバビルド時の依存を回避
-const svc = () => import('../../../bindings/changeme').then(m => m.BlenderService)
+const svc = () => import('../../../bindings/main').then(m => m.BlenderService)
 
 export const BlenderApi = {
   /** Blender インストール一覧を取得 */
