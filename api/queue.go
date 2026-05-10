@@ -461,6 +461,24 @@ func DeleteJob(id string) error {
 	return model.DeleteJob(id)
 }
 
+func DeleteJobData(id string) error {
+	j, err := model.GetJob(id)
+	if err != nil {
+		return xerrors.Errorf("DeleteJobData GetJob: %w", err)
+	}
+	if j.DataStatus == model.JobDataLocked {
+		return xerrors.New("ロック中のジョブのデータは削除できません")
+	}
+	if j.OutputDir != "" {
+		if _, statErr := os.Stat(j.OutputDir); statErr == nil {
+			if rmErr := os.RemoveAll(j.OutputDir); rmErr != nil {
+				return xerrors.Errorf("DeleteJobData RemoveAll: %w", rmErr)
+			}
+		}
+	}
+	return model.UpdateJobDataStatus(id, model.JobDataDeleted)
+}
+
 func LockJob(id string) error {
 	return model.UpdateJobDataStatus(id, model.JobDataLocked)
 }

@@ -64,11 +64,13 @@ function Row({ label, value }) {
 }
 
 function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
-  const [confirm, setConfirm]       = useState(false)
-  const [deleting, setDeleting]     = useState(false)
-  const [locking, setLocking]       = useState(false)
-  const [error, setError]           = useState('')
-  const [dataStatus, setDataStatus] = useState(job?.data_status || 'none')
+  const [confirm, setConfirm]           = useState(false)
+  const [confirmData, setConfirmData]   = useState(false)
+  const [deleting, setDeleting]         = useState(false)
+  const [deletingData, setDeletingData] = useState(false)
+  const [locking, setLocking]           = useState(false)
+  const [error, setError]               = useState('')
+  const [dataStatus, setDataStatus]     = useState(job?.data_status || 'none')
 
   useEffect(() => {
     if (job) setDataStatus(job.data_status || 'none')
@@ -97,6 +99,21 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
       setError(String(err))
     } finally {
       setLocking(false)
+    }
+  }
+
+  const handleDeleteData = async () => {
+    setDeletingData(true)
+    setError('')
+    try {
+      await QueueApi.deleteJobData({ id: job.id })
+      setDataStatus('deleted')
+      setConfirmData(false)
+      if (onStatusChanged) onStatusChanged(job.id, 'deleted')
+    } catch (err) {
+      setError(String(err))
+    } finally {
+      setDeletingData(false)
     }
   }
 
@@ -148,7 +165,16 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
             <Row label="Blender"  value={job.blender_path} />
             <Row label="ファイル" value={job.blender_file} />
             <Row label="出力先"   value={job.output_dir} />
-            <Row label="データ容量" value={formatBytes(job.disk_size)} />
+            <Row label="データ容量" value={
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span>{formatBytes(job.disk_size)}</span>
+                {dataStatus === 'available' && (
+                  <button className="btn btn-sm btn-danger" onClick={() => setConfirmData(true)} disabled={isLocked}>
+                    データ削除
+                  </button>
+                )}
+              </div>
+            } />
           </div>
 
           <div className="job-detail-section">
@@ -164,7 +190,17 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
           {error && <div className="error-msg" style={{ marginTop: 8 }}>{error}</div>}
         </div>
 
-        {confirm ? (
+        {confirmData ? (
+          <div className="job-delete-confirm">
+            <span className="job-delete-confirm-msg">出力フォルダを削除します。ジョブ履歴は残ります。この操作は取り消せません。</span>
+            <div className="dialog-actions" style={{ marginTop: 12 }}>
+              <button className="btn btn-ghost" onClick={() => setConfirmData(false)} disabled={deletingData}>キャンセル</button>
+              <button className="btn btn-danger" onClick={handleDeleteData} disabled={deletingData}>
+                {deletingData ? '削除中...' : 'データ削除する'}
+              </button>
+            </div>
+          </div>
+        ) : confirm ? (
           <div className="job-delete-confirm">
             <span className="job-delete-confirm-msg">出力フォルダも含めて削除します。この操作は取り消せません。</span>
             <div className="dialog-actions" style={{ marginTop: 12 }}>

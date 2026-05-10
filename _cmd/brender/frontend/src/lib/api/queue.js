@@ -60,6 +60,13 @@ export const QueueApi = {
     isWails() ? svc().then(s => s.DeleteJob(id))
               : serverCall('queue', 'delete_job', { id }),
 
+  /** 出力データのみ削除（ジョブ履歴は残す）
+   * @param {{ id: string }} args
+   */
+  deleteJobData: ({ id }) =>
+    isWails() ? svc().then(s => s.DeleteJobData(id))
+              : serverCall('queue', 'delete_job_data', { id }),
+
   /** ジョブをロック
    * @param {{ id: string }} args
    */

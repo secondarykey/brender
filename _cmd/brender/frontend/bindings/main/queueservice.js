@@ -30,6 +30,14 @@ export function DeleteJob(id) {
 }
 
 /**
+ * @param {string} id
+ * @returns {$CancellablePromise<void>}
+ */
+export function DeleteJobData(id) {
+    return $Call.ByID(3130572120, id);
+}
+
+/**
  * @param {string} projectID
  * @param {string} workspaceID
  * @returns {$CancellablePromise<model$0.Queue | null>}

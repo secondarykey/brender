@@ -55,6 +55,10 @@ func (s *QueueService) DeleteJob(id string) error {
 	return api.DeleteJob(id)
 }
 
+func (s *QueueService) DeleteJobData(id string) error {
+	return api.DeleteJobData(id)
+}
+
 func (s *QueueService) LockJob(id string) error {
 	return api.LockJob(id)
 }
