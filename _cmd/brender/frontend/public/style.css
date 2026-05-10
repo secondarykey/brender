@@ -1339,9 +1339,7 @@ body {
   flex-direction: column;
 }
 .image-viewer-body {
-  flex: 1;
-  min-height: 400px;
-  max-height: 60vh;
+  height: 60vh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1349,6 +1347,7 @@ body {
   border-radius: 4px;
   overflow: hidden;
   margin-bottom: 12px;
+  flex-shrink: 0;
 }
 .image-viewer-img {
   max-width: 100%;
