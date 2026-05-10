@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { QueueApi } from '../lib/api'
 
 const STATUS_LABELS = {
@@ -69,6 +69,10 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
   const [locking, setLocking]       = useState(false)
   const [error, setError]           = useState('')
   const [dataStatus, setDataStatus] = useState(job?.data_status || 'none')
+
+  useEffect(() => {
+    if (job) setDataStatus(job.data_status || 'none')
+  }, [job])
 
   if (!job) return null
 
