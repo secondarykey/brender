@@ -45,23 +45,21 @@ function HistoryTab({ projectID, workspaceID }) {
       <div className="queue-history-list">
         {pageJobs.map(j => (
           <div key={j.id} className="queue-history-item queue-history-item-clickable" onClick={() => setSelected(j)}>
-            <div className="queue-history-top">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div className="queue-history-top" style={{ alignItems: 'flex-start' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, minWidth: 0 }}>
                 {(j.data_status === 2 || j.data_status === 3) && (
                   <button className="btn btn-sm" onClick={e => { e.stopPropagation(); setViewing(j) }}>表示</button>
                 )}
-                <span className={`status-badge status-${j.status}`}>{STATUS_LABELS[j.status] ?? j.status}</span>
+                <div className="queue-history-detail" style={{ marginTop: 0 }}>
+                  <span>{j.start_frame}–{j.end_frame}f</span>
+                  {j.engine && <span>{j.engine}</span>}
+                  {j.scene  && <span>{j.scene}</span>}
+                  {j.enqueued_at && (
+                    <span>{new Date(j.enqueued_at).toLocaleString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+                  )}
+                </div>
               </div>
-              {j.enqueued_at && (
-                <span className="queue-history-date">
-                  {new Date(j.enqueued_at).toLocaleString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                </span>
-              )}
-            </div>
-            <div className="queue-history-detail">
-              <span>{j.start_frame}–{j.end_frame}f</span>
-              {j.engine && <span>{j.engine}</span>}
-              {j.scene  && <span>{j.scene}</span>}
+              <span className={`status-badge status-${j.status}`}>{STATUS_LABELS[j.status] ?? j.status}</span>
             </div>
             {j.status === 'error' && j.error_msg && (
               <div className="queue-history-error">
