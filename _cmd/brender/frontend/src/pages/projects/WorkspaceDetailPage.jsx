@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { WorkspaceApi, BlenderApi, QueueApi } from '../../lib/api'
 import JobDetailDialog from '../../components/JobDetailDialog'
+import ImageViewerDialog from '../../components/ImageViewerDialog'
 import Pagination from '../../components/Pagination'
 
 
@@ -19,6 +20,7 @@ function HistoryTab({ projectID, workspaceID }) {
 
   const [jobs, setJobs]         = useState([])
   const [selected, setSelected] = useState(null)
+  const [viewing, setViewing]   = useState(null)
   const [page, setPage]         = useState(1)
   const [pageSize, setPageSize] = useState(HISTORY_PAGE_SIZE)
 
@@ -45,11 +47,16 @@ function HistoryTab({ projectID, workspaceID }) {
           <div key={j.id} className="queue-history-item queue-history-item-clickable" onClick={() => setSelected(j)}>
             <div className="queue-history-top">
               <span className={`status-badge status-${j.status}`}>{STATUS_LABELS[j.status] ?? j.status}</span>
-              {j.enqueued_at && (
-                <span className="queue-history-date">
-                  {new Date(j.enqueued_at).toLocaleString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                </span>
-              )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                {(j.data_status === 2 || j.data_status === 3) && (
+                  <button className="btn btn-sm btn-run" onClick={e => { e.stopPropagation(); setViewing(j) }}>開く</button>
+                )}
+                {j.enqueued_at && (
+                  <span className="queue-history-date">
+                    {new Date(j.enqueued_at).toLocaleString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                )}
+              </div>
             </div>
             <div className="queue-history-detail">
               <span>{j.start_frame}–{j.end_frame}f</span>
@@ -70,6 +77,7 @@ function HistoryTab({ projectID, workspaceID }) {
           setJobs(prev => prev.map(j => j.id === id ? { ...j, data_status: status } : j))
           setSelected(prev => prev && prev.id === id ? { ...prev, data_status: status } : prev)
         }} />
+      <ImageViewerDialog job={viewing} onClose={() => setViewing(null)} />
     </>
   )
 }

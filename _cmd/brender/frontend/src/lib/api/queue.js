@@ -67,6 +67,20 @@ export const QueueApi = {
     isWails() ? svc().then(s => s.DeleteJobData(id))
               : serverCall('queue', 'delete_job_data', { id }),
 
+  /** ジョブの出力ディレクトリにある画像パス一覧を取得
+   * @param {{ id: string }} args
+   */
+  listJobImages: ({ id }) =>
+    isWails() ? svc().then(s => s.ListJobImages(id))
+              : serverCall('queue', 'list_job_images', { id }),
+
+  /** 画像ファイルを base64 データ URI として取得
+   * @param {{ path: string }} args
+   */
+  getImageBase64: ({ path }) =>
+    isWails() ? svc().then(s => s.GetImageBase64(path))
+              : serverCall('queue', 'get_image_base64', { path }),
+
   /** ジョブをロック
    * @param {{ id: string }} args
    */

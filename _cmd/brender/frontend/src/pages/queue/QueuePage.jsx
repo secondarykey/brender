@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { QueueApi } from '../../lib/api'
 import JobDetailDialog from '../../components/JobDetailDialog'
+import ImageViewerDialog from '../../components/ImageViewerDialog'
 import Pagination from '../../components/Pagination'
 
 const STATUS_LABELS = {
@@ -214,6 +215,7 @@ function HistoryTab({ navigate }) {
   const [jobs, setJobs]         = useState([])
   const [error, setError]       = useState('')
   const [selected, setSelected] = useState(null)
+  const [viewing, setViewing]   = useState(null)
   const [page, setPage]         = useState(1)
   const [pageSize, setPageSize] = useState(PAGE_SIZE)
 
@@ -248,6 +250,7 @@ function HistoryTab({ navigate }) {
                 <th>フレーム</th>
                 <th>登録時刻</th>
                 <th>所要時間</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -277,6 +280,11 @@ function HistoryTab({ navigate }) {
                   <td className="frames-cell">{j.start_frame}–{j.end_frame}</td>
                   <td className="date-cell">{formatDate(j.enqueued_at)}</td>
                   <td className="duration-cell">{duration(j.started_at, j.completed_at)}</td>
+                  <td onClick={e => e.stopPropagation()}>
+                    {(j.data_status === 2 || j.data_status === 3) && (
+                      <button className="btn btn-sm btn-run" onClick={() => setViewing(j)}>開く</button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -289,6 +297,7 @@ function HistoryTab({ navigate }) {
           setJobs(prev => prev.map(j => j.id === id ? { ...j, data_status: status } : j))
           setSelected(prev => prev && prev.id === id ? { ...prev, data_status: status } : prev)
         }} />
+      <ImageViewerDialog job={viewing} onClose={() => setViewing(null)} />
     </>
   )
 }

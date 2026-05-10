@@ -2,11 +2,13 @@ package api
 
 import (
 	"context"
+	"encoding/base64"
 	"io"
 	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/ikascrew/brender/exec"
@@ -499,6 +501,46 @@ func UnlockJob(id string) error {
 		return nil // ロックされていない
 	}
 	return model.UpdateJobDataStatus(id, j.DataStatus-1)
+}
+
+// ListJobImages はジョブの出力ディレクトリにある画像ファイルのパス一覧を昇順で返す。
+func ListJobImages(id string) ([]string, error) {
+	j, err := model.GetJob(id)
+	if err != nil {
+		return nil, xerrors.Errorf("ListJobImages GetJob: %w", err)
+	}
+	if j.OutputDir == "" {
+		return nil, nil
+	}
+	entries, err := os.ReadDir(j.OutputDir)
+	if err != nil {
+		return nil, xerrors.Errorf("ListJobImages ReadDir: %w", err)
+	}
+	var paths []string
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		ext := strings.ToLower(filepath.Ext(e.Name()))
+		if ext == ".png" || ext == ".jpg" || ext == ".jpeg" {
+			paths = append(paths, filepath.Join(j.OutputDir, e.Name()))
+		}
+	}
+	return paths, nil
+}
+
+// GetImageBase64 は指定パスの画像を base64 データ URI として返す。
+func GetImageBase64(path string) (string, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return "", xerrors.Errorf("GetImageBase64: %w", err)
+	}
+	mime := "image/png"
+	switch strings.ToLower(filepath.Ext(path)) {
+	case ".jpg", ".jpeg":
+		mime = "image/jpeg"
+	}
+	return "data:" + mime + ";base64," + base64.StdEncoding.EncodeToString(data), nil
 }
 
 func ListJobsByWorkspace(projectID string, workspaceID string) ([]*model.Job, error) {

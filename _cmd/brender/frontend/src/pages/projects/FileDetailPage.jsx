@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { WorkspaceApi, QueueApi, ProjectApi, BlenderApi } from '../../lib/api'
 import JobDetailDialog from '../../components/JobDetailDialog'
+import ImageViewerDialog from '../../components/ImageViewerDialog'
 import Pagination from '../../components/Pagination'
 
 const STATUS_LABELS = {
@@ -191,6 +192,7 @@ const HISTORY_PAGE_SIZE = 5
 function HistoryTab({ projectID, fileID }) {
   const [jobs, setJobs]         = useState([])
   const [selected, setSelected] = useState(null)
+  const [viewing, setViewing]   = useState(null)
   const [page, setPage]         = useState(1)
   const [pageSize, setPageSize] = useState(HISTORY_PAGE_SIZE)
 
@@ -217,7 +219,12 @@ function HistoryTab({ projectID, fileID }) {
           <div key={j.id} className="queue-history-item queue-history-item-clickable" onClick={() => setSelected(j)}>
             <div className="queue-history-top">
               <span className="queue-history-name">{j.workspace_name}</span>
-              <span className={`status-badge status-${j.status}`}>{STATUS_LABELS[j.status] ?? j.status}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                {(j.data_status === 2 || j.data_status === 3) && (
+                  <button className="btn btn-sm btn-run" onClick={e => { e.stopPropagation(); setViewing(j) }}>開く</button>
+                )}
+                <span className={`status-badge status-${j.status}`}>{STATUS_LABELS[j.status] ?? j.status}</span>
+              </div>
             </div>
             <div className="queue-history-detail">
               <span>{j.start_frame}–{j.end_frame}f</span>
@@ -240,6 +247,7 @@ function HistoryTab({ projectID, fileID }) {
           setJobs(prev => prev.map(j => j.id === id ? { ...j, data_status: status } : j))
           setSelected(prev => prev && prev.id === id ? { ...prev, data_status: status } : prev)
         }} />
+      <ImageViewerDialog job={viewing} onClose={() => setViewing(null)} />
     </>
   )
 }

@@ -71,6 +71,14 @@ export function Get(id) {
 }
 
 /**
+ * @param {string} path
+ * @returns {$CancellablePromise<string>}
+ */
+export function GetImageBase64(path) {
+    return $Call.ByID(2710915624, path);
+}
+
+/**
  * @returns {$CancellablePromise<(model$0.Queue | null)[]>}
  */
 export function List() {
@@ -100,11 +108,21 @@ export function ListItems() {
 }
 
 /**
+ * @param {string} id
+ * @returns {$CancellablePromise<string[]>}
+ */
+export function ListJobImages(id) {
+    return $Call.ByID(3681338691, id).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType6($result);
+    }));
+}
+
+/**
  * @returns {$CancellablePromise<(model$0.Job | null)[]>}
  */
 export function ListJobs() {
     return $Call.ByID(2931144554).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType8($result);
+        return $$createType9($result);
     }));
 }
 
@@ -115,7 +133,7 @@ export function ListJobs() {
  */
 export function ListJobsByProjectFile(projectID, fileID) {
     return $Call.ByID(567594534, projectID, fileID).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType8($result);
+        return $$createType9($result);
     }));
 }
 
@@ -126,7 +144,7 @@ export function ListJobsByProjectFile(projectID, fileID) {
  */
 export function ListJobsByWorkspace(projectID, workspaceID) {
     return $Call.ByID(2899323832, projectID, workspaceID).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType8($result);
+        return $$createType9($result);
     }));
 }
 
@@ -145,7 +163,7 @@ export function LockJob(id) {
  */
 export function PreviewRender(projectID, workspaceID) {
     return $Call.ByID(2016776806, projectID, workspaceID).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType10($result);
+        return $$createType11($result);
     }));
 }
 
@@ -164,8 +182,9 @@ const $$createType2 = $Create.Array($$createType1);
 const $$createType3 = api$0.QueueItem.createFrom;
 const $$createType4 = $Create.Nullable($$createType3);
 const $$createType5 = $Create.Array($$createType4);
-const $$createType6 = model$0.Job.createFrom;
-const $$createType7 = $Create.Nullable($$createType6);
-const $$createType8 = $Create.Array($$createType7);
-const $$createType9 = api$0.RenderPreview.createFrom;
-const $$createType10 = $Create.Nullable($$createType9);
+const $$createType6 = $Create.Array($Create.Any);
+const $$createType7 = model$0.Job.createFrom;
+const $$createType8 = $Create.Nullable($$createType7);
+const $$createType9 = $Create.Array($$createType8);
+const $$createType10 = api$0.RenderPreview.createFrom;
+const $$createType11 = $Create.Nullable($$createType10);

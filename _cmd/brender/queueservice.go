@@ -59,6 +59,14 @@ func (s *QueueService) DeleteJobData(id string) error {
 	return api.DeleteJobData(id)
 }
 
+func (s *QueueService) ListJobImages(id string) ([]string, error) {
+	return api.ListJobImages(id)
+}
+
+func (s *QueueService) GetImageBase64(path string) (string, error) {
+	return api.GetImageBase64(path)
+}
+
 func (s *QueueService) LockJob(id string) error {
 	return api.LockJob(id)
 }
