@@ -9,7 +9,8 @@ import SettingsPage from './pages/settings/SettingsPage'
 import { EnvironmentApi } from './lib/api'
 
 function App() {
-  const [nav, setNav] = useState({ page: 'projects', params: {} })
+  const [nav, setNav]         = useState({ page: 'projects', params: {} })
+  const [queueKey, setQueueKey] = useState(0)
 
   useEffect(() => {
     EnvironmentApi.get()
@@ -21,7 +22,10 @@ function App() {
       .catch(() => {})
   }, [])
 
-  const navigate = (page, params = {}) => setNav({ page, params })
+  const navigate = (page, params = {}) => {
+    if (page === 'queue') setQueueKey(k => k + 1)
+    setNav({ page, params })
+  }
 
   const renderPage = () => {
     const p = nav.params
@@ -52,7 +56,7 @@ function App() {
           />
         )
       case 'queue':
-        return <QueuePage navigate={navigate} />
+        return <QueuePage key={queueKey} navigate={navigate} />
       case 'settings':
         return <SettingsPage />
       default:
