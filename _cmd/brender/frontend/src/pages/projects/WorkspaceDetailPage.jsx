@@ -320,6 +320,10 @@ function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspa
     return <div className="page"><p className="setting-desc">読み込み中...</p></div>
   }
 
+  // fileID / fileName が props に無い場合（履歴などからの直接遷移）は detail から補完する
+  const effectiveFileID   = fileID   || detail.workspace.project_file_id || ''
+  const effectiveFileName = fileName || detail.project_files?.find(f => f.id === effectiveFileID)?.name || ''
+
   return (
     <div className="page">
       <div className="page-header">
@@ -328,8 +332,12 @@ function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspa
           <span className="breadcrumb-sep">›</span>
           <button className="breadcrumb-link" onClick={() => navigate('project', { id: projectID })}>{projectName}</button>
           <span className="breadcrumb-sep">›</span>
-          <button className="breadcrumb-link" onClick={() => navigate('file', { projectID, projectName, fileID, fileName })}>{fileName}</button>
-          <span className="breadcrumb-sep">›</span>
+          {effectiveFileName && (
+            <>
+              <button className="breadcrumb-link" onClick={() => navigate('file', { projectID, projectName, fileID: effectiveFileID, fileName: effectiveFileName })}>{effectiveFileName}</button>
+              <span className="breadcrumb-sep">›</span>
+            </>
+          )}
           <span>{detail.workspace.name}</span>
         </div>
       </div>
@@ -340,8 +348,8 @@ function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspa
             projectID={projectID}
             workspaceID={workspaceID}
             detail={detail}
-            onUpdated={() => navigate('file', { projectID, projectName, fileID, fileName })}
-            onDeleted={() => navigate('file', { projectID, projectName, fileID, fileName })}
+            onUpdated={() => navigate('file', { projectID, projectName, fileID: effectiveFileID, fileName: effectiveFileName })}
+            onDeleted={() => navigate('file', { projectID, projectName, fileID: effectiveFileID, fileName: effectiveFileName })}
           />
         </div>
         <div className="ws-detail-right">
