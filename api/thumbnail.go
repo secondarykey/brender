@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"image"
+	"image/color"
 	"image/jpeg"
 	"image/png"
 	"os"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/ikascrew/brender/exec"
 	"github.com/ikascrew/brender/model"
+	xdraw "golang.org/x/image/draw"
 	"golang.org/x/xerrors"
 )
 
@@ -95,25 +97,53 @@ func findFirstImage(dir string) (string, error) {
 	return "", nil
 }
 
+const thumbSize = 640
+
 func convertToJPEG(src, dstDir, dstPath string) error {
 	data, err := os.ReadFile(src)
 	if err != nil {
 		return xerrors.Errorf("read: %w", err)
 	}
 
-	var img image.Image
+	var src_img image.Image
 	ext := strings.ToLower(filepath.Ext(src))
 	switch ext {
 	case ".png":
-		img, err = png.Decode(bytes.NewReader(data))
+		src_img, err = png.Decode(bytes.NewReader(data))
 	case ".jpg", ".jpeg":
-		img, err = jpeg.Decode(bytes.NewReader(data))
+		src_img, err = jpeg.Decode(bytes.NewReader(data))
 	default:
 		return xerrors.Errorf("unsupported format: %s", ext)
 	}
 	if err != nil {
 		return xerrors.Errorf("decode: %w", err)
 	}
+
+	canvas := image.NewRGBA(image.Rect(0, 0, thumbSize, thumbSize))
+	// 背景を黒で塗りつぶす
+	for y := 0; y < thumbSize; y++ {
+		for x := 0; x < thumbSize; x++ {
+			canvas.Set(x, y, color.Black)
+		}
+	}
+
+	// アスペクト比を保ったまま 640x640 内に収めるスケールを計算
+	bounds := src_img.Bounds()
+	srcW := bounds.Dx()
+	srcH := bounds.Dy()
+	scale := float64(thumbSize) / float64(srcW)
+	if h := float64(srcH) * scale; h > thumbSize {
+		scale = float64(thumbSize) / float64(srcH)
+	}
+	fitW := int(float64(srcW) * scale)
+	fitH := int(float64(srcH) * scale)
+
+	// 中央に配置するオフセット
+	offsetX := (thumbSize - fitW) / 2
+	offsetY := (thumbSize - fitH) / 2
+	dst_rect := image.Rect(offsetX, offsetY, offsetX+fitW, offsetY+fitH)
+
+	xdraw.BiLinear.Scale(canvas, dst_rect, src_img, bounds, xdraw.Over, nil)
 
 	if err := os.MkdirAll(dstDir, 0755); err != nil {
 		return xerrors.Errorf("mkdir: %w", err)
@@ -125,7 +155,7 @@ func convertToJPEG(src, dstDir, dstPath string) error {
 	}
 	defer f.Close()
 
-	return jpeg.Encode(f, img, &jpeg.Options{Quality: 85})
+	return jpeg.Encode(f, canvas, &jpeg.Options{Quality: 85})
 }
 
 func imageToBase64(path string) (string, error) {
