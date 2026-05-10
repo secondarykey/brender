@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Dialogs } from '@wailsio/runtime'
 import { WorkspaceApi, ProjectApi, BlenderApi } from '../../../lib/api'
 
-// ── サムネイル付きカード ──────────────────────────────────
+// ── サムネイルタイル ──────────────────────────────────────
 function FileCard({ projectID, g, navigate, projectName, onOpen, openingFileID }) {
   const [thumb, setThumb] = useState(null)
 
@@ -16,28 +16,26 @@ function FileCard({ projectID, g, navigate, projectName, onOpen, openingFileID }
 
   return (
     <div
-      className="file-card"
+      className="file-tile"
       onClick={() => navigate('file', { projectID, projectName, fileID: g.file.id, fileName })}
     >
-      <div className="file-card-thumb">
+      <div className="file-tile-thumb">
         {thumb
           ? <img src={thumb} alt={fileName} />
-          : <span className="file-card-thumb-placeholder">No Image</span>
+          : <span className="file-tile-thumb-placeholder">No Image</span>
         }
       </div>
-      <div className="file-card-info">
-        <div className="file-card-actions">
-          <button
-            className="btn btn-run btn-sm"
-            onClick={e => { e.stopPropagation(); onOpen(e, g.file) }}
-            disabled={openingFileID === g.file.id}
-            title="Blender で開く"
-          >
-            {openingFileID === g.file.id ? '...' : '開く'}
-          </button>
-        </div>
-        <div className="file-card-name" title={fileName}>{fileName}</div>
-        <div className="file-card-meta">{g.workspaces.length} ワークスペース</div>
+      <div className="file-tile-info">
+        <button
+          className="btn btn-run btn-sm"
+          onClick={e => { e.stopPropagation(); onOpen(e, g.file) }}
+          disabled={openingFileID === g.file.id}
+          title="Blender で開く"
+        >
+          {openingFileID === g.file.id ? '...' : '開く'}
+        </button>
+        <div className="file-tile-name" title={fileName}>{fileName}</div>
+        <div className="file-tile-meta">{g.workspaces.length} ワークスペース</div>
       </div>
     </div>
   )
@@ -138,7 +136,7 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
           ))}
         </div>
       ) : (
-        <div className="file-card-grid">
+        <div className="file-tile-grid">
           {groups.map(g => (
             <FileCard
               key={g.file.id}
