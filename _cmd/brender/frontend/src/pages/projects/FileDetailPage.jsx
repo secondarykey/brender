@@ -221,7 +221,7 @@ function HistoryTab({ projectID, fileID }) {
               <span className="queue-history-name">{j.workspace_name}</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 {(j.data_status === 2 || j.data_status === 3) && (
-                  <button className="btn btn-sm" onClick={e => { e.stopPropagation(); setViewing(j) }}>開く</button>
+                  <button className="btn btn-sm" onClick={e => { e.stopPropagation(); setViewing(j) }}>表示</button>
                 )}
                 <span className={`status-badge status-${j.status}`}>{STATUS_LABELS[j.status] ?? j.status}</span>
               </div>

@@ -282,7 +282,7 @@ function HistoryTab({ navigate }) {
                   <td className="duration-cell">{duration(j.started_at, j.completed_at)}</td>
                   <td onClick={e => e.stopPropagation()}>
                     {(j.data_status === 2 || j.data_status === 3) && (
-                      <button className="btn btn-sm" onClick={() => setViewing(j)}>開く</button>
+                      <button className="btn btn-sm" onClick={() => setViewing(j)}>表示</button>
                     )}
                   </td>
                 </tr>
