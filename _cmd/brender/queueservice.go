@@ -54,3 +54,11 @@ func (s *QueueService) ListJobsByProjectFile(projectID string, fileID uint) ([]*
 func (s *QueueService) DeleteJob(id string) error {
 	return api.DeleteJob(id)
 }
+
+func (s *QueueService) LockJob(id string) error {
+	return api.LockJob(id)
+}
+
+func (s *QueueService) UnlockJob(id string) error {
+	return api.UnlockJob(id)
+}

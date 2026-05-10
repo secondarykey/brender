@@ -59,4 +59,18 @@ export const QueueApi = {
   deleteJob: ({ id }) =>
     isWails() ? svc().then(s => s.DeleteJob(id))
               : serverCall('queue', 'delete_job', { id }),
+
+  /** ジョブをロック
+   * @param {{ id: string }} args
+   */
+  lockJob: ({ id }) =>
+    isWails() ? svc().then(s => s.LockJob(id))
+              : serverCall('queue', 'lock_job', { id }),
+
+  /** ジョブのロックを解除
+   * @param {{ id: string }} args
+   */
+  unlockJob: ({ id }) =>
+    isWails() ? svc().then(s => s.UnlockJob(id))
+              : serverCall('queue', 'unlock_job', { id }),
 }

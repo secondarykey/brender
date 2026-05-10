@@ -63,14 +63,38 @@ function Row({ label, value }) {
   )
 }
 
-function JobDetailDialog({ job, onClose, onDeleted }) {
-  const [confirm, setConfirm]   = useState(false)
-  const [deleting, setDeleting] = useState(false)
-  const [error, setError]       = useState('')
+function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
+  const [confirm, setConfirm]       = useState(false)
+  const [deleting, setDeleting]     = useState(false)
+  const [locking, setLocking]       = useState(false)
+  const [error, setError]           = useState('')
+  const [dataStatus, setDataStatus] = useState(job?.data_status || 'none')
 
   if (!job) return null
 
-  const status = job.status || 'running'
+  const status   = job.status || 'running'
+  const isLocked = dataStatus === 'locked'
+  const canLock  = dataStatus === 'available' || dataStatus === 'locked'
+
+  const handleLock = async () => {
+    setLocking(true)
+    setError('')
+    try {
+      if (isLocked) {
+        await QueueApi.unlockJob({ id: job.id })
+        setDataStatus('available')
+        if (onStatusChanged) onStatusChanged(job.id, 'available')
+      } else {
+        await QueueApi.lockJob({ id: job.id })
+        setDataStatus('locked')
+        if (onStatusChanged) onStatusChanged(job.id, 'locked')
+      }
+    } catch (err) {
+      setError(String(err))
+    } finally {
+      setLocking(false)
+    }
+  }
 
   const handleDelete = async () => {
     setDeleting(true)
@@ -95,7 +119,16 @@ function JobDetailDialog({ job, onClose, onDeleted }) {
         <div className="dialog-body job-detail-body">
           <div className="job-detail-section">
             <Row label="ステータス"    value={<span className={`status-badge status-${status}`}>{STATUS_LABELS[status] ?? status}</span>} />
-            <Row label="データ"        value={<DataStatusBadge status={job.data_status || 'none'} />} />
+            <Row label="データ" value={
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <DataStatusBadge status={dataStatus} />
+                {canLock && (
+                  <button className="btn btn-sm btn-ghost" onClick={handleLock} disabled={locking}>
+                    {isLocked ? 'ロック解除' : 'ロック'}
+                  </button>
+                )}
+              </div>
+            } />
             <Row label="プロジェクト"  value={job.project_name} />
             <Row label="ワークスペース" value={job.workspace_name} />
           </div>
@@ -139,7 +172,7 @@ function JobDetailDialog({ job, onClose, onDeleted }) {
           </div>
         ) : (
           <div className="dialog-actions" style={{ justifyContent: 'space-between' }}>
-            <button className="btn btn-danger" onClick={() => setConfirm(true)}>削除</button>
+            <button className="btn btn-danger" onClick={() => setConfirm(true)} disabled={isLocked}>削除</button>
             <button className="btn btn-ghost" onClick={onClose}>閉じる</button>
           </div>
         )}

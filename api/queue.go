@@ -458,6 +458,14 @@ func DeleteJob(id string) error {
 	return model.DeleteJob(id)
 }
 
+func LockJob(id string) error {
+	return model.UpdateJobDataStatus(id, model.JobDataLocked)
+}
+
+func UnlockJob(id string) error {
+	return model.UpdateJobDataStatus(id, model.JobDataAvailable)
+}
+
 func ListJobsByWorkspace(projectID string, workspaceID string) ([]*model.Job, error) {
 	return model.ListJobsByWorkspace(projectID, workspaceID)
 }

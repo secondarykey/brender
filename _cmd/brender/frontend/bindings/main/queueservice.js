@@ -123,6 +123,14 @@ export function ListJobsByWorkspace(projectID, workspaceID) {
 }
 
 /**
+ * @param {string} id
+ * @returns {$CancellablePromise<void>}
+ */
+export function LockJob(id) {
+    return $Call.ByID(2533656384, id);
+}
+
+/**
  * @param {string} projectID
  * @param {string} workspaceID
  * @returns {$CancellablePromise<api$0.RenderPreview | null>}
@@ -131,6 +139,14 @@ export function PreviewRender(projectID, workspaceID) {
     return $Call.ByID(2016776806, projectID, workspaceID).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType10($result);
     }));
+}
+
+/**
+ * @param {string} id
+ * @returns {$CancellablePromise<void>}
+ */
+export function UnlockJob(id) {
+    return $Call.ByID(2620057101, id);
 }
 
 // Private type creation functions
