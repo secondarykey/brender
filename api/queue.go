@@ -448,6 +448,9 @@ func DeleteJob(id string) error {
 	if err != nil {
 		return xerrors.Errorf("DeleteJob GetJob: %w", err)
 	}
+	if j.DataStatus == model.JobDataLocked {
+		return xerrors.New("ロック中のジョブは削除できません")
+	}
 	if j.OutputDir != "" {
 		if _, statErr := os.Stat(j.OutputDir); statErr == nil {
 			if rmErr := os.RemoveAll(j.OutputDir); rmErr != nil {
