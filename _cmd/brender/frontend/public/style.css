@@ -690,6 +690,23 @@ body {
   padding: 6px 0;
 }
 
+.ws-list-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(26, 26, 26, 0.78);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  z-index: 10;
+}
+
+.ws-list-overlay-label {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.03em;
+}
+
 .ws-empty {
   color: rgba(255,255,255,0.3);
   font-size: 0.85rem;

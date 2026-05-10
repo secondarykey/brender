@@ -64,7 +64,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
   const [workspaces, setWorkspaces] = useState([])
   const [creating, setCreating]     = useState(false)
   const [confirm, setConfirm]       = useState(null) // { ws, preview }
-  const [resolving, setResolving]   = useState(false)
+  const [resolvingWsId, setResolvingWsId] = useState(null)
   const [enqueuing, setEnqueuing]   = useState(false)
   const [enqueueMsg, setEnqueueMsg] = useState('')
 
@@ -86,14 +86,14 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
 
   const handleRunClick = async (ws) => {
     setEnqueueMsg('')
-    setResolving(true)
+    setResolvingWsId(ws.id)
     try {
       const preview = await QueueApi.previewRender({ projectID, workspaceID: ws.id })
       setConfirm({ ws, preview })
     } catch (err) {
       setEnqueueMsg(`エラー: ${String(err)}`)
     } finally {
-      setResolving(false)
+      setResolvingWsId(null)
     }
   }
 
@@ -114,35 +114,42 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
 
   return (
     <div>
-      <div className="ws-list">
-        {workspaces.length === 0 && !creating && (
-          <p className="ws-empty">ワークスペースがありません</p>
-        )}
-        {workspaces.map(ws => (
-          <div key={ws.id} className="ws-item ws-item-run">
-            <button
-              className="btn btn-run btn-sm ws-item-run-btn"
-              onClick={() => handleRunClick(ws)}
-              disabled={resolving}
-            >
-              {resolving ? '...' : '▶ 実行'}
-            </button>
-            <div
-              className="ws-item-info ws-item-link"
-              onClick={() => navigate('workspace', { projectID, projectName, fileID, fileName, workspaceID: ws.id })}
-            >
-              <span className="ws-item-name">{ws.name}</span>
-              <div className="ws-item-meta">
-                {ws.engine && <span className="ws-meta-chip">{ws.engine}</span>}
-                {(ws.start === 0 && ws.end === -1)
-                  ? <span className="ws-meta-chip">.blend フレーム</span>
-                  : <span className="ws-meta-chip">{ws.start} – {ws.end} f</span>
-                }
+      <div style={{ position: 'relative' }}>
+        <div className="ws-list">
+          {workspaces.length === 0 && !creating && (
+            <p className="ws-empty">ワークスペースがありません</p>
+          )}
+          {workspaces.map(ws => (
+            <div key={ws.id} className="ws-item ws-item-run">
+              <button
+                className="btn btn-run btn-sm ws-item-run-btn"
+                onClick={() => handleRunClick(ws)}
+                disabled={resolvingWsId !== null}
+              >
+                ▶ 実行
+              </button>
+              <div
+                className="ws-item-info ws-item-link"
+                onClick={() => navigate('workspace', { projectID, projectName, fileID, fileName, workspaceID: ws.id })}
+              >
+                <span className="ws-item-name">{ws.name}</span>
+                <div className="ws-item-meta">
+                  {ws.engine && <span className="ws-meta-chip">{ws.engine}</span>}
+                  {(ws.start === 0 && ws.end === -1)
+                    ? <span className="ws-meta-chip">.blend フレーム</span>
+                    : <span className="ws-meta-chip">{ws.start} – {ws.end} f</span>
+                  }
+                </div>
               </div>
+              <span className="ws-item-arrow" onClick={() => navigate('workspace', { projectID, projectName, fileID, fileName, workspaceID: ws.id })}>›</span>
             </div>
-            <span className="ws-item-arrow" onClick={() => navigate('workspace', { projectID, projectName, fileID, fileName, workspaceID: ws.id })}>›</span>
+          ))}
+        </div>
+        {resolvingWsId !== null && (
+          <div className="ws-list-overlay">
+            <span className="ws-list-overlay-label">処理中...</span>
           </div>
-        ))}
+        )}
       </div>
 
       {creating ? (
