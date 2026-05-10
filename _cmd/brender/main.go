@@ -3,9 +3,11 @@ package main
 import (
 	"embed"
 	_ "embed"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/ikascrew/brender/api"
 	"github.com/ikascrew/brender/model"
@@ -57,6 +59,9 @@ func main() {
 			ApplicationShouldTerminateAfterLastWindowClosed: true,
 		},
 	})
+
+	dev := app.Env.Info().Debug
+	log.Println(fmt.Sprintf("Version: %s(DEVMode:%t)", strings.TrimSpace(appVersion), dev))
 
 	app.Window.NewWithOptions(application.WebviewWindowOptions{
 		Title:     "brender",
