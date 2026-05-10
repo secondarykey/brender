@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { ProjectApi, EnvironmentApi } from '../../lib/api'
 
 function ProjectListPage({ navigate }) {
@@ -9,6 +9,7 @@ function ProjectListPage({ navigate }) {
   const [saving, setSaving]       = useState(false)
   const [createError, setCreateError] = useState('')
   const [hasRoot, setHasRoot]     = useState(true)
+  const inputRef = useRef(null)
 
   const load = () => {
     ProjectApi.list()
@@ -25,10 +26,16 @@ function ProjectListPage({ navigate }) {
 
   const handleStartCreate = () => {
     if (!hasRoot) return
-    setName('')
+    setName('New Project')
     setCreateError('')
     setCreating(true)
   }
+
+  useEffect(() => {
+    if (creating && inputRef.current) {
+      inputRef.current.select()
+    }
+  }, [creating])
 
   const handleSave = async () => {
     setCreateError('')
@@ -71,12 +78,12 @@ function ProjectListPage({ navigate }) {
       {creating && (
         <div className="ws-create-form" style={{ marginBottom: 16 }}>
           <input
+            ref={inputRef}
             className="form-input ws-create-input"
             value={name}
             onChange={e => setName(e.target.value)}
             onKeyDown={handleKey}
             placeholder="プロジェクト名"
-            autoFocus
           />
           {createError && <span className="ws-create-error">{createError}</span>}
           <button className="btn" onClick={handleSave} disabled={saving}>

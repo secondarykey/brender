@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { WorkspaceApi, QueueApi, ProjectApi, BlenderApi } from '../../lib/api'
 import JobDetailDialog from '../../components/JobDetailDialog'
 import ImageViewerDialog from '../../components/ImageViewerDialog'
@@ -17,9 +17,14 @@ const TABS = [
 
 // ── ワークスペース作成フォーム ────────────────────────────
 function CreateForm({ projectID, fileID, onSaved, onCancel }) {
-  const [name, setName]     = useState('')
+  const [name, setName]     = useState('New Workspace')
   const [saving, setSaving] = useState(false)
   const [error, setError]   = useState('')
+  const inputRef = useRef(null)
+
+  useEffect(() => {
+    if (inputRef.current) inputRef.current.select()
+  }, [])
 
   const handleSave = async () => {
     setError('')
@@ -43,12 +48,12 @@ function CreateForm({ projectID, fileID, onSaved, onCancel }) {
   return (
     <div className="ws-create-form">
       <input
+        ref={inputRef}
         className="form-input ws-create-input"
         value={name}
         onChange={e => setName(e.target.value)}
         onKeyDown={handleKey}
         placeholder="ワークスペース名"
-        autoFocus
       />
       {error && <span className="ws-create-error">{error}</span>}
       <button className="btn" onClick={handleSave} disabled={saving}>
