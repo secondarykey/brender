@@ -167,7 +167,7 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
             <Row label="出力先"   value={job.output_dir} />
             <Row label="データ容量" value={
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span>{formatBytes(job.disk_size)}</span>
+                <span style={dataStatus >= 4 ? { textDecoration: 'line-through', opacity: 0.5 } : undefined}>{formatBytes(job.disk_size)}</span>
                 {dataStatus === 2 && (
                   <button className="btn btn-sm btn-danger" onClick={() => setConfirmData(true)} disabled={isLocked}>
                     データ削除
