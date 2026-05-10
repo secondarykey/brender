@@ -243,6 +243,7 @@ function HistoryTab({ navigate }) {
           <table className="queue-table">
             <thead>
               <tr>
+                <th></th>
                 <th>ワークスペース</th>
                 <th>ステータス</th>
                 <th>プロジェクト</th>
@@ -250,12 +251,16 @@ function HistoryTab({ navigate }) {
                 <th>フレーム</th>
                 <th>登録時刻</th>
                 <th>所要時間</th>
-                <th></th>
               </tr>
             </thead>
             <tbody>
               {pageJobs.map(j => (
                 <tr key={j.id} className={`${j.status === 'error' ? 'row-error' : ''} row-clickable`} onClick={() => setSelected(j)}>
+                  <td onClick={e => e.stopPropagation()}>
+                    {(j.data_status === 2 || j.data_status === 3) && (
+                      <button className="btn btn-sm" onClick={() => setViewing(j)}>表示</button>
+                    )}
+                  </td>
                   <td>
                     <button className="link-btn" onClick={e => { e.stopPropagation(); navigate && navigate('workspace', {
                       projectID: j.project_id, projectName: j.project_name, workspaceID: j.workspace_id,
@@ -280,11 +285,6 @@ function HistoryTab({ navigate }) {
                   <td className="frames-cell">{j.start_frame}–{j.end_frame}</td>
                   <td className="date-cell">{formatDate(j.enqueued_at)}</td>
                   <td className="duration-cell">{duration(j.started_at, j.completed_at)}</td>
-                  <td onClick={e => e.stopPropagation()}>
-                    {(j.data_status === 2 || j.data_status === 3) && (
-                      <button className="btn btn-sm" onClick={() => setViewing(j)}>表示</button>
-                    )}
-                  </td>
                 </tr>
               ))}
             </tbody>

@@ -46,17 +46,17 @@ function HistoryTab({ projectID, workspaceID }) {
         {pageJobs.map(j => (
           <div key={j.id} className="queue-history-item queue-history-item-clickable" onClick={() => setSelected(j)}>
             <div className="queue-history-top">
-              <span className={`status-badge status-${j.status}`}>{STATUS_LABELS[j.status] ?? j.status}</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 {(j.data_status === 2 || j.data_status === 3) && (
                   <button className="btn btn-sm" onClick={e => { e.stopPropagation(); setViewing(j) }}>表示</button>
                 )}
-                {j.enqueued_at && (
-                  <span className="queue-history-date">
-                    {new Date(j.enqueued_at).toLocaleString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                )}
+                <span className={`status-badge status-${j.status}`}>{STATUS_LABELS[j.status] ?? j.status}</span>
               </div>
+              {j.enqueued_at && (
+                <span className="queue-history-date">
+                  {new Date(j.enqueued_at).toLocaleString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                </span>
+              )}
             </div>
             <div className="queue-history-detail">
               <span>{j.start_frame}–{j.end_frame}f</span>
