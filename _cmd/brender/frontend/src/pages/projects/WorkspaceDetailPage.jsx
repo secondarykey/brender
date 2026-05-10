@@ -49,7 +49,7 @@ function HistoryTab({ projectID, workspaceID }) {
               <span className={`status-badge status-${j.status}`}>{STATUS_LABELS[j.status] ?? j.status}</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 {(j.data_status === 2 || j.data_status === 3) && (
-                  <button className="btn btn-sm btn-run" onClick={e => { e.stopPropagation(); setViewing(j) }}>開く</button>
+                  <button className="btn btn-sm" onClick={e => { e.stopPropagation(); setViewing(j) }}>開く</button>
                 )}
                 {j.enqueued_at && (
                   <span className="queue-history-date">
