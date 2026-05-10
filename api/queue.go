@@ -448,7 +448,7 @@ func DeleteJob(id string) error {
 	if err != nil {
 		return xerrors.Errorf("DeleteJob GetJob: %w", err)
 	}
-	if j.DataStatus == model.JobDataLocked {
+	if j.DataStatus%2 == 1 {
 		return xerrors.New("ロック中のジョブは削除できません")
 	}
 	if j.OutputDir != "" {
@@ -466,7 +466,7 @@ func DeleteJobData(id string) error {
 	if err != nil {
 		return xerrors.Errorf("DeleteJobData GetJob: %w", err)
 	}
-	if j.DataStatus == model.JobDataLocked {
+	if j.DataStatus%2 == 1 {
 		return xerrors.New("ロック中のジョブのデータは削除できません")
 	}
 	if j.OutputDir != "" {
@@ -480,11 +480,25 @@ func DeleteJobData(id string) error {
 }
 
 func LockJob(id string) error {
-	return model.UpdateJobDataStatus(id, model.JobDataLocked)
+	j, err := model.GetJob(id)
+	if err != nil {
+		return xerrors.Errorf("LockJob GetJob: %w", err)
+	}
+	if j.DataStatus%2 == 1 {
+		return nil // すでにロック済み
+	}
+	return model.UpdateJobDataStatus(id, j.DataStatus+1)
 }
 
 func UnlockJob(id string) error {
-	return model.UpdateJobDataStatus(id, model.JobDataAvailable)
+	j, err := model.GetJob(id)
+	if err != nil {
+		return xerrors.Errorf("UnlockJob GetJob: %w", err)
+	}
+	if j.DataStatus%2 == 0 {
+		return nil // ロックされていない
+	}
+	return model.UpdateJobDataStatus(id, j.DataStatus-1)
 }
 
 func ListJobsByWorkspace(projectID string, workspaceID string) ([]*model.Job, error) {

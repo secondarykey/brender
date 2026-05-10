@@ -286,11 +286,11 @@ export class Job {
         }
         if (!("data_status" in $$source)) {
             /**
-             * none / available / deleted / locked
+             * 0=なし 1=なしロック 2=あり 3=ありロック 4=削除 5=削除ロック
              * @member
-             * @type {string}
+             * @type {number}
              */
-            this["data_status"] = "";
+            this["data_status"] = 0;
         }
         if (!("disk_size" in $$source)) {
             /**

@@ -9,24 +9,25 @@ const STATUS_LABELS = {
   waiting:   '実行待ち',
 }
 
-const DATA_STATUS_LABELS = {
-  none:      'データなし',
-  available: 'あり',
-  deleted:   'データ削除',
-  locked:    'ロック',
+// data_status: 0=なし 1=なしロック 2=あり 3=ありロック 4=削除 5=削除ロック
+function dataStatusLabel(s) {
+  if (s % 2 === 1) return 'ロック'
+  if (s === 0)     return 'データなし'
+  if (s === 2)     return 'あり'
+  if (s === 4)     return 'データ削除'
+  return String(s)
 }
 
-const DATA_STATUS_CLASS = {
-  none:      'data-status-none',
-  available: 'data-status-available',
-  deleted:   'data-status-deleted',
-  locked:    'data-status-locked',
+function dataStatusClass(s) {
+  if (s % 2 === 1) return 'data-status-locked'
+  if (s === 0)     return 'data-status-none'
+  if (s === 2)     return 'data-status-available'
+  if (s === 4)     return 'data-status-deleted'
+  return ''
 }
 
 function DataStatusBadge({ status }) {
-  const label = DATA_STATUS_LABELS[status] ?? status
-  const cls   = DATA_STATUS_CLASS[status]  ?? ''
-  return <span className={`data-status-badge ${cls}`}>{label}</span>
+  return <span className={`data-status-badge ${dataStatusClass(status)}`}>{dataStatusLabel(status)}</span>
 }
 
 function formatBytes(bytes) {
@@ -70,17 +71,16 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
   const [deletingData, setDeletingData] = useState(false)
   const [locking, setLocking]           = useState(false)
   const [error, setError]               = useState('')
-  const [dataStatus, setDataStatus]     = useState(job?.data_status || 'none')
+  const [dataStatus, setDataStatus]     = useState(job?.data_status ?? 0)
 
   useEffect(() => {
-    if (job) setDataStatus(job.data_status || 'none')
+    if (job) setDataStatus(job.data_status ?? 0)
   }, [job])
 
   if (!job) return null
 
   const status   = job.status || 'running'
-  const isLocked = dataStatus === 'locked'
-  const canLock  = dataStatus === 'available' || dataStatus === 'locked'
+  const isLocked = dataStatus % 2 === 1
 
   const handleLock = async () => {
     setLocking(true)
@@ -88,12 +88,14 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
     try {
       if (isLocked) {
         await QueueApi.unlockJob({ id: job.id })
-        setDataStatus('available')
-        if (onStatusChanged) onStatusChanged(job.id, 'available')
+        const next = dataStatus - 1
+        setDataStatus(next)
+        if (onStatusChanged) onStatusChanged(job.id, next)
       } else {
         await QueueApi.lockJob({ id: job.id })
-        setDataStatus('locked')
-        if (onStatusChanged) onStatusChanged(job.id, 'locked')
+        const next = dataStatus + 1
+        setDataStatus(next)
+        if (onStatusChanged) onStatusChanged(job.id, next)
       }
     } catch (err) {
       setError(String(err))
@@ -107,9 +109,9 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
     setError('')
     try {
       await QueueApi.deleteJobData({ id: job.id })
-      setDataStatus('deleted')
+      setDataStatus(4)
       setConfirmData(false)
-      if (onStatusChanged) onStatusChanged(job.id, 'deleted')
+      if (onStatusChanged) onStatusChanged(job.id, 4)
     } catch (err) {
       setError(String(err))
     } finally {
@@ -143,11 +145,9 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
             <Row label="データ" value={
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <DataStatusBadge status={dataStatus} />
-                {canLock && (
-                  <button className="btn btn-sm btn-ghost" onClick={handleLock} disabled={locking}>
-                    {isLocked ? 'ロック解除' : 'ロック'}
-                  </button>
-                )}
+                <button className="btn btn-sm btn-ghost" onClick={handleLock} disabled={locking}>
+                  {isLocked ? 'ロック解除' : 'ロック'}
+                </button>
               </div>
             } />
             <Row label="プロジェクト"  value={job.project_name} />
@@ -168,7 +168,7 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
             <Row label="データ容量" value={
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span>{formatBytes(job.disk_size)}</span>
-                {dataStatus === 'available' && (
+                {dataStatus === 2 && (
                   <button className="btn btn-sm btn-danger" onClick={() => setConfirmData(true)} disabled={isLocked}>
                     データ削除
                   </button>
