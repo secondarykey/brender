@@ -27,11 +27,11 @@ func (s *ProjectService) Update(id, name string) (*model.ProjectDetail, error) {
 	return api.UpdateProject(id, name)
 }
 
-func (s *ProjectService) UpdateFile(fileID uint, name string, blenderInstallID uint, scene string) (*model.ProjectFile, error) {
+func (s *ProjectService) UpdateFile(fileID string, name string, blenderInstallID uint, scene string) (*model.ProjectFile, error) {
 	return api.UpdateProjectFile(fileID, name, blenderInstallID, scene)
 }
 
-func (s *ProjectService) GetFile(fileID uint) (*model.ProjectFile, error) {
+func (s *ProjectService) GetFile(fileID string) (*model.ProjectFile, error) {
 	return api.GetFile(fileID)
 }
 
@@ -39,14 +39,14 @@ func (s *ProjectService) AddFile(projectID, path string) (*model.ProjectFile, er
 	return api.AddProjectFile(projectID, path)
 }
 
-func (s *ProjectService) RemoveFile(fileID uint) error {
+func (s *ProjectService) RemoveFile(fileID string) error {
 	return api.RemoveProjectFile(fileID)
 }
 
-func (s *ProjectService) DeleteFile(fileID uint) error {
+func (s *ProjectService) DeleteFile(fileID string) error {
 	return api.DeleteProjectFile(fileID)
 }
 
-func (s *ProjectService) GetFileThumbnail(projectID string, fileID uint) (string, error) {
+func (s *ProjectService) GetFileThumbnail(projectID string, fileID string) (string, error) {
 	return api.GetFileThumbnail(projectID, fileID)
 }

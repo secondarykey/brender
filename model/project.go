@@ -19,7 +19,7 @@ type Project struct {
 
 // プロジェクトに属する .blend ファイル
 type ProjectFile struct {
-	ID               uint       `gorm:"primaryKey" json:"id"`
+	ID               string     `gorm:"primaryKey" json:"id"`
 	ProjectID        string     `json:"project_id"`
 	Path             string     `json:"path"`
 	Name             string     `json:"name"`
@@ -35,7 +35,15 @@ type ProjectDetail struct {
 }
 
 func newProjectID() string {
-	id, err := uuid.NewUUID()
+	id, err := uuid.NewRandom()
+	if err != nil {
+		panic(err)
+	}
+	return id.String()
+}
+
+func newFileID() string {
+	id, err := uuid.NewRandom()
 	if err != nil {
 		panic(err)
 	}
@@ -93,9 +101,9 @@ func SelectProject(id string) (*Project, error) {
 }
 
 
-func GetProjectFile(fileID uint) (*ProjectFile, error) {
+func GetProjectFile(fileID string) (*ProjectFile, error) {
 	var f ProjectFile
-	res := db.First(&f, fileID)
+	res := db.First(&f, "id = ?", fileID)
 	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
@@ -130,9 +138,9 @@ func UpdateProject(id, name string) (*ProjectDetail, error) {
 	return loadProjectDetail(&p)
 }
 
-func UpdateProjectFile(fileID uint, name string, blenderInstallID uint, scene string) (*ProjectFile, error) {
+func UpdateProjectFile(fileID string, name string, blenderInstallID uint, scene string) (*ProjectFile, error) {
 	var f ProjectFile
-	if res := db.First(&f, fileID); res.Error != nil {
+	if res := db.First(&f, "id = ?", fileID); res.Error != nil {
 		return nil, xerrors.Errorf("UpdateProjectFile find: %w", res.Error)
 	}
 	f.Name = name
@@ -151,6 +159,7 @@ func AddProjectFile(projectID, path string) (*ProjectFile, error) {
 		modAt = &t
 	}
 	f := &ProjectFile{
+		ID:             newFileID(),
 		ProjectID:      projectID,
 		Path:           path,
 		Name:           filepath.Base(path),
@@ -162,8 +171,8 @@ func AddProjectFile(projectID, path string) (*ProjectFile, error) {
 	return f, nil
 }
 
-func RemoveProjectFile(fileID uint) error {
-	if res := db.Delete(&ProjectFile{}, fileID); res.Error != nil {
+func RemoveProjectFile(fileID string) error {
+	if res := db.Delete(&ProjectFile{}, "id = ?", fileID); res.Error != nil {
 		return xerrors.Errorf("RemoveProjectFile: %w", res.Error)
 	}
 	return nil
@@ -190,6 +199,7 @@ func CreateProject(name string, paths []string) (*ProjectDetail, error) {
 
 	for _, path := range paths {
 		f := &ProjectFile{
+			ID:        newFileID(),
 			ProjectID: p.ID,
 			Path:      path,
 			Name:      filepath.Base(path),

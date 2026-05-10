@@ -33,7 +33,7 @@ func notifyQueueChanged() {
 type RenderPreview struct {
 	ProjectName   string `json:"project_name"`
 	WorkspaceName string `json:"workspace_name"`
-	ProjectFileID uint   `json:"project_file_id"`
+	ProjectFileID string `json:"project_file_id"`
 	BlenderPath   string `json:"blender_path"`
 	BlenderFile   string `json:"blender_file"`
 	Scene         string `json:"scene"`
@@ -58,7 +58,7 @@ func PreviewRender(projectID, workspaceID string) (*RenderPreview, error) {
 
 	var fileBlenderID uint
 	var fileScene string
-	if w.ProjectFileID != 0 {
+	if w.ProjectFileID != "" {
 		pf, pfErr := model.GetProjectFile(w.ProjectFileID)
 		if pfErr == nil && pf != nil {
 			fileBlenderID = pf.BlenderInstallID
@@ -130,7 +130,7 @@ func EnqueueWithPreview(projectID, workspaceID string, preview *RenderPreview) (
 		return nil, xerrors.Errorf("NewQueueID: %w", err)
 	}
 
-	outputDir := filepath.Join(env.ProjectRoot, projectID, workspaceID, id)
+	outputDir := filepath.Join(env.ProjectRoot, projectID, preview.ProjectFileID, workspaceID, id)
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
 		return nil, xerrors.Errorf("MkdirAll: %w", err)
 	}
@@ -203,8 +203,8 @@ func resolveBlenderPath(workspaceBlenderID, projectBlenderID uint) (string, erro
 	return b.Path, nil
 }
 
-func resolveBlenderFile(projectFileID uint, projectID string) (string, error) {
-	if projectFileID != 0 {
+func resolveBlenderFile(projectFileID string, projectID string) (string, error) {
+	if projectFileID != "" {
 		f, err := model.GetProjectFile(projectFileID)
 		if err != nil || f == nil {
 			return "", xerrors.Errorf("Blenderファイルが見つかりません: id=%d", projectFileID)
@@ -547,6 +547,6 @@ func ListJobsByWorkspace(projectID string, workspaceID string) ([]*model.Job, er
 	return model.ListJobsByWorkspace(projectID, workspaceID)
 }
 
-func ListJobsByProjectFile(projectID string, projectFileID uint) ([]*model.Job, error) {
+func ListJobsByProjectFile(projectID string, projectFileID string) ([]*model.Job, error) {
 	return model.ListJobsByProjectFile(projectID, projectFileID)
 }

@@ -31,6 +31,6 @@ func (s *BlenderService) GetEngines(installID uint) ([]string, error) {
 	return api.GetEngines(installID)
 }
 
-func (s *BlenderService) GetScenes(installID uint, fileID uint) ([]string, error) {
+func (s *BlenderService) GetScenes(installID uint, fileID string) ([]string, error) {
 	return api.GetScenes(installID, fileID)
 }

@@ -31,7 +31,7 @@ type Job struct {
 	ProjectName   string     `json:"project_name"`
 	WorkspaceID   string     `json:"workspace_id"`
 	WorkspaceName string     `json:"workspace_name"`
-	ProjectFileID uint       `json:"project_file_id"`
+	ProjectFileID string     `json:"project_file_id"`
 	BlenderPath   string     `json:"blender_path"`
 	BlenderFile   string     `json:"blender_file"`
 	OutputDir     string     `json:"output_dir"`
@@ -110,7 +110,7 @@ func DeleteJobsByWorkspace(workspaceID string) error {
 	return nil
 }
 
-func ListJobsByProjectFile(projectID string, projectFileID uint) ([]*Job, error) {
+func ListJobsByProjectFile(projectID string, projectFileID string) ([]*Job, error) {
 	var list []*Job
 	if res := db.Where("project_id = ? AND project_file_id = ?", projectID, projectFileID).
 		Order("enqueued_at desc").Find(&list); res.Error != nil {
@@ -119,7 +119,7 @@ func ListJobsByProjectFile(projectID string, projectFileID uint) ([]*Job, error)
 	return list, nil
 }
 
-func DeleteJobsByProjectFile(fileID uint) error {
+func DeleteJobsByProjectFile(fileID string) error {
 	if res := db.Delete(&Job{}, "project_file_id = ?", fileID); res.Error != nil {
 		return xerrors.Errorf("DeleteJobsByProjectFile: %w", res.Error)
 	}
@@ -170,7 +170,7 @@ func ListOutputDirsByWorkspace(workspaceID string) ([]string, error) {
 }
 
 // ListOutputDirsByProjectFile はファイルに紐づくジョブの出力フォルダ一覧を返す。
-func ListOutputDirsByProjectFile(fileID uint) ([]string, error) {
+func ListOutputDirsByProjectFile(fileID string) ([]string, error) {
 	var dirs []string
 	if res := db.Model(&Job{}).Where("project_file_id = ?", fileID).Pluck("output_dir", &dirs); res.Error != nil {
 		return nil, xerrors.Errorf("ListOutputDirsByProjectFile: %w", res.Error)

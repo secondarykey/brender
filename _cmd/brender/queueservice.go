@@ -47,7 +47,7 @@ func (s *QueueService) ListJobsByWorkspace(projectID string, workspaceID string)
 	return api.ListJobsByWorkspace(projectID, workspaceID)
 }
 
-func (s *QueueService) ListJobsByProjectFile(projectID string, fileID uint) ([]*model.Job, error) {
+func (s *QueueService) ListJobsByProjectFile(projectID string, fileID string) ([]*model.Job, error) {
 	return api.ListJobsByProjectFile(projectID, fileID)
 }
 

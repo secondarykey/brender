@@ -3,7 +3,6 @@ package api
 import (
 	"bytes"
 	"encoding/base64"
-	"fmt"
 	"image"
 	"image/color"
 	"image/jpeg"
@@ -45,13 +44,13 @@ func CreateThumbnailWorkspace(projectID string, file *model.ProjectFile) error {
 // {ProjectRoot}/{projectID}/{fileID}/thumbnail.jpg が存在すればそれを返す。
 // 存在しない場合は IsSystem ワークスペースの完了済みジョブ出力から JPEG を生成して保存する。
 // サムネイルが作れない場合は空文字を返す（エラーなし）。
-func GetFileThumbnail(projectID string, fileID uint) (string, error) {
+func GetFileThumbnail(projectID string, fileID string) (string, error) {
 	env, err := model.GetEnv()
 	if err != nil || env == nil || env.ProjectRoot == "" {
 		return "", nil
 	}
 
-	thumbDir := filepath.Join(env.ProjectRoot, projectID, fmt.Sprintf("%d", fileID))
+	thumbDir := filepath.Join(env.ProjectRoot, projectID, fileID)
 	thumbPath := filepath.Join(thumbDir, "thumbnail.jpg")
 
 	if _, err := os.Stat(thumbPath); err == nil {

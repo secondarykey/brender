@@ -11,7 +11,7 @@ import (
 type Workspace struct {
 	ID               string `gorm:"primaryKey" json:"id"`
 	ProjectId        string `json:"project_id"`
-	ProjectFileID    uint   `json:"project_file_id"`
+	ProjectFileID    string `json:"project_file_id"`
 	BlenderInstallID uint   `json:"blender_install_id"` // 0 = プロジェクトのデフォルト使用
 	Name             string `json:"name"`
 	Scene            string `json:"scene"`
@@ -80,7 +80,7 @@ func GetWorkspace(projectID string, workspaceID string) (*WorkspaceDetail, error
 	return &WorkspaceDetail{Workspace: &w, ProjectFiles: files}, nil
 }
 
-func CreateWorkspace(projectID string, projectFileID uint, name string, isSystem bool) (*Workspace, error) {
+func CreateWorkspace(projectID string, projectFileID string, name string, isSystem bool) (*Workspace, error) {
 	id, err := newWorkspaceID()
 	if err != nil {
 		return nil, xerrors.Errorf("newWorkspaceID: %w", err)
@@ -100,7 +100,7 @@ func CreateWorkspace(projectID string, projectFileID uint, name string, isSystem
 	return w, nil
 }
 
-func CreateSystemWorkspace(projectID string, projectFileID uint, name string, startFrame, endFrame int) (*Workspace, error) {
+func CreateSystemWorkspace(projectID string, projectFileID string, name string, startFrame, endFrame int) (*Workspace, error) {
 	id, err := newWorkspaceID()
 	if err != nil {
 		return nil, xerrors.Errorf("newWorkspaceID: %w", err)
@@ -139,7 +139,7 @@ func UpdateWorkspace(projectID string, workspaceID string, name string, blenderI
 	return GetWorkspace(projectID, workspaceID)
 }
 
-func GetSystemWorkspaceByFile(projectFileID uint) (*Workspace, error) {
+func GetSystemWorkspaceByFile(projectFileID string) (*Workspace, error) {
 	var w Workspace
 	res := db.Where("project_file_id = ? AND is_system = ?", projectFileID, true).First(&w)
 	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
@@ -174,7 +174,7 @@ func DeleteWorkspace(projectID, workspaceID string) error {
 	return nil
 }
 
-func DeleteWorkspacesByProjectFile(fileID uint) error {
+func DeleteWorkspacesByProjectFile(fileID string) error {
 	if res := db.Delete(&Workspace{}, "project_file_id = ?", fileID); res.Error != nil {
 		return xerrors.Errorf("DeleteWorkspacesByProjectFile: %w", res.Error)
 	}

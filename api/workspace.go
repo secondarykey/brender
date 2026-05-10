@@ -13,7 +13,7 @@ func GetWorkspace(projectID string, workspaceID string) (*model.WorkspaceDetail,
 	return model.GetWorkspace(projectID, workspaceID)
 }
 
-func CreateWorkspace(projectID string, projectFileID uint, name string) (*model.Workspace, error) {
+func CreateWorkspace(projectID string, projectFileID string, name string) (*model.Workspace, error) {
 	if name == "" {
 		return nil, xerrors.New("workspace name is required")
 	}

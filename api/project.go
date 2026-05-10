@@ -23,14 +23,14 @@ func UpdateProject(id, name string) (*model.ProjectDetail, error) {
 	return model.UpdateProject(id, name)
 }
 
-func UpdateProjectFile(fileID uint, name string, blenderInstallID uint, scene string) (*model.ProjectFile, error) {
+func UpdateProjectFile(fileID string, name string, blenderInstallID uint, scene string) (*model.ProjectFile, error) {
 	if name == "" {
 		return nil, xerrors.New("file name is required")
 	}
 	return model.UpdateProjectFile(fileID, name, blenderInstallID, scene)
 }
 
-func GetFile(fileID uint) (*model.ProjectFile, error) {
+func GetFile(fileID string) (*model.ProjectFile, error) {
 	return model.GetProjectFile(fileID)
 }
 
@@ -50,11 +50,11 @@ func AddProjectFile(projectID, path string) (*model.ProjectFile, error) {
 	return f, nil
 }
 
-func RemoveProjectFile(fileID uint) error {
+func RemoveProjectFile(fileID string) error {
 	return model.RemoveProjectFile(fileID)
 }
 
-func DeleteProjectFile(fileID uint) error {
+func DeleteProjectFile(fileID string) error {
 	dirs, _ := model.ListOutputDirsByProjectFile(fileID)
 	removeOutputDirs(dirs)
 	if err := model.DeleteJobsByProjectFile(fileID); err != nil {

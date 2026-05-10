@@ -49,7 +49,7 @@ func ReorderBlenders(ids []uint) error {
 	return model.ReorderBlenders(ids)
 }
 
-func GetScenes(installID uint, fileID uint) ([]string, error) {
+func GetScenes(installID uint, fileID string) ([]string, error) {
 	var blenderPath string
 	if installID != 0 {
 		install, err := model.GetBlenderInstall(installID)

@@ -15,7 +15,7 @@ func (s *WorkspaceService) Get(projectID string, workspaceID string) (*model.Wor
 	return api.GetWorkspace(projectID, workspaceID)
 }
 
-func (s *WorkspaceService) Create(projectID string, projectFileID uint, name string) (*model.Workspace, error) {
+func (s *WorkspaceService) Create(projectID string, projectFileID string, name string) (*model.Workspace, error) {
 	return api.CreateWorkspace(projectID, projectFileID, name)
 }
 
