@@ -1,0 +1,98 @@
+name: VersionUp
+
+on:
+  pull_request:
+    branches: [ "main" ]
+    types: [ closed ]
+
+env:
+
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+jobs:
+
+  versionup:
+
+    if: |
+      github.event.pull_request.merged == true &&
+      !startsWith(github.event.pull_request.title, 'chore: version')
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.MY_GITHUB_TOKEN }}
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgtk-3-dev \
+            webkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+
+      - name: Install Wails3
+        run: go install github.com/wailsapp/wails/v3/cmd/wails3@latest
+
+      - name: Determine and Bump Version
+        id: versioning
+        run: |
+
+          BASE_VERSION=$(cat _cmd/brender/version | xargs)
+          if ! git rev-parse "v$BASE_VERSION" >/dev/null 2>&1; then
+            FINAL_VERSION="$BASE_VERSION"
+          else
+            PREFIX=${BASE_VERSION%.*}
+            PATCH=${BASE_VERSION##*.}
+            NEXT_PATCH=$((PATCH + 1))
+            FINAL_VERSION="${PREFIX}.${NEXT_PATCH}"
+          fi
+
+          go run _cmd/version.go $FINAL_VERSION
+
+          echo "NEW_VERSION=$FINAL_VERSION" >> $GITHUB_ENV
+
+      - name: Update Build Assets
+        run: |
+          cd _cmd/brender
+          wails3 update build-assets -config build/config.yml -dir build
+
+      - name: Commit and Pull Request
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          BRANCH="chore/version-${{env.NEW_VERSION}}"
+
+          git checkout -b $BRANCH
+          git add .
+          git commit -m "chore: version ${{env.NEW_VERSION}}"
+          git push origin $BRANCH
+
+          gh pr create \
+            --title "chore: version ${{env.NEW_VERSION}}" \
+            --body "Auto version bump to ${{env.NEW_VERSION}}" \
+            --base main \
+            --head $BRANCH
+
+          gh pr merge $BRANCH --merge --delete-branch
+        env:
+          GH_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+
+      - name: Tag
+        run: |
+          NEW_TAG="v${{env.NEW_VERSION}}"
+          git tag $NEW_TAG
+          git push origin $NEW_TAG
