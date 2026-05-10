@@ -96,7 +96,10 @@ func findFirstImage(dir string) (string, error) {
 	return "", nil
 }
 
-const thumbSize = 640
+const (
+	thumbW = 640
+	thumbH = 360
+)
 
 func convertToJPEG(src, dstDir, dstPath string) error {
 	data, err := os.ReadFile(src)
@@ -118,28 +121,28 @@ func convertToJPEG(src, dstDir, dstPath string) error {
 		return xerrors.Errorf("decode: %w", err)
 	}
 
-	canvas := image.NewRGBA(image.Rect(0, 0, thumbSize, thumbSize))
-	// 背景を黒で塗りつぶす
-	for y := 0; y < thumbSize; y++ {
-		for x := 0; x < thumbSize; x++ {
+	canvas := image.NewRGBA(image.Rect(0, 0, thumbW, thumbH))
+	for y := 0; y < thumbH; y++ {
+		for x := 0; x < thumbW; x++ {
 			canvas.Set(x, y, color.Black)
 		}
 	}
 
-	// アスペクト比を保ったまま 640x640 内に収めるスケールを計算
+	// アスペクト比を保ったまま 640x360 内に収めるスケールを計算
 	bounds := src_img.Bounds()
 	srcW := bounds.Dx()
 	srcH := bounds.Dy()
-	scale := float64(thumbSize) / float64(srcW)
-	if h := float64(srcH) * scale; h > thumbSize {
-		scale = float64(thumbSize) / float64(srcH)
+	scaleX := float64(thumbW) / float64(srcW)
+	scaleY := float64(thumbH) / float64(srcH)
+	scale := scaleX
+	if scaleY < scale {
+		scale = scaleY
 	}
 	fitW := int(float64(srcW) * scale)
 	fitH := int(float64(srcH) * scale)
 
-	// 中央に配置するオフセット
-	offsetX := (thumbSize - fitW) / 2
-	offsetY := (thumbSize - fitH) / 2
+	offsetX := (thumbW - fitW) / 2
+	offsetY := (thumbH - fitH) / 2
 	dst_rect := image.Rect(offsetX, offsetY, offsetX+fitW, offsetY+fitH)
 
 	xdraw.BiLinear.Scale(canvas, dst_rect, src_img, bounds, xdraw.Over, nil)

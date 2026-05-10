@@ -3,7 +3,7 @@ import { Dialogs } from '@wailsio/runtime'
 import { WorkspaceApi, ProjectApi, BlenderApi } from '../../../lib/api'
 
 // ── サムネイルタイル ──────────────────────────────────────
-function FileCard({ projectID, g, navigate, projectName, onOpen, openingFileID }) {
+function FileCard({ projectID, g, navigate, projectName }) {
   const [thumb, setThumb] = useState(null)
 
   useEffect(() => {
@@ -26,16 +26,7 @@ function FileCard({ projectID, g, navigate, projectName, onOpen, openingFileID }
         }
       </div>
       <div className="file-tile-info">
-        <button
-          className="btn btn-run btn-sm"
-          onClick={e => { e.stopPropagation(); onOpen(e, g.file) }}
-          disabled={openingFileID === g.file.id}
-          title="Blender で開く"
-        >
-          {openingFileID === g.file.id ? '...' : '開く'}
-        </button>
         <div className="file-tile-name" title={fileName}>{fileName}</div>
-        <div className="file-tile-meta">{g.workspaces.length} ワークスペース</div>
       </div>
     </div>
   )
@@ -144,8 +135,6 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
               g={g}
               navigate={navigate}
               projectName={projectName}
-              onOpen={handleOpenFile}
-              openingFileID={openingFileID}
             />
           ))}
         </div>
