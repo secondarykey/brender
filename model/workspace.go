@@ -20,6 +20,7 @@ type Workspace struct {
 	EndFrame         int    `json:"end"`
 	FrameStep        int    `json:"frame_step"` // 0,1 = 毎フレーム
 	Thread           int    `json:"thread"`     // 0 = 全コア自動
+	IsSystem         bool   `gorm:"default:false" json:"is_system"`
 	MetaFields       `gorm:"embedded"`
 }
 
@@ -79,7 +80,7 @@ func GetWorkspace(projectID string, workspaceID string) (*WorkspaceDetail, error
 	return &WorkspaceDetail{Workspace: &w, ProjectFiles: files}, nil
 }
 
-func CreateWorkspace(projectID string, projectFileID uint, name string) (*Workspace, error) {
+func CreateWorkspace(projectID string, projectFileID uint, name string, isSystem bool) (*Workspace, error) {
 	id, err := newWorkspaceID()
 	if err != nil {
 		return nil, xerrors.Errorf("newWorkspaceID: %w", err)
@@ -91,9 +92,30 @@ func CreateWorkspace(projectID string, projectFileID uint, name string) (*Worksp
 		Name:          name,
 		StartFrame:    0,
 		EndFrame:      -1,
+		IsSystem:      isSystem,
 	}
 	if res := db.Create(w); res.Error != nil {
 		return nil, xerrors.Errorf("CreateWorkspace: %w", res.Error)
+	}
+	return w, nil
+}
+
+func CreateSystemWorkspace(projectID string, projectFileID uint, name string, startFrame, endFrame int) (*Workspace, error) {
+	id, err := newWorkspaceID()
+	if err != nil {
+		return nil, xerrors.Errorf("newWorkspaceID: %w", err)
+	}
+	w := &Workspace{
+		ID:            id,
+		ProjectId:     projectID,
+		ProjectFileID: projectFileID,
+		Name:          name,
+		StartFrame:    startFrame,
+		EndFrame:      endFrame,
+		IsSystem:      true,
+	}
+	if res := db.Create(w); res.Error != nil {
+		return nil, xerrors.Errorf("CreateSystemWorkspace: %w", res.Error)
 	}
 	return w, nil
 }

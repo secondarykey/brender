@@ -1,6 +1,7 @@
 package api
 
 import (
+	"log"
 	"os"
 
 	"github.com/ikascrew/brender/model"
@@ -37,7 +38,16 @@ func AddProjectFile(projectID, path string) (*model.ProjectFile, error) {
 	if _, err := os.Stat(path); err != nil {
 		return nil, xerrors.Errorf("file not found: %s", path)
 	}
-	return model.AddProjectFile(projectID, path)
+	f, err := model.AddProjectFile(projectID, path)
+	if err != nil {
+		return nil, err
+	}
+	go func() {
+		if err := CreateThumbnailWorkspace(projectID, f); err != nil {
+			log.Printf("thumbnail workspace creation failed for file %d: %v", f.ID, err)
+		}
+	}()
+	return f, nil
 }
 
 func RemoveProjectFile(fileID uint) error {

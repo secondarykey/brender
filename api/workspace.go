@@ -17,7 +17,7 @@ func CreateWorkspace(projectID string, projectFileID uint, name string) (*model.
 	if name == "" {
 		return nil, xerrors.New("workspace name is required")
 	}
-	return model.CreateWorkspace(projectID, projectFileID, name)
+	return model.CreateWorkspace(projectID, projectFileID, name, false)
 }
 
 func UpdateWorkspace(projectID string, workspaceID string, name string, blenderInstallID uint, scene, engine string, startFrame, endFrame, frameStep, thread int) (*model.WorkspaceDetail, error) {
