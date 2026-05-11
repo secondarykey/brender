@@ -9,12 +9,18 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ikascrew/brender/exec"
 	"github.com/ikascrew/brender/model"
 	"golang.org/x/xerrors"
 )
+
+const maxConcurrentJobs = 2
+
+// scheduleMu はキューの起動判定と DB 更新をアトミックに行うためのミューテックス。
+var scheduleMu sync.Mutex
 
 
 // QueueChangedHook はキューの件数が変化したときに呼ばれるフック。
@@ -169,7 +175,18 @@ func EnqueueWithPreview(projectID, workspaceID string, preview *RenderPreview) (
 		return nil, xerrors.Errorf("CreateQueue: %w", err)
 	}
 
-	go executeQueue(q, job)
+	// 同時実行数が上限未満なら即時起動、超えていれば待機キューのまま
+	scheduleMu.Lock()
+	running, _ := model.CountRunningQueues()
+	shouldStart := running < maxConcurrentJobs
+	if shouldStart {
+		_ = model.MarkQueueStarting(id)
+	}
+	scheduleMu.Unlock()
+
+	if shouldStart {
+		go executeQueue(q, job)
+	}
 	notifyQueueChanged()
 
 	return q, nil
@@ -323,7 +340,33 @@ func finishJob(id string, success bool, errMsg string, diskSize int64) {
 	if err := model.DeleteQueue(id); err != nil {
 		log.Println("DeleteQueue error:", err)
 	}
+	startNextWaiting()
 	notifyQueueChanged()
+}
+
+// startNextWaiting は実行上限に空きがあれば待機中の最古ジョブを起動する。
+// scheduleMu でレースを防ぎ、DB 更新後にロックを解放してから goroutine を起動する。
+func startNextWaiting() {
+	scheduleMu.Lock()
+	running, _ := model.CountRunningQueues()
+	if running >= maxConcurrentJobs {
+		scheduleMu.Unlock()
+		return
+	}
+	q, err := model.GetOldestWaitingQueue()
+	if err != nil || q == nil {
+		scheduleMu.Unlock()
+		return
+	}
+	j, err := model.GetJob(q.ID)
+	if err != nil || j == nil {
+		scheduleMu.Unlock()
+		return
+	}
+	_ = model.MarkQueueStarting(q.ID)
+	scheduleMu.Unlock()
+
+	go executeQueue(q, j)
 }
 
 // QueueItem combines Queue (active state) with Job (parameters/names) for display.
@@ -434,8 +477,12 @@ func CancelQueue(id string) error {
 	if err := model.UpdateJobDone(q.ID, model.JobCancelled, "", &now, diskSize, model.JobDataNone); err != nil {
 		log.Println("UpdateJobDone(cancelled) error:", err)
 	}
+	wasRunning := q.Status == model.QueueRunning
 	if err := model.DeleteQueue(q.ID); err != nil {
 		return err
+	}
+	if wasRunning {
+		startNextWaiting()
 	}
 	notifyQueueChanged()
 	return nil
