@@ -568,12 +568,17 @@ body {
 .workspace-tab-root {
   position: relative;
 }
-.ws-add-file-fab {
+/* height:0 の sticky ラッパーでタイルレイアウトに影響せず右上に固定 */
+.ws-add-file-fab-wrap {
   position: sticky;
   top: 0;
-  float: right;
+  height: 0;
+  text-align: right;
   z-index: 10;
-  margin-bottom: 8px;
+}
+.ws-add-file-fab {
+  display: inline-block;
+  margin-top: 4px;
 }
 
 /* ファイル一覧 */
