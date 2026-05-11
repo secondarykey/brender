@@ -215,9 +215,9 @@ export class RenderPreview {
         if (!("project_file_id" in $$source)) {
             /**
              * @member
-             * @type {number}
+             * @type {string}
              */
-            this["project_file_id"] = 0;
+            this["project_file_id"] = "";
         }
         if (!("blender_path" in $$source)) {
             /**

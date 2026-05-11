@@ -30,7 +30,7 @@ export function GetEngines(installID) {
 
 /**
  * @param {number} installID
- * @param {number} fileID
+ * @param {string} fileID
  * @returns {$CancellablePromise<string[]>}
  */
 export function GetScenes(installID, fileID) {

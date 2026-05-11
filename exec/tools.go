@@ -13,13 +13,13 @@ import (
 	"golang.org/x/xerrors"
 )
 
+//go:embed _assets
+var assetsEmb embed.FS
+
 // ツールスクリプトのキャッシュ（プロセス起動後に1回だけ作成、存在確認付き）
 var (
 	toolFileMu   sync.Mutex
 	toolFilePath string
-
-	runFileMu   sync.Mutex
-	runFilePath string
 )
 
 // getToolPythonFile はキャッシュされたスクリプトファイルパスを返す。
@@ -44,11 +44,6 @@ func getToolPythonFile() (string, error) {
 	return p, nil
 }
 
-//
-
-//go:embed _assets
-var assetsEmb embed.FS
-
 const (
 	ToolFlag   = "=BRENDER PYTHON TOOL %s"
 	SceneFlag  = "==SCENES %s"
@@ -66,49 +61,6 @@ var (
 	CameraStart = fmt.Sprintf(CameraFlag, StartFlag)
 	CameraEnd   = fmt.Sprintf(CameraFlag, EndFlag)
 )
-
-// GetRunPythonFile はレンダリング実行時に渡す Python スクリプトのパスを返す。
-// ファイルが存在しない場合のみ再作成する。
-func GetRunPythonFile() (string, error) {
-	runFileMu.Lock()
-	defer runFileMu.Unlock()
-
-	if runFilePath != "" {
-		if _, err := os.Stat(runFilePath); err == nil {
-			return runFilePath, nil
-		}
-		runFilePath = ""
-	}
-
-	p, err := createRunPythonFile()
-	if err != nil {
-		return "", err
-	}
-	runFilePath = p
-	return p, nil
-}
-
-/**
- * レンダリング実行用のPythonファイルを作成する
- */
-func createRunPythonFile() (string, error) {
-
-	tmpl, err := template.ParseFS(assetsEmb, "_assets/run.tmpl")
-	if err != nil {
-		return "", xerrors.Errorf("template.ParseFS() error: %w", err)
-	}
-
-	fp, err := os.CreateTemp("", "brender-run_*.py")
-	if err != nil {
-		return "", xerrors.Errorf("os.CreateTemp() error: %w", err)
-	}
-	defer fp.Close()
-
-	if err = tmpl.Execute(fp, nil); err != nil {
-		return "", xerrors.Errorf("tmpl.Execute() error: %w", err)
-	}
-	return fp.Name(), nil
-}
 
 /**
  * ツール用のPythonファイルを作成する

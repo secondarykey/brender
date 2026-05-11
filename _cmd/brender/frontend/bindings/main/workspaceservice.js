@@ -12,7 +12,7 @@ import * as model$0 from "../github.com/ikascrew/brender/model/models.js";
 
 /**
  * @param {string} projectID
- * @param {number} projectFileID
+ * @param {string} projectFileID
  * @param {string} name
  * @returns {$CancellablePromise<model$0.Workspace | null>}
  */
