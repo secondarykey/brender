@@ -107,7 +107,7 @@ func CountQueues() (int64, error) {
 
 func ListQueues() ([]*Queue, error) {
 	var list []*Queue
-	if res := db.Order("id desc").Find(&list); res.Error != nil {
+	if res := db.Order("id asc").Find(&list); res.Error != nil {
 		return nil, xerrors.Errorf("ListQueues: %w", res.Error)
 	}
 	return list, nil

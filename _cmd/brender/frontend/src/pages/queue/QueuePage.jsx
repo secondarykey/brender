@@ -313,7 +313,7 @@ function QueuePage({ navigate }) {
           className={`tab-btn${tab === 'active' ? ' active' : ''}`}
           onClick={() => setTab('active')}
         >
-          実行中
+          キュー
         </button>
         <button
           className={`tab-btn${tab === 'history' ? ' active' : ''}`}
