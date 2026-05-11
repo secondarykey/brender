@@ -202,9 +202,9 @@ export class Job {
         if (!("project_file_id" in $$source)) {
             /**
              * @member
-             * @type {number}
+             * @type {string}
              */
-            this["project_file_id"] = 0;
+            this["project_file_id"] = "";
         }
         if (!("blender_path" in $$source)) {
             /**
@@ -448,9 +448,9 @@ export class ProjectFile {
         if (!("id" in $$source)) {
             /**
              * @member
-             * @type {number}
+             * @type {string}
              */
-            this["id"] = 0;
+            this["id"] = "";
         }
         if (!("project_id" in $$source)) {
             /**
@@ -625,9 +625,9 @@ export class Workspace {
         if (!("project_file_id" in $$source)) {
             /**
              * @member
-             * @type {number}
+             * @type {string}
              */
-            this["project_file_id"] = 0;
+            this["project_file_id"] = "";
         }
         if (!("blender_install_id" in $$source)) {
             /**
@@ -688,6 +688,13 @@ export class Workspace {
              * @type {number}
              */
             this["thread"] = 0;
+        }
+        if (!("is_system" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["is_system"] = false;
         }
         if (!("created_at" in $$source)) {
             /**

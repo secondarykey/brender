@@ -40,7 +40,7 @@ export function Delete(id) {
 }
 
 /**
- * @param {number} fileID
+ * @param {string} fileID
  * @returns {$CancellablePromise<void>}
  */
 export function DeleteFile(fileID) {
@@ -58,13 +58,22 @@ export function Get(id) {
 }
 
 /**
- * @param {number} fileID
+ * @param {string} fileID
  * @returns {$CancellablePromise<model$0.ProjectFile | null>}
  */
 export function GetFile(fileID) {
     return $Call.ByID(1334031842, fileID).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType1($result);
     }));
+}
+
+/**
+ * @param {string} projectID
+ * @param {string} fileID
+ * @returns {$CancellablePromise<string>}
+ */
+export function GetFileThumbnail(projectID, fileID) {
+    return $Call.ByID(228160970, projectID, fileID);
 }
 
 /**
@@ -77,7 +86,7 @@ export function List() {
 }
 
 /**
- * @param {number} fileID
+ * @param {string} fileID
  * @returns {$CancellablePromise<void>}
  */
 export function RemoveFile(fileID) {
@@ -96,7 +105,7 @@ export function Update(id, name) {
 }
 
 /**
- * @param {number} fileID
+ * @param {string} fileID
  * @param {string} name
  * @param {number} blenderInstallID
  * @param {string} scene

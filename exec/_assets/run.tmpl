@@ -1,7 +1,36 @@
 import bpy
 
-def printHello():
-    print("Run Test")
+def setCamera():
+
+    print("== Call setCamera()")
+
+    scene = bpy.data.scenes["{{ .Camera.Scene }}"]
+    target_cam = bpy.data.objects.get("{{ .Camera.Name }}")
+    scene.camera = target_cam
+    print("== set Camera [{{ .Camera.Name }}]")
+
+
+def setSamples():
+    print("== Call setSamples()")
+    scene = bpy.data.scenes["{{ .Samples.Scene }}"]
+{{ if .Samples.IsCycles }}
+    scene.cycles.samples = {{ .Samples.Value }}
+{{ else if .Samples.IsEevee }}
+    scene.eevee.taa_render_samples = {{ .Samples.Value }}
+{{ else if .Samples.IsWorkbench }}
+    scene.cycles.render_aa = '{{ .Samples.Value }}'
+{{ end }}
+    print("== samples set [{{.Samples.Value}}]")
 
 if __name__ == "__main__":
-    printHello()
+
+    print("= Brender Run Script start")
+
+{{ if .Camera.Set }}
+    setCamera()
+{{ end }}
+{{ if .Samples.Set }}
+    setSamples()
+{{ end }}
+
+    print("= Brender Run Script end")

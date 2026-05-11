@@ -1,0 +1,115 @@
+package exec
+
+import (
+	"fmt"
+	"os"
+	"text/template"
+
+	"golang.org/x/xerrors"
+)
+
+/*
+var (
+	runFileMu   sync.Mutex
+	runFilePath string
+)
+*/
+
+type Run struct {
+	Camera  *RunCamera
+	Samples *RunSamples
+}
+
+type RunCamera struct {
+	Set   bool   //設定をする
+	Scene string //カメラのシーン
+	Name  string //設定カメラ名
+}
+
+type RunSamples struct {
+	Set         bool   //設定をする
+	Scene       string //設定のシーン
+	Value       int    //設定サンプル数
+	IsCycles    bool
+	IsEevee     bool
+	IsWorkbench bool
+}
+
+func NewRunScript() *Run {
+	var run Run
+
+	run.Camera = newRunCamera()
+	run.Samples = newRunSamples()
+
+	return &run
+}
+
+func newRunCamera() *RunCamera {
+	var cam RunCamera
+
+	cam.Set = false
+	cam.Scene = ""
+	cam.Name = ""
+
+	return &cam
+}
+
+func newRunSamples() *RunSamples {
+
+	var samples RunSamples
+	samples.Set = false
+	samples.IsCycles = false
+	samples.IsEevee = false
+	samples.IsWorkbench = false
+
+	samples.Scene = ""
+	samples.Value = 0
+	return &samples
+}
+
+// GetRunPythonFile はレンダリング実行時に渡す Python スクリプトのパスを返す。
+// ファイルが存在しない場合のみ再作成する。
+func GetRunPythonFile(dto *Run) (string, error) {
+
+	/*
+		runFileMu.Lock()
+		defer runFileMu.Unlock()
+
+		if runFilePath != "" {
+			if _, err := os.Stat(runFilePath); err == nil {
+				return runFilePath, nil
+			}
+			runFilePath = ""
+		}
+	*/
+
+	p, err := createRunPythonFile(dto)
+	if err != nil {
+		return "", err
+	}
+	//runFilePath = p
+	return p, nil
+}
+
+/**
+ * レンダリング実行用のPythonファイルを作成する
+ */
+func createRunPythonFile(dto *Run) (string, error) {
+
+	tmpl, err := template.ParseFS(assetsEmb, "_assets/run.tmpl")
+	if err != nil {
+		return "", xerrors.Errorf("template.ParseFS() error: %w", err)
+	}
+
+	fp, err := os.CreateTemp("", "brender-run_*.py")
+	if err != nil {
+		return "", xerrors.Errorf("os.CreateTemp() error: %w", err)
+	}
+	defer fp.Close()
+
+	fmt.Println("dto", dto.Samples)
+	if err = tmpl.Execute(fp, dto); err != nil {
+		return "", xerrors.Errorf("tmpl.Execute() error: %w", err)
+	}
+	return fp.Name(), nil
+}

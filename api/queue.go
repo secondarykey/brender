@@ -22,7 +22,6 @@ const maxConcurrentJobs = 2
 // scheduleMu はキューの起動判定と DB 更新をアトミックに行うためのミューテックス。
 var scheduleMu sync.Mutex
 
-
 // QueueChangedHook はキューの件数が変化したときに呼ばれるフック。
 // 呼び出し元（Wails サービス層など）で設定する。
 var QueueChangedHook func(count int64)
@@ -244,6 +243,7 @@ func resolveBlenderFile(projectFileID string, projectID string) (string, error) 
 }
 
 func executeQueue(q *model.Queue, job *model.Job) {
+
 	b, err := exec.NewBlender(job.BlenderPath)
 	if err != nil {
 		finishJob(q.ID, false, err.Error(), 0)
@@ -259,7 +259,15 @@ func executeQueue(q *model.Queue, job *model.Job) {
 	b.Thread = job.Thread
 	b.Result = filepath.Join(job.OutputDir, "frame_####")
 
-	if runScript, rsErr := exec.GetRunPythonFile(); rsErr == nil {
+	run := exec.NewRunScript()
+	run.Samples.Scene = b.Scene
+
+	//TODO 強制的にサンプルを8 にするテスト
+	//run.Samples.Set = true
+	//run.Samples.IsCycles = true
+	//run.Samples.Value = 8
+
+	if runScript, rsErr := exec.GetRunPythonFile(run); rsErr == nil {
 		b.RunScript = runScript
 	} else {
 		log.Println("GetRunPythonFile error (rendering continues without script):", rsErr)
@@ -425,11 +433,11 @@ func ListQueueItems() ([]*QueueItem, error) {
 			CreatedAt:   q.CreatedAt,
 		}
 		if j, err := model.GetJob(q.ID); err == nil && j != nil {
-			item.ProjectName   = j.ProjectName
+			item.ProjectName = j.ProjectName
 			item.WorkspaceName = j.WorkspaceName
-			item.Engine        = j.Engine
-			item.StartFrame    = j.StartFrame
-			item.EndFrame      = j.EndFrame
+			item.Engine = j.Engine
+			item.StartFrame = j.StartFrame
+			item.EndFrame = j.EndFrame
 		}
 		if pr := exec.GetProgress(q.ID); pr != nil {
 			if pr.NowFrame > 0 {
@@ -441,13 +449,13 @@ func ListQueueItems() ([]*QueueItem, error) {
 			if pr.AverageTime > 0 {
 				item.AverageSec = pr.AverageTime.Seconds()
 			}
-			item.Log1         = pr.Log1
-			item.Log2         = pr.Log2
-			item.NowTile      = pr.NowTile
-			item.TotalTiles   = pr.TotalTiles
-			item.NowSample    = pr.NowSample
+			item.Log1 = pr.Log1
+			item.Log2 = pr.Log2
+			item.NowTile = pr.NowTile
+			item.TotalTiles = pr.TotalTiles
+			item.NowSample = pr.NowSample
 			item.TotalSamples = pr.TotalSamples
-			item.FrameActive  = pr.FrameActive
+			item.FrameActive = pr.FrameActive
 		}
 		items = append(items, item)
 	}

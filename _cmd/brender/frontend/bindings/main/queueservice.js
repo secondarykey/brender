@@ -128,7 +128,7 @@ export function ListJobs() {
 
 /**
  * @param {string} projectID
- * @param {number} fileID
+ * @param {string} fileID
  * @returns {$CancellablePromise<(model$0.Job | null)[]>}
  */
 export function ListJobsByProjectFile(projectID, fileID) {
