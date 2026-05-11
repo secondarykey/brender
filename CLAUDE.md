@@ -99,7 +99,7 @@ server/        (legacy HTTP server, still functional but handler/api/ is stale)
 |---|---|---|
 | `blenderservice.go` | `BlenderService` | `api/blender.go` |
 | `environmentservice.go` | `EnvironmentService` | `api/environment.go` |
-| `projectservice.go` | `ProjectService` | `api/project.go` |
+| `projectservice.go` | `ProjectService` | `api/project.go` + `api/thumbnail.go` |
 | `workspaceservice.go` | `WorkspaceService` | `api/workspace.go` |
 | `queueservice.go` | `QueueService` | `api/queue.go` |
 
@@ -114,29 +114,78 @@ Services are registered in `main.go`. After adding or changing a service, run `w
 
 ### Key model notes
 - `Environment`: `ProjectRoot string`, `Server bool`. No `BlenderCmd`/`BlenderVersion`/`Hash` fields (removed).
-- `Project`: `ID string` (UUID), `Name`, `BlenderInstallID uint`, `Scene string`. No `Archive` or `ThumbnailFrame` fields (removed).
-- `ProjectFile`: `ID uint`, `ProjectID`, `Path`, `Name`, `FileModifiedAt *time.Time`. `FileModifiedAt` is set from `os.Stat().ModTime()` on add; intended for future "file changed?" detection.
-- `Workspace`: `ProjectFileID uint` is set at creation and never changed by Update (file association is fixed). `BlenderInstallID=0` means use project default.
-- `Job`: permanent history record. Shares UUID v7 with its `Queue` record. Has `ProjectFileID uint` for direct file-based query.
+- `Project`: `ID string` (UUID v4), `Name`, `BlenderInstallID uint`, `Scene string`. No `Archive` or `ThumbnailFrame` fields (removed).
+- `ProjectFile`: `ID string` (UUID v4), `ProjectID`, `Path`, `Name`, `BlenderInstallID uint`, `Scene string`, `FileModifiedAt *time.Time`. `FileModifiedAt` is set from `os.Stat().ModTime()` on add.
+- `Workspace`: `ID string` (UUID v4), `ProjectFileID string` (固定、Update では変更不可), `BlenderInstallID=0` means use project default, `IsSystem bool` (サムネイル自動生成ワークスペースは `true`)。
+- `Job`: permanent history record. Shares UUID v7 with its `Queue` record. Has `ProjectFileID string` for direct file-based query.
   - `Status`: `completed` / `error` / `cancelled`
   - `DiskSize int64`: 完了時に出力ディレクトリの容量を保存
-  - `DataStatus string`: `none`（実行中・エラー）/ `available`（完了）/ `deleted`（データのみ削除）/ `locked`（ロック）
+  - `DataStatus int`: `0`=none / `1`=none+locked / `2`=available / `3`=available+locked / `4`=deleted / `5`=deleted+locked
   - `OutputDir string`: 出力先ディレクトリパス
 - `Queue`: ephemeral active-execution record. Deleted by `finishJob()` on completion/error/cancel.
+  - `Status`: `waiting` / `running`
+
+### UUID 発行ルール
+| エンティティ | 関数 | バージョン |
+|---|---|---|
+| ProjectID | `uuid.NewRandom()` | v4 |
+| ProjectFileID | `uuid.NewRandom()` | v4 |
+| WorkspaceID | `uuid.NewRandom()` | v4 |
+| QueueID / JobID | `uuid.NewV7()` | v7（時刻順ソート可） |
+
+### ディレクトリ構造
+```
+{env.ProjectRoot}/
+  {projectID}/
+    {fileID}/
+      thumbnail.jpg          ← サムネイル画像（640×360 JPEG）
+      {workspaceID}/
+        {jobID}/
+          frame_####.png     ← レンダリング出力フレーム
+          render.log         ← Blender 標準出力ログ
+```
 
 ### Navigation hierarchy (frontend)
 プロジェクト一覧 → プロジェクト詳細（ファイル一覧タブ） → ファイル詳細（ワークスペース左/履歴右の分割レイアウト・設定タブ） → ワークスペース設定（設定左/履歴右の分割レイアウト）
 
 ## Key Concepts
 
+### サムネイル自動生成 (`api/thumbnail.go`)
+ファイル登録時（`AddProjectFile`）に非同期で `CreateThumbnailWorkspace` を呼び出す。
+
+**フロー**:
+1. `IsSystem=true` のワークスペース「`ファイル名 Thumbnail`」を作成
+2. Blender で `.blend` のデフォルトシーンを解析し、中間フレーム（`(start+end)/2`）を1枚レンダリング
+3. 出力 PNG を `convertToJPEG` で 640×360 JPEG に変換して `thumbnail.jpg` として保存
+4. エラーはログ出力のみ（ファイル登録をブロックしない）
+
+**変換ロジック** (`convertToJPEG`):
+- キャンバス 640×360（黒背景）
+- 元画像をアスペクト比保持でキャンバスに収まる最大サイズに縮小（長辺基準 `min(W/srcW, H/srcH)`）
+- 中央配置、JPEG quality 85
+
+`GetFileThumbnail(projectID, fileID)` — `thumbnail.jpg` を base64 data URI で返す。存在しない場合は `IsSystem` ワークスペースの完了ジョブから画像を検索して変換・保存してから返す。
+
+**IsSystem ワークスペース**: 現在はワークスペース一覧に表示したまま。将来 `ListWorkspacesByProject` の WHERE 句に `is_system = false` を追加して除外する予定。
+
 ### Async rendering flow (`api/queue.go`)
-`Enqueue()` resolves the Blender executable (workspace → project → FirstBlender fallback), resolves the `.blend` file (workspace's `ProjectFileID` → project's first file), creates a `Job` + `Queue` sharing the same UUID v7, then spawns `executeQueue()` as a goroutine. The goroutine creates a `ProcessingWriter`, writes `render.log` to the output dir, calls `b.RunWithPID()`, and on completion calls `finishJob()` which updates Job status and deletes the Queue record.
+`Enqueue()` → `PreviewRender()` でパラメータ解決 → `EnqueueWithPreview()` でジョブ作成・キュー投入。
 
-Output directory: `{env.ProjectRoot}/{projectID}/{workspaceID}/{queueID}/`
-- `frame_####.png` — rendered frames
-- `render.log` — full Blender output
+**同時実行制御**:
+- `maxConcurrentJobs = 2`（定数）
+- `scheduleMu sync.Mutex` でスケジューラのレース防止
+- 投入時: 実行中キュー数が上限未満なら `MarkQueueStarting()`（DB で status を running に変更）してから `go executeQueue()` を起動。上限以上なら `waiting` のまま保留。
+- 完了・キャンセル時: `startNextWaiting()` を呼び出し、最古の `waiting` ジョブを昇格して起動。
+- 同一ワークスペースの重複投入禁止: `ExistsQueueByWorkspace` で事前チェック。
 
-`finishJob()` は完了時に `calcDirSize()` で出力ディレクトリ容量を計算して `Job.DiskSize` に保存する。
+**`executeQueue` の流れ**:
+1. `ProcessingWriter` 作成、`exec.RegisterProgress` 登録
+2. `render.log` を出力ディレクトリに作成（stdout/stderr を MultiWriter で書き込む）
+3. `b.RunWithPID()` で Blender 起動
+4. `model.UpdateQueueRunning(id, pid)` で PID・開始時刻を記録
+5. `errCh` から完了を待ち、`finishJob()` を呼ぶ
+
+`finishJob()` は完了時に `calcDirSize()` で出力ディレクトリ容量を計算して `Job.DiskSize` に保存、Queue レコードを削除後 `startNextWaiting()` → `notifyQueueChanged()` を呼ぶ。
 
 ### Queue changed hook (`api/queue.go`)
 ```go
@@ -217,17 +266,22 @@ On startup, `App.jsx` calls `EnvironmentApi.get()`. If `ProjectRoot` is not set,
 App.jsx
   MainLayout (sidebar nav + queue badge)
     ProjectListPage        (/projects)
+      プロジェクト新規作成: 「New Project」デフォルト値・フォーカス・全選択状態
     ProjectDetailPage      (/project/:id)
       tabs: ファイル一覧 / 設定
-        ファイル一覧: 各ファイル行に「開く」(オレンジ)・名称・›
     FileDetailPage         (/file)
-      tab: ワークスペース → 左右分割（左: ワークスペース一覧, 右: 実行履歴）
-      tab: 設定
-        ワークスペース一覧: 各行に「▶ 実行」(オレンジ)・名称・›
+      tab: ワークスペース → 左右分割
+        左: ワークスペース一覧（各行に「▶ 実行」・名称・›）
+             新規作成: 「New Workspace」デフォルト値・全選択状態
+        右: 実行履歴（HistoryTab）
+      tab: 設定 → 左右分割
+        左: ファイル設定フォーム
+        右: ThumbnailPanel（thumbnail.jpg 表示）
     WorkspaceDetailPage    (/workspace)
       左右分割（左: 設定フォーム, 右: 実行履歴）
+      ※ props に fileID/fileName がない場合、detail.project_files から補完してパンクズに表示
     QueuePage              (/queue)
-      tabs: 実行中 / 実行履歴
+      tabs: キュー（waiting/running 一覧、登録順昇順） / 実行履歴
     SettingsPage           (/settings)
       tabs: 環境 / Blender
 ```
@@ -235,6 +289,13 @@ App.jsx
 Breadcrumb: プロジェクト › プロジェクト名 › ファイル名 › ワークスペース名
 
 After `Enqueue()` succeeds, the app navigates to the queue page (`navigate('queue')`).
+
+### ファイル一覧タイル表示 (`WorkspaceTab.jsx`)
+- デフォルト表示: カード（タイル）表示
+- 表示切り替えボタン: 左寄せ
+- 「+ .blend ファイルを追加」ボタン: `position: sticky; top: 0; float: right` で右上固定（スクロールしても追従）
+- タイルサイズ: 幅 320px、縦レイアウト（サムネイル上 180px + 名称のみ下）
+- サムネイル: `ProjectApi.getFileThumbnail({ projectID, fileID })` で base64 data URI を取得して表示
 
 ### サイドバー
 - アイコンのみ表示（ラベルなし）、`title` 属性でツールチップ
@@ -256,7 +317,7 @@ src/lib/api/
   _client.js      isWails() 判定 + serverCall() fetch ヘルパー
   blender.js      BlenderApi
   environment.js  EnvironmentApi
-  project.js      ProjectApi
+  project.js      ProjectApi  ← getFileThumbnail({ projectID, fileID }) を含む
   workspace.js    WorkspaceApi
   queue.js        QueueApi
   index.js        re-export
