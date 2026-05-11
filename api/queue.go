@@ -47,6 +47,7 @@ type RenderPreview struct {
 	EndFrame      int    `json:"end_frame"`
 	FrameStep     int    `json:"frame_step"`
 	Thread        int    `json:"thread"`
+	Samples       int    `json:"samples"`
 }
 
 // PreviewRender はToolを実行してレンダリングパラメータを解決・検証する。
@@ -117,6 +118,7 @@ func PreviewRender(projectID, workspaceID string) (*RenderPreview, error) {
 		EndFrame:      endFrame,
 		FrameStep:     w.FrameStep,
 		Thread:        w.Thread,
+		Samples:       w.Samples,
 	}, nil
 }
 
@@ -166,6 +168,7 @@ func EnqueueWithPreview(projectID, workspaceID string, preview *RenderPreview) (
 		EndFrame:      preview.EndFrame,
 		FrameStep:     preview.FrameStep,
 		Thread:        preview.Thread,
+		Samples:       preview.Samples,
 		EnqueuedAt:    &now,
 	}
 	if err := model.CreateJob(job); err != nil {
@@ -262,10 +265,11 @@ func executeQueue(q *model.Queue, job *model.Job) {
 	run := exec.NewRunScript()
 	run.Samples.Scene = b.Scene
 
-	//TODO 強制的にサンプルを8 にするテスト
-	//run.Samples.Set = true
-	//run.Samples.IsCycles = true
-	//run.Samples.Value = 8
+	if job.Samples > 0 {
+		run.Samples.Set = true
+		run.Samples.Value = job.Samples
+		run.Samples.IsCycles, run.Samples.IsEevee, run.Samples.IsWorkbench = exec.EngineFlags(job.Engine)
+	}
 
 	if runScript, rsErr := exec.GetRunPythonFile(run); rsErr == nil {
 		b.RunScript = runScript

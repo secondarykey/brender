@@ -20,11 +20,11 @@ func CreateWorkspace(projectID string, projectFileID string, name string) (*mode
 	return model.CreateWorkspace(projectID, projectFileID, name, false)
 }
 
-func UpdateWorkspace(projectID string, workspaceID string, name string, blenderInstallID uint, scene, engine string, startFrame, endFrame, frameStep, thread int) (*model.WorkspaceDetail, error) {
+func UpdateWorkspace(projectID string, workspaceID string, name string, blenderInstallID uint, scene, engine string, startFrame, endFrame, frameStep, thread, samples int) (*model.WorkspaceDetail, error) {
 	if name == "" {
 		return nil, xerrors.New("workspace name is required")
 	}
-	return model.UpdateWorkspace(projectID, workspaceID, name, blenderInstallID, scene, engine, startFrame, endFrame, frameStep, thread)
+	return model.UpdateWorkspace(projectID, workspaceID, name, blenderInstallID, scene, engine, startFrame, endFrame, frameStep, thread, samples)
 }
 
 func DeleteWorkspace(projectID, workspaceID string) error {

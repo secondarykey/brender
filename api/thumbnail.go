@@ -31,7 +31,7 @@ func CreateThumbnailWorkspace(projectID string, file *model.ProjectFile) error {
 	mid := (st.Start + st.End) / 2
 	name := file.Name + " Thumbnail"
 
-	ws, err := model.CreateSystemWorkspace(projectID, file.ID, name, mid, mid)
+	ws, err := model.CreateSystemWorkspace(projectID, file.ID, name, mid, mid, 8)
 	if err != nil {
 		return err
 	}
