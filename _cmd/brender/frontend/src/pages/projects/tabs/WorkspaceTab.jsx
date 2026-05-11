@@ -75,7 +75,9 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
 
   return (
     <div className="workspace-tab-root">
-      <button className="btn btn-secondary ws-add-file-fab" onClick={handleAddFile}>+ .blend ファイルを追加</button>
+      <div className="ws-add-file-fab-wrap">
+        <button className="btn btn-secondary ws-add-file-fab" onClick={handleAddFile}>+ .blend ファイルを追加</button>
+      </div>
 
       {error && <div className="error-msg">{error}</div>}
 
