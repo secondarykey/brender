@@ -1,7 +1,6 @@
 package exec
 
 import (
-	"fmt"
 	"os"
 	"strings"
 	"text/template"
@@ -117,7 +116,6 @@ func createRunPythonFile(dto *Run) (string, error) {
 	}
 	defer fp.Close()
 
-	fmt.Println("dto", dto.Samples)
 	if err = tmpl.Execute(fp, dto); err != nil {
 		return "", xerrors.Errorf("tmpl.Execute() error: %w", err)
 	}

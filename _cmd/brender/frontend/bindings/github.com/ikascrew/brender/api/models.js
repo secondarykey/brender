@@ -275,6 +275,13 @@ export class RenderPreview {
              */
             this["thread"] = 0;
         }
+        if (!("samples" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["samples"] = 0;
+        }
 
         Object.assign(this, $$source);
     }

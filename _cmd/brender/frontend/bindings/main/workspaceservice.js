@@ -63,10 +63,11 @@ export function ListByProject(projectID) {
  * @param {number} endFrame
  * @param {number} frameStep
  * @param {number} thread
+ * @param {number} samples
  * @returns {$CancellablePromise<model$0.WorkspaceDetail | null>}
  */
-export function Update(projectID, workspaceID, name, blenderInstallID, scene, engine, startFrame, endFrame, frameStep, thread) {
-    return $Call.ByID(988583913, projectID, workspaceID, name, blenderInstallID, scene, engine, startFrame, endFrame, frameStep, thread).then(/** @type {($result: any) => any} */(($result) => {
+export function Update(projectID, workspaceID, name, blenderInstallID, scene, engine, startFrame, endFrame, frameStep, thread, samples) {
+    return $Call.ByID(988583913, projectID, workspaceID, name, blenderInstallID, scene, engine, startFrame, endFrame, frameStep, thread, samples).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType3($result);
     }));
 }

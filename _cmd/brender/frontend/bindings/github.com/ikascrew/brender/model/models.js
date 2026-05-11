@@ -269,6 +269,14 @@ export class Job {
              */
             this["thread"] = 0;
         }
+        if (!("samples" in $$source)) {
+            /**
+             * 0 = Blender デフォルト
+             * @member
+             * @type {number}
+             */
+            this["samples"] = 0;
+        }
         if (!("status" in $$source)) {
             /**
              * completed / error / cancelled
@@ -688,6 +696,14 @@ export class Workspace {
              * @type {number}
              */
             this["thread"] = 0;
+        }
+        if (!("samples" in $$source)) {
+            /**
+             * 0 = Blender デフォルト
+             * @member
+             * @type {number}
+             */
+            this["samples"] = 0;
         }
         if (!("is_system" in $$source)) {
             /**
