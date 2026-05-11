@@ -37,7 +37,7 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
   const [error, setError]     = useState('')
   const [fileError, setFileError] = useState('')
   const [openingFileID, setOpeningFileID] = useState(null)
-  const [viewMode, setViewMode] = useState('list') // 'list' | 'card'
+  const [viewMode, setViewMode] = useState('card') // 'list' | 'card'
 
   const load = () => {
     WorkspaceApi.listByProject({ projectID })
