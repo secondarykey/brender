@@ -101,7 +101,7 @@ func CreateWorkspace(projectID string, projectFileID string, name string, isSyst
 	return w, nil
 }
 
-func CreateSystemWorkspace(projectID string, projectFileID string, name string, startFrame, endFrame int) (*Workspace, error) {
+func CreateSystemWorkspace(projectID string, projectFileID string, name string, startFrame, endFrame, samples int) (*Workspace, error) {
 	id, err := newWorkspaceID()
 	if err != nil {
 		return nil, xerrors.Errorf("newWorkspaceID: %w", err)
@@ -113,6 +113,7 @@ func CreateSystemWorkspace(projectID string, projectFileID string, name string, 
 		Name:          name,
 		StartFrame:    startFrame,
 		EndFrame:      endFrame,
+		Samples:       samples,
 		IsSystem:      true,
 	}
 	if res := db.Create(w); res.Error != nil {
