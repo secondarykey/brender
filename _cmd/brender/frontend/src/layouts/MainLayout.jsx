@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { QueueApi } from '../lib/api'
 import { onAppEvent } from '../lib/appEvents'
 import TitleBar from '../components/TitleBar'
+import { useTranslation } from "react-i18next";
+
 
 function NavItem({ label, icon, active, onClick, badge }) {
   return (
@@ -17,6 +19,8 @@ function NavItem({ label, icon, active, onClick, badge }) {
 }
 
 function MainLayout({ currentPage, onNavigate, children }) {
+
+  const { t } = useTranslation();
   const [queueCount, setQueueCount] = useState(0)
 
   useEffect(() => {
@@ -28,12 +32,12 @@ function MainLayout({ currentPage, onNavigate, children }) {
   }, [])
 
   const topNav = [
-    { id: 'projects', label: 'プロジェクト', icon: '▦' },
-    { id: 'queue',    label: 'キュー',         icon: '⏱', badge: queueCount },
+    { id: 'projects', label: t('menu.project'), icon: '▦' },
+    { id: 'queue',    label: t('menu.queue'),    icon: '⏱', badge: queueCount },
   ]
 
   const bottomNav = [
-    { id: 'settings', label: '設定', icon: '⚙' },
+    { id: 'settings', label: t('menu.settings'), icon: '⚙' },
   ]
 
   return (

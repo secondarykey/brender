@@ -1,0 +1,19 @@
+{
+  "project": {
+    "register": {
+      "transition": "+New Project",
+      "apply": "Create",
+      "cancel": "Cancel"
+    }
+  },
+  "menu" : {
+    "project": "Project",
+    "queue": "Queue",
+    "settings": "Settings"
+  },
+  "title" : {
+    "minimum": "Minimize",
+    "maximum": "Maximize",
+    "close": "Close"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "project": {
+    "register": {
+      "transition": "+新規作成",
+      "apply": "作成",
+      "cancel": "キャンセル"
+    }
+  },
+  "menu" : {
+    "project": "プロジェクト",
+    "queue": "キュー",
+    "settings": "設定"
+  },
+  "title" : {
+    "minimum": "最小化",
+    "maximum": "最大化",
+    "close": "閉じる"
+  }
+}
