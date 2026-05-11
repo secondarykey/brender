@@ -131,6 +131,14 @@ func EnqueueWithPreview(projectID, workspaceID string, preview *RenderPreview) (
 		return nil, xerrors.New("作業ディレクトリが設定されていません（システム設定で設定してください）")
 	}
 
+	exists, err := model.ExistsQueueByWorkspace(projectID, workspaceID)
+	if err != nil {
+		return nil, xerrors.Errorf("ExistsQueueByWorkspace: %w", err)
+	}
+	if exists {
+		return nil, xerrors.New("同一ワークスペースのジョブがすでにキューに存在します")
+	}
+
 	id, err := model.NewQueueID()
 	if err != nil {
 		return nil, xerrors.Errorf("NewQueueID: %w", err)

@@ -113,6 +113,18 @@ func ListQueues() ([]*Queue, error) {
 	return list, nil
 }
 
+// ExistsQueueByWorkspace は同一ワークスペースのキューが存在するか返す。
+func ExistsQueueByWorkspace(projectID, workspaceID string) (bool, error) {
+	var count int64
+	res := db.Model(&Queue{}).
+		Where("project_id = ? AND workspace_id = ?", projectID, workspaceID).
+		Count(&count)
+	if res.Error != nil {
+		return false, xerrors.Errorf("ExistsQueueByWorkspace: %w", res.Error)
+	}
+	return count > 0, nil
+}
+
 func ListQueuesByWorkspace(projectID string, workspaceID string) ([]*Queue, error) {
 	var list []*Queue
 	if res := db.Where("project_id = ? AND workspace_id = ?", projectID, workspaceID).
