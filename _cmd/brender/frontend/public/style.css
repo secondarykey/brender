@@ -565,10 +565,15 @@ body {
 .ws-files-header {
   margin-bottom: 20px;
 }
-.ws-add-file-row {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 16px;
+.workspace-tab-root {
+  position: relative;
+}
+.ws-add-file-fab {
+  position: sticky;
+  top: 0;
+  float: right;
+  z-index: 10;
+  margin-bottom: 8px;
 }
 
 /* ファイル一覧 */
@@ -614,7 +619,7 @@ body {
 .file-view-toggle {
   display: flex;
   gap: 4px;
-  justify-content: flex-end;
+  justify-content: flex-start;
   margin-bottom: 10px;
 }
 .file-view-btn {

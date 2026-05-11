@@ -74,7 +74,9 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
   }
 
   return (
-    <div>
+    <div className="workspace-tab-root">
+      <button className="btn btn-secondary ws-add-file-fab" onClick={handleAddFile}>+ .blend ファイルを追加</button>
+
       {error && <div className="error-msg">{error}</div>}
 
       {groups.length > 0 && (
@@ -141,9 +143,6 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
       )}
 
       {fileError && <div className="error-msg" style={{ marginTop: 8 }}>{fileError}</div>}
-      <div className="ws-add-file-row">
-        <button className="btn btn-secondary" onClick={handleAddFile}>+ .blend ファイルを追加</button>
-      </div>
     </div>
   )
 }
