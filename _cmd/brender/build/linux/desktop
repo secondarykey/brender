@@ -1,13 +1,13 @@
 [Desktop Entry]
 Version=1.0
 Name=My Product
-Comment=A brender application
+Comment=My Product Description
 # The Exec line includes %u to pass the URL to the application
-Exec=/usr/local/bin/brender.exe %u
+Exec=/usr/local/bin/ %u
 Terminal=false
 Type=Application
-Icon=brender.exe
+Icon=
 Categories=Utility;
-StartupWMClass=brender.exe
+StartupWMClass=
 
  

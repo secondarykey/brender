@@ -32,10 +32,25 @@ func initDB() error {
 	return model.Init(filepath.Join(dir, "brender.db"))
 }
 
+func initLog() error {
+	return nil
+}
+
+func initLocale() error {
+	return nil
+}
+
 func main() {
+
+	//ログ関連の処理
+
 	if err := initDB(); err != nil {
 		log.Fatal(err)
 	}
+
+	//国際化関連の初期処理
+
+	//移行処理
 
 	app := application.New(application.Options{
 		Name:        "brender",
