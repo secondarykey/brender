@@ -105,6 +105,7 @@ function SettingsTab({ projectID, workspaceID, detail, onUpdated, onDeleted }) {
       endFrame:         end,
       frameStep:        detail.workspace.frame_step || 1,
       thread:           detail.workspace.thread || 0,
+      samples:          detail.workspace.samples || 0,
     })
     setSpecifyFrames(!isFrameDefault(start, end))
     setSaved(false)
@@ -166,6 +167,7 @@ function SettingsTab({ projectID, workspaceID, detail, onUpdated, onDeleted }) {
         scene: form.scene, engine: form.engine,
         startFrame: form.startFrame, endFrame: form.endFrame,
         frameStep: form.frameStep, thread: form.thread,
+        samples: form.samples,
       })
       setSaved(true)
       onUpdated()
@@ -252,6 +254,12 @@ function SettingsTab({ projectID, workspaceID, detail, onUpdated, onDeleted }) {
         <label className="form-label">スレッド数</label>
         <input className="form-input" style={{ width: 120 }} type="number" min={0} value={form.thread} onChange={e => set('thread', Number(e.target.value))} />
         <span className="form-hint">0 = 自動</span>
+      </div>
+
+      <div className="form-field">
+        <label className="form-label">サンプル数</label>
+        <input className="form-input" style={{ width: 120 }} type="number" min={0} value={form.samples} onChange={e => set('samples', Number(e.target.value))} />
+        <span className="form-hint">0 = Blender デフォルト（エンジンの設定値を使用）</span>
       </div>
 
       {error && <div className="error-msg">{error}</div>}

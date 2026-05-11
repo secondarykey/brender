@@ -19,8 +19,8 @@ func (s *WorkspaceService) Create(projectID string, projectFileID string, name s
 	return api.CreateWorkspace(projectID, projectFileID, name)
 }
 
-func (s *WorkspaceService) Update(projectID string, workspaceID string, name string, blenderInstallID uint, scene, engine string, startFrame, endFrame, frameStep, thread int) (*model.WorkspaceDetail, error) {
-	return api.UpdateWorkspace(projectID, workspaceID, name, blenderInstallID, scene, engine, startFrame, endFrame, frameStep, thread)
+func (s *WorkspaceService) Update(projectID string, workspaceID string, name string, blenderInstallID uint, scene, engine string, startFrame, endFrame, frameStep, thread, samples int) (*model.WorkspaceDetail, error) {
+	return api.UpdateWorkspace(projectID, workspaceID, name, blenderInstallID, scene, engine, startFrame, endFrame, frameStep, thread, samples)
 }
 
 func (s *WorkspaceService) Delete(projectID, workspaceID string) error {

@@ -3,10 +3,20 @@ package exec
 import (
 	"fmt"
 	"os"
+	"strings"
 	"text/template"
 
 	"golang.org/x/xerrors"
 )
+
+// EngineFlags はエンジン名から IsXxx フラグを返す。
+func EngineFlags(engine string) (isCycles, isEevee, isWorkbench bool) {
+	e := strings.ToUpper(engine)
+	isCycles = strings.Contains(e, "CYCLES")
+	isEevee = strings.Contains(e, "EEVEE")
+	isWorkbench = strings.Contains(e, "WORKBENCH")
+	return
+}
 
 /*
 var (
