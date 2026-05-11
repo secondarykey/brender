@@ -8,7 +8,7 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as model$0 from "../github.com/ikascrew/brender/model/models.js";
+import * as model$0 from "../../model/models.js";
 
 /**
  * @param {string} projectID
@@ -16,7 +16,7 @@ import * as model$0 from "../github.com/ikascrew/brender/model/models.js";
  * @returns {$CancellablePromise<model$0.ProjectFile | null>}
  */
 export function AddFile(projectID, path) {
-    return $Call.ByID(384050389, projectID, path).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(3555975532, projectID, path).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType1($result);
     }));
 }
@@ -26,7 +26,7 @@ export function AddFile(projectID, path) {
  * @returns {$CancellablePromise<model$0.ProjectDetail | null>}
  */
 export function Create(name) {
-    return $Call.ByID(1461490988, name).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(1643296919, name).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType3($result);
     }));
 }
@@ -36,7 +36,7 @@ export function Create(name) {
  * @returns {$CancellablePromise<void>}
  */
 export function Delete(id) {
-    return $Call.ByID(3223581587, id);
+    return $Call.ByID(4167210284, id);
 }
 
 /**
@@ -44,7 +44,7 @@ export function Delete(id) {
  * @returns {$CancellablePromise<void>}
  */
 export function DeleteFile(fileID) {
-    return $Call.ByID(1843196909, fileID);
+    return $Call.ByID(1985671226, fileID);
 }
 
 /**
@@ -52,7 +52,7 @@ export function DeleteFile(fileID) {
  * @returns {$CancellablePromise<model$0.ProjectDetail | null>}
  */
 export function Get(id) {
-    return $Call.ByID(430935156, id).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(1926978505, id).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType3($result);
     }));
 }
@@ -62,7 +62,7 @@ export function Get(id) {
  * @returns {$CancellablePromise<model$0.ProjectFile | null>}
  */
 export function GetFile(fileID) {
-    return $Call.ByID(1334031842, fileID).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(3336844271, fileID).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType1($result);
     }));
 }
@@ -73,14 +73,14 @@ export function GetFile(fileID) {
  * @returns {$CancellablePromise<string>}
  */
 export function GetFileThumbnail(projectID, fileID) {
-    return $Call.ByID(228160970, projectID, fileID);
+    return $Call.ByID(2482383365, projectID, fileID);
 }
 
 /**
  * @returns {$CancellablePromise<(model$0.ProjectDetail | null)[]>}
  */
 export function List() {
-    return $Call.ByID(165469264).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(3125621303).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType4($result);
     }));
 }
@@ -90,7 +90,7 @@ export function List() {
  * @returns {$CancellablePromise<void>}
  */
 export function RemoveFile(fileID) {
-    return $Call.ByID(2514277222, fileID);
+    return $Call.ByID(2574066893, fileID);
 }
 
 /**
@@ -99,7 +99,7 @@ export function RemoveFile(fileID) {
  * @returns {$CancellablePromise<model$0.ProjectDetail | null>}
  */
 export function Update(id, name) {
-    return $Call.ByID(2713121225, id, name).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(2080245374, id, name).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType3($result);
     }));
 }
@@ -112,7 +112,7 @@ export function Update(id, name) {
  * @returns {$CancellablePromise<model$0.ProjectFile | null>}
  */
 export function UpdateFile(fileID, name, blenderInstallID, scene) {
-    return $Call.ByID(3043174895, fileID, name, blenderInstallID, scene).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(2556186200, fileID, name, blenderInstallID, scene).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType1($result);
     }));
 }

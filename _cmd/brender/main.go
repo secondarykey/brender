@@ -10,7 +10,9 @@ import (
 	"strings"
 
 	"github.com/ikascrew/brender/api"
+	"github.com/ikascrew/brender/api/wails"
 	"github.com/ikascrew/brender/model"
+
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
@@ -29,6 +31,7 @@ func initDB() error {
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err
 	}
+
 	return model.Init(filepath.Join(dir, "brender.db"))
 }
 
@@ -53,14 +56,14 @@ func main() {
 	//移行処理
 
 	app := application.New(application.Options{
-		Name:        "brender",
+		Name:        "Brender",
 		Description: "Blender rendering manager",
 		Services: []application.Service{
-			application.NewService(&BlenderService{}),
-			application.NewService(&EnvironmentService{}),
-			application.NewService(&ProjectService{}),
-			application.NewService(&WorkspaceService{}),
-			application.NewService(&QueueService{}),
+			application.NewService(wails.NewBlender()),
+			application.NewService(wails.NewEnvironment()),
+			application.NewService(wails.NewProject()),
+			application.NewService(wails.NewWorkspace()),
+			application.NewService(wails.NewQueue()),
 		},
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),

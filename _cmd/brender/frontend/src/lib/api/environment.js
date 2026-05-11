@@ -1,6 +1,6 @@
 import { isWails, serverCall } from './_client'
 
-const svc = () => import('../../../bindings/main').then(m => m.EnvironmentService)
+const svc = () => import('../../../bindings/github.com/ikascrew/brender/api/wails/environment');
 
 export const EnvironmentApi = {
   /** 環境設定を取得 */

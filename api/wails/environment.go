@@ -1,4 +1,4 @@
-package main
+package wails
 
 import (
 	"os"
@@ -7,18 +7,23 @@ import (
 	"github.com/ikascrew/brender/model"
 )
 
-type EnvironmentService struct{}
+type Environment struct{}
 
-func (s *EnvironmentService) Get() (*model.Environment, error) {
+func NewEnvironment() *Environment {
+	var env Environment
+	return &env
+}
+
+func (s *Environment) Get() (*model.Environment, error) {
 	return api.GetEnvironment()
 }
 
-func (s *EnvironmentService) SetRoot(root string) error {
+func (s *Environment) SetRoot(root string) error {
 	return api.SetProjectRoot(root)
 }
 
 // GetWorkDir returns the process working directory for use as a dialog default.
-func (s *EnvironmentService) GetWorkDir() string {
+func (s *Environment) GetWorkDir() string {
 	dir, err := os.Getwd()
 	if err != nil {
 		return ""

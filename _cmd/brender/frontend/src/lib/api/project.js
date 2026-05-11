@@ -1,6 +1,6 @@
 import { isWails, serverCall } from './_client'
 
-const svc = () => import('../../../bindings/main').then(m => m.ProjectService)
+const svc = () => import('../../../bindings/github.com/ikascrew/brender/api/wails/project')
 
 export const ProjectApi = {
   /** プロジェクト一覧を取得 */

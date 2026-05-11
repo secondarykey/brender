@@ -8,14 +8,14 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as model$0 from "../github.com/ikascrew/brender/model/models.js";
+import * as model$0 from "../../model/models.js";
 
 /**
  * @param {number} id
  * @returns {$CancellablePromise<void>}
  */
 export function Delete(id) {
-    return $Call.ByID(3108635402, id);
+    return $Call.ByID(505165703, id);
 }
 
 /**
@@ -23,7 +23,7 @@ export function Delete(id) {
  * @returns {$CancellablePromise<string[]>}
  */
 export function GetEngines(installID) {
-    return $Call.ByID(1492915694, installID).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(2944509355, installID).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType0($result);
     }));
 }
@@ -34,7 +34,7 @@ export function GetEngines(installID) {
  * @returns {$CancellablePromise<string[]>}
  */
 export function GetScenes(installID, fileID) {
-    return $Call.ByID(1844523090, installID, fileID).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(1000048201, installID, fileID).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType0($result);
     }));
 }
@@ -43,7 +43,7 @@ export function GetScenes(installID, fileID) {
  * @returns {$CancellablePromise<(model$0.BlenderInstall | null)[]>}
  */
 export function List() {
-    return $Call.ByID(4031984705).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(2583559636).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType3($result);
     }));
 }
@@ -54,7 +54,7 @@ export function List() {
  * @returns {$CancellablePromise<void>}
  */
 export function OpenFile(installID, filePath) {
-    return $Call.ByID(3673195439, installID, filePath);
+    return $Call.ByID(1002287226, installID, filePath);
 }
 
 /**
@@ -62,7 +62,7 @@ export function OpenFile(installID, filePath) {
  * @returns {$CancellablePromise<model$0.BlenderInstall | null>}
  */
 export function Register(path) {
-    return $Call.ByID(3741754752, path).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(3243524325, path).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType2($result);
     }));
 }
@@ -72,7 +72,7 @@ export function Register(path) {
  * @returns {$CancellablePromise<void>}
  */
 export function Reorder(ids) {
-    return $Call.ByID(3888189960, ids);
+    return $Call.ByID(2974685599, ids);
 }
 
 // Private type creation functions

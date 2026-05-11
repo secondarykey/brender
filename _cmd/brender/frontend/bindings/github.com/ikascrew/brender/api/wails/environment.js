@@ -8,13 +8,13 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as model$0 from "../github.com/ikascrew/brender/model/models.js";
+import * as model$0 from "../../model/models.js";
 
 /**
  * @returns {$CancellablePromise<model$0.Environment | null>}
  */
 export function Get() {
-    return $Call.ByID(3978054320).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(868116245).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType1($result);
     }));
 }
@@ -24,7 +24,7 @@ export function Get() {
  * @returns {$CancellablePromise<string>}
  */
 export function GetWorkDir() {
-    return $Call.ByID(176312780);
+    return $Call.ByID(3827899719);
 }
 
 /**
@@ -32,7 +32,7 @@ export function GetWorkDir() {
  * @returns {$CancellablePromise<void>}
  */
 export function SetRoot(root) {
-    return $Call.ByID(602666156, root);
+    return $Call.ByID(496585617, root);
 }
 
 // Private type creation functions

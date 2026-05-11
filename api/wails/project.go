@@ -1,0 +1,57 @@
+package wails
+
+import (
+	"github.com/ikascrew/brender/api"
+	"github.com/ikascrew/brender/model"
+)
+
+type Project struct{}
+
+func NewProject() *Project {
+	var p Project
+	return &p
+}
+
+func (s *Project) List() ([]*model.ProjectDetail, error) {
+	return api.ListProjects()
+}
+
+func (s *Project) Get(id string) (*model.ProjectDetail, error) {
+	return api.GetProject(id)
+}
+
+func (s *Project) Create(name string) (*model.ProjectDetail, error) {
+	return api.CreateProject(name)
+}
+
+func (s *Project) Delete(id string) error {
+	return api.DeleteProject(id)
+}
+
+func (s *Project) Update(id, name string) (*model.ProjectDetail, error) {
+	return api.UpdateProject(id, name)
+}
+
+func (s *Project) UpdateFile(fileID string, name string, blenderInstallID uint, scene string) (*model.ProjectFile, error) {
+	return api.UpdateProjectFile(fileID, name, blenderInstallID, scene)
+}
+
+func (s *Project) GetFile(fileID string) (*model.ProjectFile, error) {
+	return api.GetFile(fileID)
+}
+
+func (s *Project) AddFile(projectID, path string) (*model.ProjectFile, error) {
+	return api.AddProjectFile(projectID, path)
+}
+
+func (s *Project) RemoveFile(fileID string) error {
+	return api.RemoveProjectFile(fileID)
+}
+
+func (s *Project) DeleteFile(fileID string) error {
+	return api.DeleteProjectFile(fileID)
+}
+
+func (s *Project) GetFileThumbnail(projectID string, fileID string) (string, error) {
+	return api.GetFileThumbnail(projectID, fileID)
+}

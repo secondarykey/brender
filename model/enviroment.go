@@ -15,12 +15,14 @@ type Environment struct {
 }
 
 func GetEnv() (*Environment, error) {
+
 	env := Environment{}
 	//環境値は絶対１件
 	res := db.First(&env)
 	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
+
 	return &env, nil
 }
 

@@ -8,17 +8,17 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as api$0 from "../github.com/ikascrew/brender/api/models.js";
+import * as api$0 from "../models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as model$0 from "../github.com/ikascrew/brender/model/models.js";
+import * as model$0 from "../../model/models.js";
 
 /**
  * @param {string} id
  * @returns {$CancellablePromise<void>}
  */
 export function Cancel(id) {
-    return $Call.ByID(303544676, id);
+    return $Call.ByID(4091358631, id);
 }
 
 /**
@@ -26,7 +26,7 @@ export function Cancel(id) {
  * @returns {$CancellablePromise<void>}
  */
 export function DeleteJob(id) {
-    return $Call.ByID(3644669520, id);
+    return $Call.ByID(3837319329, id);
 }
 
 /**
@@ -34,7 +34,7 @@ export function DeleteJob(id) {
  * @returns {$CancellablePromise<void>}
  */
 export function DeleteJobData(id) {
-    return $Call.ByID(3130572120, id);
+    return $Call.ByID(2294952497, id);
 }
 
 /**
@@ -43,7 +43,7 @@ export function DeleteJobData(id) {
  * @returns {$CancellablePromise<model$0.Queue | null>}
  */
 export function Enqueue(projectID, workspaceID) {
-    return $Call.ByID(4151871024, projectID, workspaceID).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(321240905, projectID, workspaceID).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType1($result);
     }));
 }
@@ -55,7 +55,7 @@ export function Enqueue(projectID, workspaceID) {
  * @returns {$CancellablePromise<model$0.Queue | null>}
  */
 export function EnqueueWithPreview(projectID, workspaceID, preview) {
-    return $Call.ByID(2833902284, projectID, workspaceID, preview).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(1039318383, projectID, workspaceID, preview).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType1($result);
     }));
 }
@@ -65,7 +65,7 @@ export function EnqueueWithPreview(projectID, workspaceID, preview) {
  * @returns {$CancellablePromise<model$0.Queue | null>}
  */
 export function Get(id) {
-    return $Call.ByID(2893970202, id).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(468661419, id).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType1($result);
     }));
 }
@@ -75,14 +75,14 @@ export function Get(id) {
  * @returns {$CancellablePromise<string>}
  */
 export function GetImageBase64(path) {
-    return $Call.ByID(2710915624, path);
+    return $Call.ByID(1202128375, path);
 }
 
 /**
  * @returns {$CancellablePromise<(model$0.Queue | null)[]>}
  */
 export function List() {
-    return $Call.ByID(1861685306).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(3165860213).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType2($result);
     }));
 }
@@ -93,7 +93,7 @@ export function List() {
  * @returns {$CancellablePromise<(model$0.Queue | null)[]>}
  */
 export function ListByWorkspace(projectID, workspaceID) {
-    return $Call.ByID(3470338888, projectID, workspaceID).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(1462409681, projectID, workspaceID).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType2($result);
     }));
 }
@@ -102,7 +102,7 @@ export function ListByWorkspace(projectID, workspaceID) {
  * @returns {$CancellablePromise<(api$0.QueueItem | null)[]>}
  */
 export function ListItems() {
-    return $Call.ByID(91534118).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(305390015).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType5($result);
     }));
 }
@@ -112,7 +112,7 @@ export function ListItems() {
  * @returns {$CancellablePromise<string[]>}
  */
 export function ListJobImages(id) {
-    return $Call.ByID(3681338691, id).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(1978976334, id).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType6($result);
     }));
 }
@@ -121,7 +121,7 @@ export function ListJobImages(id) {
  * @returns {$CancellablePromise<(model$0.Job | null)[]>}
  */
 export function ListJobs() {
-    return $Call.ByID(2931144554).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(1456638637).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType9($result);
     }));
 }
@@ -132,7 +132,7 @@ export function ListJobs() {
  * @returns {$CancellablePromise<(model$0.Job | null)[]>}
  */
 export function ListJobsByProjectFile(projectID, fileID) {
-    return $Call.ByID(567594534, projectID, fileID).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(774568071, projectID, fileID).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType9($result);
     }));
 }
@@ -143,7 +143,7 @@ export function ListJobsByProjectFile(projectID, fileID) {
  * @returns {$CancellablePromise<(model$0.Job | null)[]>}
  */
 export function ListJobsByWorkspace(projectID, workspaceID) {
-    return $Call.ByID(2899323832, projectID, workspaceID).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(1990300201, projectID, workspaceID).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType9($result);
     }));
 }
@@ -153,7 +153,7 @@ export function ListJobsByWorkspace(projectID, workspaceID) {
  * @returns {$CancellablePromise<void>}
  */
 export function LockJob(id) {
-    return $Call.ByID(2533656384, id);
+    return $Call.ByID(4279433993, id);
 }
 
 /**
@@ -162,7 +162,7 @@ export function LockJob(id) {
  * @returns {$CancellablePromise<api$0.RenderPreview | null>}
  */
 export function PreviewRender(projectID, workspaceID) {
-    return $Call.ByID(2016776806, projectID, workspaceID).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(2094811495, projectID, workspaceID).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType11($result);
     }));
 }
@@ -172,7 +172,7 @@ export function PreviewRender(projectID, workspaceID) {
  * @returns {$CancellablePromise<void>}
  */
 export function UnlockJob(id) {
-    return $Call.ByID(2620057101, id);
+    return $Call.ByID(1952234080, id);
 }
 
 // Private type creation functions

@@ -12,6 +12,7 @@ func GetEnvironment() (*model.Environment, error) {
 }
 
 func SetProjectRoot(root string) error {
+
 	if _, err := os.Stat(root); err != nil {
 		return xerrors.Errorf("directory not found: %s", root)
 	}
@@ -20,6 +21,7 @@ func SetProjectRoot(root string) error {
 	if err != nil {
 		return xerrors.Errorf("GetEnv error: %w", err)
 	}
+
 	if env == nil {
 		env = &model.Environment{}
 	}

@@ -8,7 +8,7 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as model$0 from "../github.com/ikascrew/brender/model/models.js";
+import * as model$0 from "../../model/models.js";
 
 /**
  * @param {string} projectID
@@ -17,7 +17,7 @@ import * as model$0 from "../github.com/ikascrew/brender/model/models.js";
  * @returns {$CancellablePromise<model$0.Workspace | null>}
  */
 export function Create(projectID, projectFileID, name) {
-    return $Call.ByID(437707596, projectID, projectFileID, name).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(534786391, projectID, projectFileID, name).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType1($result);
     }));
 }
@@ -28,7 +28,7 @@ export function Create(projectID, projectFileID, name) {
  * @returns {$CancellablePromise<void>}
  */
 export function Delete(projectID, workspaceID) {
-    return $Call.ByID(2241478067, projectID, workspaceID);
+    return $Call.ByID(4225591020, projectID, workspaceID);
 }
 
 /**
@@ -37,7 +37,7 @@ export function Delete(projectID, workspaceID) {
  * @returns {$CancellablePromise<model$0.WorkspaceDetail | null>}
  */
 export function Get(projectID, workspaceID) {
-    return $Call.ByID(1095693844, projectID, workspaceID).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(1108603273, projectID, workspaceID).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType3($result);
     }));
 }
@@ -47,7 +47,7 @@ export function Get(projectID, workspaceID) {
  * @returns {$CancellablePromise<(model$0.WorkspacesByFile | null)[]>}
  */
 export function ListByProject(projectID) {
-    return $Call.ByID(3968006918, projectID).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(2381232515, projectID).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType6($result);
     }));
 }
@@ -67,7 +67,7 @@ export function ListByProject(projectID) {
  * @returns {$CancellablePromise<model$0.WorkspaceDetail | null>}
  */
 export function Update(projectID, workspaceID, name, blenderInstallID, scene, engine, startFrame, endFrame, frameStep, thread, samples) {
-    return $Call.ByID(988583913, projectID, workspaceID, name, blenderInstallID, scene, engine, startFrame, endFrame, frameStep, thread, samples).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(971734846, projectID, workspaceID, name, blenderInstallID, scene, engine, startFrame, endFrame, frameStep, thread, samples).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType3($result);
     }));
 }
