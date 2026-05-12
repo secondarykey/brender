@@ -126,14 +126,14 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
             onClick={() => setViewMode('card')}
             title={t('workspace.cardView')}
           >⊞</button>
+          <SortSelect value={sort} onChange={handleSortChange} />
           <button
             className={`btn btn-sm${thumbnailMode ? ' btn-outline-active' : ' btn-outline'}`}
-            style={{ marginLeft: 8 }}
+            style={{ marginLeft: 'auto' }}
             onClick={() => { setThumbnailMode(v => !v); setThumbMsg('') }}
           >
             {t('file.setAsProjectThumbnail')}
           </button>
-          <SortSelect value={sort} onChange={handleSortChange} />
         </div>
       )}
 

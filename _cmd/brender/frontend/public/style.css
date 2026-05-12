@@ -653,7 +653,6 @@ body {
   margin-bottom: 10px;
 }
 .sort-select {
-  margin-left: auto;
   background: #1e1e1e;
   color: rgba(255,255,255,0.7);
   border: 1px solid rgba(255,255,255,0.15);
