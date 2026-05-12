@@ -3,6 +3,7 @@ package api
 import (
 	"log"
 	"os"
+	"time"
 
 	"github.com/ikascrew/brender/model"
 	"golang.org/x/xerrors"
@@ -42,6 +43,11 @@ func AddProjectFile(projectID, path string) (*model.ProjectFile, error) {
 	if err != nil {
 		return nil, err
 	}
+	now := time.Now()
+	if err := model.UpdateProjectFileProcessedAt(f.ID, &now); err != nil {
+		log.Printf("AddProjectFile: UpdateProjectFileProcessedAt: %v", err)
+	}
+	touchProjectProcessedAt(projectID)
 	go func() {
 		if err := CreateThumbnailWorkspace(projectID, f); err != nil {
 			log.Printf("thumbnail workspace creation failed for file %d: %v", f.ID, err)
@@ -82,5 +88,20 @@ func CreateProject(name string) (*model.ProjectDetail, error) {
 	if name == "" {
 		return nil, xerrors.New("project name is required")
 	}
-	return model.CreateProject(name, nil)
+	d, err := model.CreateProject(name, nil)
+	if err != nil {
+		return nil, err
+	}
+	now := time.Now()
+	if err := model.UpdateProjectProcessedAt(d.Project.ID, &now); err != nil {
+		log.Printf("CreateProject: UpdateProjectProcessedAt: %v", err)
+	}
+	return d, nil
+}
+
+func touchProjectProcessedAt(projectID string) {
+	now := time.Now()
+	if err := model.UpdateProjectProcessedAt(projectID, &now); err != nil {
+		log.Printf("touchProjectProcessedAt(%s): %v", projectID, err)
+	}
 }

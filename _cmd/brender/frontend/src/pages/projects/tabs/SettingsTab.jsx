@@ -53,6 +53,7 @@ function SettingsTab({ detail, focusName, onUpdated, onDeleted }) {
   const [confirm, setConfirm]   = useState(false)
   const [deleting, setDeleting] = useState(false)
   const nameRef = useRef(null)
+  const hasFocused = useRef(false)
 
   useEffect(() => {
     setForm({ name: detail.project.name })
@@ -61,9 +62,10 @@ function SettingsTab({ detail, focusName, onUpdated, onDeleted }) {
   }, [detail])
 
   useEffect(() => {
-    if (focusName && nameRef.current) {
+    if (focusName && !hasFocused.current && nameRef.current) {
       nameRef.current.focus()
       nameRef.current.select()
+      hasFocused.current = true
     }
   }, [focusName, form])
 
