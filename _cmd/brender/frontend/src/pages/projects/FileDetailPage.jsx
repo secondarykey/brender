@@ -360,7 +360,7 @@ function ThumbnailPanel({ projectID, fileID }) {
       <h3 className="ws-detail-section-title">{t('workspace.thumbnail')}</h3>
       {src
         ? <img className="thumbnail-img" src={src} alt="thumbnail" />
-        : <div className="thumbnail-placeholder" />
+        : <div className="thumbnail-placeholder">No Image</div>
       }
     </div>
   )
