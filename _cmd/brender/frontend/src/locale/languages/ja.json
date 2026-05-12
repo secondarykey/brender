@@ -167,6 +167,7 @@
     "renderResults": "レンダリング結果 — "
   },
   "settings": {
+    "language": "言語",
     "workingDir": "作業ディレクトリ",
     "workingDirHint": "プロジェクトとレンダリング結果を保存するフォルダを指定します。",
     "selectFolder": "フォルダを選択",

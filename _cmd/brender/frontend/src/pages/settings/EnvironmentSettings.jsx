@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
 import { EnvironmentApi } from '../../lib/api'
+import { LANGUAGES } from '../../languages'
 
 function EnvironmentSettings() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [root, setRoot]       = useState('')
   const [workDir, setWorkDir] = useState('')
   const [saving, setSaving]   = useState(false)
@@ -44,7 +45,21 @@ function EnvironmentSettings() {
 
   return (
     <div>
-      <h2 className="section-title">{t('settings.workingDir')}</h2>
+      <h2 className="section-title">{t('settings.language')}</h2>
+      <div className="setting-row">
+        <select
+          className="form-select"
+          style={{ width: 200 }}
+          value={i18n.language}
+          onChange={e => i18n.changeLanguage(e.target.value)}
+        >
+          {LANGUAGES.map(lang => (
+            <option key={lang.code} value={lang.code}>{lang.label}</option>
+          ))}
+        </select>
+      </div>
+
+      <h2 className="section-title" style={{ marginTop: 24 }}>{t('settings.workingDir')}</h2>
       <p className="setting-desc">{t('settings.workingDirHint')}</p>
 
       <div className="setting-row">

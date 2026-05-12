@@ -167,6 +167,7 @@
     "renderResults": "Rendering Results — "
   },
   "settings": {
+    "language": "Language",
     "workingDir": "Working Directory",
     "workingDirHint": "Specify the folder to save projects and rendering results.",
     "selectFolder": "Select Folder",
