@@ -49,7 +49,7 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
   const [error, setError]     = useState('')
   const [fileError, setFileError] = useState('')
   const [openingFileID, setOpeningFileID] = useState(null)
-  const [viewMode, setViewMode] = useState('card') // 'list' | 'card'
+  const [viewMode, setViewMode] = useState(() => localStorage.getItem('viewMode:files') || 'card')
   const [thumbnailMode, setThumbnailMode] = useState(false)
   const [thumbMsg, setThumbMsg] = useState('')
   const [sort, setSort] = useState(() => localStorage.getItem('sort:files') || 'display_order')
@@ -114,12 +114,12 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
         <div className="file-view-toggle">
           <button
             className={`file-view-btn${viewMode === 'list' ? ' active' : ''}`}
-            onClick={() => setViewMode('list')}
+            onClick={() => { setViewMode('list'); localStorage.setItem('viewMode:files', 'list') }}
             title={t('workspace.listView')}
           >☰</button>
           <button
             className={`file-view-btn${viewMode === 'card' ? ' active' : ''}`}
-            onClick={() => setViewMode('card')}
+            onClick={() => { setViewMode('card'); localStorage.setItem('viewMode:files', 'card') }}
             title={t('workspace.cardView')}
           >⊞</button>
           <SortSelect value={sort} onChange={handleSortChange} />
