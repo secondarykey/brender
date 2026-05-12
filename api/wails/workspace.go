@@ -35,3 +35,7 @@ func (s *Workspace) Delete(projectID, workspaceID string) error {
 func (s *Workspace) GetThumbnail(projectID string, fileID string, workspaceID string) (string, error) {
 	return api.GetWorkspaceThumbnail(projectID, fileID, workspaceID)
 }
+
+func (s *Workspace) SetThumbnail(projectID string, fileID string, workspaceID string, imagePath string) (string, error) {
+	return api.SetWorkspaceThumbnail(projectID, fileID, workspaceID, imagePath)
+}

@@ -103,6 +103,7 @@
     "openInBlender": "Blender で開く",
     "thumbnail": "サムネイル",
     "noThumbnail": "サムネイルがありません",
+    "clickToChangeThumbnail": "クリックして画像を変更",
     "noHistory": "まだ実行履歴がありません",
     "blender": "Blender",
     "blenderHint": "未設定の場合: ファイルのデフォルト → Blender一覧の先頭 の順で使用されます",

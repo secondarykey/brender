@@ -59,3 +59,11 @@ func (s *Project) GetFileThumbnail(projectID string, fileID string) (string, err
 func (s *Project) GetProjectThumbnail(projectID string) (string, error) {
 	return api.GetProjectThumbnail(projectID)
 }
+
+func (s *Project) SetProjectThumbnail(projectID string, imagePath string) (string, error) {
+	return api.SetProjectThumbnail(projectID, imagePath)
+}
+
+func (s *Project) SetFileThumbnail(projectID string, fileID string, imagePath string) (string, error) {
+	return api.SetFileThumbnail(projectID, fileID, imagePath)
+}

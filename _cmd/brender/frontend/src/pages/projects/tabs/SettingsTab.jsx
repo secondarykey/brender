@@ -1,27 +1,45 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Dialogs } from '@wailsio/runtime'
 import { ProjectApi } from '../../../lib/api'
+
+const IMAGE_FILTER = [{ DisplayName: 'Image', Pattern: '*.jpg;*.jpeg;*.png;*.bmp;*.webp' }]
 
 function ProjectThumbnailPanel({ projectID }) {
   const { t } = useTranslation()
   const [src, setSrc]         = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
-    setLoading(true)
     ProjectApi.getProjectThumbnail({ projectID })
       .then(data => setSrc(data || null))
       .catch(() => setSrc(null))
-      .finally(() => setLoading(false))
   }, [projectID])
+
+  const handleClick = async () => {
+    if (uploading) return
+    try {
+      const path = await Dialogs.OpenFile({ Filters: IMAGE_FILTER })
+      if (!path) return
+      setUploading(true)
+      const data = await ProjectApi.setProjectThumbnail({ projectID, imagePath: path })
+      setSrc(data || null)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setUploading(false)
+    }
+  }
 
   return (
     <div className="thumbnail-panel">
       <h3 className="ws-detail-section-title">{t('workspace.thumbnail')}</h3>
-      {src
-        ? <img className="thumbnail-img" src={src} alt="thumbnail" />
-        : <div className="thumbnail-placeholder">No Image</div>
-      }
+      <div className="thumbnail-clickable" onClick={handleClick} title={t('workspace.clickToChangeThumbnail')}>
+        {src
+          ? <img className="thumbnail-img" src={src} alt="thumbnail" />
+          : <div className="thumbnail-placeholder">No Image</div>
+        }
+      </div>
     </div>
   )
 }

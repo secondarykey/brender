@@ -84,4 +84,18 @@ export const ProjectApi = {
   getProjectThumbnail: ({ projectID }) =>
     isWails() ? svc().then(s => s.GetProjectThumbnail(projectID))
               : serverCall('project', 'get_project_thumbnail', { project_id: projectID }),
+
+  /** 画像ファイルをプロジェクトサムネイルに設定し、base64 データURIを返す
+   * @param {{ projectID: string, imagePath: string }} args
+   */
+  setProjectThumbnail: ({ projectID, imagePath }) =>
+    isWails() ? svc().then(s => s.SetProjectThumbnail(projectID, imagePath))
+              : serverCall('project', 'set_project_thumbnail', { project_id: projectID, image_path: imagePath }),
+
+  /** 画像ファイルをファイルサムネイルに設定し、base64 データURIを返す
+   * @param {{ projectID: string, fileID: string, imagePath: string }} args
+   */
+  setFileThumbnail: ({ projectID, fileID, imagePath }) =>
+    isWails() ? svc().then(s => s.SetFileThumbnail(projectID, fileID, imagePath))
+              : serverCall('project', 'set_file_thumbnail', { project_id: projectID, file_id: fileID, image_path: imagePath }),
 }

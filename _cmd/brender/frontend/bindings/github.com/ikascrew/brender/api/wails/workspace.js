@@ -64,6 +64,17 @@ export function ListByProject(projectID) {
 
 /**
  * @param {string} projectID
+ * @param {string} fileID
+ * @param {string} workspaceID
+ * @param {string} imagePath
+ * @returns {$CancellablePromise<string>}
+ */
+export function SetThumbnail(projectID, fileID, workspaceID, imagePath) {
+    return $Call.ByID(3409619191, projectID, fileID, workspaceID, imagePath);
+}
+
+/**
+ * @param {string} projectID
  * @param {string} workspaceID
  * @param {string} name
  * @param {number} blenderInstallID
