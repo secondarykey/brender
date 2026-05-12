@@ -206,7 +206,9 @@
   "viewer": {
     "noImages": "画像ファイルが見つかりません",
     "play": "▶ 再生",
-    "stop": "⏹ 停止"
+    "stop": "⏹ 停止",
+    "setAsThumbnail": "サムネイルに設定",
+    "thumbnailSet": "サムネイルを設定しました"
   },
   "render": {
     "confirmTitle": "レンダリングを実行しますか？",
