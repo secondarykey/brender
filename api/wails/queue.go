@@ -2,6 +2,7 @@ package wails
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/ikascrew/brender/api"
 	"github.com/ikascrew/brender/model"
@@ -88,22 +89,13 @@ func (s *Queue) GetJobLog(id string) (string, error) {
 }
 
 func (s *Queue) OpenLogWindow(jobID string) error {
-	app := application.Get()
-	winName := "log-" + jobID
-
-	// 既存ウィンドウがあればフォーカスして終了
-	if win, exists := app.Window.GetByName(winName); exists {
-		win.Show()
-		win.Focus()
-		return nil
-	}
-
 	title := "render.log"
 	if j, err := model.GetJob(jobID); err == nil && j != nil {
 		title = fmt.Sprintf("render.log — %s / %s", j.ProjectName, j.WorkspaceName)
 	}
 
-	app.Window.NewWithOptions(application.WebviewWindowOptions{
+	winName := fmt.Sprintf("log-%s-%d", jobID, time.Now().UnixNano())
+	application.Get().Window.NewWithOptions(application.WebviewWindowOptions{
 		Name:             winName,
 		Title:            title,
 		Width:            900,
