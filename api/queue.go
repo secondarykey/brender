@@ -175,6 +175,17 @@ func EnqueueWithPreview(projectID, workspaceID string, preview *RenderPreview) (
 		return nil, xerrors.Errorf("CreateJob: %w", err)
 	}
 
+	// ワークスペース・ファイル・プロジェクトのデータ処理日を更新
+	if err := model.UpdateWorkspaceProcessedAt(workspaceID, &now); err != nil {
+		log.Println("UpdateWorkspaceProcessedAt:", err)
+	}
+	if err := model.UpdateProjectFileProcessedAt(preview.ProjectFileID, &now); err != nil {
+		log.Println("UpdateProjectFileProcessedAt:", err)
+	}
+	if err := model.UpdateProjectProcessedAt(projectID, &now); err != nil {
+		log.Println("UpdateProjectProcessedAt:", err)
+	}
+
 	q := &model.Queue{
 		ID:          id,
 		ProjectID:   projectID,

@@ -12,9 +12,11 @@ import (
 )
 
 type Project struct {
-	ID         string `gorm:"primaryKey" json:"id"`
-	Name       string `json:"name"`
-	MetaFields `gorm:"embedded"`
+	ID           string     `gorm:"primaryKey" json:"id"`
+	Name         string     `json:"name"`
+	DisplayOrder int        `gorm:"default:99999" json:"display_order"`
+	ProcessedAt  *time.Time `json:"processed_at"`
+	MetaFields   `gorm:"embedded"`
 }
 
 // プロジェクトに属する .blend ファイル
@@ -26,6 +28,8 @@ type ProjectFile struct {
 	BlenderInstallID uint       `json:"blender_install_id"`
 	Scene            string     `json:"scene"`
 	FileModifiedAt   *time.Time `json:"file_modified_at"`
+	DisplayOrder     int        `gorm:"default:99999" json:"display_order"`
+	ProcessedAt      *time.Time `json:"processed_at"`
 	MetaFields       `gorm:"embedded"`
 }
 
@@ -184,6 +188,20 @@ func DeleteProject(id string) error {
 	}
 	if res := db.Delete(&ProjectFile{}, "project_id = ?", id); res.Error != nil {
 		return xerrors.Errorf("DeleteProject files: %w", res.Error)
+	}
+	return nil
+}
+
+func UpdateProjectProcessedAt(id string, t *time.Time) error {
+	if res := db.Model(&Project{}).Where("id = ?", id).Update("processed_at", t); res.Error != nil {
+		return xerrors.Errorf("UpdateProjectProcessedAt: %w", res.Error)
+	}
+	return nil
+}
+
+func UpdateProjectFileProcessedAt(id string, t *time.Time) error {
+	if res := db.Model(&ProjectFile{}).Where("id = ?", id).Update("processed_at", t); res.Error != nil {
+		return xerrors.Errorf("UpdateProjectFileProcessedAt: %w", res.Error)
 	}
 	return nil
 }
