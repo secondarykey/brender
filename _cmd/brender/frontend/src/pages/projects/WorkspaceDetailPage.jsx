@@ -135,6 +135,7 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
   const [confirm, setConfirm]               = useState(false)
   const [deleting, setDeleting]             = useState(false)
   const nameRef = useRef(null)
+  const hasFocused = useRef(false)
 
   useEffect(() => {
     const start = detail.workspace.start ?? 0
@@ -156,9 +157,10 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
   }, [detail])
 
   useEffect(() => {
-    if (focusName && nameRef.current) {
+    if (focusName && !hasFocused.current && nameRef.current) {
       nameRef.current.focus()
       nameRef.current.select()
+      hasFocused.current = true
     }
   }, [focusName, form])
 
