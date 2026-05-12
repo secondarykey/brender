@@ -62,7 +62,7 @@ func GetFileThumbnail(projectID string, fileID string) (string, error) {
 		return "", nil
 	}
 
-	job, err := model.GetLatestCompletedJobByWorkspace(ws.ID)
+	job, err := model.GetLatestJobForThumbnail(ws.ID)
 	if err != nil || job == nil {
 		return "", nil
 	}
@@ -177,7 +177,7 @@ func GetWorkspaceThumbnail(projectID, fileID, workspaceID string) (string, error
 		return imageToBase64(thumbPath)
 	}
 
-	job, err := model.GetLatestCompletedJobByWorkspace(workspaceID)
+	job, err := model.GetLatestJobForThumbnail(workspaceID)
 	if err != nil || job == nil {
 		return "", nil
 	}
