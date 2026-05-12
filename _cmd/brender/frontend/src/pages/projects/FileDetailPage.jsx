@@ -1,22 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { WorkspaceApi, QueueApi, ProjectApi, BlenderApi } from '../../lib/api'
 import JobDetailDialog from '../../components/JobDetailDialog'
 import ImageViewerDialog from '../../components/ImageViewerDialog'
 import Pagination from '../../components/Pagination'
 
-const STATUS_LABELS = {
-  completed: '完了',
-  error:     'エラー',
-  cancelled: 'キャンセル',
-}
-
-const TABS = [
-  { id: 'workspace', label: 'ワークスペース' },
-  { id: 'settings',  label: '設定' },
-]
-
 // ── ワークスペース作成フォーム ────────────────────────────
 function CreateForm({ projectID, fileID, onSaved, onCancel }) {
+  const { t } = useTranslation()
   const [name, setName]     = useState('New Workspace')
   const [saving, setSaving] = useState(false)
   const [error, setError]   = useState('')
@@ -28,7 +19,7 @@ function CreateForm({ projectID, fileID, onSaved, onCancel }) {
 
   const handleSave = async () => {
     setError('')
-    if (!name.trim()) { setError('名前を入力してください'); return }
+    if (!name.trim()) { setError(t('workspace.nameRequired')); return }
     setSaving(true)
     try {
       const ws = await WorkspaceApi.create({ projectID, projectFileID: fileID, name: name.trim() })
@@ -53,19 +44,20 @@ function CreateForm({ projectID, fileID, onSaved, onCancel }) {
         value={name}
         onChange={e => setName(e.target.value)}
         onKeyDown={handleKey}
-        placeholder="ワークスペース名"
+        placeholder={t('workspace.name')}
       />
       {error && <span className="ws-create-error">{error}</span>}
       <button className="btn" onClick={handleSave} disabled={saving}>
-        {saving ? '...' : '作成'}
+        {saving ? '...' : t('common.create')}
       </button>
-      <button className="btn btn-ghost" onClick={onCancel}>キャンセル</button>
+      <button className="btn btn-ghost" onClick={onCancel}>{t('common.cancel')}</button>
     </div>
   )
 }
 
 // ── ワークスペースタブ ─────────────────────────────────────
 function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEnqueued }) {
+  const { t } = useTranslation()
   const [workspaces, setWorkspaces] = useState([])
   const [creating, setCreating]     = useState(false)
   const [confirm, setConfirm]       = useState(null) // { ws, preview }
@@ -96,7 +88,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
       const preview = await QueueApi.previewRender({ projectID, workspaceID: ws.id })
       setConfirm({ ws, preview })
     } catch (err) {
-      setEnqueueMsg(`エラー: ${String(err)}`)
+      setEnqueueMsg(`${t('common.error')}${String(err)}`)
     } finally {
       setResolvingWsId(null)
     }
@@ -110,7 +102,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
       await QueueApi.enqueueWithPreview({ projectID, workspaceID: confirm.ws.id, preview: confirm.preview })
       onEnqueued()
     } catch (err) {
-      setEnqueueMsg(`エラー: ${String(err)}`)
+      setEnqueueMsg(`${t('common.error')}${String(err)}`)
       setConfirm(null)
     } finally {
       setEnqueuing(false)
@@ -122,7 +114,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
       <div style={{ position: 'relative' }}>
         <div className="ws-list">
           {workspaces.length === 0 && !creating && (
-            <p className="ws-empty">ワークスペースがありません</p>
+            <p className="ws-empty">{t('workspace.empty')}</p>
           )}
           {workspaces.map(ws => (
             <div key={ws.id} className="ws-item ws-item-run">
@@ -131,7 +123,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
                 onClick={() => handleRunClick(ws)}
                 disabled={resolvingWsId !== null}
               >
-                ▶ 実行
+                ▶ {t('common.run')}
               </button>
               <div
                 className="ws-item-info ws-item-link"
@@ -141,7 +133,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
                 <div className="ws-item-meta">
                   {ws.engine && <span className="ws-meta-chip">{ws.engine}</span>}
                   {(ws.start === 0 && ws.end === -1)
-                    ? <span className="ws-meta-chip">.blend フレーム</span>
+                    ? <span className="ws-meta-chip">{t('workspace.blendDefault')}</span>
                     : <span className="ws-meta-chip">{ws.start} – {ws.end} f</span>
                   }
                 </div>
@@ -152,7 +144,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
         </div>
         {resolvingWsId !== null && (
           <div className="ws-list-overlay">
-            <span className="ws-list-overlay-label">処理中...</span>
+            <span className="ws-list-overlay-label">{t('common.processing')}</span>
           </div>
         )}
       </div>
@@ -161,12 +153,12 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
         <CreateForm projectID={projectID} fileID={fileID} onSaved={handleSaved} onCancel={() => setCreating(false)} />
       ) : (
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
-          <button className="btn btn-secondary" onClick={() => setCreating(true)}>+ ワークスペースを作成</button>
+          <button className="btn btn-secondary" onClick={() => setCreating(true)}>{t('workspace.createNew')}</button>
         </div>
       )}
 
       {enqueueMsg && (
-        <div className={`enqueue-msg${enqueueMsg.startsWith('エラー') ? ' enqueue-error' : ''}`} style={{ marginTop: 12 }}>
+        <div className={`enqueue-msg${enqueueMsg.startsWith(t('common.error')) ? ' enqueue-error' : ''}`} style={{ marginTop: 12 }}>
           {enqueueMsg}
         </div>
       )}
@@ -174,21 +166,21 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
       {confirm && (
         <div className="dialog-overlay" onClick={() => setConfirm(null)}>
           <div className="dialog" onClick={e => e.stopPropagation()}>
-            <h3 className="dialog-title">レンダリングを実行しますか？</h3>
+            <h3 className="dialog-title">{t('render.confirmTitle')}</h3>
             <div className="dialog-body">
-              <p><span className="dialog-label">ワークスペース</span>{confirm.ws.name}</p>
-              <p><span className="dialog-label">シーン</span>{confirm.preview.scene}</p>
+              <p><span className="dialog-label">{t('render.workspace')}</span>{confirm.ws.name}</p>
+              <p><span className="dialog-label">{t('render.scene')}</span>{confirm.preview.scene}</p>
               {confirm.preview.engine
-                ? <p><span className="dialog-label">エンジン</span>{confirm.preview.engine}</p>
-                : <p><span className="dialog-label">エンジン</span><span style={{ opacity: 0.5 }}>.blend のデフォルト</span></p>
+                ? <p><span className="dialog-label">{t('render.engine')}</span>{confirm.preview.engine}</p>
+                : <p><span className="dialog-label">{t('render.engine')}</span><span style={{ opacity: 0.5 }}>{t('render.blendDefault')}</span></p>
               }
-              <p><span className="dialog-label">フレーム</span>{confirm.preview.start_frame} – {confirm.preview.end_frame}</p>
-              {confirm.preview.frame_step > 1 && <p><span className="dialog-label">ステップ</span>{confirm.preview.frame_step}</p>}
+              <p><span className="dialog-label">{t('render.frames')}</span>{confirm.preview.start_frame} – {confirm.preview.end_frame}</p>
+              {confirm.preview.frame_step > 1 && <p><span className="dialog-label">{t('render.step')}</span>{confirm.preview.frame_step}</p>}
             </div>
             <div className="dialog-actions">
-              <button className="btn btn-ghost" onClick={() => setConfirm(null)}>キャンセル</button>
+              <button className="btn btn-ghost" onClick={() => setConfirm(null)}>{t('common.cancel')}</button>
               <button className="btn btn-run" onClick={handleEnqueue} disabled={enqueuing}>
-                {enqueuing ? '追加中...' : '実行'}
+                {enqueuing ? t('common.enqueueing') : t('common.run')}
               </button>
             </div>
           </div>
@@ -202,6 +194,7 @@ const HISTORY_PAGE_SIZE = 5
 
 // ── 履歴タブ ──────────────────────────────────────────────
 function HistoryTab({ projectID, fileID }) {
+  const { t } = useTranslation()
   const [jobs, setJobs]         = useState([])
   const [selected, setSelected] = useState(null)
   const [viewing, setViewing]   = useState(null)
@@ -216,12 +209,14 @@ function HistoryTab({ projectID, fileID }) {
 
   useEffect(() => { load() }, [load])
 
+  const statusLabel = (s) => ({ completed: t('status.completed'), error: t('status.error'), cancelled: t('status.cancelled') })[s] ?? s
+
   const totalPages  = Math.max(1, Math.ceil(jobs.length / pageSize))
   const currentPage = Math.min(page, totalPages)
   const pageJobs    = jobs.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 
   if (jobs.length === 0) {
-    return <p className="empty-msg">まだ実行履歴がありません</p>
+    return <p className="empty-msg">{t('workspace.noHistory')}</p>
   }
 
   return (
@@ -231,7 +226,7 @@ function HistoryTab({ projectID, fileID }) {
           <div key={j.id} className="queue-history-item queue-history-item-clickable" onClick={() => setSelected(j)}>
             <div className="queue-history-top">
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-                <button className="btn btn-sm" onClick={e => { e.stopPropagation(); setViewing(j) }} disabled={!(j.data_status === 2 || j.data_status === 3)}>表示</button>
+                <button className="btn btn-sm" onClick={e => { e.stopPropagation(); setViewing(j) }} disabled={!(j.data_status === 2 || j.data_status === 3)}>{t('common.view')}</button>
                 <div>
                   <span className="queue-history-name">{j.workspace_name}</span>
                   <div className="queue-history-detail" style={{ marginTop: 4 }}>
@@ -243,7 +238,7 @@ function HistoryTab({ projectID, fileID }) {
                   </div>
                 </div>
               </div>
-              <span className={`status-badge status-${j.status}`}>{STATUS_LABELS[j.status] ?? j.status}</span>
+              <span className={`status-badge status-${j.status}`}>{statusLabel(j.status)}</span>
             </div>
             {j.status === 'error' && j.error_msg && (
               <div className="queue-history-error">
@@ -266,6 +261,7 @@ function HistoryTab({ projectID, fileID }) {
 
 // ── サムネイルパネル ───────────────────────────────────────
 function ThumbnailPanel({ projectID, fileID }) {
+  const { t } = useTranslation()
   const [src, setSrc]         = useState(null)
   const [loading, setLoading] = useState(true)
 
@@ -279,13 +275,13 @@ function ThumbnailPanel({ projectID, fileID }) {
 
   return (
     <div className="thumbnail-panel">
-      <h3 className="ws-detail-section-title">サムネイル</h3>
+      <h3 className="ws-detail-section-title">{t('workspace.thumbnail')}</h3>
       {loading ? (
-        <p className="thumbnail-placeholder">読み込み中...</p>
+        <p className="thumbnail-placeholder">{t('common.loading')}</p>
       ) : src ? (
         <img className="thumbnail-img" src={src} alt="thumbnail" />
       ) : (
-        <p className="thumbnail-placeholder">サムネイルがありません</p>
+        <p className="thumbnail-placeholder">{t('workspace.noThumbnail')}</p>
       )}
     </div>
   )
@@ -293,6 +289,7 @@ function ThumbnailPanel({ projectID, fileID }) {
 
 // ── 設定タブ ─────────────────────────────────────────────
 function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
+  const { t } = useTranslation()
   const [name, setName]                   = useState(fileName)
   const [blenderInstallID, setBlenderID]  = useState(0)
   const [scene, setScene]                 = useState('')
@@ -339,7 +336,7 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
       const updated = await ProjectApi.updateFile({ fileID, name: name.trim(), blenderInstallID, scene })
       if (onUpdated) onUpdated(updated)
     } catch (e) {
-      setError(e?.message ?? '保存に失敗しました')
+      setError(e?.message ?? String(e))
     } finally {
       setSaving(false)
     }
@@ -352,7 +349,7 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
       await ProjectApi.deleteFile({ fileID })
       if (onDeleted) onDeleted()
     } catch (e) {
-      setError(e?.message ?? '削除に失敗しました')
+      setError(e?.message ?? String(e))
       setConfirm(false)
     } finally {
       setDeleting(false)
@@ -364,36 +361,36 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
       <div className="ws-detail-left">
         <div className="form" style={{ maxWidth: 480 }}>
           <div className="form-field">
-            <label className="form-label">ファイル名称</label>
+            <label className="form-label">{t('file.displayName')}</label>
             <input
               className="form-input"
               value={name}
               onChange={e => setName(e.target.value)}
             />
-            <span className="form-hint">レンダリング設定グループの表示名</span>
+            <span className="form-hint">{t('file.displayNameHint')}</span>
           </div>
 
           <div className="form-field">
-            <label className="form-label">デフォルト Blender</label>
+            <label className="form-label">{t('file.defaultBlender')}</label>
             {blenders.length === 0 ? (
-              <p className="setting-desc">Blenderが登録されていません（システム設定で追加してください）</p>
+              <p className="setting-desc">{t('settings.noBlenderRegistered')}</p>
             ) : (
               <select
                 className="form-select"
                 value={blenderInstallID}
                 onChange={e => handleBlenderChange(Number(e.target.value))}
               >
-                <option value={0}>— 未設定 —</option>
+                <option value={0}>{t('common.notSet')}</option>
                 {blenders.map(b => (
-                  <option key={b.id} value={b.id}>{b.name} ({b.version || 'バージョン不明'})</option>
+                  <option key={b.id} value={b.id}>{b.name} ({b.version || t('common.versionUnknown')})</option>
                 ))}
               </select>
             )}
-            <span className="form-hint">未設定の場合: Blender一覧の先頭が使用されます</span>
+            <span className="form-hint">{t('file.blenderHint')}</span>
           </div>
 
           <div className="form-field">
-            <label className="form-label">デフォルトシーン</label>
+            <label className="form-label">{t('file.defaultScene')}</label>
             {scenes.length > 0 ? (
               <select
                 className="form-select"
@@ -401,7 +398,7 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
                 onChange={e => setScene(e.target.value)}
                 disabled={scenesLoading}
               >
-                <option value="">— 未設定 —</option>
+                <option value="">{t('common.notSet')}</option>
                 {scenes.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             ) : (
@@ -409,17 +406,17 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
                 className="form-input"
                 value={scene}
                 onChange={e => setScene(e.target.value)}
-                placeholder="未設定"
+                placeholder={t('common.notSetPlaceholder')}
               />
             )}
-            <span className="form-hint">未設定の場合: .blend ファイルのデフォルトシーンが使用されます</span>
+            <span className="form-hint">{t('file.sceneHint')}</span>
           </div>
 
           {error && <p className="form-error">{error}</p>}
           <div className="form-actions">
-            <button className="btn btn-danger" onClick={() => setConfirm(true)}>削除</button>
+            <button className="btn btn-danger" onClick={() => setConfirm(true)}>{t('common.delete')}</button>
             <button className="btn" onClick={handleSave} disabled={saving}>
-              {saving ? '保存中...' : '保存'}
+              {saving ? t('common.saving') : t('common.save')}
             </button>
           </div>
         </div>
@@ -427,17 +424,17 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
         {confirm && (
           <div className="dialog-overlay" onClick={() => setConfirm(false)}>
             <div className="dialog" onClick={e => e.stopPropagation()}>
-              <h3 className="dialog-title">ファイルを削除しますか？</h3>
+              <h3 className="dialog-title">{t('file.confirmDelete')}</h3>
               <div className="dialog-body">
-                <p><span className="dialog-label">ファイル</span>{fileName}</p>
+                <p><span className="dialog-label">{t('dialog.file')}</span>{fileName}</p>
                 <p style={{ marginTop: 10, color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>
-                  関連するワークスペースおよびジョブ履歴も削除されます。物理ファイルは削除されません。この操作は取り消せません。
+                  {t('file.deleteWarning')}
                 </p>
               </div>
               <div className="dialog-actions">
-                <button className="btn btn-ghost" onClick={() => setConfirm(false)}>キャンセル</button>
+                <button className="btn btn-ghost" onClick={() => setConfirm(false)}>{t('common.cancel')}</button>
                 <button className="btn btn-danger" onClick={handleDelete} disabled={deleting}>
-                  {deleting ? '削除中...' : '削除'}
+                  {deleting ? t('common.deleting') : t('common.delete')}
                 </button>
               </div>
             </div>
@@ -454,14 +451,20 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
 
 // ── ページ本体 ────────────────────────────────────────────
 function FileDetailPage({ projectID, projectName, fileID, fileName, navigate }) {
+  const { t } = useTranslation()
   const [tab, setTab] = useState('workspace')
   const [currentFileName, setCurrentFileName] = useState(fileName)
+
+  const tabs = [
+    { id: 'workspace', label: t('tabs.fileList') },
+    { id: 'settings',  label: t('tabs.settings') },
+  ]
 
   return (
     <div className="page">
       <div className="page-header">
         <div className="breadcrumb">
-          <button className="breadcrumb-link" onClick={() => navigate('projects')}>プロジェクト</button>
+          <button className="breadcrumb-link" onClick={() => navigate('projects')}>{t('breadcrumb.projects')}</button>
           <span className="breadcrumb-sep">›</span>
           <button className="breadcrumb-link" onClick={() => navigate('project', { id: projectID })}>{projectName}</button>
           <span className="breadcrumb-sep">›</span>
@@ -470,13 +473,13 @@ function FileDetailPage({ projectID, projectName, fileID, fileName, navigate }) 
       </div>
 
       <div className="tab-nav">
-        {TABS.map(t => (
+        {tabs.map(tb => (
           <button
-            key={t.id}
-            className={`tab-btn${tab === t.id ? ' active' : ''}`}
-            onClick={() => setTab(t.id)}
+            key={tb.id}
+            className={`tab-btn${tab === tb.id ? ' active' : ''}`}
+            onClick={() => setTab(tb.id)}
           >
-            {t.label}
+            {tb.label}
           </button>
         ))}
       </div>
@@ -495,7 +498,7 @@ function FileDetailPage({ projectID, projectName, fileID, fileName, navigate }) 
               />
             </div>
             <div className="ws-detail-right">
-              <h3 className="ws-detail-section-title">実行履歴</h3>
+              <h3 className="ws-detail-section-title">{t('tabs.history')}</h3>
               <HistoryTab projectID={projectID} fileID={fileID} />
             </div>
           </div>

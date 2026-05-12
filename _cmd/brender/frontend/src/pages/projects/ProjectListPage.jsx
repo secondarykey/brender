@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ProjectApi, EnvironmentApi } from '../../lib/api'
 
 function ProjectListPage({ navigate }) {
+  const { t } = useTranslation()
   const [projects, setProjects]   = useState([])
   const [error, setError]         = useState('')
   const [creating, setCreating]   = useState(false)
@@ -39,7 +41,7 @@ function ProjectListPage({ navigate }) {
 
   const handleSave = async () => {
     setCreateError('')
-    if (!name.trim()) { setCreateError('プロジェクト名を入力してください'); return }
+    if (!name.trim()) { setCreateError(t('project.nameRequired')); return }
     setSaving(true)
     try {
       const d = await ProjectApi.create({ name: name.trim() })
@@ -62,14 +64,14 @@ function ProjectListPage({ navigate }) {
     <div className="page">
       <div className="page-header">
 {!creating && (
-          <button className="btn" onClick={handleStartCreate} disabled={!hasRoot}>+ 新規作成</button>
+          <button className="btn" onClick={handleStartCreate} disabled={!hasRoot}>{t('project.register.transition')}</button>
         )}
       </div>
 
       {!hasRoot && (
         <div className="notice-banner">
-          作業ディレクトリが設定されていません。
-          <button className="btn-link" onClick={() => navigate('settings')}>設定画面で設定してください</button>
+          {t('project.rootNotSet')}
+          <button className="btn-link" onClick={() => navigate('settings')}>{t('project.configureInSettings')}</button>
         </div>
       )}
 
@@ -83,20 +85,20 @@ function ProjectListPage({ navigate }) {
             value={name}
             onChange={e => setName(e.target.value)}
             onKeyDown={handleKey}
-            placeholder="プロジェクト名"
+            placeholder={t('project.name')}
           />
           {createError && <span className="ws-create-error">{createError}</span>}
           <button className="btn" onClick={handleSave} disabled={saving}>
-            {saving ? '...' : '作成'}
+            {saving ? '...' : t('project.register.apply')}
           </button>
-          <button className="btn btn-ghost" onClick={() => setCreating(false)}>キャンセル</button>
+          <button className="btn btn-ghost" onClick={() => setCreating(false)}>{t('project.register.cancel')}</button>
         </div>
       )}
 
       {projects.length === 0 && !creating ? (
         <div className="empty-state">
-          <p>プロジェクトがありません</p>
-          <button className="btn" onClick={handleStartCreate} disabled={!hasRoot}>最初のプロジェクトを作成</button>
+          <p>{t('project.empty')}</p>
+          <button className="btn" onClick={handleStartCreate} disabled={!hasRoot}>{t('project.createFirst')}</button>
         </div>
       ) : (
         <div className="project-list">

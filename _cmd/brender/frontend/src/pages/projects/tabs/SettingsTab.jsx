@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ProjectApi } from '../../../lib/api'
 
 function SettingsTab({ detail, onUpdated, onDeleted }) {
+  const { t } = useTranslation()
   const [form, setForm]         = useState(null)
   const [saving, setSaving]     = useState(false)
   const [error, setError]       = useState('')
@@ -23,7 +25,7 @@ function SettingsTab({ detail, onUpdated, onDeleted }) {
   const handleSave = async () => {
     setError('')
     setSaved(false)
-    if (!form.name.trim()) { setError('プロジェクト名を入力してください'); return }
+    if (!form.name.trim()) { setError(t('project.nameRequired')); return }
     setSaving(true)
     try {
       await ProjectApi.update({ id: detail.project.id, name: form.name.trim() })
@@ -54,7 +56,7 @@ function SettingsTab({ detail, onUpdated, onDeleted }) {
   return (
     <div className="form" style={{ maxWidth: 480 }}>
       <div className="form-field">
-        <label className="form-label">プロジェクト名 <span className="required">*</span></label>
+        <label className="form-label">{t('project.name')} <span className="required">*</span></label>
         <input
           className="form-input"
           value={form.name}
@@ -63,31 +65,31 @@ function SettingsTab({ detail, onUpdated, onDeleted }) {
       </div>
 
       {error && <div className="error-msg">{error}</div>}
-      {saved && <div className="success-msg">保存しました</div>}
+      {saved && <div className="success-msg">{t('common.saved')}</div>}
 
       <div className="form-actions">
         <button className="btn btn-danger" onClick={() => setConfirm(true)}>
-          削除
+          {t('common.delete')}
         </button>
         <button className="btn" onClick={handleSave} disabled={saving}>
-          {saving ? '保存中...' : '保存'}
+          {saving ? t('common.saving') : t('common.save')}
         </button>
       </div>
 
       {confirm && (
         <div className="dialog-overlay" onClick={() => setConfirm(false)}>
           <div className="dialog" onClick={e => e.stopPropagation()}>
-            <h3 className="dialog-title">プロジェクトを削除しますか？</h3>
+            <h3 className="dialog-title">{t('project.confirmDelete')}</h3>
             <div className="dialog-body">
-              <p><span className="dialog-label">プロジェクト</span>{detail.project.name}</p>
+              <p><span className="dialog-label">{t('dialog.project')}</span>{detail.project.name}</p>
               <p style={{ marginTop: 10, color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>
-                関連するワークスペースおよびジョブも削除されます。この操作は取り消せません。
+                {t('project.deleteWarning')}
               </p>
             </div>
             <div className="dialog-actions">
-              <button className="btn btn-ghost" onClick={() => setConfirm(false)}>キャンセル</button>
+              <button className="btn btn-ghost" onClick={() => setConfirm(false)}>{t('common.cancel')}</button>
               <button className="btn btn-danger" onClick={handleDelete} disabled={deleting}>
-                {deleting ? '削除中...' : '削除'}
+                {deleting ? t('common.deleting') : t('common.delete')}
               </button>
             </div>
           </div>

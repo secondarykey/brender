@@ -1,6 +1,9 @@
+import { useTranslation } from 'react-i18next'
+
 const PAGE_SIZE_OPTIONS = [5, 10, 20, 100]
 
 function Pagination({ page, totalPages, onChange, pageSize, onPageSizeChange, total }) {
+  const { t } = useTranslation()
   const showSizer = pageSize != null && onPageSizeChange != null
 
   if (totalPages <= 1 && !showSizer) return null
@@ -33,9 +36,9 @@ function Pagination({ page, totalPages, onChange, pageSize, onPageSizeChange, to
       {showSizer ? (
         <div className="pagination-sizer">
           {total != null && (
-            <span className="pagination-info">{total} 件</span>
+            <span className="pagination-info">{total}{t('pagination.items')}</span>
           )}
-          <span className="pagination-info">表示件数</span>
+          <span className="pagination-info">{t('pagination.itemsPerPage')}</span>
           <select
             className="pagination-size-select"
             value={pageSize}
@@ -52,7 +55,7 @@ function Pagination({ page, totalPages, onChange, pageSize, onPageSizeChange, to
         <button className="pagination-btn" onClick={() => onChange(page - 1)} disabled={page <= 1}>‹</button>
         {buttons}
         <button className="pagination-btn" onClick={() => onChange(page + 1)} disabled={page >= totalPages}>›</button>
-        <span className="pagination-info">{page} / {totalPages} ページ</span>
+        <span className="pagination-info">{page} / {totalPages} {t('pagination.page')}</span>
       </div>
     </div>
   )

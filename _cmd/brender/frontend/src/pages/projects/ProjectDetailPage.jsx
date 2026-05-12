@@ -1,17 +1,19 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ProjectApi } from '../../lib/api'
 import WorkspaceTab from './tabs/WorkspaceTab'
 import SettingsTab from './tabs/SettingsTab'
 
-const TABS = [
-  { id: 'workspace', label: 'ファイル一覧' },
-  { id: 'settings',  label: '設定' },
-]
-
 function ProjectDetailPage({ id, navigate }) {
+  const { t } = useTranslation()
   const [detail, setDetail] = useState(null)
   const [tab, setTab] = useState('workspace')
   const [error, setError] = useState('')
+
+  const tabs = [
+    { id: 'workspace', label: t('tabs.fileList') },
+    { id: 'settings',  label: t('tabs.settings') },
+  ]
 
   const load = () => {
     ProjectApi.get({ id })
@@ -26,7 +28,7 @@ function ProjectDetailPage({ id, navigate }) {
   }
 
   if (!detail) {
-    return <div className="page"><p className="setting-desc">読み込み中...</p></div>
+    return <div className="page"><p className="setting-desc">{t('common.loading')}</p></div>
   }
 
   return (
@@ -34,7 +36,7 @@ function ProjectDetailPage({ id, navigate }) {
       <div className="page-header">
         <div className="breadcrumb">
           <button className="breadcrumb-link" onClick={() => navigate('projects')}>
-            プロジェクト
+            {t('breadcrumb.projects')}
           </button>
           <span className="breadcrumb-sep">›</span>
           <span>{detail.project.name}</span>
@@ -42,13 +44,13 @@ function ProjectDetailPage({ id, navigate }) {
       </div>
 
       <div className="tab-nav">
-        {TABS.map(t => (
+        {tabs.map(tb => (
           <button
-            key={t.id}
-            className={`tab-btn${tab === t.id ? ' active' : ''}`}
-            onClick={() => setTab(t.id)}
+            key={tb.id}
+            className={`tab-btn${tab === tb.id ? ' active' : ''}`}
+            onClick={() => setTab(tb.id)}
           >
-            {t.label}
+            {tb.label}
           </button>
         ))}
       </div>

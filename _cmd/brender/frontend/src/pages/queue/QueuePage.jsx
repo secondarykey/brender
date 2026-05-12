@@ -1,35 +1,36 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { QueueApi } from '../../lib/api'
 import JobDetailDialog from '../../components/JobDetailDialog'
 import ImageViewerDialog from '../../components/ImageViewerDialog'
 import Pagination from '../../components/Pagination'
 
-const STATUS_LABELS = {
-  waiting:   '実行待ち',
-  running:   '実行中',
-  completed: '完了',
-  error:     'エラー',
-  cancelled: 'キャンセル',
-}
-
 function StatusBadge({ status }) {
-  return <span className={`status-badge status-${status}`}>{STATUS_LABELS[status] ?? status}</span>
+  const { t } = useTranslation()
+  const labels = {
+    waiting:   t('status.waiting'),
+    running:   t('status.running'),
+    completed: t('status.completed'),
+    error:     t('status.error'),
+    cancelled: t('status.cancelled'),
+  }
+  return <span className={`status-badge status-${status}`}>{labels[status] ?? status}</span>
 }
 
-function elapsed(startedAt) {
+function elapsed(startedAt, t) {
   if (!startedAt) return '—'
   const sec = Math.floor((new Date() - new Date(startedAt)) / 1000)
-  if (sec < 60) return `${sec}秒`
-  if (sec < 3600) return `${Math.floor(sec / 60)}分${sec % 60}秒`
-  return `${Math.floor(sec / 3600)}時間${Math.floor((sec % 3600) / 60)}分`
+  if (sec < 60) return `${sec}${t('time.seconds')}`
+  if (sec < 3600) return `${Math.floor(sec / 60)}${t('time.minutes')}${sec % 60}${t('time.seconds')}`
+  return `${Math.floor(sec / 3600)}${t('time.hours')}${Math.floor((sec % 3600) / 60)}${t('time.minutes')}`
 }
 
-function duration(startedAt, completedAt) {
+function duration(startedAt, completedAt, t) {
   if (!startedAt || !completedAt) return '—'
   const sec = Math.floor((new Date(completedAt) - new Date(startedAt)) / 1000)
-  if (sec < 60) return `${sec}秒`
-  if (sec < 3600) return `${Math.floor(sec / 60)}分${sec % 60}秒`
-  return `${Math.floor(sec / 3600)}時間${Math.floor((sec % 3600) / 60)}分`
+  if (sec < 60) return `${sec}${t('time.seconds')}`
+  if (sec < 3600) return `${Math.floor(sec / 60)}${t('time.minutes')}${sec % 60}${t('time.seconds')}`
+  return `${Math.floor(sec / 3600)}${t('time.hours')}${Math.floor((sec % 3600) / 60)}${t('time.minutes')}`
 }
 
 function formatDate(iso) {
@@ -37,20 +38,16 @@ function formatDate(iso) {
   return new Date(iso).toLocaleString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })
 }
 
-function formatETA(iso) {
+function formatETA(iso, t) {
   if (!iso) return null
   const d = new Date(iso)
   const diffSec = Math.floor((d - new Date()) / 1000)
-  if (diffSec <= 0) return '間もなく完了'
-  if (diffSec < 60) return `約${diffSec}秒後`
-  if (diffSec < 3600) return `約${Math.floor(diffSec / 60)}分後`
-  return `約${Math.floor(diffSec / 3600)}時間${Math.floor((diffSec % 3600) / 60)}分後`
+  if (diffSec <= 0) return t('queue.almostComplete')
+  if (diffSec < 60) return `約${diffSec}${t('time.seconds')}後`
+  if (diffSec < 3600) return `約${Math.floor(diffSec / 60)}${t('time.minutes')}後`
+  return `約${Math.floor(diffSec / 3600)}${t('time.hours')}${Math.floor((diffSec % 3600) / 60)}${t('time.minutes')}後`
 }
 
-// フレーム内サブ進捗を 0.0–1.0 で返す（バー計算用のみ）
-// Cycles (tiles+samples): (完了タイル×totalSamples + nowSample) / (totalTiles×totalSamples)
-// Cycles/EEVEE (samples のみ): nowSample / totalSamples
-// 「1/n を0とする」: sample は 1-indexed なので -1 してから計算（sample 1 = 進捗0）
 function subFramePct(q) {
   const sample = Math.max(0, q.now_sample - 1)
   if (q.total_tiles > 0 && q.total_samples > 0) {
@@ -62,11 +59,11 @@ function subFramePct(q) {
 }
 
 function ProgressCell({ q }) {
+  const { t } = useTranslation()
   const isRunning = q.status === 'running'
   const isWaiting = q.status === 'waiting'
 
   const totalFrames = Math.max(1, q.end_frame - q.start_frame + 1)
-  // frame_active が true になるまで準備中（Cycles sync 中・EEVEE フレーム間は false）
   const hasFrame   = isRunning && q.now_frame > 0 && q.frame_active
   const framesDone = hasFrame ? q.now_frame - q.start_frame : 0
 
@@ -77,9 +74,9 @@ function ProgressCell({ q }) {
 
   const frameText = isWaiting ? `${q.start_frame}–${q.end_frame}f`
                   : hasFrame  ? `${q.now_frame} / ${q.end_frame}f (${pctText}%)`
-                  : isRunning ? `準備中... (${q.start_frame}–${q.end_frame}f)`
+                  : isRunning ? `${t('queue.preparing')}${q.start_frame}–${q.end_frame}f)`
                   :             `${q.start_frame}–${q.end_frame}f`
-  const aveSec = isRunning && q.average_sec > 0 ? `${q.average_sec.toFixed(1)}秒/f` : ''
+  const aveSec = isRunning && q.average_sec > 0 ? `${q.average_sec.toFixed(1)}${t('queue.secondsPerFrame')}` : ''
 
   const logText = q.log2 || ''
   return (
@@ -98,6 +95,7 @@ function ProgressCell({ q }) {
 
 // ── 実行中タブ ────────────────────────────────────────────
 function ActiveTab({ navigate }) {
+  const { t } = useTranslation()
   const [items, setItems]           = useState([])
   const [error, setError]           = useState('')
   const [confirmId, setConfirmId]   = useState(null)
@@ -135,16 +133,16 @@ function ActiveTab({ navigate }) {
     <>
       {error && <div className="error-msg" style={{ marginBottom: 12 }}>{error}</div>}
       {items.length === 0 ? (
-        <p className="empty-msg">実行中・待機中のジョブはありません</p>
+        <p className="empty-msg">{t('queue.noJobs')}</p>
       ) : (
         <table className="queue-table">
           <thead>
             <tr>
-              <th className="col-name">ワークスペース</th>
-              <th className="col-status">ステータス</th>
-              <th className="col-progress" style={{ width: 300, minWidth: 300, maxWidth: 300 }}>フレーム / 進捗</th>
-              <th className="col-datetime">開始 / 完了予定</th>
-              <th className="col-duration">経過 / 残り</th>
+              <th className="col-name">{t('table.workspace')}</th>
+              <th className="col-status">{t('table.status')}</th>
+              <th className="col-progress" style={{ width: 300, minWidth: 300, maxWidth: 300 }}>{t('table.frameProgress')}</th>
+              <th className="col-datetime">{t('table.startExpected')}</th>
+              <th className="col-duration">{t('table.elapsedRemaining')}</th>
               <th className="col-action"></th>
             </tr>
           </thead>
@@ -165,15 +163,15 @@ function ActiveTab({ navigate }) {
                   {q.expected_at && <div className="cell-sub">{formatDate(q.expected_at)}</div>}
                 </td>
                 <td className="col-duration duration-cell">
-                  <div>{elapsed(q.started_at)}</div>
-                  {q.expected_at && <div className="cell-sub">{formatETA(q.expected_at)}</div>}
+                  <div>{elapsed(q.started_at, t)}</div>
+                  {q.expected_at && <div className="cell-sub">{formatETA(q.expected_at, t)}</div>}
                 </td>
                 <td className="col-action">
                   <button
                     className="btn btn-danger btn-sm"
                     onClick={() => setConfirmId(q.id)}
                   >
-                    キャンセル
+                    {t('common.cancelAction')}
                   </button>
                 </td>
               </tr>
@@ -185,20 +183,20 @@ function ActiveTab({ navigate }) {
       {confirmId && (
         <div className="dialog-overlay" onClick={() => setConfirmId(null)}>
           <div className="dialog" onClick={e => e.stopPropagation()}>
-            <h3 className="dialog-title">ジョブをキャンセルしますか？</h3>
+            <h3 className="dialog-title">{t('queue.confirmCancel')}</h3>
             <div className="dialog-body">
               {confirmItem && (
                 <>
-                  <p><span className="dialog-label">プロジェクト</span>{confirmItem.project_name}</p>
-                  <p><span className="dialog-label">ワークスペース</span>{confirmItem.workspace_name}</p>
-                  <p><span className="dialog-label">ステータス</span><StatusBadge status={confirmItem.status} /></p>
+                  <p><span className="dialog-label">{t('dialog.project')}</span>{confirmItem.project_name}</p>
+                  <p><span className="dialog-label">{t('dialog.workspace')}</span>{confirmItem.workspace_name}</p>
+                  <p><span className="dialog-label">{t('dialog.status')}</span><StatusBadge status={confirmItem.status} /></p>
                 </>
               )}
             </div>
             <div className="dialog-actions">
-              <button className="btn btn-ghost" onClick={() => setConfirmId(null)}>戻る</button>
+              <button className="btn btn-ghost" onClick={() => setConfirmId(null)}>{t('common.back')}</button>
               <button className="btn btn-danger" onClick={handleCancel} disabled={cancelling}>
-                {cancelling ? 'キャンセル中...' : 'キャンセルする'}
+                {cancelling ? t('common.cancelling') : t('common.cancelAction')}
               </button>
             </div>
           </div>
@@ -212,6 +210,7 @@ const PAGE_SIZE = 10
 
 // ── 実行履歴タブ ──────────────────────────────────────────
 function HistoryTab({ navigate }) {
+  const { t } = useTranslation()
   const [jobs, setJobs]         = useState([])
   const [error, setError]       = useState('')
   const [selected, setSelected] = useState(null)
@@ -237,20 +236,20 @@ function HistoryTab({ navigate }) {
     <>
       {error && <div className="error-msg" style={{ marginBottom: 12 }}>{error}</div>}
       {jobs.length === 0 ? (
-        <p className="empty-msg">実行履歴がありません</p>
+        <p className="empty-msg">{t('queue.noHistory')}</p>
       ) : (
         <>
           <table className="queue-table">
             <thead>
               <tr>
                 <th></th>
-                <th>ワークスペース</th>
-                <th>ステータス</th>
-                <th>プロジェクト</th>
-                <th>エンジン</th>
-                <th>フレーム</th>
-                <th>登録時刻</th>
-                <th>所要時間</th>
+                <th>{t('table.workspace')}</th>
+                <th>{t('table.status')}</th>
+                <th>{t('table.project')}</th>
+                <th>{t('table.engine')}</th>
+                <th>{t('table.frames')}</th>
+                <th>{t('table.enqueuedAt')}</th>
+                <th>{t('table.duration')}</th>
               </tr>
             </thead>
             <tbody>
@@ -258,7 +257,7 @@ function HistoryTab({ navigate }) {
                 <tr key={j.id} className={`${j.status === 'error' ? 'row-error' : ''} row-clickable`} onClick={() => setSelected(j)}>
                   <td onClick={e => e.stopPropagation()}>
                     {(j.data_status === 2 || j.data_status === 3) && (
-                      <button className="btn btn-sm" onClick={() => setViewing(j)}>表示</button>
+                      <button className="btn btn-sm" onClick={() => setViewing(j)}>{t('common.view')}</button>
                     )}
                   </td>
                   <td>
@@ -281,10 +280,10 @@ function HistoryTab({ navigate }) {
                       {j.project_name || j.project_id}
                     </button>
                   </td>
-                  <td>{j.engine || 'デフォルト'}</td>
+                  <td>{j.engine || t('common.default')}</td>
                   <td className="frames-cell">{j.start_frame}–{j.end_frame}</td>
                   <td className="date-cell">{formatDate(j.enqueued_at)}</td>
-                  <td className="duration-cell">{duration(j.started_at, j.completed_at)}</td>
+                  <td className="duration-cell">{duration(j.started_at, j.completed_at, t)}</td>
                 </tr>
               ))}
             </tbody>
@@ -304,6 +303,7 @@ function HistoryTab({ navigate }) {
 
 // ── ページ本体 ────────────────────────────────────────────
 function QueuePage({ navigate }) {
+  const { t } = useTranslation()
   const [tab, setTab] = useState('active')
 
   return (
@@ -313,13 +313,13 @@ function QueuePage({ navigate }) {
           className={`tab-btn${tab === 'active' ? ' active' : ''}`}
           onClick={() => setTab('active')}
         >
-          キュー
+          {t('tabs.queue')}
         </button>
         <button
           className={`tab-btn${tab === 'history' ? ' active' : ''}`}
           onClick={() => setTab('history')}
         >
-          実行履歴
+          {t('tabs.history')}
         </button>
       </div>
 

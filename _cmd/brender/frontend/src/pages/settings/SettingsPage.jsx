@@ -1,25 +1,27 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import EnvironmentSettings from './EnvironmentSettings'
 import BlenderSettings from './BlenderSettings'
 
-const TABS = [
-  { id: 'env', label: '環境' },
-  { id: 'blender', label: 'Blender' },
-]
-
 function SettingsPage() {
+  const { t } = useTranslation()
   const [tab, setTab] = useState('env')
+
+  const tabs = [
+    { id: 'env',     label: t('tabs.environment') },
+    { id: 'blender', label: t('tabs.blender') },
+  ]
 
   return (
     <div className="page">
 <div className="tab-nav">
-        {TABS.map(t => (
+        {tabs.map(tb => (
           <button
-            key={t.id}
-            className={`tab-btn${tab === t.id ? ' active' : ''}`}
-            onClick={() => setTab(t.id)}
+            key={tb.id}
+            className={`tab-btn${tab === tb.id ? ' active' : ''}`}
+            onClick={() => setTab(tb.id)}
           >
-            {t.label}
+            {tb.label}
           </button>
         ))}
       </div>

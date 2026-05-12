@@ -1,23 +1,8 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { QueueApi } from '../lib/api'
 
-const STATUS_LABELS = {
-  completed: '完了',
-  error:     'エラー',
-  cancelled: 'キャンセル',
-  running:   '実行中',
-  waiting:   '実行待ち',
-}
-
 // data_status: 0=なし 1=なしロック 2=あり 3=ありロック 4=削除 5=削除ロック
-function dataStatusLabel(s) {
-  if (s % 2 === 1) return 'ロック'
-  if (s === 0)     return 'データなし'
-  if (s === 2)     return 'あり'
-  if (s === 4)     return 'データ削除'
-  return String(s)
-}
-
 function dataStatusClass(s) {
   if (s % 2 === 1) return 'data-status-locked'
   if (s === 0)     return 'data-status-none'
@@ -27,7 +12,14 @@ function dataStatusClass(s) {
 }
 
 function DataStatusBadge({ status }) {
-  return <span className={`data-status-badge ${dataStatusClass(status)}`}>{dataStatusLabel(status)}</span>
+  const { t } = useTranslation()
+  const labels = {
+    0: t('dataStatus.none'),
+    2: t('dataStatus.available'),
+    4: t('dataStatus.deleted'),
+  }
+  const label = status % 2 === 1 ? t('dataStatus.locked') : (labels[status] ?? String(status))
+  return <span className={`data-status-badge ${dataStatusClass(status)}`}>{label}</span>
 }
 
 function formatBytes(bytes) {
@@ -46,12 +38,12 @@ function fmt(iso) {
   })
 }
 
-function duration(startedAt, completedAt) {
+function duration(startedAt, completedAt, t) {
   if (!startedAt || !completedAt) return '—'
   const sec = Math.floor((new Date(completedAt) - new Date(startedAt)) / 1000)
-  if (sec < 60) return `${sec}秒`
-  if (sec < 3600) return `${Math.floor(sec / 60)}分${sec % 60}秒`
-  return `${Math.floor(sec / 3600)}時間${Math.floor((sec % 3600) / 60)}分`
+  if (sec < 60) return `${sec}${t('time.seconds')}`
+  if (sec < 3600) return `${Math.floor(sec / 60)}${t('time.minutes')}${sec % 60}${t('time.seconds')}`
+  return `${Math.floor(sec / 3600)}${t('time.hours')}${Math.floor((sec % 3600) / 60)}${t('time.minutes')}`
 }
 
 function Row({ label, value, selectable }) {
@@ -65,6 +57,7 @@ function Row({ label, value, selectable }) {
 }
 
 function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
+  const { t } = useTranslation()
   const [confirm, setConfirm]           = useState(false)
   const [confirmData, setConfirmData]   = useState(false)
   const [deleting, setDeleting]         = useState(false)
@@ -77,6 +70,14 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
   }, [job])
 
   if (!job) return null
+
+  const statusLabels = {
+    completed: t('status.completed'),
+    error:     t('status.error'),
+    cancelled: t('status.cancelled'),
+    running:   t('status.running'),
+    waiting:   t('status.waiting'),
+  }
 
   const status   = job.status || 'running'
   const isLocked = dataStatus % 2 === 1
@@ -136,40 +137,40 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
   return (
     <div className="dialog-overlay" onClick={() => { if (!confirm) onClose() }}>
       <div className="dialog dialog-wide" onClick={e => e.stopPropagation()}>
-        <h3 className="dialog-title">ジョブ詳細</h3>
+        <h3 className="dialog-title">{t('dialog.jobDetails')}</h3>
 
         <div className="dialog-body job-detail-body">
           <div className="job-detail-section">
-            <Row label="ステータス"    value={<span className={`status-badge status-${status}`}>{STATUS_LABELS[status] ?? status}</span>} />
-            <Row label="データ" value={
+            <Row label={t('dialog.status')}    value={<span className={`status-badge status-${status}`}>{statusLabels[status] ?? status}</span>} />
+            <Row label={t('dialog.data')} value={
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <DataStatusBadge status={dataStatus} />
                 <button className="btn btn-sm btn-ghost" onClick={handleLock} disabled={locking}>
-                  {isLocked ? 'ロック解除' : 'ロック'}
+                  {isLocked ? t('common.unlock') : t('common.lock')}
                 </button>
               </div>
             } />
-            <Row label="プロジェクト"  value={job.project_name} />
-            <Row label="ワークスペース" value={job.workspace_name} />
+            <Row label={t('dialog.project')}  value={job.project_name} />
+            <Row label={t('dialog.workspace')} value={job.workspace_name} />
           </div>
 
           <div className="job-detail-section">
-            <Row label="シーン"    value={job.scene   || 'デフォルト'} />
-            <Row label="エンジン"  value={job.engine  || 'デフォルト'} />
-            <Row label="フレーム"  value={`${job.start_frame} – ${job.end_frame}${job.frame_step > 1 ? ` (ステップ ${job.frame_step})` : ''}`} />
-            <Row label="スレッド"  value={job.thread === 0 ? '自動' : String(job.thread)} />
+            <Row label={t('dialog.scene')}    value={job.scene   || t('common.default')} />
+            <Row label={t('dialog.engine')}  value={job.engine  || t('common.default')} />
+            <Row label={t('dialog.frames')}  value={`${job.start_frame} – ${job.end_frame}${job.frame_step > 1 ? ` (${t('dialog.step')}${job.frame_step})` : ''}`} />
+            <Row label={t('dialog.threads')}  value={job.thread === 0 ? t('common.automatic') : String(job.thread)} />
           </div>
 
           <div className="job-detail-section">
-            <Row label="Blender"  value={job.blender_path} selectable />
-            <Row label="ファイル" value={job.blender_file} selectable />
-            <Row label="出力先"   value={job.output_dir}   selectable />
-            <Row label="データ容量" value={
+            <Row label={t('dialog.blender')}  value={job.blender_path} selectable />
+            <Row label={t('dialog.file')} value={job.blender_file} selectable />
+            <Row label={t('dialog.output')}   value={job.output_dir}   selectable />
+            <Row label={t('dialog.dataSize')} value={
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={dataStatus >= 4 ? { textDecoration: 'line-through', opacity: 0.5 } : undefined}>{formatBytes(job.disk_size)}</span>
                 {dataStatus === 2 && (
                   <button className="btn btn-sm btn-danger" onClick={() => setConfirmData(true)} disabled={isLocked}>
-                    データ削除
+                    {t('common.deleteData')}
                   </button>
                 )}
               </div>
@@ -177,10 +178,10 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
           </div>
 
           <div className="job-detail-section">
-            <Row label="登録日時" value={fmt(job.enqueued_at)} />
-            <Row label="開始日時" value={fmt(job.started_at)} />
-            <Row label="完了日時" value={fmt(job.completed_at)} />
-            <Row label="所要時間" value={duration(job.started_at, job.completed_at)} />
+            <Row label={t('dialog.enrolledAt')} value={fmt(job.enqueued_at)} />
+            <Row label={t('dialog.startedAt')} value={fmt(job.started_at)} />
+            <Row label={t('dialog.completedAt')} value={fmt(job.completed_at)} />
+            <Row label={t('dialog.duration')} value={duration(job.started_at, job.completed_at, t)} />
           </div>
 
           {status === 'error' && job.error_msg && (
@@ -192,30 +193,30 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
 
         {confirmData ? (
           <div className="job-delete-confirm">
-            <span className="job-delete-confirm-msg">出力フォルダを削除します。ジョブ履歴は残ります。この操作は取り消せません。</span>
+            <span className="job-delete-confirm-msg">{t('job.deleteDataWarning')}</span>
             <div className="dialog-actions" style={{ marginTop: 12 }}>
-              <button className="btn btn-ghost" onClick={() => setConfirmData(false)} disabled={deletingData}>キャンセル</button>
+              <button className="btn btn-ghost" onClick={() => setConfirmData(false)} disabled={deletingData}>{t('common.cancel')}</button>
               <button className="btn btn-danger" onClick={handleDeleteData} disabled={deletingData}>
-                {deletingData ? '削除中...' : 'データ削除する'}
+                {deletingData ? t('common.deleting') : t('job.deleteDataAction')}
               </button>
             </div>
           </div>
         ) : confirm ? (
           <div className="job-delete-confirm">
-            <span className="job-delete-confirm-msg">出力フォルダも含めて削除します。この操作は取り消せません。</span>
+            <span className="job-delete-confirm-msg">{t('job.deleteWarning')}</span>
             <div className="dialog-actions" style={{ marginTop: 12 }}>
-              <button className="btn btn-ghost" onClick={() => setConfirm(false)} disabled={deleting}>キャンセル</button>
+              <button className="btn btn-ghost" onClick={() => setConfirm(false)} disabled={deleting}>{t('common.cancel')}</button>
               <button className="btn btn-danger" onClick={handleDelete} disabled={deleting}>
-                {deleting ? '削除中...' : '削除する'}
+                {deleting ? t('common.deleting') : t('common.delete')}
               </button>
             </div>
           </div>
         ) : (
           <div className="dialog-actions" style={{ justifyContent: 'space-between' }}>
-            <button className="btn btn-danger" onClick={() => setConfirm(true)} disabled={isLocked}>削除</button>
+            <button className="btn btn-danger" onClick={() => setConfirm(true)} disabled={isLocked}>{t('common.delete')}</button>
             <div style={{ display: 'flex', gap: 8 }}>
-              <button className="btn btn-ghost" onClick={() => QueueApi.openLogWindow({ id: job.id })}>ログを表示</button>
-              <button className="btn btn-ghost" onClick={onClose}>閉じる</button>
+              <button className="btn btn-ghost" onClick={() => QueueApi.openLogWindow({ id: job.id })}>{t('job.showLog')}</button>
+              <button className="btn btn-ghost" onClick={onClose}>{t('common.close')}</button>
             </div>
           </div>
         )}

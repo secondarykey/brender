@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { WorkspaceApi, BlenderApi, QueueApi } from '../../lib/api'
 import JobDetailDialog from '../../components/JobDetailDialog'
 import ImageViewerDialog from '../../components/ImageViewerDialog'
@@ -7,17 +8,11 @@ import Pagination from '../../components/Pagination'
 
 const isFrameDefault = (start, end) => start === 0 && end === -1
 
-const STATUS_LABELS = {
-  completed: '完了',
-  error:     'エラー',
-  cancelled: 'キャンセル',
-}
-
 const HISTORY_PAGE_SIZE = 5
 
 // ── 履歴タブ ──────────────────────────────────────────────
 function HistoryTab({ projectID, workspaceID }) {
-
+  const { t } = useTranslation()
   const [jobs, setJobs]         = useState([])
   const [selected, setSelected] = useState(null)
   const [viewing, setViewing]   = useState(null)
@@ -32,12 +27,14 @@ function HistoryTab({ projectID, workspaceID }) {
 
   useEffect(() => { load() }, [load])
 
+  const statusLabel = (s) => ({ completed: t('status.completed'), error: t('status.error'), cancelled: t('status.cancelled') })[s] ?? s
+
   const totalPages  = Math.max(1, Math.ceil(jobs.length / pageSize))
   const currentPage = Math.min(page, totalPages)
   const pageJobs    = jobs.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 
   if (jobs.length === 0) {
-    return <p className="empty-msg">まだ実行履歴がありません</p>
+    return <p className="empty-msg">{t('workspace.noHistory')}</p>
   }
 
   return (
@@ -47,7 +44,7 @@ function HistoryTab({ projectID, workspaceID }) {
           <div key={j.id} className="queue-history-item queue-history-item-clickable" onClick={() => setSelected(j)}>
             <div className="queue-history-top">
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-                <button className="btn btn-sm" onClick={e => { e.stopPropagation(); setViewing(j) }} disabled={!(j.data_status === 2 || j.data_status === 3)}>表示</button>
+                <button className="btn btn-sm" onClick={e => { e.stopPropagation(); setViewing(j) }} disabled={!(j.data_status === 2 || j.data_status === 3)}>{t('common.view')}</button>
                 <div className="queue-history-detail" style={{ marginTop: 0 }}>
                   <span>{j.start_frame}–{j.end_frame}f</span>
                   {j.engine && <span>{j.engine}</span>}
@@ -57,7 +54,7 @@ function HistoryTab({ projectID, workspaceID }) {
                   )}
                 </div>
               </div>
-              <span className={`status-badge status-${j.status}`}>{STATUS_LABELS[j.status] ?? j.status}</span>
+              <span className={`status-badge status-${j.status}`}>{statusLabel(j.status)}</span>
             </div>
             {j.status === 'error' && j.error_msg && (
               <div className="queue-history-error">
@@ -80,6 +77,7 @@ function HistoryTab({ projectID, workspaceID }) {
 
 // ── 設定タブ ──────────────────────────────────────────────
 function SettingsTab({ projectID, workspaceID, detail, onUpdated, onDeleted }) {
+  const { t } = useTranslation()
   const [blenders, setBlenders]             = useState([])
   const [engines, setEngines]               = useState([])
   const [enginesLoading, setEnginesLoading] = useState(false)
@@ -127,8 +125,6 @@ function SettingsTab({ projectID, workspaceID, detail, onUpdated, onDeleted }) {
       .catch(() => {})
   }, [])
 
-  // GetEngines と GetScenes を1つの effect にまとめて同時並行で呼び出す
-  // （blenderInstallID 変化時に2つの effect が別々に発火するのを防ぐ）
   useEffect(() => {
     if (!form) return
     const fid = detail?.workspace?.project_file_id
@@ -158,7 +154,7 @@ function SettingsTab({ projectID, workspaceID, detail, onUpdated, onDeleted }) {
   const handleSave = async () => {
     setError('')
     setSaved(false)
-    if (!form.name.trim()) { setError('ワークスペース名を入力してください'); return }
+    if (!form.name.trim()) { setError(t('workspace.nameRequired')); return }
     setSaving(true)
     try {
       await WorkspaceApi.update({
@@ -183,107 +179,107 @@ function SettingsTab({ projectID, workspaceID, detail, onUpdated, onDeleted }) {
   return (
     <div className="form workspace" style={{ maxWidth: 520 }}>
       <div className="form-field">
-        <label className="form-label">ワークスペース名 <span className="required">*</span></label>
+        <label className="form-label">{t('workspace.name')} <span className="required">*</span></label>
         <input className="form-input" value={form.name} onChange={e => set('name', e.target.value)} />
       </div>
 
       <div className="form-field">
-        <label className="form-label">Blender</label>
+        <label className="form-label">{t('workspace.blender')}</label>
         <select className="form-select" value={form.blenderInstallID} onChange={e => set('blenderInstallID', Number(e.target.value))}>
-          <option value={0}>— 未設定 —</option>
+          <option value={0}>{t('common.notSet')}</option>
           {blenders.map(b => (
-            <option key={b.id} value={b.id}>{b.name} ({b.version || 'バージョン不明'})</option>
+            <option key={b.id} value={b.id}>{b.name} ({b.version || t('common.versionUnknown')})</option>
           ))}
         </select>
-        <span className="form-hint">未設定の場合: ファイルのデフォルト → Blender一覧の先頭 の順で使用されます</span>
+        <span className="form-hint">{t('workspace.blenderHint')}</span>
       </div>
 
       <div className="form-field">
-        <label className="form-label">シーン</label>
+        <label className="form-label">{t('workspace.scene')}</label>
         {scenes.length > 0 ? (
           <select className="form-select" value={form.scene} onChange={e => set('scene', e.target.value)} disabled={scenesLoading}>
-            <option value="">— 未設定 —</option>
+            <option value="">{t('common.notSet')}</option>
             {scenes.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
         ) : (
-          <input className="form-input" value={form.scene} onChange={e => set('scene', e.target.value)} placeholder="未設定" />
+          <input className="form-input" value={form.scene} onChange={e => set('scene', e.target.value)} placeholder={t('common.notSetPlaceholder')} />
         )}
-        <span className="form-hint">未設定の場合: ファイルのデフォルト → .blend ファイルのデフォルト の順で使用されます</span>
+        <span className="form-hint">{t('workspace.sceneHint')}</span>
       </div>
 
       <div className="form-field">
-        <label className="form-label">レンダーエンジン</label>
+        <label className="form-label">{t('workspace.renderEngine')}</label>
         {engines.length > 0 ? (
           <select className="form-select" value={form.engine} onChange={e => set('engine', e.target.value)} disabled={enginesLoading}>
-            <option value="">— 未設定 —</option>
+            <option value="">{t('common.notSet')}</option>
             {engines.map(eng => <option key={eng} value={eng}>{eng}</option>)}
           </select>
         ) : (
-          <input className="form-input" value={form.engine} onChange={e => set('engine', e.target.value)} placeholder="未設定（例: CYCLES）" />
+          <input className="form-input" value={form.engine} onChange={e => set('engine', e.target.value)} placeholder={t('workspace.enginePlaceholder')} />
         )}
-        <span className="form-hint">未設定の場合: .blend ファイルのデフォルトエンジンが使用されます</span>
+        <span className="form-hint">{t('workspace.engineHint')}</span>
       </div>
 
       <div className="form-field">
-        <label className="form-label">フレーム範囲</label>
+        <label className="form-label">{t('workspace.frameRange')}</label>
         <label className="form-checkbox-label">
           <input type="checkbox" checked={specifyFrames} onChange={e => handleSpecifyFrames(e.target.checked)} />
-          フレームを指定する
+          {t('workspace.specifyFrames')}
         </label>
         {specifyFrames && (
           <div className="form-row" style={{ marginTop: 8 }}>
             <div className="form-field">
-              <label className="form-label">開始</label>
+              <label className="form-label">{t('workspace.startFrame')}</label>
               <input className="form-input" style={{ width: 100 }} type="number" min={0} value={form.startFrame} onChange={e => set('startFrame', Number(e.target.value))} />
             </div>
             <div className="form-field">
-              <label className="form-label">終了</label>
+              <label className="form-label">{t('workspace.endFrame')}</label>
               <input className="form-input" style={{ width: 100 }} type="number" min={0} value={form.endFrame} onChange={e => set('endFrame', Number(e.target.value))} />
             </div>
             <div className="form-field">
-              <label className="form-label">ステップ</label>
+              <label className="form-label">{t('workspace.frameStep')}</label>
               <input className="form-input" style={{ width: 80 }} type="number" min={1} value={form.frameStep} onChange={e => set('frameStep', Number(e.target.value))} />
-              <span className="form-hint">1 = 毎フレーム</span>
+              <span className="form-hint">{t('workspace.frameStepHint')}</span>
             </div>
           </div>
         )}
-        <span className="form-hint">未指定の場合: .blend ファイルのフレーム設定が使用されます</span>
+        <span className="form-hint">{t('workspace.frameRangeHint')}</span>
       </div>
 
       <div className="form-field">
-        <label className="form-label">スレッド数</label>
+        <label className="form-label">{t('workspace.threads')}</label>
         <input className="form-input" style={{ width: 120 }} type="number" min={0} value={form.thread} onChange={e => set('thread', Number(e.target.value))} />
-        <span className="form-hint">0 = 自動</span>
+        <span className="form-hint">{t('workspace.threadsHint')}</span>
       </div>
 
       <div className="form-field">
-        <label className="form-label">サンプル数</label>
+        <label className="form-label">{t('workspace.samples')}</label>
         <input className="form-input" style={{ width: 120 }} type="number" min={0} value={form.samples} onChange={e => set('samples', Number(e.target.value))} />
-        <span className="form-hint">0 = Blender デフォルト（エンジンの設定値を使用）</span>
+        <span className="form-hint">{t('workspace.samplesHint')}</span>
       </div>
 
       {error && <div className="error-msg">{error}</div>}
-      {saved && <div className="success-msg">保存しました</div>}
+      {saved && <div className="success-msg">{t('common.saved')}</div>}
 
       <div className="form-actions">
-        <button className="btn btn-danger" onClick={() => setConfirm(true)}>削除</button>
+        <button className="btn btn-danger" onClick={() => setConfirm(true)}>{t('common.delete')}</button>
         <button className="btn" onClick={handleSave} disabled={saving}>
-          {saving ? '保存中...' : '保存'}
+          {saving ? t('common.saving') : t('common.save')}
         </button>
       </div>
 
       {confirm && (
         <div className="dialog-overlay" onClick={() => setConfirm(false)}>
           <div className="dialog" onClick={e => e.stopPropagation()}>
-            <h3 className="dialog-title">ワークスペースを削除しますか？</h3>
+            <h3 className="dialog-title">{t('workspace.confirmDelete')}</h3>
             <div className="dialog-body">
-              <p><span className="dialog-label">ワークスペース</span>{detail.workspace.name}</p>
+              <p><span className="dialog-label">{t('dialog.workspace')}</span>{detail.workspace.name}</p>
               <p style={{ marginTop: 10, color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>
-                関連するジョブ履歴も削除されます。この操作は取り消せません。
+                {t('workspace.deleteWarning')}
               </p>
             </div>
             <div className="dialog-actions">
-              <button className="btn btn-ghost" onClick={() => setConfirm(false)}>キャンセル</button>
+              <button className="btn btn-ghost" onClick={() => setConfirm(false)}>{t('common.cancel')}</button>
               <button className="btn btn-danger" onClick={async () => {
                 setDeleting(true)
                 try {
@@ -296,7 +292,7 @@ function SettingsTab({ projectID, workspaceID, detail, onUpdated, onDeleted }) {
                   setDeleting(false)
                 }
               }} disabled={deleting}>
-                {deleting ? '削除中...' : '削除'}
+                {deleting ? t('common.deleting') : t('common.delete')}
               </button>
             </div>
           </div>
@@ -310,6 +306,7 @@ function SettingsTab({ projectID, workspaceID, detail, onUpdated, onDeleted }) {
 
 // ── ページ本体 ────────────────────────────────────────────
 function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspaceID, navigate }) {
+  const { t } = useTranslation()
   const [detail, setDetail] = useState(null)
   const [error, setError]   = useState('')
 
@@ -325,10 +322,9 @@ function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspa
     return <div className="page"><div className="error-msg">{error}</div></div>
   }
   if (!detail) {
-    return <div className="page"><p className="setting-desc">読み込み中...</p></div>
+    return <div className="page"><p className="setting-desc">{t('common.loading')}</p></div>
   }
 
-  // fileID / fileName が props に無い場合（履歴などからの直接遷移）は detail から補完する
   const effectiveFileID   = fileID   || detail.workspace.project_file_id || ''
   const effectiveFileName = fileName || detail.project_files?.find(f => f.id === effectiveFileID)?.name || ''
 
@@ -336,7 +332,7 @@ function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspa
     <div className="page">
       <div className="page-header">
         <div className="breadcrumb">
-          <button className="breadcrumb-link" onClick={() => navigate('projects')}>プロジェクト</button>
+          <button className="breadcrumb-link" onClick={() => navigate('projects')}>{t('breadcrumb.projects')}</button>
           <span className="breadcrumb-sep">›</span>
           <button className="breadcrumb-link" onClick={() => navigate('project', { id: projectID })}>{projectName}</button>
           <span className="breadcrumb-sep">›</span>
@@ -361,7 +357,7 @@ function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspa
           />
         </div>
         <div className="ws-detail-right">
-          <h3 className="ws-detail-section-title">実行履歴</h3>
+          <h3 className="ws-detail-section-title">{t('tabs.history')}</h3>
           <HistoryTab projectID={projectID} workspaceID={workspaceID} />
         </div>
       </div>

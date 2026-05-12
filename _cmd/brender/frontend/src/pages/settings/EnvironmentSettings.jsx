@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
 import { EnvironmentApi } from '../../lib/api'
 
 function EnvironmentSettings() {
+  const { t } = useTranslation()
   const [root, setRoot]       = useState('')
   const [workDir, setWorkDir] = useState('')
   const [saving, setSaving]   = useState(false)
@@ -42,18 +44,18 @@ function EnvironmentSettings() {
 
   return (
     <div>
-      <h2 className="section-title">作業ディレクトリ</h2>
-      <p className="setting-desc">プロジェクトとレンダリング結果を保存するフォルダを指定します。</p>
+      <h2 className="section-title">{t('settings.workingDir')}</h2>
+      <p className="setting-desc">{t('settings.workingDirHint')}</p>
 
       <div className="setting-row">
-        <span className="setting-path">{root || '未設定'}</span>
+        <span className="setting-path">{root || t('common.notSetPlaceholder')}</span>
         <button className="btn" onClick={handleSelectDir} disabled={saving}>
-          {saving ? '保存中...' : 'フォルダを選択'}
+          {saving ? t('common.saving') : t('settings.selectFolder')}
         </button>
       </div>
 
       {error && <div className="error-msg">{error}</div>}
-      {saved && <div className="success-msg">保存しました</div>}
+      {saved && <div className="success-msg">{t('common.saved')}</div>}
     </div>
   )
 }

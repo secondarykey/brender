@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
 import { WorkspaceApi, ProjectApi, BlenderApi } from '../../../lib/api'
 
 // ── サムネイルタイル ──────────────────────────────────────
 function FileCard({ projectID, g, navigate, projectName }) {
+  const { t } = useTranslation()
   const [thumb, setThumb] = useState(null)
 
   useEffect(() => {
@@ -22,7 +24,7 @@ function FileCard({ projectID, g, navigate, projectName }) {
       <div className="file-tile-thumb">
         {thumb
           ? <img src={thumb} alt={fileName} />
-          : <span className="file-tile-thumb-placeholder">No Image</span>
+          : <span className="file-tile-thumb-placeholder">{t('workspace.noImage')}</span>
         }
       </div>
       <div className="file-tile-info">
@@ -33,6 +35,7 @@ function FileCard({ projectID, g, navigate, projectName }) {
 }
 
 function WorkspaceTab({ projectID, navigate, projectName }) {
+  const { t } = useTranslation()
   const [groups, setGroups]   = useState([])
   const [error, setError]     = useState('')
   const [fileError, setFileError] = useState('')
@@ -76,7 +79,7 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
   return (
     <div className="workspace-tab-root">
       <div className="ws-add-file-fab-wrap">
-        <button className="btn btn-secondary ws-add-file-fab" onClick={handleAddFile}>+ .blend ファイルを追加</button>
+        <button className="btn btn-secondary ws-add-file-fab" onClick={handleAddFile}>{t('workspace.addFile')}</button>
       </div>
 
       {error && <div className="error-msg">{error}</div>}
@@ -86,18 +89,18 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
           <button
             className={`file-view-btn${viewMode === 'list' ? ' active' : ''}`}
             onClick={() => setViewMode('list')}
-            title="リスト表示"
+            title={t('workspace.listView')}
           >☰</button>
           <button
             className={`file-view-btn${viewMode === 'card' ? ' active' : ''}`}
             onClick={() => setViewMode('card')}
-            title="カード表示"
+            title={t('workspace.cardView')}
           >⊞</button>
         </div>
       )}
 
       {groups.length === 0 ? (
-        <p className="ws-empty">.blend ファイルが登録されていません</p>
+        <p className="ws-empty">{t('workspace.noFilesRegistered')}</p>
       ) : viewMode === 'list' ? (
         <div className="file-list">
           {groups.map(g => (
@@ -115,16 +118,16 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
                 className="btn btn-run btn-sm file-item-open-btn"
                 onClick={e => handleOpenFile(e, g.file)}
                 disabled={openingFileID === g.file.id}
-                title="Blender で開く"
+                title={t('workspace.openInBlender')}
               >
-                {openingFileID === g.file.id ? '...' : '開く'}
+                {openingFileID === g.file.id ? '...' : t('common.open')}
               </button>
               <div className="file-item-info">
                 <span className="ws-file-name">{g.file.name || g.file.path.split(/[/\\]/).pop()}</span>
                 <span className="ws-file-path">{g.file.path}</span>
               </div>
               <div className="file-item-meta">
-                <span className="file-item-count">{g.workspaces.length} ワークスペース</span>
+                <span className="file-item-count">{g.workspaces.length} {t('tabs.fileList')}</span>
                 <span className="ws-item-arrow">›</span>
               </div>
             </div>

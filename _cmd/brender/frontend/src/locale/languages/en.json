@@ -1,19 +1,223 @@
 {
+  "common": {
+    "loading": "Loading...",
+    "saving": "Saving...",
+    "save": "Save",
+    "saved": "Saved",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "deleting": "Deleting...",
+    "create": "Create",
+    "close": "Close",
+    "back": "Back",
+    "view": "View",
+    "open": "Open",
+    "run": "Run",
+    "default": "Default",
+    "notSet": "— Not set —",
+    "notSetPlaceholder": "Not set",
+    "versionUnknown": "Version unknown",
+    "lock": "Lock",
+    "unlock": "Unlock",
+    "automatic": "Auto",
+    "loop": "Loop",
+    "processing": "Processing...",
+    "registering": "Registering...",
+    "cancelling": "Cancelling...",
+    "cancelAction": "Cancel",
+    "enqueueing": "Adding...",
+    "deleteData": "Delete Data",
+    "dragToReorder": "Drag to reorder",
+    "error": "Error: "
+  },
+  "menu": {
+    "project": "Project",
+    "queue": "Queue",
+    "settings": "Settings"
+  },
+  "title": {
+    "minimum": "Minimize",
+    "maximum": "Maximize",
+    "close": "Close"
+  },
+  "status": {
+    "waiting": "Waiting",
+    "running": "Running",
+    "completed": "Completed",
+    "error": "Error",
+    "cancelled": "Cancelled"
+  },
+  "dataStatus": {
+    "none": "No data",
+    "locked": "Locked",
+    "available": "Available",
+    "deleted": "Deleted"
+  },
+  "tabs": {
+    "fileList": "Files",
+    "settings": "Settings",
+    "queue": "Queue",
+    "history": "History",
+    "environment": "Environment",
+    "blender": "Blender"
+  },
+  "breadcrumb": {
+    "projects": "Projects"
+  },
   "project": {
     "register": {
       "transition": "+New Project",
       "apply": "Create",
       "cancel": "Cancel"
-    }
+    },
+    "name": "Project Name",
+    "nameRequired": "Please enter a project name",
+    "empty": "No projects",
+    "createFirst": "Create your first project",
+    "confirmDelete": "Delete this project?",
+    "deleteWarning": "All associated workspaces and jobs will also be deleted. This action cannot be undone.",
+    "rootNotSet": "Working directory is not set.",
+    "configureInSettings": "Please configure in Settings"
   },
-  "menu" : {
+  "file": {
+    "displayName": "File Name",
+    "displayNameHint": "Display name for the rendering settings group",
+    "defaultBlender": "Default Blender",
+    "blenderHint": "If not set: the first Blender in the list will be used",
+    "defaultScene": "Default Scene",
+    "sceneHint": "If not set: the default scene in the .blend file will be used",
+    "confirmDelete": "Delete this file?",
+    "deleteWarning": "Associated workspaces and job history will also be deleted. The physical file will not be deleted. This action cannot be undone."
+  },
+  "workspace": {
+    "name": "Workspace Name",
+    "nameSuffix": " *",
+    "nameRequired": "Please enter a workspace name",
+    "empty": "No workspaces",
+    "createNew": "+ Create Workspace",
+    "addFile": "+ Add .blend file",
+    "listView": "List view",
+    "cardView": "Card view",
+    "noFilesRegistered": "No .blend files registered",
+    "noImage": "No Image",
+    "openInBlender": "Open in Blender",
+    "thumbnail": "Thumbnail",
+    "noThumbnail": "No thumbnail",
+    "noHistory": "No execution history yet",
+    "blender": "Blender",
+    "blenderHint": "If not set: file default → first in Blender list",
+    "scene": "Scene",
+    "sceneHint": "If not set: file default → .blend file default",
+    "renderEngine": "Render Engine",
+    "enginePlaceholder": "Not set (e.g. CYCLES)",
+    "engineHint": "If not set: the default engine in the .blend file will be used",
+    "frameRange": "Frame Range",
+    "specifyFrames": "Specify frames",
+    "startFrame": "Start",
+    "endFrame": "End",
+    "frameStep": "Step",
+    "frameStepHint": "1 = every frame",
+    "frameRangeHint": "If not set: the frame settings in the .blend file will be used",
+    "threads": "Thread Count",
+    "threadsHint": "0 = auto",
+    "samples": "Sample Count",
+    "samplesHint": "0 = Blender default (use engine setting)",
+    "confirmDelete": "Delete this workspace?",
+    "deleteWarning": "Associated job history will also be deleted. This action cannot be undone.",
+    "confirmRender": "Start rendering?",
+    "blendDefault": ".blend default"
+  },
+  "queue": {
+    "noJobs": "No running or waiting jobs",
+    "noHistory": "No execution history",
+    "confirmCancel": "Cancel this job?",
+    "almostComplete": "Almost done",
+    "preparing": "Preparing... (",
+    "secondsPerFrame": "s/f"
+  },
+  "job": {
+    "showLog": "Show Log",
+    "noLog": "No log file",
+    "deleteDataWarning": "The output folder will be deleted. Job history will be preserved. This action cannot be undone.",
+    "deleteDataAction": "Delete Data",
+    "deleteWarning": "The output folder will also be deleted. This action cannot be undone."
+  },
+  "dialog": {
+    "jobDetails": "Job Details",
+    "status": "Status",
+    "data": "Data",
     "project": "Project",
-    "queue": "Queue",
-    "settings": "Settings"
+    "workspace": "Workspace",
+    "scene": "Scene",
+    "engine": "Engine",
+    "frames": "Frames",
+    "step": "Step ",
+    "threads": "Threads",
+    "blender": "Blender",
+    "file": "File",
+    "output": "Output",
+    "dataSize": "Data Size",
+    "enrolledAt": "Enqueued",
+    "startedAt": "Started",
+    "completedAt": "Completed",
+    "duration": "Duration",
+    "name": "Name",
+    "version": "Version",
+    "path": "Path",
+    "renderResults": "Rendering Results — "
   },
-  "title" : {
-    "minimum": "Minimize",
-    "maximum": "Maximize",
-    "close": "Close"
+  "settings": {
+    "workingDir": "Working Directory",
+    "workingDirHint": "Specify the folder to save projects and rendering results.",
+    "selectFolder": "Select Folder",
+    "addBlender": "+ Add Blender",
+    "noBlenders": "No Blender installations registered",
+    "reorderHint": "Drag ≡ to reorder. The top Blender is used as default.",
+    "confirmDeleteBlender": "Delete this Blender installation?",
+    "noBlenderRegistered": "No Blender registered (please add in system settings)"
+  },
+  "table": {
+    "workspace": "Workspace",
+    "status": "Status",
+    "frameProgress": "Frame / Progress",
+    "startExpected": "Start / Expected",
+    "elapsedRemaining": "Elapsed / Remaining",
+    "project": "Project",
+    "engine": "Engine",
+    "frames": "Frames",
+    "enqueuedAt": "Enqueued",
+    "duration": "Duration",
+    "name": "Name",
+    "version": "Version",
+    "path": "Path"
+  },
+  "time": {
+    "seconds": "s",
+    "minutes": "m",
+    "hours": "h"
+  },
+  "pagination": {
+    "items": " items",
+    "itemsPerPage": "Per page",
+    "page": "page"
+  },
+  "viewer": {
+    "noImages": "No image files found",
+    "play": "▶ Play",
+    "stop": "⏹ Stop"
+  },
+  "render": {
+    "confirmTitle": "Start rendering?",
+    "workspace": "Workspace",
+    "scene": "Scene",
+    "engine": "Engine",
+    "blendDefault": ".blend default",
+    "frames": "Frames",
+    "step": "Step ",
+    "thread": "Threads",
+    "auto": "Auto",
+    "samples": "Samples",
+    "blenderPath": "Blender",
+    "filePath": "File"
   }
 }

@@ -1,19 +1,223 @@
 {
+  "common": {
+    "loading": "読み込み中...",
+    "saving": "保存中...",
+    "save": "保存",
+    "saved": "保存しました",
+    "cancel": "キャンセル",
+    "delete": "削除",
+    "deleting": "削除中...",
+    "create": "作成",
+    "close": "閉じる",
+    "back": "戻る",
+    "view": "表示",
+    "open": "開く",
+    "run": "実行",
+    "default": "デフォルト",
+    "notSet": "— 未設定 —",
+    "notSetPlaceholder": "未設定",
+    "versionUnknown": "バージョン不明",
+    "lock": "ロック",
+    "unlock": "ロック解除",
+    "automatic": "自動",
+    "loop": "ループ",
+    "processing": "処理中...",
+    "registering": "登録中...",
+    "cancelling": "キャンセル中...",
+    "cancelAction": "キャンセルする",
+    "enqueueing": "追加中...",
+    "deleteData": "データ削除",
+    "dragToReorder": "ドラッグで並び替え",
+    "error": "エラー: "
+  },
+  "menu": {
+    "project": "プロジェクト",
+    "queue": "キュー",
+    "settings": "設定"
+  },
+  "title": {
+    "minimum": "最小化",
+    "maximum": "最大化",
+    "close": "閉じる"
+  },
+  "status": {
+    "waiting": "実行待ち",
+    "running": "実行中",
+    "completed": "完了",
+    "error": "エラー",
+    "cancelled": "キャンセル"
+  },
+  "dataStatus": {
+    "none": "データなし",
+    "locked": "ロック",
+    "available": "あり",
+    "deleted": "データ削除"
+  },
+  "tabs": {
+    "fileList": "ファイル一覧",
+    "settings": "設定",
+    "queue": "キュー",
+    "history": "実行履歴",
+    "environment": "環境",
+    "blender": "Blender"
+  },
+  "breadcrumb": {
+    "projects": "プロジェクト"
+  },
   "project": {
     "register": {
       "transition": "+新規作成",
       "apply": "作成",
       "cancel": "キャンセル"
-    }
+    },
+    "name": "プロジェクト名",
+    "nameRequired": "プロジェクト名を入力してください",
+    "empty": "プロジェクトがありません",
+    "createFirst": "最初のプロジェクトを作成",
+    "confirmDelete": "プロジェクトを削除しますか？",
+    "deleteWarning": "関連するワークスペースおよびジョブも削除されます。この操作は取り消せません。",
+    "rootNotSet": "作業ディレクトリが設定されていません。",
+    "configureInSettings": "設定画面で設定してください"
   },
-  "menu" : {
+  "file": {
+    "displayName": "ファイル名称",
+    "displayNameHint": "レンダリング設定グループの表示名",
+    "defaultBlender": "デフォルト Blender",
+    "blenderHint": "未設定の場合: Blender一覧の先頭が使用されます",
+    "defaultScene": "デフォルトシーン",
+    "sceneHint": "未設定の場合: .blend ファイルのデフォルトシーンが使用されます",
+    "confirmDelete": "ファイルを削除しますか？",
+    "deleteWarning": "関連するワークスペースおよびジョブ履歴も削除されます。物理ファイルは削除されません。この操作は取り消せません。"
+  },
+  "workspace": {
+    "name": "ワークスペース名",
+    "nameSuffix": " *",
+    "nameRequired": "ワークスペース名を入力してください",
+    "empty": "ワークスペースがありません",
+    "createNew": "+ ワークスペースを作成",
+    "addFile": "+ .blend ファイルを追加",
+    "listView": "リスト表示",
+    "cardView": "カード表示",
+    "noFilesRegistered": ".blend ファイルが登録されていません",
+    "noImage": "No Image",
+    "openInBlender": "Blender で開く",
+    "thumbnail": "サムネイル",
+    "noThumbnail": "サムネイルがありません",
+    "noHistory": "まだ実行履歴がありません",
+    "blender": "Blender",
+    "blenderHint": "未設定の場合: ファイルのデフォルト → Blender一覧の先頭 の順で使用されます",
+    "scene": "シーン",
+    "sceneHint": "未設定の場合: ファイルのデフォルト → .blend ファイルのデフォルト の順で使用されます",
+    "renderEngine": "レンダーエンジン",
+    "enginePlaceholder": "未設定（例: CYCLES）",
+    "engineHint": "未設定の場合: .blend ファイルのデフォルトエンジンが使用されます",
+    "frameRange": "フレーム範囲",
+    "specifyFrames": "フレームを指定する",
+    "startFrame": "開始",
+    "endFrame": "終了",
+    "frameStep": "ステップ",
+    "frameStepHint": "1 = 毎フレーム",
+    "frameRangeHint": "未指定の場合: .blend ファイルのフレーム設定が使用されます",
+    "threads": "スレッド数",
+    "threadsHint": "0 = 自動",
+    "samples": "サンプル数",
+    "samplesHint": "0 = Blender デフォルト（エンジンの設定値を使用）",
+    "confirmDelete": "ワークスペースを削除しますか？",
+    "deleteWarning": "関連するジョブ履歴も削除されます。この操作は取り消せません。",
+    "confirmRender": "レンダリングを実行しますか？",
+    "blendDefault": ".blend のデフォルト"
+  },
+  "queue": {
+    "noJobs": "実行中・待機中のジョブはありません",
+    "noHistory": "実行履歴がありません",
+    "confirmCancel": "ジョブをキャンセルしますか？",
+    "almostComplete": "間もなく完了",
+    "preparing": "準備中... (",
+    "secondsPerFrame": "秒/f"
+  },
+  "job": {
+    "showLog": "ログを表示",
+    "noLog": "ログファイルがありません",
+    "deleteDataWarning": "出力フォルダを削除します。ジョブ履歴は残ります。この操作は取り消せません。",
+    "deleteDataAction": "データ削除する",
+    "deleteWarning": "出力フォルダも含めて削除します。この操作は取り消せません。"
+  },
+  "dialog": {
+    "jobDetails": "ジョブ詳細",
+    "status": "ステータス",
+    "data": "データ",
     "project": "プロジェクト",
-    "queue": "キュー",
-    "settings": "設定"
+    "workspace": "ワークスペース",
+    "scene": "シーン",
+    "engine": "エンジン",
+    "frames": "フレーム",
+    "step": "ステップ ",
+    "threads": "スレッド",
+    "blender": "Blender",
+    "file": "ファイル",
+    "output": "出力先",
+    "dataSize": "データ容量",
+    "enrolledAt": "登録日時",
+    "startedAt": "開始日時",
+    "completedAt": "完了日時",
+    "duration": "所要時間",
+    "name": "名前",
+    "version": "バージョン",
+    "path": "パス",
+    "renderResults": "レンダリング結果 — "
   },
-  "title" : {
-    "minimum": "最小化",
-    "maximum": "最大化",
-    "close": "閉じる"
+  "settings": {
+    "workingDir": "作業ディレクトリ",
+    "workingDirHint": "プロジェクトとレンダリング結果を保存するフォルダを指定します。",
+    "selectFolder": "フォルダを選択",
+    "addBlender": "+ Blender を追加",
+    "noBlenders": "登録されたBlenderはありません",
+    "reorderHint": "≡ をドラッグして順序を変更できます。一番上のBlenderがデフォルトとして使用されます。",
+    "confirmDeleteBlender": "Blenderを削除しますか？",
+    "noBlenderRegistered": "Blenderが登録されていません（システム設定で追加してください）"
+  },
+  "table": {
+    "workspace": "ワークスペース",
+    "status": "ステータス",
+    "frameProgress": "フレーム / 進捗",
+    "startExpected": "開始 / 完了予定",
+    "elapsedRemaining": "経過 / 残り",
+    "project": "プロジェクト",
+    "engine": "エンジン",
+    "frames": "フレーム",
+    "enqueuedAt": "登録時刻",
+    "duration": "所要時間",
+    "name": "名前",
+    "version": "バージョン",
+    "path": "パス"
+  },
+  "time": {
+    "seconds": "秒",
+    "minutes": "分",
+    "hours": "時間"
+  },
+  "pagination": {
+    "items": "件",
+    "itemsPerPage": "表示件数",
+    "page": "ページ"
+  },
+  "viewer": {
+    "noImages": "画像ファイルが見つかりません",
+    "play": "▶ 再生",
+    "stop": "⏹ 停止"
+  },
+  "render": {
+    "confirmTitle": "レンダリングを実行しますか？",
+    "workspace": "ワークスペース",
+    "scene": "シーン",
+    "engine": "エンジン",
+    "blendDefault": ".blend のデフォルト",
+    "frames": "フレーム",
+    "step": "ステップ ",
+    "thread": "スレッド",
+    "auto": "自動",
+    "samples": "サンプル数",
+    "blenderPath": "Blender",
+    "filePath": "ファイル"
   }
 }
