@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"image"
-	"image/color"
 	stdDraw "image/draw"
 	"image/jpeg"
 	"image/png"
@@ -12,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/anthonynsimon/bild/blur"
 	"github.com/ikascrew/brender/exec"
 	"github.com/ikascrew/brender/model"
 	xdraw "golang.org/x/image/draw"
@@ -102,9 +102,9 @@ const (
 	thumbH = 360
 )
 
-// makeDimmedBackground は元画像をカバースケールで 640×360 に拡大クロップし、
-// 25% 透明（75% 不透明）で合成した背景を返す。
-func makeDimmedBackground(src image.Image, bounds image.Rectangle, srcW, srcH int) *image.RGBA {
+// makeBlurredBackground は元画像をカバースケールで 640×360 に拡大クロップし、
+// bild/blur でガウスブラーをかけた背景を返す。
+func makeBlurredBackground(src image.Image, bounds image.Rectangle, srcW, srcH int) *image.RGBA {
 	// cover スケール: 短辺ではなく長辺基準で全面を埋める
 	coverScaleX := float64(thumbW) / float64(srcW)
 	coverScaleY := float64(thumbH) / float64(srcH)
@@ -125,10 +125,10 @@ func makeDimmedBackground(src image.Image, bounds image.Rectangle, srcW, srcH in
 	cropped := image.NewRGBA(image.Rect(0, 0, thumbW, thumbH))
 	xdraw.Copy(cropped, image.Point{}, covered, image.Rect(cropX, cropY, cropX+thumbW, cropY+thumbH), xdraw.Src, nil)
 
-	// クロップ画像を 25% 透明（75% 不透明）で合成
+	// ガウスブラーをかけて背景画像として返す
+	blurred := blur.Gaussian(cropped, 20)
 	canvas := image.NewRGBA(image.Rect(0, 0, thumbW, thumbH))
-	stdDraw.DrawMask(canvas, canvas.Bounds(), cropped, image.Point{}, image.NewUniform(color.Alpha{A: 192}), image.Point{}, stdDraw.Over)
-
+	stdDraw.Draw(canvas, canvas.Bounds(), blurred, image.Point{}, stdDraw.Src)
 	return canvas
 }
 
@@ -166,7 +166,7 @@ func convertToJPEG(src, dstDir, dstPath string) error {
 	fitW := int(float64(srcW) * scale)
 	fitH := int(float64(srcH) * scale)
 
-	canvas := makeDimmedBackground(src_img, bounds, srcW, srcH)
+	canvas := makeBlurredBackground(src_img, bounds, srcW, srcH)
 
 	offsetX := (thumbW - fitW) / 2
 	offsetY := (thumbH - fitH) / 2
