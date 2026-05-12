@@ -721,6 +721,10 @@ body {
   display: flex;
   justify-content: flex-end;
 }
+.file-tile .ws-tile-actions {
+  justify-content: space-between;
+  align-items: center;
+}
 
 /* ファイル詳細ヘッダ */
 .file-detail-header {

@@ -71,3 +71,7 @@ func (s *Project) SetFileThumbnail(projectID string, fileID string, imagePath st
 func (s *Project) SetFileThumbnailFromWorkspace(projectID string, fileID string, workspaceID string) (string, error) {
 	return api.SetFileThumbnailFromWorkspace(projectID, fileID, workspaceID)
 }
+
+func (s *Project) SetProjectThumbnailFromFile(projectID string, fileID string) (string, error) {
+	return api.SetProjectThumbnailFromFile(projectID, fileID)
+}

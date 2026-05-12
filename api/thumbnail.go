@@ -234,6 +234,42 @@ func SetFileThumbnailFromWorkspace(projectID, fileID, workspaceID string) (strin
 	return imageToBase64(fileThumbPath)
 }
 
+// SetProjectThumbnailFromFile はファイルのサムネイル（またはジョブ出力）をプロジェクトサムネイルとして保存し、base64 データURIを返す。
+func SetProjectThumbnailFromFile(projectID, fileID string) (string, error) {
+	env, err := model.GetEnv()
+	if err != nil || env == nil || env.ProjectRoot == "" {
+		return "", xerrors.New("作業ディレクトリが設定されていません")
+	}
+
+	fileThumbPath := filepath.Join(env.ProjectRoot, projectID, fileID, "thumbnail.jpg")
+	projectThumbDir := filepath.Join(env.ProjectRoot, projectID)
+	projectThumbPath := filepath.Join(projectThumbDir, "thumbnail.jpg")
+
+	srcPath := ""
+	if _, err := os.Stat(fileThumbPath); err == nil {
+		srcPath = fileThumbPath
+	} else {
+		ws, err := model.GetSystemWorkspaceByFile(fileID)
+		if err != nil || ws == nil {
+			return "", xerrors.New("サムネイルにする画像が見つかりません")
+		}
+		job, err := model.GetLatestJobForThumbnail(ws.ID)
+		if err != nil || job == nil {
+			return "", xerrors.New("サムネイルにする画像が見つかりません")
+		}
+		imagePath, err := findFirstImage(job.OutputDir)
+		if err != nil || imagePath == "" {
+			return "", xerrors.New("サムネイルにする画像が見つかりません")
+		}
+		srcPath = imagePath
+	}
+
+	if err := convertToJPEG(srcPath, projectThumbDir, projectThumbPath); err != nil {
+		return "", xerrors.Errorf("SetProjectThumbnailFromFile: %w", err)
+	}
+	return imageToBase64(projectThumbPath)
+}
+
 // GetProjectThumbnail はプロジェクトのサムネイル画像を base64 データURIで返す。
 // {ProjectRoot}/{projectID}/thumbnail.jpg が存在すればそれを返す。存在しない場合は空文字を返す。
 func GetProjectThumbnail(projectID string) (string, error) {
