@@ -103,7 +103,7 @@ const (
 )
 
 // makeDimmedBackground は元画像をカバースケールで 640×360 に拡大クロップし、
-// 50% 透明で黒地に重ねた背景を返す。
+// 25% 透明（75% 不透明）で合成した背景を返す。
 func makeDimmedBackground(src image.Image, bounds image.Rectangle, srcW, srcH int) *image.RGBA {
 	// cover スケール: 短辺ではなく長辺基準で全面を埋める
 	coverScaleX := float64(thumbW) / float64(srcW)
@@ -125,10 +125,9 @@ func makeDimmedBackground(src image.Image, bounds image.Rectangle, srcW, srcH in
 	cropped := image.NewRGBA(image.Rect(0, 0, thumbW, thumbH))
 	xdraw.Copy(cropped, image.Point{}, covered, image.Rect(cropX, cropY, cropX+thumbW, cropY+thumbH), xdraw.Src, nil)
 
-	// 黒地の上にクロップ画像を 50% 透明で合成
+	// クロップ画像を 25% 透明（75% 不透明）で合成
 	canvas := image.NewRGBA(image.Rect(0, 0, thumbW, thumbH))
-	stdDraw.Draw(canvas, canvas.Bounds(), image.NewUniform(color.Black), image.Point{}, stdDraw.Src)
-	stdDraw.DrawMask(canvas, canvas.Bounds(), cropped, image.Point{}, image.NewUniform(color.Alpha{A: 128}), image.Point{}, stdDraw.Over)
+	stdDraw.DrawMask(canvas, canvas.Bounds(), cropped, image.Point{}, image.NewUniform(color.Alpha{A: 192}), image.Point{}, stdDraw.Over)
 
 	return canvas
 }
