@@ -165,6 +165,14 @@ export function LockJob(id) {
 }
 
 /**
+ * @param {string} jobID
+ * @returns {$CancellablePromise<void>}
+ */
+export function OpenLogWindow(jobID) {
+    return $Call.ByID(673859361, jobID);
+}
+
+/**
  * @param {string} projectID
  * @param {string} workspaceID
  * @returns {$CancellablePromise<api$0.RenderPreview | null>}

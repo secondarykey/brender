@@ -101,4 +101,11 @@ export const QueueApi = {
   getJobLog: ({ id }) =>
     isWails() ? svc().then(s => s.GetJobLog(id))
               : serverCall('queue', 'get_job_log', { id }),
+
+  /** render.log を別ウィンドウで開く
+   * @param {{ id: string }} args
+   */
+  openLogWindow: ({ id }) =>
+    isWails() ? svc().then(s => s.OpenLogWindow(id))
+              : serverCall('queue', 'open_log_window', { id }),
 }

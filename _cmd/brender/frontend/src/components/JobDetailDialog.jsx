@@ -72,32 +72,9 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
   const [locking, setLocking]           = useState(false)
   const [error, setError]               = useState('')
   const [dataStatus, setDataStatus]     = useState(job?.data_status ?? 0)
-  const [logOpen, setLogOpen]           = useState(false)
-  const [logText, setLogText]           = useState(null)
-  const [logLoading, setLogLoading]     = useState(false)
-
   useEffect(() => {
-    if (job) {
-      setDataStatus(job.data_status ?? 0)
-      setLogOpen(false)
-      setLogText(null)
-    }
+    if (job) setDataStatus(job.data_status ?? 0)
   }, [job])
-
-  const handleToggleLog = async () => {
-    if (logOpen) { setLogOpen(false); return }
-    setLogOpen(true)
-    if (logText !== null) return
-    setLogLoading(true)
-    try {
-      const text = await QueueApi.getJobLog({ id: job.id })
-      setLogText(text || '')
-    } catch {
-      setLogText('')
-    } finally {
-      setLogLoading(false)
-    }
-  }
 
   if (!job) return null
 
@@ -210,22 +187,6 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
             <div className="job-detail-error">{job.error_msg}</div>
           )}
 
-          <div className="job-log-section">
-            <button className="btn btn-sm btn-ghost job-log-toggle" onClick={handleToggleLog}>
-              {logOpen ? '▲ ログを閉じる' : '▼ render.log を表示'}
-            </button>
-            {logOpen && (
-              <div className="job-log-viewer">
-                {logLoading
-                  ? <span className="job-log-empty">読み込み中...</span>
-                  : logText
-                    ? <pre className="job-log-pre">{logText}</pre>
-                    : <span className="job-log-empty">ログファイルがありません</span>
-                }
-              </div>
-            )}
-          </div>
-
           {error && <div className="error-msg" style={{ marginTop: 8 }}>{error}</div>}
         </div>
 
@@ -252,7 +213,10 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
         ) : (
           <div className="dialog-actions" style={{ justifyContent: 'space-between' }}>
             <button className="btn btn-danger" onClick={() => setConfirm(true)} disabled={isLocked}>削除</button>
-            <button className="btn btn-ghost" onClick={onClose}>閉じる</button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="btn btn-ghost" onClick={() => QueueApi.openLogWindow({ id: job.id })}>ログを表示</button>
+              <button className="btn btn-ghost" onClick={onClose}>閉じる</button>
+            </div>
           </div>
         )}
       </div>
