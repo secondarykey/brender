@@ -12,8 +12,8 @@ func NewProject() *Project {
 	return &p
 }
 
-func (s *Project) List() ([]*model.ProjectDetail, error) {
-	return api.ListProjects()
+func (s *Project) List(sort string) ([]*model.ProjectDetail, error) {
+	return api.ListProjects(sort)
 }
 
 func (s *Project) Get(id string) (*model.ProjectDetail, error) {

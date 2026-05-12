@@ -12,8 +12,8 @@ func NewWorkspace() *Workspace {
 	return &w
 }
 
-func (s *Workspace) ListByProject(projectID string) ([]*model.WorkspacesByFile, error) {
-	return api.ListWorkspacesByProject(projectID)
+func (s *Workspace) ListByProject(projectID string, sort string) ([]*model.WorkspacesByFile, error) {
+	return api.ListWorkspacesByProject(projectID, sort)
 }
 
 func (s *Workspace) Get(projectID string, workspaceID string) (*model.WorkspaceDetail, error) {

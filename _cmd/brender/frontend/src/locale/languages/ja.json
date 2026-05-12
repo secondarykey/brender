@@ -53,6 +53,12 @@
     "available": "あり",
     "deleted": "データ削除"
   },
+  "sort": {
+    "label": "並び順",
+    "display_order": "表示順",
+    "created_at": "作成日",
+    "processed_at": "処理日"
+  },
   "tabs": {
     "fileList": "ファイル一覧",
     "workspaceList": "ワークスペース",

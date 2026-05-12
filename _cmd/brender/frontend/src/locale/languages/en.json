@@ -53,6 +53,12 @@
     "available": "Available",
     "deleted": "Deleted"
   },
+  "sort": {
+    "label": "Sort",
+    "display_order": "Display Order",
+    "created_at": "Created",
+    "processed_at": "Processed"
+  },
   "tabs": {
     "fileList": "Files",
     "workspaceList": "Workspace",

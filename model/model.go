@@ -9,6 +9,21 @@ import (
 
 var db *gorm.DB
 
+// resolveOrder はソートキーを ORDER BY 句に変換する。
+// "display_order" → display_order asc, created_at desc
+// "processed_at"  → processed_at desc, created_at desc
+// その他(デフォルト) → created_at desc
+func resolveOrder(sort string) string {
+	switch sort {
+	case "display_order":
+		return "display_order asc, created_at desc"
+	case "processed_at":
+		return "processed_at desc, created_at desc"
+	default:
+		return "created_at desc"
+	}
+}
+
 type MetaFields struct {
 	CreatedAt *time.Time     `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt *time.Time     `gorm:"autoUpdateTime" json:"updated_at"`

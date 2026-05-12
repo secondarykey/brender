@@ -54,10 +54,11 @@ export function GetThumbnail(projectID, fileID, workspaceID) {
 
 /**
  * @param {string} projectID
+ * @param {string} sort
  * @returns {$CancellablePromise<(model$0.WorkspacesByFile | null)[]>}
  */
-export function ListByProject(projectID) {
-    return $Call.ByID(2381232515, projectID).then(/** @type {($result: any) => any} */(($result) => {
+export function ListByProject(projectID, sort) {
+    return $Call.ByID(2381232515, projectID, sort).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType6($result);
     }));
 }

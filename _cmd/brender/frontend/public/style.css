@@ -648,9 +648,22 @@ body {
 .file-view-toggle {
   display: flex;
   gap: 4px;
+  align-items: center;
   justify-content: flex-start;
   margin-bottom: 10px;
 }
+.sort-select {
+  margin-left: auto;
+  background: #1e1e1e;
+  color: rgba(255,255,255,0.7);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 0.8rem;
+  height: 28px;
+  cursor: pointer;
+}
+.sort-select:focus { outline: none; border-color: #4a7cdc; }
 .file-view-btn {
   background: transparent;
   border: 1px solid rgba(255,255,255,0.15);
