@@ -94,4 +94,11 @@ export const QueueApi = {
   unlockJob: ({ id }) =>
     isWails() ? svc().then(s => s.UnlockJob(id))
               : serverCall('queue', 'unlock_job', { id }),
+
+  /** render.log の内容を取得
+   * @param {{ id: string }} args
+   */
+  getJobLog: ({ id }) =>
+    isWails() ? svc().then(s => s.GetJobLog(id))
+              : serverCall('queue', 'get_job_log', { id }),
 }

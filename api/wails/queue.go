@@ -79,3 +79,7 @@ func (s *Queue) LockJob(id string) error {
 func (s *Queue) UnlockJob(id string) error {
 	return api.UnlockJob(id)
 }
+
+func (s *Queue) GetJobLog(id string) (string, error) {
+	return api.GetJobLog(id)
+}

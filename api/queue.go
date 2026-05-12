@@ -617,3 +617,24 @@ func ListJobsByWorkspace(projectID string, workspaceID string) ([]*model.Job, er
 func ListJobsByProjectFile(projectID string, projectFileID string) ([]*model.Job, error) {
 	return model.ListJobsByProjectFile(projectID, projectFileID)
 }
+
+// GetJobLog は job の OutputDir にある render.log の内容を返す。
+// ファイルが存在しない場合は空文字を返す。
+func GetJobLog(id string) (string, error) {
+	j, err := model.GetJob(id)
+	if err != nil {
+		return "", xerrors.Errorf("GetJobLog GetJob: %w", err)
+	}
+	if j.OutputDir == "" {
+		return "", nil
+	}
+	logPath := filepath.Join(j.OutputDir, "render.log")
+	data, err := os.ReadFile(logPath)
+	if os.IsNotExist(err) {
+		return "", nil
+	}
+	if err != nil {
+		return "", xerrors.Errorf("GetJobLog ReadFile: %w", err)
+	}
+	return string(data), nil
+}

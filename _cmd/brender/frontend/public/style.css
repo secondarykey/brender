@@ -1198,6 +1198,32 @@ body {
   -webkit-user-select: text;
   cursor: text;
 }
+.job-log-section { display: flex; flex-direction: column; gap: 6px; }
+.job-log-toggle { align-self: flex-start; }
+.job-log-viewer {
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 4px;
+  max-height: 320px;
+  overflow-y: auto;
+  background: #111;
+}
+.job-log-pre {
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-all;
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
+}
+.job-log-empty {
+  display: block;
+  padding: 10px 12px;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.35);
+}
 .job-detail-error {
   background: rgba(241,126,114,0.1);
   border: 1px solid rgba(241,126,114,0.3);
