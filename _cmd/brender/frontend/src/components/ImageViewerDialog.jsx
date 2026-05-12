@@ -1,19 +1,21 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { QueueApi } from '../lib/api'
+import { QueueApi, WorkspaceApi } from '../lib/api'
 
 function ImageViewerDialog({ job, onClose }) {
   const { t } = useTranslation()
-  const [images, setImages]           = useState([])
-  const [index, setIndex]             = useState(0)
-  const [imgSrc, setImgSrc]           = useState('')
-  const [loadingList, setLoadingList] = useState(true)
-  const [loadingImg, setLoadingImg]   = useState(false)
-  const [error, setError]             = useState('')
-  const [playing, setPlaying]         = useState(false)
-  const [loop, setLoop]               = useState(false)
-  const playingRef                    = useRef(false)
-  const loopRef                       = useRef(false)
+  const [images, setImages]               = useState([])
+  const [index, setIndex]                 = useState(0)
+  const [imgSrc, setImgSrc]               = useState('')
+  const [loadingList, setLoadingList]     = useState(true)
+  const [loadingImg, setLoadingImg]       = useState(false)
+  const [error, setError]                 = useState('')
+  const [playing, setPlaying]             = useState(false)
+  const [loop, setLoop]                   = useState(false)
+  const [thumbMsg, setThumbMsg]           = useState('')
+  const [settingThumb, setSettingThumb]   = useState(false)
+  const playingRef                        = useRef(false)
+  const loopRef                           = useRef(false)
 
   const stopPlay = () => { playingRef.current = false; setPlaying(false) }
   const toggleLoop = () => { const v = !loopRef.current; loopRef.current = v; setLoop(v) }
@@ -75,6 +77,25 @@ function ImageViewerDialog({ job, onClose }) {
     }
   }
 
+  const handleSetThumbnail = async () => {
+    if (settingThumb || !images[index]) return
+    setSettingThumb(true)
+    setThumbMsg('')
+    try {
+      await WorkspaceApi.setThumbnail({
+        projectID:   job.project_id,
+        fileID:      job.project_file_id,
+        workspaceID: job.workspace_id,
+        imagePath:   images[index],
+      })
+      setThumbMsg(t('viewer.thumbnailSet'))
+    } catch (e) {
+      setThumbMsg(String(e))
+    } finally {
+      setSettingThumb(false)
+    }
+  }
+
   if (!job) return null
 
   const filename = images[index] ? images[index].replace(/\\/g, '/').split('/').pop() : ''
@@ -129,7 +150,15 @@ function ImageViewerDialog({ job, onClose }) {
               title={t('common.loop')}
             >⟳ {t('common.loop')}</button>
           </div>
-          <button className="btn btn-ghost" onClick={onClose}>{t('common.close')}</button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {thumbMsg && <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>{thumbMsg}</span>}
+            <button
+              className="btn btn-sm btn-secondary"
+              onClick={handleSetThumbnail}
+              disabled={settingThumb || images.length === 0}
+            >{settingThumb ? '...' : t('viewer.setAsThumbnail')}</button>
+            <button className="btn btn-ghost" onClick={onClose}>{t('common.close')}</button>
+          </div>
         </div>
       </div>
     </div>

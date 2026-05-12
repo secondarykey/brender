@@ -206,7 +206,9 @@
   "viewer": {
     "noImages": "No image files found",
     "play": "▶ Play",
-    "stop": "⏹ Stop"
+    "stop": "⏹ Stop",
+    "setAsThumbnail": "Set as thumbnail",
+    "thumbnailSet": "Thumbnail updated"
   },
   "render": {
     "confirmTitle": "Start rendering?",
