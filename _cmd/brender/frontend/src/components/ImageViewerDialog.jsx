@@ -1,17 +1,22 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { QueueApi } from '../lib/api'
 
 function ImageViewerDialog({ job, onClose }) {
-  const [images, setImages]         = useState([])
-  const [index, setIndex]           = useState(0)
-  const [imgSrc, setImgSrc]         = useState('')
+  const [images, setImages]           = useState([])
+  const [index, setIndex]             = useState(0)
+  const [imgSrc, setImgSrc]           = useState('')
   const [loadingList, setLoadingList] = useState(true)
-  const [loadingImg, setLoadingImg] = useState(false)
-  const [error, setError]           = useState('')
+  const [loadingImg, setLoadingImg]   = useState(false)
+  const [error, setError]             = useState('')
+  const [playing, setPlaying]         = useState(false)
+  const playingRef                    = useRef(false)
+
+  const stopPlay = () => { playingRef.current = false; setPlaying(false) }
 
   // 画像ファイル一覧を取得
   useEffect(() => {
     if (!job) return
+    stopPlay()
     setLoadingList(true)
     setError('')
     setImages([])
@@ -29,6 +34,7 @@ function ImageViewerDialog({ job, onClose }) {
   }, [job])
 
   // インデックスが変わったら画像を読み込む（前の画像は読み込み完了まで表示したまま）
+  // 再生中は読み込み完了後に次のインデックスへ自動進行する
   useEffect(() => {
     if (images.length === 0) return
     setLoadingImg(true)
@@ -36,12 +42,32 @@ function ImageViewerDialog({ job, onClose }) {
       .then(src => {
         setImgSrc(src)
         setLoadingImg(false)
+        if (playingRef.current) {
+          setIndex(prev => {
+            if (prev < images.length - 1) return prev + 1
+            playingRef.current = false
+            setPlaying(false)
+            return prev
+          })
+        }
       })
       .catch(err => {
         setError(String(err))
         setLoadingImg(false)
+        stopPlay()
       })
   }, [images, index])
+
+  const handleTogglePlay = () => {
+    if (playing) {
+      stopPlay()
+    } else {
+      // 最後のフレームなら先頭に戻してから再生
+      if (index >= images.length - 1) setIndex(0)
+      playingRef.current = true
+      setPlaying(true)
+    }
+  }
 
   if (!job) return null
 
@@ -70,12 +96,18 @@ function ImageViewerDialog({ job, onClose }) {
             {filename}{loadingImg && <span className="image-viewer-loading-inline"> 読み込み中...</span>}
           </span>
           <div className="image-viewer-slider-row">
+            <button
+              className="btn btn-sm btn-ghost image-viewer-play-btn"
+              onClick={handleTogglePlay}
+              disabled={images.length <= 1}
+              title={playing ? '停止' : '再生'}
+            >{playing ? '⏹' : '▶'}</button>
             <input
               type="range"
               min={0}
               max={Math.max(0, images.length - 1)}
               value={index}
-              onChange={e => setIndex(Number(e.target.value))}
+              onChange={e => { stopPlay(); setIndex(Number(e.target.value)) }}
               className="image-viewer-slider"
               disabled={images.length <= 1}
             />
