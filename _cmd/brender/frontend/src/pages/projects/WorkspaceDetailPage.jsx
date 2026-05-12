@@ -10,6 +10,35 @@ const isFrameDefault = (start, end) => start === 0 && end === -1
 
 const HISTORY_PAGE_SIZE = 5
 
+// ── ワークスペースサムネイル ───────────────────────────────
+function WorkspaceThumbnailPanel({ projectID, fileID, workspaceID }) {
+  const { t } = useTranslation()
+  const [src, setSrc]         = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!fileID) { setLoading(false); return }
+    setLoading(true)
+    WorkspaceApi.getThumbnail({ projectID, fileID, workspaceID })
+      .then(data => setSrc(data || null))
+      .catch(() => setSrc(null))
+      .finally(() => setLoading(false))
+  }, [projectID, fileID, workspaceID])
+
+  return (
+    <div className="thumbnail-panel">
+      <h3 className="ws-detail-section-title">{t('workspace.thumbnail')}</h3>
+      {loading ? (
+        <p className="thumbnail-placeholder">{t('common.loading')}</p>
+      ) : src ? (
+        <img className="thumbnail-img" src={src} alt="thumbnail" />
+      ) : (
+        <p className="thumbnail-placeholder">{t('workspace.noThumbnail')}</p>
+      )}
+    </div>
+  )
+}
+
 // ── 履歴タブ ──────────────────────────────────────────────
 function HistoryTab({ projectID, workspaceID }) {
   const { t } = useTranslation()
@@ -357,6 +386,7 @@ function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspa
           />
         </div>
         <div className="ws-detail-right">
+          <WorkspaceThumbnailPanel projectID={projectID} fileID={effectiveFileID} workspaceID={workspaceID} />
           <h3 className="ws-detail-section-title">{t('tabs.history')}</h3>
           <HistoryTab projectID={projectID} workspaceID={workspaceID} />
         </div>
