@@ -221,6 +221,12 @@ function SettingsTab({ projectID, workspaceID, detail, onUpdated, onDeleted }) {
       </div>
 
       <div className="form-field">
+        <label className="form-label">{t('workspace.samples')}</label>
+        <input className="form-input" style={{ width: 120 }} type="number" min={0} value={form.samples} onChange={e => set('samples', Number(e.target.value))} />
+        <span className="form-hint">{t('workspace.samplesHint')}</span>
+      </div>
+
+      <div className="form-field">
         <label className="form-label">{t('workspace.frameRange')}</label>
         <label className="form-checkbox-label">
           <input type="checkbox" checked={specifyFrames} onChange={e => handleSpecifyFrames(e.target.checked)} />
@@ -250,12 +256,6 @@ function SettingsTab({ projectID, workspaceID, detail, onUpdated, onDeleted }) {
         <label className="form-label">{t('workspace.threads')}</label>
         <input className="form-input" style={{ width: 120 }} type="number" min={0} value={form.thread} onChange={e => set('thread', Number(e.target.value))} />
         <span className="form-hint">{t('workspace.threadsHint')}</span>
-      </div>
-
-      <div className="form-field">
-        <label className="form-label">{t('workspace.samples')}</label>
-        <input className="form-input" style={{ width: 120 }} type="number" min={0} value={form.samples} onChange={e => set('samples', Number(e.target.value))} />
-        <span className="form-hint">{t('workspace.samplesHint')}</span>
       </div>
 
       {error && <div className="error-msg">{error}</div>}
