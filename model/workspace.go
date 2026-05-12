@@ -48,17 +48,18 @@ func newWorkspaceID() (string, error) {
 	return id.String(), nil
 }
 
-func ListWorkspacesByProject(projectID string) ([]*WorkspacesByFile, error) {
+func ListWorkspacesByProject(projectID string, sort string) ([]*WorkspacesByFile, error) {
+	order := resolveOrder(sort)
 	var files []*ProjectFile
-	if res := db.Where("project_id = ?", projectID).Find(&files); res.Error != nil {
+	if res := db.Where("project_id = ?", projectID).Order(order).Find(&files); res.Error != nil {
 		return nil, xerrors.Errorf("ListWorkspacesByProject files: %w", res.Error)
 	}
 
 	result := make([]*WorkspacesByFile, 0, len(files))
 	for _, f := range files {
 		var ws []*Workspace
-		if res := db.Where("project_id = ? AND project_file_id = ?", projectID, f.ID).
-			Order("created_at").Find(&ws); res.Error != nil {
+		if res := db.Where("project_id = ? AND project_file_id = ? AND is_system = ?", projectID, f.ID, false).
+			Order(order).Find(&ws); res.Error != nil {
 			return nil, xerrors.Errorf("ListWorkspacesByProject workspaces: %w", res.Error)
 		}
 		result = append(result, &WorkspacesByFile{File: f, Workspaces: ws})

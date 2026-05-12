@@ -5,8 +5,8 @@ import (
 	"golang.org/x/xerrors"
 )
 
-func ListWorkspacesByProject(projectID string) ([]*model.WorkspacesByFile, error) {
-	return model.ListWorkspacesByProject(projectID)
+func ListWorkspacesByProject(projectID string, sort string) ([]*model.WorkspacesByFile, error) {
+	return model.ListWorkspacesByProject(projectID, sort)
 }
 
 func GetWorkspace(projectID string, workspaceID string) (*model.WorkspaceDetail, error) {

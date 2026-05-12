@@ -85,10 +85,11 @@ export function GetProjectThumbnail(projectID) {
 }
 
 /**
+ * @param {string} sort
  * @returns {$CancellablePromise<(model$0.ProjectDetail | null)[]>}
  */
-export function List() {
-    return $Call.ByID(3125621303).then(/** @type {($result: any) => any} */(($result) => {
+export function List(sort) {
+    return $Call.ByID(3125621303, sort).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType4($result);
     }));
 }

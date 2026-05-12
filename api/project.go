@@ -8,8 +8,8 @@ import (
 	"golang.org/x/xerrors"
 )
 
-func ListProjects() ([]*model.ProjectDetail, error) {
-	return model.ListProjects()
+func ListProjects(sort string) ([]*model.ProjectDetail, error) {
+	return model.ListProjects(sort)
 }
 
 func GetProject(id string) (*model.ProjectDetail, error) {

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
 import { WorkspaceApi, ProjectApi, BlenderApi } from '../../../lib/api'
+import SortSelect from '../../../components/SortSelect'
 
 // ── サムネイルタイル ──────────────────────────────────────
 function FileCard({ projectID, g, navigate, projectName, thumbnailMode, onSetThumbnail }) {
@@ -51,14 +52,21 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
   const [viewMode, setViewMode] = useState('card') // 'list' | 'card'
   const [thumbnailMode, setThumbnailMode] = useState(false)
   const [thumbMsg, setThumbMsg] = useState('')
+  const [sort, setSort] = useState(() => localStorage.getItem('sort:files') || 'display_order')
 
-  const load = () => {
-    WorkspaceApi.listByProject({ projectID })
+  const load = (s) => {
+    WorkspaceApi.listByProject({ projectID, sort: s })
       .then(list => setGroups(list || []))
       .catch(err => setError(String(err)))
   }
 
-  useEffect(() => { load() }, [projectID])
+  const handleSortChange = (s) => {
+    setSort(s)
+    localStorage.setItem('sort:files', s)
+    load(s)
+  }
+
+  useEffect(() => { load(sort) }, [projectID])
 
   const handleOpenFile = async (e, file) => {
     e.stopPropagation()
@@ -125,6 +133,7 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
           >
             {t('file.setAsProjectThumbnail')}
           </button>
+          <SortSelect value={sort} onChange={handleSortChange} />
         </div>
       )}
 

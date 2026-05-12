@@ -3,10 +3,12 @@ import { isWails, serverCall } from './_client'
 const svc = () => import('../../../bindings/github.com/ikascrew/brender/api/wails/project')
 
 export const ProjectApi = {
-  /** プロジェクト一覧を取得 */
-  list: () =>
-    isWails() ? svc().then(s => s.List())
-              : serverCall('project', 'list'),
+  /** プロジェクト一覧を取得
+   * @param {{ sort?: string }} args  sort: "display_order" | "created_at" | "processed_at"
+   */
+  list: ({ sort = '' } = {}) =>
+    isWails() ? svc().then(s => s.List(sort))
+              : serverCall('project', 'list', { sort }),
 
   /** プロジェクトを取得
    * @param {{ id: string }} args

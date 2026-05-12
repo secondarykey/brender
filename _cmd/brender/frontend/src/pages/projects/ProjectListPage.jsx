@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ProjectApi, EnvironmentApi } from '../../lib/api'
+import SortSelect from '../../components/SortSelect'
 
 // ── プロジェクトタイル（サムネイル表示） ──────────────────
 function ProjectTile({ d, navigate }) {
@@ -46,19 +47,26 @@ function ProjectListPage({ navigate }) {
   const [createError, setCreateError] = useState('')
   const [hasRoot, setHasRoot]     = useState(true)
   const [viewMode, setViewMode]   = useState('list') // 'list' | 'card'
+  const [sort, setSort]           = useState(() => localStorage.getItem('sort:projects') || 'display_order')
   const inputRef = useRef(null)
 
-  const load = () => {
-    ProjectApi.list()
+  const load = (s) => {
+    ProjectApi.list({ sort: s })
       .then(list => setProjects(list || []))
       .catch(err => setError(String(err)))
+  }
+
+  const handleSortChange = (s) => {
+    setSort(s)
+    localStorage.setItem('sort:projects', s)
+    load(s)
   }
 
   useEffect(() => {
     EnvironmentApi.get()
       .then(env => setHasRoot(!!(env && env.root)))
       .catch(() => setHasRoot(false))
-    load()
+    load(sort)
   }, [])
 
   const handleStartCreate = () => {
@@ -149,6 +157,7 @@ function ProjectListPage({ navigate }) {
                 onClick={() => setViewMode('card')}
                 title={t('workspace.cardView')}
               >⊞</button>
+              <SortSelect value={sort} onChange={handleSortChange} />
             </div>
           )}
 

@@ -5,6 +5,7 @@ import { WorkspaceApi, QueueApi, ProjectApi, BlenderApi } from '../../lib/api'
 import JobDetailDialog from '../../components/JobDetailDialog'
 import ImageViewerDialog from '../../components/ImageViewerDialog'
 import Pagination from '../../components/Pagination'
+import SortSelect from '../../components/SortSelect'
 
 // ── ワークスペース作成フォーム ────────────────────────────
 function CreateForm({ projectID, fileID, onSaved, onCancel }) {
@@ -123,9 +124,10 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
   const [viewMode, setViewMode]     = useState('list') // 'list' | 'card'
   const [thumbnailMode, setThumbnailMode] = useState(false)
   const [thumbMsg, setThumbMsg]     = useState('')
+  const [sort, setSort]             = useState(() => localStorage.getItem('sort:workspaces') || 'display_order')
 
-  const load = () => {
-    WorkspaceApi.listByProject({ projectID })
+  const load = (s) => {
+    WorkspaceApi.listByProject({ projectID, sort: s })
       .then(list => {
         const group = (list || []).find(g => g.file.id === fileID)
         setWorkspaces(group ? group.workspaces : [])
@@ -133,7 +135,13 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
       .catch(() => {})
   }
 
-  useEffect(() => { load() }, [projectID, fileID])
+  const handleSortChange = (s) => {
+    setSort(s)
+    localStorage.setItem('sort:workspaces', s)
+    load(s)
+  }
+
+  useEffect(() => { load(sort) }, [projectID, fileID])
 
   const handleSaved = (ws) => {
     setCreating(false)
@@ -201,6 +209,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
           >
             {t('workspace.setAsFileThumbnail')}
           </button>
+          <SortSelect value={sort} onChange={handleSortChange} />
         </div>
       )}
 
