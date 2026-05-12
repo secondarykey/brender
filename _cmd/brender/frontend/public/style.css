@@ -255,7 +255,12 @@ body {
 /* サムネイルパネル */
 .thumbnail-panel { display: flex; flex-direction: column; }
 .thumbnail-img { width: 100%; border-radius: 4px; object-fit: contain; }
-.thumbnail-placeholder { color: rgba(255,255,255,0.3); font-size: 0.85rem; }
+.thumbnail-placeholder {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #111;
+  border-radius: 4px;
+}
 
 /* ws-detail-split を持つページはフレックス列 */
 .page:has(.ws-detail-split) {

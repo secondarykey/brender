@@ -358,13 +358,10 @@ function ThumbnailPanel({ projectID, fileID }) {
   return (
     <div className="thumbnail-panel">
       <h3 className="ws-detail-section-title">{t('workspace.thumbnail')}</h3>
-      {loading ? (
-        <p className="thumbnail-placeholder">{t('common.loading')}</p>
-      ) : src ? (
-        <img className="thumbnail-img" src={src} alt="thumbnail" />
-      ) : (
-        <p className="thumbnail-placeholder">{t('workspace.noThumbnail')}</p>
-      )}
+      {src
+        ? <img className="thumbnail-img" src={src} alt="thumbnail" />
+        : <div className="thumbnail-placeholder" />
+      }
     </div>
   )
 }
