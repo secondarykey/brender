@@ -9,9 +9,12 @@ function ImageViewerDialog({ job, onClose }) {
   const [loadingImg, setLoadingImg]   = useState(false)
   const [error, setError]             = useState('')
   const [playing, setPlaying]         = useState(false)
+  const [loop, setLoop]               = useState(false)
   const playingRef                    = useRef(false)
+  const loopRef                       = useRef(false)
 
   const stopPlay = () => { playingRef.current = false; setPlaying(false) }
+  const toggleLoop = () => { const v = !loopRef.current; loopRef.current = v; setLoop(v) }
 
   // 画像ファイル一覧を取得
   useEffect(() => {
@@ -45,6 +48,7 @@ function ImageViewerDialog({ job, onClose }) {
         if (playingRef.current) {
           setIndex(prev => {
             if (prev < images.length - 1) return prev + 1
+            if (loopRef.current) return 0   // ループON: 先頭へ戻る
             playingRef.current = false
             setPlaying(false)
             return prev
@@ -119,6 +123,12 @@ function ImageViewerDialog({ job, onClose }) {
               onClick={handleTogglePlay}
               disabled={images.length <= 1}
             >{playing ? '⏹ 停止' : '▶ 再生'}</button>
+            <button
+              className={`btn btn-sm ${loop ? '' : 'btn-ghost'} image-viewer-loop-btn`}
+              onClick={toggleLoop}
+              disabled={images.length <= 1}
+              title="ループ"
+            >⟳ ループ</button>
           </div>
         </div>
 
