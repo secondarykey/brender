@@ -1,6 +1,9 @@
 package api
 
 import (
+	"log"
+	"time"
+
 	"github.com/ikascrew/brender/model"
 	"golang.org/x/xerrors"
 )
@@ -17,7 +20,18 @@ func CreateWorkspace(projectID string, projectFileID string, name string) (*mode
 	if name == "" {
 		return nil, xerrors.New("workspace name is required")
 	}
-	return model.CreateWorkspace(projectID, projectFileID, name, false)
+	ws, err := model.CreateWorkspace(projectID, projectFileID, name, false)
+	if err != nil {
+		return nil, err
+	}
+	now := time.Now()
+	if err := model.UpdateProjectFileProcessedAt(projectFileID, &now); err != nil {
+		log.Printf("CreateWorkspace: UpdateProjectFileProcessedAt: %v", err)
+	}
+	if err := model.UpdateProjectProcessedAt(projectID, &now); err != nil {
+		log.Printf("CreateWorkspace: UpdateProjectProcessedAt: %v", err)
+	}
+	return ws, nil
 }
 
 func UpdateWorkspace(projectID string, workspaceID string, name string, blenderInstallID uint, scene, engine string, startFrame, endFrame, frameStep, thread, samples int) (*model.WorkspaceDetail, error) {
