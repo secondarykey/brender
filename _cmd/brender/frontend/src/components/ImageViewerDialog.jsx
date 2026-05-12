@@ -119,7 +119,7 @@ function ImageViewerDialog({ job, onClose }) {
           </div>
         </div>
 
-        <div className="dialog-actions" style={{ visibility: images.length > 0 ? 'visible' : 'hidden' }}>
+        <div className="dialog-actions" style={{ justifyContent: 'space-between', visibility: images.length > 0 ? 'visible' : 'hidden' }}>
           <div style={{ display: 'flex', gap: 8 }}>
             <button
               className="btn btn-sm btn-ghost"
