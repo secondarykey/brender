@@ -2,6 +2,40 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ProjectApi, EnvironmentApi } from '../../lib/api'
 
+// ── プロジェクトタイル（サムネイル表示） ──────────────────
+function ProjectTile({ d, navigate }) {
+  const { t } = useTranslation()
+  const [thumb, setThumb] = useState(null)
+
+  useEffect(() => {
+    ProjectApi.getProjectThumbnail({ projectID: d.project.id })
+      .then(src => setThumb(src || null))
+      .catch(() => {})
+  }, [d.project.id])
+
+  return (
+    <div className="file-tile" onClick={() => navigate('project', { id: d.project.id })}>
+      <div className="file-tile-thumb">
+        {thumb
+          ? <img src={thumb} alt={d.project.name} />
+          : <div className="thumbnail-placeholder">No Image</div>
+        }
+      </div>
+      <div className="file-tile-info">
+        <div className="file-tile-name" title={d.project.name}>{d.project.name}</div>
+        {d.files.length > 0 && (
+          <div className="project-files" style={{ marginTop: 4 }}>
+            {d.files.slice(0, 3).map(f => (
+              <span key={f.id} className="project-file-chip">{f.name}</span>
+            ))}
+            {d.files.length > 3 && <span className="project-file-chip">+{d.files.length - 3}</span>}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function ProjectListPage({ navigate }) {
   const { t } = useTranslation()
   const [projects, setProjects]   = useState([])
@@ -11,6 +45,7 @@ function ProjectListPage({ navigate }) {
   const [saving, setSaving]       = useState(false)
   const [createError, setCreateError] = useState('')
   const [hasRoot, setHasRoot]     = useState(true)
+  const [viewMode, setViewMode]   = useState('list') // 'list' | 'card'
   const inputRef = useRef(null)
 
   const load = () => {
@@ -101,29 +136,54 @@ function ProjectListPage({ navigate }) {
           <button className="btn" onClick={handleStartCreate} disabled={!hasRoot}>{t('project.createFirst')}</button>
         </div>
       ) : (
-        <div className="project-list">
-          {projects.map(d => (
-            <div
-              key={d.project.id}
-              className="project-card"
-              onClick={() => navigate('project', { id: d.project.id })}
-            >
-              <div className="project-card-header">
-                <span className="project-name">{d.project.name}</span>
-                {d.blender && (
-                  <span className="project-blender-badge">
-                    {d.blender.name} {d.blender.version}
-                  </span>
-                )}
-              </div>
-              <div className="project-files">
-                {d.files.map(f => (
-                  <span key={f.id} className="project-file-chip">{f.name}</span>
-                ))}
-              </div>
+        <>
+          {projects.length > 0 && (
+            <div className="file-view-toggle" style={{ marginBottom: 8 }}>
+              <button
+                className={`file-view-btn${viewMode === 'list' ? ' active' : ''}`}
+                onClick={() => setViewMode('list')}
+                title={t('workspace.listView')}
+              >☰</button>
+              <button
+                className={`file-view-btn${viewMode === 'card' ? ' active' : ''}`}
+                onClick={() => setViewMode('card')}
+                title={t('workspace.cardView')}
+              >⊞</button>
             </div>
-          ))}
-        </div>
+          )}
+
+          {viewMode === 'list' ? (
+            <div className="project-list">
+              {projects.map(d => (
+                <div
+                  key={d.project.id}
+                  className="project-card"
+                  onClick={() => navigate('project', { id: d.project.id })}
+                >
+                  <div className="project-card-header">
+                    <span className="project-name">{d.project.name}</span>
+                    {d.blender && (
+                      <span className="project-blender-badge">
+                        {d.blender.name} {d.blender.version}
+                      </span>
+                    )}
+                  </div>
+                  <div className="project-files">
+                    {d.files.map(f => (
+                      <span key={f.id} className="project-file-chip">{f.name}</span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="file-tile-grid">
+              {projects.map(d => (
+                <ProjectTile key={d.project.id} d={d} navigate={navigate} />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   )

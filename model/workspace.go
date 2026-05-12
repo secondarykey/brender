@@ -2,6 +2,7 @@ package model
 
 import (
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 	"golang.org/x/xerrors"
@@ -9,19 +10,21 @@ import (
 )
 
 type Workspace struct {
-	ID               string `gorm:"primaryKey" json:"id"`
-	ProjectId        string `json:"project_id"`
-	ProjectFileID    string `json:"project_file_id"`
-	BlenderInstallID uint   `json:"blender_install_id"` // 0 = プロジェクトのデフォルト使用
-	Name             string `json:"name"`
-	Scene            string `json:"scene"`
-	Engine           string `json:"engine"`     // "" = Blender デフォルト
-	StartFrame       int    `json:"start"`
-	EndFrame         int    `json:"end"`
-	FrameStep        int    `json:"frame_step"` // 0,1 = 毎フレーム
-	Thread           int    `json:"thread"`     // 0 = 全コア自動
-	Samples          int    `json:"samples"`      // 0 = Blender デフォルト
-	IsSystem         bool   `gorm:"default:false" json:"is_system"`
+	ID               string     `gorm:"primaryKey" json:"id"`
+	ProjectId        string     `json:"project_id"`
+	ProjectFileID    string     `json:"project_file_id"`
+	BlenderInstallID uint       `json:"blender_install_id"` // 0 = プロジェクトのデフォルト使用
+	Name             string     `json:"name"`
+	Scene            string     `json:"scene"`
+	Engine           string     `json:"engine"`              // "" = Blender デフォルト
+	StartFrame       int        `json:"start"`
+	EndFrame         int        `json:"end"`
+	FrameStep        int        `json:"frame_step"`          // 0,1 = 毎フレーム
+	Thread           int        `json:"thread"`              // 0 = 全コア自動
+	Samples          int        `json:"samples"`             // 0 = Blender デフォルト
+	IsSystem         bool       `gorm:"default:false" json:"is_system"`
+	DisplayOrder     int        `gorm:"default:99999" json:"display_order"`
+	ProcessedAt      *time.Time `json:"processed_at"`
 	MetaFields       `gorm:"embedded"`
 }
 
@@ -140,6 +143,13 @@ func UpdateWorkspace(projectID string, workspaceID string, name string, blenderI
 		return nil, xerrors.Errorf("UpdateWorkspace save: %w", res.Error)
 	}
 	return GetWorkspace(projectID, workspaceID)
+}
+
+func UpdateWorkspaceProcessedAt(id string, t *time.Time) error {
+	if res := db.Model(&Workspace{}).Where("id = ?", id).Update("processed_at", t); res.Error != nil {
+		return xerrors.Errorf("UpdateWorkspaceProcessedAt: %w", res.Error)
+	}
+	return nil
 }
 
 func GetSystemWorkspaceByFile(projectFileID string) (*Workspace, error) {

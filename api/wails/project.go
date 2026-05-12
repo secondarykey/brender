@@ -55,3 +55,7 @@ func (s *Project) DeleteFile(fileID string) error {
 func (s *Project) GetFileThumbnail(projectID string, fileID string) (string, error) {
 	return api.GetFileThumbnail(projectID, fileID)
 }
+
+func (s *Project) GetProjectThumbnail(projectID string) (string, error) {
+	return api.GetProjectThumbnail(projectID)
+}
