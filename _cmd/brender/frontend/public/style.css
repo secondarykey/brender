@@ -725,6 +725,36 @@ body {
   justify-content: space-between;
   align-items: center;
 }
+.thumbnail-mode-hint {
+  margin: 6px 0;
+  padding: 6px 10px;
+  background: rgba(74, 124, 220, 0.15);
+  border: 1px solid rgba(74, 124, 220, 0.4);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  color: #7aaaf0;
+}
+.thumbnail-mode-ok {
+  background: rgba(40, 160, 80, 0.15);
+  border-color: rgba(40, 160, 80, 0.4);
+  color: #6fcf97;
+}
+.file-tile-thumb-select {
+  cursor: crosshair;
+  border-color: rgba(74, 124, 220, 0.5) !important;
+}
+.file-tile-thumb-select:hover {
+  border-color: #4a7cdc !important;
+  box-shadow: 0 0 0 2px rgba(74, 124, 220, 0.3);
+}
+.file-item-thumb-select {
+  cursor: crosshair;
+  border-left: 2px solid rgba(74, 124, 220, 0.5);
+}
+.file-item-thumb-select:hover {
+  border-left-color: #4a7cdc;
+  background: rgba(74, 124, 220, 0.08);
+}
 
 /* ファイル詳細ヘッダ */
 .file-detail-header {
