@@ -79,6 +79,14 @@ export function GetImageBase64(path) {
 }
 
 /**
+ * @param {string} id
+ * @returns {$CancellablePromise<string>}
+ */
+export function GetJobLog(id) {
+    return $Call.ByID(891375752, id);
+}
+
+/**
  * @returns {$CancellablePromise<(model$0.Queue | null)[]>}
  */
 export function List() {
