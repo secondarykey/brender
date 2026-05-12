@@ -88,11 +88,11 @@ func GetLatestCompletedJobByWorkspace(workspaceID string) (*Job, error) {
 	return &j, nil
 }
 
-// GetLatestJobForThumbnail は出力データが削除されていない最新の完了ジョブを返す。
-// サムネイル生成用途で使用し、data_status は削除済み（4,5）以外を対象とする。
+// GetLatestJobForThumbnail はサムネイル生成用に最新の完了ジョブを返す。
+// data_status は問わない（findFirstImage でファイル存在を確認するため）。
 func GetLatestJobForThumbnail(workspaceID string) (*Job, error) {
 	var j Job
-	res := db.Where("workspace_id = ? AND status = ? AND data_status < ?", workspaceID, JobCompleted, JobDataDeleted).
+	res := db.Where("workspace_id = ? AND status = ?", workspaceID, JobCompleted).
 		Order("enqueued_at desc").First(&j)
 	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
 		return nil, nil
