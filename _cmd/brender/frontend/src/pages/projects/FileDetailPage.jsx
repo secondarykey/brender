@@ -57,11 +57,9 @@ function CreateForm({ projectID, fileID, onSaved, onCancel }) {
 }
 
 // ── ワークスペースカード（サムネイル表示） ──────────────────
-function WorkspaceCard({ projectID, fileID, ws, navigate, projectName, fileName, onRunClick, resolvingWsId }) {
+function WorkspaceCard({ projectID, fileID, ws, navigate, projectName, fileName, onRunClick, resolvingWsId, thumbnailMode, onSetThumbnail }) {
   const { t } = useTranslation()
-  const [thumb, setThumb]           = useState(null)
-  const [settingThumb, setSettingThumb] = useState(false)
-  const [thumbMsg, setThumbMsg]     = useState('')
+  const [thumb, setThumb] = useState(null)
 
   useEffect(() => {
     WorkspaceApi.getThumbnail({ projectID, fileID, workspaceID: ws.id })
@@ -69,27 +67,18 @@ function WorkspaceCard({ projectID, fileID, ws, navigate, projectName, fileName,
       .catch(() => {})
   }, [projectID, fileID, ws.id])
 
-  const handleSetFileThumbnail = async (e) => {
-    e.stopPropagation()
-    if (settingThumb) return
-    setSettingThumb(true)
-    setThumbMsg('')
-    try {
-      await ProjectApi.setFileThumbnailFromWorkspace({ projectID, fileID, workspaceID: ws.id })
-      setThumbMsg('✓')
-      setTimeout(() => setThumbMsg(''), 2000)
-    } catch (err) {
-      setThumbMsg('✗')
-      setTimeout(() => setThumbMsg(''), 2000)
-    } finally {
-      setSettingThumb(false)
+  const handleClick = () => {
+    if (thumbnailMode) {
+      onSetThumbnail(ws.id)
+    } else {
+      navigate('workspace', { projectID, projectName, fileID, fileName, workspaceID: ws.id })
     }
   }
 
   return (
     <div
-      className="file-tile ws-tile"
-      onClick={() => navigate('workspace', { projectID, projectName, fileID, fileName, workspaceID: ws.id })}
+      className={`file-tile ws-tile${thumbnailMode ? ' file-tile-thumb-select' : ''}`}
+      onClick={handleClick}
     >
       <div className="file-tile-thumb">
         {thumb
@@ -107,22 +96,17 @@ function WorkspaceCard({ projectID, fileID, ws, navigate, projectName, fileName,
           }
         </div>
       </div>
-      <div className="ws-tile-actions">
-        {thumbMsg && <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>{thumbMsg}</span>}
-        <button
-          className="btn btn-sm btn-secondary"
-          onClick={handleSetFileThumbnail}
-          disabled={settingThumb}
-          title={t('workspace.setAsFileThumbnail')}
-        >{t('workspace.setAsFileThumbnail')}</button>
-        <button
-          className="btn btn-run btn-sm"
-          onClick={e => { e.stopPropagation(); onRunClick(ws) }}
-          disabled={resolvingWsId !== null}
-        >
-          ▶ {t('common.run')}
-        </button>
-      </div>
+      {!thumbnailMode && (
+        <div className="ws-tile-actions">
+          <button
+            className="btn btn-run btn-sm"
+            onClick={e => { e.stopPropagation(); onRunClick(ws) }}
+            disabled={resolvingWsId !== null}
+          >
+            ▶ {t('common.run')}
+          </button>
+        </div>
+      )}
     </div>
   )
 }
@@ -137,6 +121,8 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
   const [enqueuing, setEnqueuing]   = useState(false)
   const [enqueueMsg, setEnqueueMsg] = useState('')
   const [viewMode, setViewMode]     = useState('list') // 'list' | 'card'
+  const [thumbnailMode, setThumbnailMode] = useState(false)
+  const [thumbMsg, setThumbMsg]     = useState('')
 
   const load = () => {
     WorkspaceApi.listByProject({ projectID })
@@ -182,6 +168,18 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
     }
   }
 
+  const handleSetThumbnail = async (workspaceID) => {
+    setThumbMsg('')
+    try {
+      await ProjectApi.setFileThumbnailFromWorkspace({ projectID, fileID, workspaceID })
+      setThumbMsg(t('viewer.thumbnailSet'))
+      setThumbnailMode(false)
+      setTimeout(() => setThumbMsg(''), 2500)
+    } catch (err) {
+      setThumbMsg(t('common.error') + String(err))
+    }
+  }
+
   return (
     <div>
       {workspaces.length > 0 && (
@@ -196,8 +194,21 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
             onClick={() => setViewMode('card')}
             title={t('workspace.cardView')}
           >⊞</button>
+          <button
+            className={`btn btn-sm${thumbnailMode ? ' btn-outline-active' : ' btn-outline'}`}
+            style={{ marginLeft: 8 }}
+            onClick={() => { setThumbnailMode(v => !v); setThumbMsg('') }}
+          >
+            {t('workspace.setAsFileThumbnail')}
+          </button>
         </div>
       )}
+
+      {thumbnailMode && (
+        <div className="thumbnail-mode-hint">{t('file.selectThumbnailHint')}</div>
+      )}
+      {thumbMsg && <div className="thumbnail-mode-hint thumbnail-mode-ok">{thumbMsg}</div>}
+
 
       <div style={{ position: 'relative' }}>
         {viewMode === 'list' ? (
@@ -206,17 +217,23 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
               <p className="ws-empty">{t('workspace.empty')}</p>
             )}
             {workspaces.map(ws => (
-              <div key={ws.id} className="ws-item ws-item-run">
-                <button
-                  className="btn btn-run btn-sm ws-item-run-btn"
-                  onClick={() => handleRunClick(ws)}
-                  disabled={resolvingWsId !== null}
-                >
-                  ▶ {t('common.run')}
-                </button>
+              <div
+                key={ws.id}
+                className={`ws-item ws-item-run${thumbnailMode ? ' file-item-thumb-select' : ''}`}
+                onClick={thumbnailMode ? () => handleSetThumbnail(ws.id) : undefined}
+              >
+                {!thumbnailMode && (
+                  <button
+                    className="btn btn-run btn-sm ws-item-run-btn"
+                    onClick={() => handleRunClick(ws)}
+                    disabled={resolvingWsId !== null}
+                  >
+                    ▶ {t('common.run')}
+                  </button>
+                )}
                 <div
                   className="ws-item-info ws-item-link"
-                  onClick={() => navigate('workspace', { projectID, projectName, fileID, fileName, workspaceID: ws.id })}
+                  onClick={thumbnailMode ? undefined : () => navigate('workspace', { projectID, projectName, fileID, fileName, workspaceID: ws.id })}
                 >
                   <span className="ws-item-name">{ws.name}</span>
                   <div className="ws-item-meta">
@@ -227,7 +244,9 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
                     }
                   </div>
                 </div>
-                <span className="ws-item-arrow" onClick={() => navigate('workspace', { projectID, projectName, fileID, fileName, workspaceID: ws.id })}>›</span>
+                {!thumbnailMode && (
+                  <span className="ws-item-arrow" onClick={() => navigate('workspace', { projectID, projectName, fileID, fileName, workspaceID: ws.id })}>›</span>
+                )}
               </div>
             ))}
           </div>
@@ -247,6 +266,8 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
                 fileName={fileName}
                 onRunClick={handleRunClick}
                 resolvingWsId={resolvingWsId}
+                thumbnailMode={thumbnailMode}
+                onSetThumbnail={handleSetThumbnail}
               />
             ))}
           </div>

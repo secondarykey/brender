@@ -119,7 +119,7 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
             title={t('workspace.cardView')}
           >⊞</button>
           <button
-            className={`btn btn-sm${thumbnailMode ? ' btn-run' : ' btn-secondary'}`}
+            className={`btn btn-sm${thumbnailMode ? ' btn-outline-active' : ' btn-outline'}`}
             style={{ marginLeft: 8 }}
             onClick={() => { setThumbnailMode(v => !v); setThumbMsg('') }}
           >

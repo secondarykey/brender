@@ -1017,6 +1017,19 @@ body {
 
 .btn-secondary:hover:not(:disabled) { background: rgba(255,255,255,0.13); }
 
+.btn-outline {
+  background: transparent;
+  color: #4a7cdc;
+  border: 1px solid #4a7cdc;
+}
+.btn-outline:hover:not(:disabled) { background: rgba(74, 124, 220, 0.1); }
+.btn-outline-active {
+  background: rgba(74, 124, 220, 0.18);
+  color: #7aaaf0;
+  border: 1px solid #4a7cdc;
+}
+.btn-outline-active:hover:not(:disabled) { background: rgba(74, 124, 220, 0.28); }
+
 .btn-ghost {
   background: transparent;
   color: rgba(255,255,255,0.5);
