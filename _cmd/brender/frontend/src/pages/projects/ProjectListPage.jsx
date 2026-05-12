@@ -43,7 +43,7 @@ function ProjectListPage({ navigate }) {
   const [error, setError]       = useState('')
   const [hasRoot, setHasRoot]   = useState(true)
   const [creating, setCreating] = useState(false)
-  const [viewMode, setViewMode] = useState('list') // 'list' | 'card'
+  const [viewMode, setViewMode] = useState(() => localStorage.getItem('viewMode:projects') || 'list')
   const [sort, setSort]         = useState(() => localStorage.getItem('sort:projects') || 'display_order')
 
   const load = (s) => {
@@ -100,12 +100,12 @@ function ProjectListPage({ navigate }) {
             <div className="file-view-toggle" style={{ marginBottom: 8 }}>
               <button
                 className={`file-view-btn${viewMode === 'list' ? ' active' : ''}`}
-                onClick={() => setViewMode('list')}
+                onClick={() => { setViewMode('list'); localStorage.setItem('viewMode:projects', 'list') }}
                 title={t('workspace.listView')}
               >☰</button>
               <button
                 className={`file-view-btn${viewMode === 'card' ? ' active' : ''}`}
-                onClick={() => setViewMode('card')}
+                onClick={() => { setViewMode('card'); localStorage.setItem('viewMode:projects', 'card') }}
                 title={t('workspace.cardView')}
               >⊞</button>
               <SortSelect value={sort} onChange={handleSortChange} />
