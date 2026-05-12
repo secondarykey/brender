@@ -76,7 +76,10 @@ _cmd/brender/  (Wails3 desktop app)
         src/lib/api/       ← API ラッパー層（Wails/HTTP 切り替え）
         src/lib/appEvents.js ← イベントバス（Wails Events/SSE 切り替え）
         ↕ Wails3 JS bindings (frontend/bindings/)
-    *service.go  (thin Wails service wrappers)
+    main.go
+        ↓
+api/wails/     (Wails サービス層 — thin wrappers registered in main.go)
+api/rest/      (REST サービス層 — サーバモード用、未実装)
         ↓
 api/           (business logic, framework-agnostic)
         ↓
@@ -94,18 +97,18 @@ server/        (legacy HTTP server, still functional but handler/api/ is stale)
 - `server/` has its own `go.mod` and `replace` directive pointing to the root module.
 - `_cmd/old/` — archived previous server implementation, not built.
 
-### Wails3 services (`_cmd/brender/`)
-| File | Service | Wraps |
+### Wails3 services (`api/wails/`)
+| File | Type | Wraps |
 |---|---|---|
-| `blenderservice.go` | `BlenderService` | `api/blender.go` |
-| `environmentservice.go` | `EnvironmentService` | `api/environment.go` |
-| `projectservice.go` | `ProjectService` | `api/project.go` + `api/thumbnail.go` |
-| `workspaceservice.go` | `WorkspaceService` | `api/workspace.go` |
-| `queueservice.go` | `QueueService` | `api/queue.go` |
+| `api/wails/blender.go` | `Blender` | `api/blender.go` |
+| `api/wails/environment.go` | `Environment` | `api/environment.go` |
+| `api/wails/project.go` | `Project` | `api/project.go` + `api/thumbnail.go` |
+| `api/wails/workspace.go` | `Workspace` | `api/workspace.go` |
+| `api/wails/queue.go` | `Queue` | `api/queue.go` |
 
-Services are registered in `main.go`. After adding or changing a service, run `wails3 generate bindings` to update the frontend JS bindings.
+Services are registered in `_cmd/brender/main.go`. After adding or changing a service, run `wails3 generate bindings` to update the frontend JS bindings.
 
-`BlenderService.OpenFile(installID, filePath)` — Blender を GUI モードで起動（`-b` なし、`cmd.Start()` で非同期）。
+`wails.Blender.OpenFile(installID, filePath)` — Blender を GUI モードで起動（`-b` なし、`cmd.Start()` で非同期）。
 
 ## Data Model
 

@@ -27,14 +27,14 @@ export const WorkspaceApi = {
   /** ワークスペースを更新
    * @param {{ projectID: string, workspaceID: string, name: string,
    *           blenderInstallID: number, scene: string, engine: string,
-   *           startFrame: number, endFrame: number, frameStep: number, thread: number }} args
+   *           startFrame: number, endFrame: number, frameStep: number, thread: number, samples: number }} args
    */
-  update: ({ projectID, workspaceID, name, blenderInstallID, scene, engine, startFrame, endFrame, frameStep, thread }) =>
-    isWails() ? svc().then(s => s.Update(projectID, workspaceID, name, blenderInstallID, scene, engine, startFrame, endFrame, frameStep, thread))
+  update: ({ projectID, workspaceID, name, blenderInstallID, scene, engine, startFrame, endFrame, frameStep, thread, samples }) =>
+    isWails() ? svc().then(s => s.Update(projectID, workspaceID, name, blenderInstallID, scene, engine, startFrame, endFrame, frameStep, thread, samples))
               : serverCall('workspace', 'update', {
                   project_id: projectID, workspace_id: workspaceID, name,
                   blender_install_id: blenderInstallID, scene, engine,
-                  start_frame: startFrame, end_frame: endFrame, frame_step: frameStep, thread,
+                  start_frame: startFrame, end_frame: endFrame, frame_step: frameStep, thread, samples,
                 }),
 
   /** ワークスペースを削除
