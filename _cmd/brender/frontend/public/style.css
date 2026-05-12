@@ -1492,8 +1492,8 @@ body {
 }
 .image-viewer-controls {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  gap: 4px;
   margin-bottom: 12px;
 }
 .image-viewer-filename {
@@ -1502,11 +1502,14 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  min-width: 0;
-  flex: 1;
+}
+.image-viewer-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 .image-viewer-slider {
-  flex: 2;
+  flex: 1;
   accent-color: #d15904;
   cursor: pointer;
 }

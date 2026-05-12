@@ -69,16 +69,18 @@ function ImageViewerDialog({ job, onClose }) {
 
         <div className="image-viewer-controls" style={{ visibility: images.length > 0 ? 'visible' : 'hidden' }}>
           <span className="image-viewer-filename" title={filename}>{filename}</span>
-          <input
-            type="range"
-            min={0}
-            max={Math.max(0, images.length - 1)}
-            value={index}
-            onChange={e => setIndex(Number(e.target.value))}
-            className="image-viewer-slider"
-            disabled={images.length <= 1}
-          />
-          <span className="image-viewer-counter">{images.length > 0 ? `${index + 1} / ${images.length}` : '— / —'}</span>
+          <div className="image-viewer-slider-row">
+            <input
+              type="range"
+              min={0}
+              max={Math.max(0, images.length - 1)}
+              value={index}
+              onChange={e => setIndex(Number(e.target.value))}
+              className="image-viewer-slider"
+              disabled={images.length <= 1}
+            />
+            <span className="image-viewer-counter">{images.length > 0 ? `${index + 1} / ${images.length}` : '— / —'}</span>
+          </div>
         </div>
 
         <div className="dialog-actions">
