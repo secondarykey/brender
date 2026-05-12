@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
 import { ProjectApi } from '../../../lib/api'
@@ -44,7 +44,7 @@ function ProjectThumbnailPanel({ projectID }) {
   )
 }
 
-function SettingsTab({ detail, onUpdated, onDeleted }) {
+function SettingsTab({ detail, focusName, onUpdated, onDeleted }) {
   const { t } = useTranslation()
   const [form, setForm]         = useState(null)
   const [saving, setSaving]     = useState(false)
@@ -52,12 +52,20 @@ function SettingsTab({ detail, onUpdated, onDeleted }) {
   const [saved, setSaved]       = useState(false)
   const [confirm, setConfirm]   = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const nameRef = useRef(null)
 
   useEffect(() => {
     setForm({ name: detail.project.name })
     setSaved(false)
     setError('')
   }, [detail])
+
+  useEffect(() => {
+    if (focusName && nameRef.current) {
+      nameRef.current.focus()
+      nameRef.current.select()
+    }
+  }, [focusName, form])
 
   const set = (key, val) => {
     setSaved(false)
@@ -102,6 +110,7 @@ function SettingsTab({ detail, onUpdated, onDeleted }) {
           <div className="form-field">
             <label className="form-label">{t('project.name')} <span className="required">*</span></label>
             <input
+              ref={nameRef}
               className="form-input"
               value={form.name}
               onChange={e => set('name', e.target.value)}

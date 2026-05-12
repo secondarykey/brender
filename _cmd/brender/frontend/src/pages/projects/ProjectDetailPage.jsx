@@ -4,10 +4,10 @@ import { ProjectApi } from '../../lib/api'
 import WorkspaceTab from './tabs/WorkspaceTab'
 import SettingsTab from './tabs/SettingsTab'
 
-function ProjectDetailPage({ id, navigate }) {
+function ProjectDetailPage({ id, initialTab, focusName, navigate }) {
   const { t } = useTranslation()
   const [detail, setDetail] = useState(null)
-  const [tab, setTab] = useState('workspace')
+  const [tab, setTab] = useState(initialTab || 'workspace')
   const [error, setError] = useState('')
 
   const tabs = [
@@ -64,7 +64,7 @@ function ProjectDetailPage({ id, navigate }) {
           />
         )}
         {tab === 'settings' && (
-          <SettingsTab detail={detail} onUpdated={load} onDeleted={() => navigate('projects')} />
+          <SettingsTab detail={detail} focusName={focusName} onUpdated={load} onDeleted={() => navigate('projects')} />
         )}
       </div>
     </div>
