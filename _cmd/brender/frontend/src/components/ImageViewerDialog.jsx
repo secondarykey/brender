@@ -61,12 +61,18 @@ function ImageViewerDialog({ job, onClose }) {
   const handleTogglePlay = () => {
     if (playing) {
       stopPlay()
-    } else {
-      // 最後のフレームなら先頭に戻してから再生
-      if (index >= images.length - 1) setIndex(0)
-      playingRef.current = true
-      setPlaying(true)
+      return
     }
+    playingRef.current = true
+    setPlaying(true)
+    if (index >= images.length - 1) {
+      // 最後のフレームなら先頭から再生（effect が再実行されて .then() が進行を引き継ぐ）
+      setIndex(0)
+    } else if (!loadingImg) {
+      // 読み込み済みなら即座に次へ進める（.then() はすでに終わっているため自分で進行）
+      setIndex(prev => prev + 1)
+    }
+    // loadingImg 中なら .then() が playingRef を見て進行するので何もしない
   }
 
   if (!job) return null
@@ -96,12 +102,6 @@ function ImageViewerDialog({ job, onClose }) {
             {filename}{loadingImg && <span className="image-viewer-loading-inline"> 読み込み中...</span>}
           </span>
           <div className="image-viewer-slider-row">
-            <button
-              className="btn btn-sm btn-ghost image-viewer-play-btn"
-              onClick={handleTogglePlay}
-              disabled={images.length <= 1}
-              title={playing ? '停止' : '再生'}
-            >{playing ? '⏹' : '▶'}</button>
             <input
               type="range"
               min={0}
@@ -112,6 +112,13 @@ function ImageViewerDialog({ job, onClose }) {
               disabled={images.length <= 1}
             />
             <span className="image-viewer-counter">{images.length > 0 ? `${index + 1} / ${images.length}` : '— / —'}</span>
+          </div>
+          <div className="image-viewer-play-row">
+            <button
+              className="btn btn-sm btn-ghost"
+              onClick={handleTogglePlay}
+              disabled={images.length <= 1}
+            >{playing ? '⏹ 停止' : '▶ 再生'}</button>
           </div>
         </div>
 

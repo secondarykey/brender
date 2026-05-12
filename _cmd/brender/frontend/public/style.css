@@ -1512,11 +1512,10 @@ body {
   align-items: center;
   gap: 10px;
 }
-.image-viewer-play-btn {
-  flex-shrink: 0;
-  width: 28px;
-  padding: 0;
-  font-size: 0.7rem;
+.image-viewer-play-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 2px;
 }
 .image-viewer-slider {
   flex: 1;
