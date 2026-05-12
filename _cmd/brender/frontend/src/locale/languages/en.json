@@ -89,7 +89,8 @@
     "sceneHint": "If not set: the default scene in the .blend file will be used",
     "confirmDelete": "Delete this file?",
     "deleteWarning": "Associated workspaces and job history will also be deleted. The physical file will not be deleted. This action cannot be undone.",
-    "setAsProjectThumbnail": "Set as project thumbnail"
+    "setAsProjectThumbnail": "Set Thumbnail",
+    "selectThumbnailHint": "Click the image to use as thumbnail"
   },
   "workspace": {
     "name": "Workspace Name",

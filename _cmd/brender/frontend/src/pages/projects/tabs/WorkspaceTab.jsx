@@ -4,11 +4,9 @@ import { Dialogs } from '@wailsio/runtime'
 import { WorkspaceApi, ProjectApi, BlenderApi } from '../../../lib/api'
 
 // ── サムネイルタイル ──────────────────────────────────────
-function FileCard({ projectID, g, navigate, projectName }) {
+function FileCard({ projectID, g, navigate, projectName, thumbnailMode, onSetThumbnail }) {
   const { t } = useTranslation()
   const [thumb, setThumb] = useState(null)
-  const [settingThumb, setSettingThumb] = useState(false)
-  const [thumbMsg, setThumbMsg] = useState('')
 
   useEffect(() => {
     ProjectApi.getFileThumbnail({ projectID, fileID: g.file.id })
@@ -18,25 +16,18 @@ function FileCard({ projectID, g, navigate, projectName }) {
 
   const fileName = g.file.name || g.file.path.split(/[/\\]/).pop()
 
-  const handleSetProjectThumbnail = async (e) => {
-    e.stopPropagation()
-    setSettingThumb(true)
-    setThumbMsg('')
-    try {
-      await ProjectApi.setProjectThumbnailFromFile({ projectID, fileID: g.file.id })
-      setThumbMsg(t('viewer.thumbnailSet'))
-      setTimeout(() => setThumbMsg(''), 2000)
-    } catch (err) {
-      setThumbMsg(t('common.error') + String(err))
-    } finally {
-      setSettingThumb(false)
+  const handleClick = () => {
+    if (thumbnailMode) {
+      onSetThumbnail(g.file.id)
+    } else {
+      navigate('file', { projectID, projectName, fileID: g.file.id, fileName })
     }
   }
 
   return (
     <div
-      className="file-tile"
-      onClick={() => navigate('file', { projectID, projectName, fileID: g.file.id, fileName })}
+      className={`file-tile${thumbnailMode ? ' file-tile-thumb-select' : ''}`}
+      onClick={handleClick}
     >
       <div className="file-tile-thumb">
         {thumb
@@ -46,16 +37,6 @@ function FileCard({ projectID, g, navigate, projectName }) {
       </div>
       <div className="file-tile-info">
         <div className="file-tile-name" title={fileName}>{fileName}</div>
-      </div>
-      <div className="ws-tile-actions" onClick={e => e.stopPropagation()}>
-        {thumbMsg && <span className="ws-thumb-msg">{thumbMsg}</span>}
-        <button
-          className="btn btn-secondary btn-sm"
-          onClick={handleSetProjectThumbnail}
-          disabled={settingThumb}
-        >
-          {settingThumb ? t('common.processing') : t('file.setAsProjectThumbnail')}
-        </button>
       </div>
     </div>
   )
@@ -68,6 +49,8 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
   const [fileError, setFileError] = useState('')
   const [openingFileID, setOpeningFileID] = useState(null)
   const [viewMode, setViewMode] = useState('card') // 'list' | 'card'
+  const [thumbnailMode, setThumbnailMode] = useState(false)
+  const [thumbMsg, setThumbMsg] = useState('')
 
   const load = () => {
     WorkspaceApi.listByProject({ projectID })
@@ -103,6 +86,18 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
     }
   }
 
+  const handleSetThumbnail = async (fileID) => {
+    setThumbMsg('')
+    try {
+      await ProjectApi.setProjectThumbnailFromFile({ projectID, fileID })
+      setThumbMsg(t('viewer.thumbnailSet'))
+      setThumbnailMode(false)
+      setTimeout(() => setThumbMsg(''), 2500)
+    } catch (err) {
+      setThumbMsg(t('common.error') + String(err))
+    }
+  }
+
   return (
     <div className="workspace-tab-root">
       <div className="ws-add-file-fab-wrap">
@@ -123,8 +118,20 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
             onClick={() => setViewMode('card')}
             title={t('workspace.cardView')}
           >⊞</button>
+          <button
+            className={`btn btn-sm${thumbnailMode ? ' btn-run' : ' btn-secondary'}`}
+            style={{ marginLeft: 8 }}
+            onClick={() => { setThumbnailMode(v => !v); setThumbMsg('') }}
+          >
+            {t('file.setAsProjectThumbnail')}
+          </button>
         </div>
       )}
+
+      {thumbnailMode && (
+        <div className="thumbnail-mode-hint">{t('file.selectThumbnailHint')}</div>
+      )}
+      {thumbMsg && <div className="thumbnail-mode-hint thumbnail-mode-ok">{thumbMsg}</div>}
 
       {groups.length === 0 ? (
         <p className="ws-empty">{t('workspace.noFilesRegistered')}</p>
@@ -133,22 +140,30 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
           {groups.map(g => (
             <div
               key={g.file.id}
-              className="file-item"
-              onClick={() => navigate('file', {
-                projectID,
-                projectName,
-                fileID:   g.file.id,
-                fileName: g.file.name || g.file.path.split(/[/\\]/).pop(),
-              })}
+              className={`file-item${thumbnailMode ? ' file-item-thumb-select' : ''}`}
+              onClick={() => {
+                if (thumbnailMode) {
+                  handleSetThumbnail(g.file.id)
+                } else {
+                  navigate('file', {
+                    projectID,
+                    projectName,
+                    fileID:   g.file.id,
+                    fileName: g.file.name || g.file.path.split(/[/\\]/).pop(),
+                  })
+                }
+              }}
             >
-              <button
-                className="btn btn-run btn-sm file-item-open-btn"
-                onClick={e => handleOpenFile(e, g.file)}
-                disabled={openingFileID === g.file.id}
-                title={t('workspace.openInBlender')}
-              >
-                {openingFileID === g.file.id ? '...' : t('common.open')}
-              </button>
+              {!thumbnailMode && (
+                <button
+                  className="btn btn-run btn-sm file-item-open-btn"
+                  onClick={e => handleOpenFile(e, g.file)}
+                  disabled={openingFileID === g.file.id}
+                  title={t('workspace.openInBlender')}
+                >
+                  {openingFileID === g.file.id ? '...' : t('common.open')}
+                </button>
+              )}
               <div className="file-item-info">
                 <span className="ws-file-name">{g.file.name || g.file.path.split(/[/\\]/).pop()}</span>
                 <span className="ws-file-path">{g.file.path}</span>
@@ -169,6 +184,8 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
               g={g}
               navigate={navigate}
               projectName={projectName}
+              thumbnailMode={thumbnailMode}
+              onSetThumbnail={handleSetThumbnail}
             />
           ))}
         </div>
