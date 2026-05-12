@@ -311,6 +311,71 @@ After `Enqueue()` succeeds, the app navigates to the queue page (`navigate('queu
 - `pageSize` / `onPageSizeChange` が渡された場合、左端に表示件数セレクタ（5/10/20/100）と全件数を表示
 - `totalPages` が 1 でもページ情報行は常に表示
 
+## Internationalization (`src/languages.jsx`, `src/locale/`)
+
+フロントエンドは `react-i18next` で国際化されている。
+
+### 対応言語
+| コード | 表示名 | 言語ファイル |
+|---|---|---|
+| `ja` | 日本語 | `src/locale/languages/ja.json` |
+| `en` | English | `src/locale/languages/en.json` |
+
+### 言語の切り替えと永続化
+- 設定画面の「環境」タブにセレクタを表示
+- `i18n.changeLanguage(code)` を呼ぶと即座に全UIが切り替わる
+- 選択言語は `localStorage`（キー: `brender-language`）に自動保存
+- 起動時は localStorage の値を読み込む。未設定の場合デフォルトは `ja`
+
+### 使い方（コンポーネント内）
+```js
+import { useTranslation } from 'react-i18next'
+
+function MyComponent() {
+  const { t, i18n } = useTranslation()
+  // t('common.save') → "保存" / "Save"
+  // i18n.language     → "ja" / "en"
+}
+```
+
+### 翻訳キー構造 (`src/locale/languages/*.json`)
+| セクション | 用途 |
+|---|---|
+| `common` | 汎用ラベル（保存・削除・キャンセルなど） |
+| `menu` | サイドバーナビゲーション |
+| `title` | タイトルバーボタン（最小化・最大化・閉じる） |
+| `status` | ジョブ実行ステータス（waiting/running/completed/error/cancelled） |
+| `dataStatus` | データ状態バッジ（none/locked/available/deleted） |
+| `tabs` | タブラベル（ファイル一覧・設定・キュー・履歴・環境・Blender） |
+| `breadcrumb` | パンくずリスト |
+| `project` | プロジェクト操作 |
+| `file` | ファイル（.blend）設定 |
+| `workspace` | ワークスペース設定（フレーム・スレッド・サンプル数など） |
+| `queue` | キュー画面 |
+| `job` | ジョブ詳細・削除操作 |
+| `dialog` | ダイアログ内ラベル（ステータス・フレーム・Blenderパスなど） |
+| `settings` | 設定画面（言語・作業ディレクトリ・Blender登録など） |
+| `table` | テーブルヘッダ |
+| `time` | 時間単位（秒・分・時間） |
+| `pagination` | ページネーション |
+| `viewer` | 画像ビューア（再生・停止） |
+| `render` | レンダリング確認ダイアログ |
+
+### 新しいキーを追加するとき
+1. `en.json` と `ja.json` の両方に同じキーを追加する
+2. コンポーネントで `t('section.key')` を使う
+3. 言語ファイルは Vite の動的 `import()` で読み込まれる（ビルド時にバンドル済み）
+
+### `LANGUAGES` 定数
+`src/languages.jsx` からエクスポートされる配列。設定画面のセレクタで使用。
+```js
+export const LANGUAGES = [
+  { code: "ja", label: "日本語" },
+  { code: "en", label: "English" },
+]
+```
+新しい言語を追加する場合はここに追記し、対応する JSON ファイルを `src/locale/languages/` に置く。
+
 ## Frontend API Layer (`src/lib/api/`)
 
 **重要**: フロントエンドから Wails Service を直接呼ばないこと。必ずこのラッパー経由で呼ぶ。
