@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
 import { WorkspaceApi, QueueApi, ProjectApi, BlenderApi } from '../../lib/api'
@@ -7,55 +7,6 @@ import ImageViewerDialog from '../../components/ImageViewerDialog'
 import Pagination from '../../components/Pagination'
 import SortSelect from '../../components/SortSelect'
 
-// ── ワークスペース作成フォーム ────────────────────────────
-function CreateForm({ projectID, fileID, onSaved, onCancel }) {
-  const { t } = useTranslation()
-  const [name, setName]     = useState('New Workspace')
-  const [saving, setSaving] = useState(false)
-  const [error, setError]   = useState('')
-  const inputRef = useRef(null)
-
-  useEffect(() => {
-    if (inputRef.current) inputRef.current.select()
-  }, [])
-
-  const handleSave = async () => {
-    setError('')
-    if (!name.trim()) { setError(t('workspace.nameRequired')); return }
-    setSaving(true)
-    try {
-      const ws = await WorkspaceApi.create({ projectID, projectFileID: fileID, name: name.trim() })
-      onSaved(ws)
-    } catch (err) {
-      setError(String(err))
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const handleKey = (e) => {
-    if (e.key === 'Enter') handleSave()
-    if (e.key === 'Escape') onCancel()
-  }
-
-  return (
-    <div className="ws-create-form">
-      <input
-        ref={inputRef}
-        className="form-input ws-create-input"
-        value={name}
-        onChange={e => setName(e.target.value)}
-        onKeyDown={handleKey}
-        placeholder={t('workspace.name')}
-      />
-      {error && <span className="ws-create-error">{error}</span>}
-      <button className="btn" onClick={handleSave} disabled={saving}>
-        {saving ? '...' : t('common.create')}
-      </button>
-      <button className="btn btn-ghost" onClick={onCancel}>{t('common.cancel')}</button>
-    </div>
-  )
-}
 
 // ── ワークスペースカード（サムネイル表示） ──────────────────
 function WorkspaceCard({ projectID, fileID, ws, navigate, projectName, fileName, onRunClick, resolvingWsId, thumbnailMode, onSetThumbnail }) {
@@ -116,7 +67,7 @@ function WorkspaceCard({ projectID, fileID, ws, navigate, projectName, fileName,
 function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEnqueued }) {
   const { t } = useTranslation()
   const [workspaces, setWorkspaces] = useState([])
-  const [creating, setCreating]     = useState(false)
+  const [creating, setCreating]     = useState(false) // 作成中フラグ
   const [confirm, setConfirm]       = useState(null) // { ws, preview }
   const [resolvingWsId, setResolvingWsId] = useState(null)
   const [enqueuing, setEnqueuing]   = useState(false)
@@ -143,9 +94,16 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
 
   useEffect(() => { load(sort) }, [projectID, fileID])
 
-  const handleSaved = (ws) => {
-    setCreating(false)
-    navigate('workspace', { projectID, projectName, fileID, fileName, workspaceID: ws.id })
+  const handleCreateWorkspace = async () => {
+    if (creating) return
+    setCreating(true)
+    try {
+      const ws = await WorkspaceApi.create({ projectID, projectFileID: fileID, name: 'New Workspace Name' })
+      navigate('workspace', { projectID, projectName, fileID, fileName, workspaceID: ws.id, focusName: true })
+    } catch (err) {
+      setEnqueueMsg(t('common.error') + String(err))
+      setCreating(false)
+    }
   }
 
   const handleRunClick = async (ws) => {
@@ -288,15 +246,11 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
         )}
       </div>
 
-      {creating && (
-        <CreateForm projectID={projectID} fileID={fileID} onSaved={handleSaved} onCancel={() => setCreating(false)} />
-      )}
-
-      {!creating && (
-        <div className="list-fab">
-          <button className="btn btn-green" onClick={() => setCreating(true)}>{t('workspace.createNew')}</button>
-        </div>
-      )}
+      <div className="list-fab">
+        <button className="btn btn-green" onClick={handleCreateWorkspace} disabled={creating}>
+          {creating ? t('common.registering') : t('workspace.createNew')}
+        </button>
+      </div>
 
       {enqueueMsg && (
         <div className={`enqueue-msg${enqueueMsg.startsWith(t('common.error')) ? ' enqueue-error' : ''}`} style={{ marginTop: 12 }}>

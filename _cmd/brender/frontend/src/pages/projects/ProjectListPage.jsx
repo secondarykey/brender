@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ProjectApi, EnvironmentApi } from '../../lib/api'
 import SortSelect from '../../components/SortSelect'
@@ -39,16 +39,12 @@ function ProjectTile({ d, navigate }) {
 
 function ProjectListPage({ navigate }) {
   const { t } = useTranslation()
-  const [projects, setProjects]   = useState([])
-  const [error, setError]         = useState('')
-  const [creating, setCreating]   = useState(false)
-  const [name, setName]           = useState('')
-  const [saving, setSaving]       = useState(false)
-  const [createError, setCreateError] = useState('')
-  const [hasRoot, setHasRoot]     = useState(true)
-  const [viewMode, setViewMode]   = useState('list') // 'list' | 'card'
-  const [sort, setSort]           = useState(() => localStorage.getItem('sort:projects') || 'display_order')
-  const inputRef = useRef(null)
+  const [projects, setProjects] = useState([])
+  const [error, setError]       = useState('')
+  const [hasRoot, setHasRoot]   = useState(true)
+  const [creating, setCreating] = useState(false)
+  const [viewMode, setViewMode] = useState('list') // 'list' | 'card'
+  const [sort, setSort]         = useState(() => localStorage.getItem('sort:projects') || 'display_order')
 
   const load = (s) => {
     ProjectApi.list({ sort: s })
@@ -69,38 +65,17 @@ function ProjectListPage({ navigate }) {
     load(sort)
   }, [])
 
-  const handleStartCreate = () => {
-    if (!hasRoot) return
-    setName('New Project')
-    setCreateError('')
+  const handleCreate = async () => {
+    if (!hasRoot || creating) return
     setCreating(true)
-  }
-
-  useEffect(() => {
-    if (creating && inputRef.current) {
-      inputRef.current.select()
-    }
-  }, [creating])
-
-  const handleSave = async () => {
-    setCreateError('')
-    if (!name.trim()) { setCreateError(t('project.nameRequired')); return }
-    setSaving(true)
     try {
-      const d = await ProjectApi.create({ name: name.trim() })
-      setCreating(false)
-      load()
-      navigate('project', { id: d.project.id })
+      const d = await ProjectApi.create({ name: 'New Project Name' })
+      navigate('project', { id: d.project.id, initialTab: 'settings', focusName: true })
     } catch (err) {
-      setCreateError(String(err))
+      setError(String(err))
     } finally {
-      setSaving(false)
+      setCreating(false)
     }
-  }
-
-  const handleKey = (e) => {
-    if (e.key === 'Enter') handleSave()
-    if (e.key === 'Escape') setCreating(false)
   }
 
   return (
@@ -114,28 +89,10 @@ function ProjectListPage({ navigate }) {
 
       {error && <div className="error-msg">{error}</div>}
 
-      {creating && (
-        <div className="ws-create-form" style={{ marginBottom: 16 }}>
-          <input
-            ref={inputRef}
-            className="form-input ws-create-input"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            onKeyDown={handleKey}
-            placeholder={t('project.name')}
-          />
-          {createError && <span className="ws-create-error">{createError}</span>}
-          <button className="btn" onClick={handleSave} disabled={saving}>
-            {saving ? '...' : t('project.register.apply')}
-          </button>
-          <button className="btn btn-ghost" onClick={() => setCreating(false)}>{t('project.register.cancel')}</button>
-        </div>
-      )}
-
-      {projects.length === 0 && !creating ? (
+      {projects.length === 0 ? (
         <div className="empty-state">
           <p>{t('project.empty')}</p>
-          <button className="btn btn-green" onClick={handleStartCreate} disabled={!hasRoot}>{t('project.createFirst')}</button>
+          <button className="btn btn-green" onClick={handleCreate} disabled={!hasRoot || creating}>{t('project.createFirst')}</button>
         </div>
       ) : (
         <>
@@ -189,13 +146,11 @@ function ProjectListPage({ navigate }) {
         </>
       )}
 
-      {!creating && (
-        <div className="list-fab">
-          <button className="btn btn-green" onClick={handleStartCreate} disabled={!hasRoot}>
-            {t('project.register.transition')}
-          </button>
-        </div>
-      )}
+      <div className="list-fab">
+        <button className="btn btn-green" onClick={handleCreate} disabled={!hasRoot || creating}>
+          {creating ? t('common.registering') : t('project.register.transition')}
+        </button>
+      </div>
     </div>
   )
 }

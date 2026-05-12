@@ -33,7 +33,7 @@ function App() {
       case 'projects':
         return <ProjectListPage navigate={navigate} />
       case 'project':
-        return <ProjectDetailPage id={p.id} navigate={navigate} />
+        return <ProjectDetailPage id={p.id} initialTab={p.initialTab} focusName={p.focusName} navigate={navigate} />
       case 'file':
         return (
           <FileDetailPage
@@ -52,6 +52,7 @@ function App() {
             fileID={p.fileID}
             fileName={p.fileName}
             workspaceID={p.workspaceID}
+            focusName={p.focusName}
             navigate={navigate}
           />
         )

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
 import { WorkspaceApi, BlenderApi, QueueApi } from '../../lib/api'
@@ -120,7 +120,7 @@ function HistoryTab({ projectID, workspaceID }) {
 }
 
 // ── 設定タブ ──────────────────────────────────────────────
-function SettingsTab({ projectID, workspaceID, detail, onUpdated, onDeleted }) {
+function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onDeleted }) {
   const { t } = useTranslation()
   const [blenders, setBlenders]             = useState([])
   const [engines, setEngines]               = useState([])
@@ -134,6 +134,7 @@ function SettingsTab({ projectID, workspaceID, detail, onUpdated, onDeleted }) {
   const [saved, setSaved]                   = useState(false)
   const [confirm, setConfirm]               = useState(false)
   const [deleting, setDeleting]             = useState(false)
+  const nameRef = useRef(null)
 
   useEffect(() => {
     const start = detail.workspace.start ?? 0
@@ -153,6 +154,13 @@ function SettingsTab({ projectID, workspaceID, detail, onUpdated, onDeleted }) {
     setSaved(false)
     setError('')
   }, [detail])
+
+  useEffect(() => {
+    if (focusName && nameRef.current) {
+      nameRef.current.focus()
+      nameRef.current.select()
+    }
+  }, [focusName, form])
 
   const handleSpecifyFrames = (checked) => {
     setSpecifyFrames(checked)
@@ -224,7 +232,7 @@ function SettingsTab({ projectID, workspaceID, detail, onUpdated, onDeleted }) {
     <div className="form workspace" style={{ maxWidth: 520 }}>
       <div className="form-field">
         <label className="form-label">{t('workspace.name')} <span className="required">*</span></label>
-        <input className="form-input" value={form.name} onChange={e => set('name', e.target.value)} />
+        <input ref={nameRef} className="form-input" value={form.name} onChange={e => set('name', e.target.value)} />
       </div>
 
       <div className="form-field">
@@ -349,7 +357,7 @@ function SettingsTab({ projectID, workspaceID, detail, onUpdated, onDeleted }) {
 
 
 // ── ページ本体 ────────────────────────────────────────────
-function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspaceID, navigate }) {
+function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspaceID, focusName, navigate }) {
   const { t } = useTranslation()
   const [detail, setDetail] = useState(null)
   const [error, setError]   = useState('')
@@ -396,6 +404,7 @@ function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspa
             projectID={projectID}
             workspaceID={workspaceID}
             detail={detail}
+            focusName={focusName}
             onUpdated={() => navigate('file', { projectID, projectName, fileID: effectiveFileID, fileName: effectiveFileName })}
             onDeleted={() => navigate('file', { projectID, projectName, fileID: effectiveFileID, fileName: effectiveFileName })}
           />
