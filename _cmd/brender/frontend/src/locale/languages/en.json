@@ -103,6 +103,7 @@
     "openInBlender": "Open in Blender",
     "thumbnail": "Thumbnail",
     "noThumbnail": "No thumbnail",
+    "clickToChangeThumbnail": "Click to change thumbnail",
     "noHistory": "No execution history yet",
     "blender": "Blender",
     "blenderHint": "If not set: file default → first in Blender list",

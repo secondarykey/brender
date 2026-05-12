@@ -160,6 +160,48 @@ func convertToJPEG(src, dstDir, dstPath string) error {
 	return jpeg.Encode(f, canvas, &jpeg.Options{Quality: 85})
 }
 
+// SetProjectThumbnail は imagePath の画像を 640x360 JPEG に変換してプロジェクトサムネイルとして保存し、base64 データURIを返す。
+func SetProjectThumbnail(projectID, imagePath string) (string, error) {
+	env, err := model.GetEnv()
+	if err != nil || env == nil || env.ProjectRoot == "" {
+		return "", xerrors.New("作業ディレクトリが設定されていません")
+	}
+	thumbDir := filepath.Join(env.ProjectRoot, projectID)
+	thumbPath := filepath.Join(thumbDir, "thumbnail.jpg")
+	if err := convertToJPEG(imagePath, thumbDir, thumbPath); err != nil {
+		return "", xerrors.Errorf("SetProjectThumbnail: %w", err)
+	}
+	return imageToBase64(thumbPath)
+}
+
+// SetFileThumbnail は imagePath の画像を 640x360 JPEG に変換してファイルサムネイルとして保存し、base64 データURIを返す。
+func SetFileThumbnail(projectID, fileID, imagePath string) (string, error) {
+	env, err := model.GetEnv()
+	if err != nil || env == nil || env.ProjectRoot == "" {
+		return "", xerrors.New("作業ディレクトリが設定されていません")
+	}
+	thumbDir := filepath.Join(env.ProjectRoot, projectID, fileID)
+	thumbPath := filepath.Join(thumbDir, "thumbnail.jpg")
+	if err := convertToJPEG(imagePath, thumbDir, thumbPath); err != nil {
+		return "", xerrors.Errorf("SetFileThumbnail: %w", err)
+	}
+	return imageToBase64(thumbPath)
+}
+
+// SetWorkspaceThumbnail は imagePath の画像を 640x360 JPEG に変換してワークスペースサムネイルとして保存し、base64 データURIを返す。
+func SetWorkspaceThumbnail(projectID, fileID, workspaceID, imagePath string) (string, error) {
+	env, err := model.GetEnv()
+	if err != nil || env == nil || env.ProjectRoot == "" {
+		return "", xerrors.New("作業ディレクトリが設定されていません")
+	}
+	thumbDir := filepath.Join(env.ProjectRoot, projectID, fileID, workspaceID)
+	thumbPath := filepath.Join(thumbDir, "thumbnail.jpg")
+	if err := convertToJPEG(imagePath, thumbDir, thumbPath); err != nil {
+		return "", xerrors.Errorf("SetWorkspaceThumbnail: %w", err)
+	}
+	return imageToBase64(thumbPath)
+}
+
 // GetProjectThumbnail はプロジェクトのサムネイル画像を base64 データURIで返す。
 // {ProjectRoot}/{projectID}/thumbnail.jpg が存在すればそれを返す。存在しない場合は空文字を返す。
 func GetProjectThumbnail(projectID string) (string, error) {

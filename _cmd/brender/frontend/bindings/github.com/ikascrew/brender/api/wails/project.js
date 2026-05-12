@@ -102,6 +102,25 @@ export function RemoveFile(fileID) {
 }
 
 /**
+ * @param {string} projectID
+ * @param {string} fileID
+ * @param {string} imagePath
+ * @returns {$CancellablePromise<string>}
+ */
+export function SetFileThumbnail(projectID, fileID, imagePath) {
+    return $Call.ByID(72181641, projectID, fileID, imagePath);
+}
+
+/**
+ * @param {string} projectID
+ * @param {string} imagePath
+ * @returns {$CancellablePromise<string>}
+ */
+export function SetProjectThumbnail(projectID, imagePath) {
+    return $Call.ByID(2139017766, projectID, imagePath);
+}
+
+/**
  * @param {string} id
  * @param {string} name
  * @returns {$CancellablePromise<model$0.ProjectDetail | null>}

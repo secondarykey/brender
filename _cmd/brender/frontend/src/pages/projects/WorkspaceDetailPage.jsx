@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Dialogs } from '@wailsio/runtime'
 import { WorkspaceApi, BlenderApi, QueueApi } from '../../lib/api'
 import JobDetailDialog from '../../components/JobDetailDialog'
 import ImageViewerDialog from '../../components/ImageViewerDialog'
@@ -10,28 +11,45 @@ const isFrameDefault = (start, end) => start === 0 && end === -1
 
 const HISTORY_PAGE_SIZE = 5
 
+const IMAGE_FILTER = [{ DisplayName: 'Image', Pattern: '*.jpg;*.jpeg;*.png;*.bmp;*.webp' }]
+
 // ── ワークスペースサムネイル ───────────────────────────────
 function WorkspaceThumbnailPanel({ projectID, fileID, workspaceID }) {
   const { t } = useTranslation()
-  const [src, setSrc]         = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [src, setSrc]             = useState(null)
+  const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
-    if (!fileID) { setLoading(false); return }
-    setLoading(true)
+    if (!fileID) return
     WorkspaceApi.getThumbnail({ projectID, fileID, workspaceID })
       .then(data => setSrc(data || null))
       .catch(() => setSrc(null))
-      .finally(() => setLoading(false))
   }, [projectID, fileID, workspaceID])
+
+  const handleClick = async () => {
+    if (uploading || !fileID) return
+    try {
+      const path = await Dialogs.OpenFile({ Filters: IMAGE_FILTER })
+      if (!path) return
+      setUploading(true)
+      const data = await WorkspaceApi.setThumbnail({ projectID, fileID, workspaceID, imagePath: path })
+      setSrc(data || null)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setUploading(false)
+    }
+  }
 
   return (
     <div className="thumbnail-panel">
       <h3 className="ws-detail-section-title">{t('workspace.thumbnail')}</h3>
-      {src
-        ? <img className="thumbnail-img" src={src} alt="thumbnail" />
-        : <div className="thumbnail-placeholder">No Image</div>
-      }
+      <div className="thumbnail-clickable" onClick={handleClick} title={t('workspace.clickToChangeThumbnail')}>
+        {src
+          ? <img className="thumbnail-img" src={src} alt="thumbnail" />
+          : <div className="thumbnail-placeholder">No Image</div>
+        }
+      </div>
     </div>
   )
 }
