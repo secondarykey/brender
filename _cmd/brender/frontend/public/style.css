@@ -1512,12 +1512,6 @@ body {
   align-items: center;
   gap: 10px;
 }
-.image-viewer-play-row {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 2px;
-}
 .image-viewer-loop-btn {
   min-width: 72px;
 }

@@ -117,7 +117,10 @@ function ImageViewerDialog({ job, onClose }) {
             />
             <span className="image-viewer-counter">{images.length > 0 ? `${index + 1} / ${images.length}` : '— / —'}</span>
           </div>
-          <div className="image-viewer-play-row">
+        </div>
+
+        <div className="dialog-actions" style={{ visibility: images.length > 0 ? 'visible' : 'hidden' }}>
+          <div style={{ display: 'flex', gap: 8 }}>
             <button
               className="btn btn-sm btn-ghost"
               onClick={handleTogglePlay}
@@ -130,9 +133,6 @@ function ImageViewerDialog({ job, onClose }) {
               title="ループ"
             >⟳ ループ</button>
           </div>
-        </div>
-
-        <div className="dialog-actions">
           <button className="btn btn-ghost" onClick={onClose}>閉じる</button>
         </div>
       </div>
