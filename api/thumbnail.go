@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"image"
-	"image/color"
 	"image/jpeg"
 	"image/png"
 	"os"
@@ -101,6 +100,39 @@ const (
 	thumbH = 360
 )
 
+// makeBlurredBackground は元画像をカバースケールで 640×360 に拡大クロップし、
+// 極小サイズへのダウンスケール→アップスケールでブラー効果を付けた背景を返す。
+func makeBlurredBackground(src image.Image, bounds image.Rectangle, srcW, srcH int) *image.RGBA {
+	// cover スケール: 短辺ではなく長辺基準で全面を埋める
+	coverScaleX := float64(thumbW) / float64(srcW)
+	coverScaleY := float64(thumbH) / float64(srcH)
+	coverScale := coverScaleX
+	if coverScaleY > coverScale {
+		coverScale = coverScaleY
+	}
+	coverW := int(float64(srcW) * coverScale)
+	coverH := int(float64(srcH) * coverScale)
+
+	// 元画像を cover サイズにスケール
+	covered := image.NewRGBA(image.Rect(0, 0, coverW, coverH))
+	xdraw.BiLinear.Scale(covered, covered.Bounds(), src, bounds, xdraw.Src, nil)
+
+	// 中央クロップで 640×360 を切り出す
+	cropX := (coverW - thumbW) / 2
+	cropY := (coverH - thumbH) / 2
+	cropped := image.NewRGBA(image.Rect(0, 0, thumbW, thumbH))
+	xdraw.Copy(cropped, image.Point{}, covered, image.Rect(cropX, cropY, cropX+thumbW, cropY+thumbH), xdraw.Src, nil)
+
+	// ブラー: 極小サイズへダウンスケールしてから元サイズへアップスケール
+	const blurW, blurH = 32, 18
+	tiny := image.NewRGBA(image.Rect(0, 0, blurW, blurH))
+	xdraw.BiLinear.Scale(tiny, tiny.Bounds(), cropped, cropped.Bounds(), xdraw.Src, nil)
+	blurred := image.NewRGBA(image.Rect(0, 0, thumbW, thumbH))
+	xdraw.BiLinear.Scale(blurred, blurred.Bounds(), tiny, tiny.Bounds(), xdraw.Src, nil)
+
+	return blurred
+}
+
 func convertToJPEG(src, dstDir, dstPath string) error {
 	data, err := os.ReadFile(src)
 	if err != nil {
@@ -121,17 +153,11 @@ func convertToJPEG(src, dstDir, dstPath string) error {
 		return xerrors.Errorf("decode: %w", err)
 	}
 
-	canvas := image.NewRGBA(image.Rect(0, 0, thumbW, thumbH))
-	for y := 0; y < thumbH; y++ {
-		for x := 0; x < thumbW; x++ {
-			canvas.Set(x, y, color.Black)
-		}
-	}
-
-	// アスペクト比を保ったまま 640x360 内に収めるスケールを計算
 	bounds := src_img.Bounds()
 	srcW := bounds.Dx()
 	srcH := bounds.Dy()
+
+	// アスペクト比を保ったまま 640x360 内に収めるスケールを計算 (contain)
 	scaleX := float64(thumbW) / float64(srcW)
 	scaleY := float64(thumbH) / float64(srcH)
 	scale := scaleX
@@ -140,6 +166,8 @@ func convertToJPEG(src, dstDir, dstPath string) error {
 	}
 	fitW := int(float64(srcW) * scale)
 	fitH := int(float64(srcH) * scale)
+
+	canvas := makeBlurredBackground(src_img, bounds, srcW, srcH)
 
 	offsetX := (thumbW - fitW) / 2
 	offsetY := (thumbH - fitH) / 2
