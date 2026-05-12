@@ -113,6 +113,16 @@ export function SetFileThumbnail(projectID, fileID, imagePath) {
 
 /**
  * @param {string} projectID
+ * @param {string} fileID
+ * @param {string} workspaceID
+ * @returns {$CancellablePromise<string>}
+ */
+export function SetFileThumbnailFromWorkspace(projectID, fileID, workspaceID) {
+    return $Call.ByID(3596304418, projectID, fileID, workspaceID);
+}
+
+/**
+ * @param {string} projectID
  * @param {string} imagePath
  * @returns {$CancellablePromise<string>}
  */

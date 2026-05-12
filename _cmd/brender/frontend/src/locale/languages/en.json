@@ -55,6 +55,7 @@
   },
   "tabs": {
     "fileList": "Files",
+    "workspaceList": "Workspace",
     "settings": "Settings",
     "queue": "Queue",
     "history": "History",
@@ -126,7 +127,8 @@
     "confirmDelete": "Delete this workspace?",
     "deleteWarning": "Associated job history will also be deleted. This action cannot be undone.",
     "confirmRender": "Start rendering?",
-    "blendDefault": ".blend default"
+    "blendDefault": ".blend default",
+    "setAsFileThumbnail": "Set as file thumbnail"
   },
   "queue": {
     "noJobs": "No running or waiting jobs",
