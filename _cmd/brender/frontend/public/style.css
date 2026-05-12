@@ -1193,6 +1193,11 @@ body {
   flex: 1;
   word-break: break-all;
 }
+.job-detail-value-selectable {
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
+}
 .job-detail-error {
   background: rgba(241,126,114,0.1);
   border: 1px solid rgba(241,126,114,0.3);

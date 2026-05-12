@@ -54,12 +54,12 @@ function duration(startedAt, completedAt) {
   return `${Math.floor(sec / 3600)}時間${Math.floor((sec % 3600) / 60)}分`
 }
 
-function Row({ label, value }) {
+function Row({ label, value, selectable }) {
   if (!value && value !== 0) return null
   return (
     <div className="job-detail-row">
       <span className="job-detail-label">{label}</span>
-      <span className="job-detail-value">{value}</span>
+      <span className={`job-detail-value${selectable ? ' job-detail-value-selectable' : ''}`}>{value}</span>
     </div>
   )
 }
@@ -162,9 +162,9 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
           </div>
 
           <div className="job-detail-section">
-            <Row label="Blender"  value={job.blender_path} />
-            <Row label="ファイル" value={job.blender_file} />
-            <Row label="出力先"   value={job.output_dir} />
+            <Row label="Blender"  value={job.blender_path} selectable />
+            <Row label="ファイル" value={job.blender_file} selectable />
+            <Row label="出力先"   value={job.output_dir}   selectable />
             <Row label="データ容量" value={
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={dataStatus >= 4 ? { textDecoration: 'line-through', opacity: 0.5 } : undefined}>{formatBytes(job.disk_size)}</span>
