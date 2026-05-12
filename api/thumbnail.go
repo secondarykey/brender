@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/base64"
 	"image"
+	"image/color"
+	stdDraw "image/draw"
 	"image/jpeg"
 	"image/png"
 	"os"
@@ -100,9 +102,9 @@ const (
 	thumbH = 360
 )
 
-// makeBlurredBackground は元画像をカバースケールで 640×360 に拡大クロップし、
-// 極小サイズへのダウンスケール→アップスケールでブラー効果を付けた背景を返す。
-func makeBlurredBackground(src image.Image, bounds image.Rectangle, srcW, srcH int) *image.RGBA {
+// makeDimmedBackground は元画像をカバースケールで 640×360 に拡大クロップし、
+// 50% 透明で黒地に重ねた背景を返す。
+func makeDimmedBackground(src image.Image, bounds image.Rectangle, srcW, srcH int) *image.RGBA {
 	// cover スケール: 短辺ではなく長辺基準で全面を埋める
 	coverScaleX := float64(thumbW) / float64(srcW)
 	coverScaleY := float64(thumbH) / float64(srcH)
@@ -123,14 +125,12 @@ func makeBlurredBackground(src image.Image, bounds image.Rectangle, srcW, srcH i
 	cropped := image.NewRGBA(image.Rect(0, 0, thumbW, thumbH))
 	xdraw.Copy(cropped, image.Point{}, covered, image.Rect(cropX, cropY, cropX+thumbW, cropY+thumbH), xdraw.Src, nil)
 
-	// ブラー: 極小サイズへダウンスケールしてから元サイズへアップスケール
-	const blurW, blurH = 32, 18
-	tiny := image.NewRGBA(image.Rect(0, 0, blurW, blurH))
-	xdraw.BiLinear.Scale(tiny, tiny.Bounds(), cropped, cropped.Bounds(), xdraw.Src, nil)
-	blurred := image.NewRGBA(image.Rect(0, 0, thumbW, thumbH))
-	xdraw.BiLinear.Scale(blurred, blurred.Bounds(), tiny, tiny.Bounds(), xdraw.Src, nil)
+	// 黒地の上にクロップ画像を 50% 透明で合成
+	canvas := image.NewRGBA(image.Rect(0, 0, thumbW, thumbH))
+	stdDraw.Draw(canvas, canvas.Bounds(), image.NewUniform(color.Black), image.Point{}, stdDraw.Src)
+	stdDraw.DrawMask(canvas, canvas.Bounds(), cropped, image.Point{}, image.NewUniform(color.Alpha{A: 128}), image.Point{}, stdDraw.Over)
 
-	return blurred
+	return canvas
 }
 
 func convertToJPEG(src, dstDir, dstPath string) error {
@@ -167,7 +167,7 @@ func convertToJPEG(src, dstDir, dstPath string) error {
 	fitW := int(float64(srcW) * scale)
 	fitH := int(float64(srcH) * scale)
 
-	canvas := makeBlurredBackground(src_img, bounds, srcW, srcH)
+	canvas := makeDimmedBackground(src_img, bounds, srcW, srcH)
 
 	offsetX := (thumbW - fitW) / 2
 	offsetY := (thumbH - fitH) / 2
