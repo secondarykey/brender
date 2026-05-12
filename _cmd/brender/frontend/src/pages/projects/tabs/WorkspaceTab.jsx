@@ -7,6 +7,8 @@ import { WorkspaceApi, ProjectApi, BlenderApi } from '../../../lib/api'
 function FileCard({ projectID, g, navigate, projectName }) {
   const { t } = useTranslation()
   const [thumb, setThumb] = useState(null)
+  const [settingThumb, setSettingThumb] = useState(false)
+  const [thumbMsg, setThumbMsg] = useState('')
 
   useEffect(() => {
     ProjectApi.getFileThumbnail({ projectID, fileID: g.file.id })
@@ -15,6 +17,21 @@ function FileCard({ projectID, g, navigate, projectName }) {
   }, [projectID, g.file.id])
 
   const fileName = g.file.name || g.file.path.split(/[/\\]/).pop()
+
+  const handleSetProjectThumbnail = async (e) => {
+    e.stopPropagation()
+    setSettingThumb(true)
+    setThumbMsg('')
+    try {
+      await ProjectApi.setProjectThumbnailFromFile({ projectID, fileID: g.file.id })
+      setThumbMsg(t('viewer.thumbnailSet'))
+      setTimeout(() => setThumbMsg(''), 2000)
+    } catch (err) {
+      setThumbMsg(t('common.error') + String(err))
+    } finally {
+      setSettingThumb(false)
+    }
+  }
 
   return (
     <div
@@ -29,6 +46,16 @@ function FileCard({ projectID, g, navigate, projectName }) {
       </div>
       <div className="file-tile-info">
         <div className="file-tile-name" title={fileName}>{fileName}</div>
+      </div>
+      <div className="ws-tile-actions" onClick={e => e.stopPropagation()}>
+        {thumbMsg && <span className="ws-thumb-msg">{thumbMsg}</span>}
+        <button
+          className="btn btn-secondary btn-sm"
+          onClick={handleSetProjectThumbnail}
+          disabled={settingThumb}
+        >
+          {settingThumb ? t('common.processing') : t('file.setAsProjectThumbnail')}
+        </button>
       </div>
     </div>
   )

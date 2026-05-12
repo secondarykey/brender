@@ -131,6 +131,15 @@ export function SetProjectThumbnail(projectID, imagePath) {
 }
 
 /**
+ * @param {string} projectID
+ * @param {string} fileID
+ * @returns {$CancellablePromise<string>}
+ */
+export function SetProjectThumbnailFromFile(projectID, fileID) {
+    return $Call.ByID(3135202372, projectID, fileID);
+}
+
+/**
  * @param {string} id
  * @param {string} name
  * @returns {$CancellablePromise<model$0.ProjectDetail | null>}
