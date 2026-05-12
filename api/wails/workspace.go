@@ -31,3 +31,7 @@ func (s *Workspace) Update(projectID string, workspaceID string, name string, bl
 func (s *Workspace) Delete(projectID, workspaceID string) error {
 	return api.DeleteWorkspace(projectID, workspaceID)
 }
+
+func (s *Workspace) GetThumbnail(projectID string, fileID string, workspaceID string) (string, error) {
+	return api.GetWorkspaceThumbnail(projectID, fileID, workspaceID)
+}

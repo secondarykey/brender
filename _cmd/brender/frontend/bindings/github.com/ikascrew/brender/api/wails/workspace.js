@@ -44,6 +44,16 @@ export function Get(projectID, workspaceID) {
 
 /**
  * @param {string} projectID
+ * @param {string} fileID
+ * @param {string} workspaceID
+ * @returns {$CancellablePromise<string>}
+ */
+export function GetThumbnail(projectID, fileID, workspaceID) {
+    return $Call.ByID(1938393227, projectID, fileID, workspaceID);
+}
+
+/**
+ * @param {string} projectID
  * @returns {$CancellablePromise<(model$0.WorkspacesByFile | null)[]>}
  */
 export function ListByProject(projectID) {

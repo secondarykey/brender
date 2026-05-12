@@ -160,6 +160,40 @@ func convertToJPEG(src, dstDir, dstPath string) error {
 	return jpeg.Encode(f, canvas, &jpeg.Options{Quality: 85})
 }
 
+// GetWorkspaceThumbnail はワークスペースのサムネイル画像を base64 データURIで返す。
+// {ProjectRoot}/{projectID}/{fileID}/{workspaceID}/thumbnail.jpg が存在すればそれを返す。
+// 存在しない場合はそのワークスペースの完了済みジョブ出力から JPEG を生成して保存する。
+// サムネイルが作れない場合は空文字を返す（エラーなし）。
+func GetWorkspaceThumbnail(projectID, fileID, workspaceID string) (string, error) {
+	env, err := model.GetEnv()
+	if err != nil || env == nil || env.ProjectRoot == "" {
+		return "", nil
+	}
+
+	thumbDir := filepath.Join(env.ProjectRoot, projectID, fileID, workspaceID)
+	thumbPath := filepath.Join(thumbDir, "thumbnail.jpg")
+
+	if _, err := os.Stat(thumbPath); err == nil {
+		return imageToBase64(thumbPath)
+	}
+
+	job, err := model.GetLatestCompletedJobByWorkspace(workspaceID)
+	if err != nil || job == nil {
+		return "", nil
+	}
+
+	imagePath, err := findFirstImage(job.OutputDir)
+	if err != nil || imagePath == "" {
+		return "", nil
+	}
+
+	if err := convertToJPEG(imagePath, thumbDir, thumbPath); err != nil {
+		return "", xerrors.Errorf("convertToJPEG: %w", err)
+	}
+
+	return imageToBase64(thumbPath)
+}
+
 func imageToBase64(path string) (string, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {

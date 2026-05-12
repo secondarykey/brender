@@ -685,6 +685,18 @@ body {
   text-overflow: ellipsis;
 }
 
+/* ワークスペースタイル */
+.ws-tile { cursor: pointer; }
+.ws-tile-info {
+  padding: 6px 10px 2px;
+  min-width: 0;
+}
+.ws-tile-actions {
+  padding: 4px 10px 8px;
+  display: flex;
+  justify-content: flex-end;
+}
+
 /* ファイル詳細ヘッダ */
 .file-detail-header {
   display: flex;

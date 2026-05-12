@@ -55,6 +55,51 @@ function CreateForm({ projectID, fileID, onSaved, onCancel }) {
   )
 }
 
+// ── ワークスペースカード（サムネイル表示） ──────────────────
+function WorkspaceCard({ projectID, fileID, ws, navigate, projectName, fileName, onRunClick, resolvingWsId }) {
+  const { t } = useTranslation()
+  const [thumb, setThumb] = useState(null)
+
+  useEffect(() => {
+    WorkspaceApi.getThumbnail({ projectID, fileID, workspaceID: ws.id })
+      .then(src => setThumb(src || null))
+      .catch(() => {})
+  }, [projectID, fileID, ws.id])
+
+  return (
+    <div
+      className="file-tile ws-tile"
+      onClick={() => navigate('workspace', { projectID, projectName, fileID, fileName, workspaceID: ws.id })}
+    >
+      <div className="file-tile-thumb">
+        {thumb
+          ? <img src={thumb} alt={ws.name} />
+          : <span className="file-tile-thumb-placeholder">{t('workspace.noImage')}</span>
+        }
+      </div>
+      <div className="ws-tile-info">
+        <span className="file-tile-name" title={ws.name}>{ws.name}</span>
+        <div className="ws-item-meta" style={{ marginTop: 4 }}>
+          {ws.engine && <span className="ws-meta-chip">{ws.engine}</span>}
+          {(ws.start === 0 && ws.end === -1)
+            ? <span className="ws-meta-chip">{t('workspace.blendDefault')}</span>
+            : <span className="ws-meta-chip">{ws.start} – {ws.end} f</span>
+          }
+        </div>
+      </div>
+      <div className="ws-tile-actions">
+        <button
+          className="btn btn-run btn-sm"
+          onClick={e => { e.stopPropagation(); onRunClick(ws) }}
+          disabled={resolvingWsId !== null}
+        >
+          ▶ {t('common.run')}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ── ワークスペースタブ ─────────────────────────────────────
 function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEnqueued }) {
   const { t } = useTranslation()
@@ -64,6 +109,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
   const [resolvingWsId, setResolvingWsId] = useState(null)
   const [enqueuing, setEnqueuing]   = useState(false)
   const [enqueueMsg, setEnqueueMsg] = useState('')
+  const [viewMode, setViewMode]     = useState('list') // 'list' | 'card'
 
   const load = () => {
     WorkspaceApi.listByProject({ projectID })
@@ -111,37 +157,73 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
 
   return (
     <div>
-      <div style={{ position: 'relative' }}>
-        <div className="ws-list">
-          {workspaces.length === 0 && !creating && (
-            <p className="ws-empty">{t('workspace.empty')}</p>
-          )}
-          {workspaces.map(ws => (
-            <div key={ws.id} className="ws-item ws-item-run">
-              <button
-                className="btn btn-run btn-sm ws-item-run-btn"
-                onClick={() => handleRunClick(ws)}
-                disabled={resolvingWsId !== null}
-              >
-                ▶ {t('common.run')}
-              </button>
-              <div
-                className="ws-item-info ws-item-link"
-                onClick={() => navigate('workspace', { projectID, projectName, fileID, fileName, workspaceID: ws.id })}
-              >
-                <span className="ws-item-name">{ws.name}</span>
-                <div className="ws-item-meta">
-                  {ws.engine && <span className="ws-meta-chip">{ws.engine}</span>}
-                  {(ws.start === 0 && ws.end === -1)
-                    ? <span className="ws-meta-chip">{t('workspace.blendDefault')}</span>
-                    : <span className="ws-meta-chip">{ws.start} – {ws.end} f</span>
-                  }
-                </div>
-              </div>
-              <span className="ws-item-arrow" onClick={() => navigate('workspace', { projectID, projectName, fileID, fileName, workspaceID: ws.id })}>›</span>
-            </div>
-          ))}
+      {workspaces.length > 0 && (
+        <div className="file-view-toggle" style={{ marginBottom: 8 }}>
+          <button
+            className={`file-view-btn${viewMode === 'list' ? ' active' : ''}`}
+            onClick={() => setViewMode('list')}
+            title={t('workspace.listView')}
+          >☰</button>
+          <button
+            className={`file-view-btn${viewMode === 'card' ? ' active' : ''}`}
+            onClick={() => setViewMode('card')}
+            title={t('workspace.cardView')}
+          >⊞</button>
         </div>
+      )}
+
+      <div style={{ position: 'relative' }}>
+        {viewMode === 'list' ? (
+          <div className="ws-list">
+            {workspaces.length === 0 && !creating && (
+              <p className="ws-empty">{t('workspace.empty')}</p>
+            )}
+            {workspaces.map(ws => (
+              <div key={ws.id} className="ws-item ws-item-run">
+                <button
+                  className="btn btn-run btn-sm ws-item-run-btn"
+                  onClick={() => handleRunClick(ws)}
+                  disabled={resolvingWsId !== null}
+                >
+                  ▶ {t('common.run')}
+                </button>
+                <div
+                  className="ws-item-info ws-item-link"
+                  onClick={() => navigate('workspace', { projectID, projectName, fileID, fileName, workspaceID: ws.id })}
+                >
+                  <span className="ws-item-name">{ws.name}</span>
+                  <div className="ws-item-meta">
+                    {ws.engine && <span className="ws-meta-chip">{ws.engine}</span>}
+                    {(ws.start === 0 && ws.end === -1)
+                      ? <span className="ws-meta-chip">{t('workspace.blendDefault')}</span>
+                      : <span className="ws-meta-chip">{ws.start} – {ws.end} f</span>
+                    }
+                  </div>
+                </div>
+                <span className="ws-item-arrow" onClick={() => navigate('workspace', { projectID, projectName, fileID, fileName, workspaceID: ws.id })}>›</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="file-tile-grid">
+            {workspaces.length === 0 && !creating && (
+              <p className="ws-empty">{t('workspace.empty')}</p>
+            )}
+            {workspaces.map(ws => (
+              <WorkspaceCard
+                key={ws.id}
+                projectID={projectID}
+                fileID={fileID}
+                ws={ws}
+                navigate={navigate}
+                projectName={projectName}
+                fileName={fileName}
+                onRunClick={handleRunClick}
+                resolvingWsId={resolvingWsId}
+              />
+            ))}
+          </div>
+        )}
         {resolvingWsId !== null && (
           <div className="ws-list-overlay">
             <span className="ws-list-overlay-label">{t('common.processing')}</span>

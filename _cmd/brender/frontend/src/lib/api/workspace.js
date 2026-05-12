@@ -43,4 +43,11 @@ export const WorkspaceApi = {
   delete: ({ projectID, workspaceID }) =>
     isWails() ? svc().then(s => s.Delete(projectID, workspaceID))
               : serverCall('workspace', 'delete', { project_id: projectID, workspace_id: workspaceID }),
+
+  /** ワークスペースのサムネイル画像を base64 データURIで取得
+   * @param {{ projectID: string, fileID: string, workspaceID: string }} args
+   */
+  getThumbnail: ({ projectID, fileID, workspaceID }) =>
+    isWails() ? svc().then(s => s.GetThumbnail(projectID, fileID, workspaceID))
+              : serverCall('workspace', 'get_thumbnail', { project_id: projectID, file_id: fileID, workspace_id: workspaceID }),
 }
