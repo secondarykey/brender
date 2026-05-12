@@ -105,12 +105,6 @@ function ProjectListPage({ navigate }) {
 
   return (
     <div className="page">
-      <div className="page-header">
-{!creating && (
-          <button className="btn" onClick={handleStartCreate} disabled={!hasRoot}>{t('project.register.transition')}</button>
-        )}
-      </div>
-
       {!hasRoot && (
         <div className="notice-banner">
           {t('project.rootNotSet')}
@@ -141,7 +135,7 @@ function ProjectListPage({ navigate }) {
       {projects.length === 0 && !creating ? (
         <div className="empty-state">
           <p>{t('project.empty')}</p>
-          <button className="btn" onClick={handleStartCreate} disabled={!hasRoot}>{t('project.createFirst')}</button>
+          <button className="btn btn-green" onClick={handleStartCreate} disabled={!hasRoot}>{t('project.createFirst')}</button>
         </div>
       ) : (
         <>
@@ -193,6 +187,14 @@ function ProjectListPage({ navigate }) {
             </div>
           )}
         </>
+      )}
+
+      {!creating && (
+        <div className="list-fab">
+          <button className="btn btn-green" onClick={handleStartCreate} disabled={!hasRoot}>
+            {t('project.register.transition')}
+          </button>
+        </div>
       )}
     </div>
   )

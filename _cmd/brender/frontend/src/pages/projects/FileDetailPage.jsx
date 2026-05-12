@@ -288,11 +288,13 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
         )}
       </div>
 
-      {creating ? (
+      {creating && (
         <CreateForm projectID={projectID} fileID={fileID} onSaved={handleSaved} onCancel={() => setCreating(false)} />
-      ) : (
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
-          <button className="btn btn-secondary" onClick={() => setCreating(true)}>{t('workspace.createNew')}</button>
+      )}
+
+      {!creating && (
+        <div className="list-fab">
+          <button className="btn btn-green" onClick={() => setCreating(true)}>{t('workspace.createNew')}</button>
         </div>
       )}
 

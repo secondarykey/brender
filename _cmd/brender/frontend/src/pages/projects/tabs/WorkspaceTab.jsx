@@ -108,10 +108,6 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
 
   return (
     <div className="workspace-tab-root">
-      <div className="ws-add-file-fab-wrap">
-        <button className="btn btn-secondary ws-add-file-fab" onClick={handleAddFile}>{t('workspace.addFile')}</button>
-      </div>
-
       {error && <div className="error-msg">{error}</div>}
 
       {groups.length > 0 && (
@@ -201,6 +197,10 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
       )}
 
       {fileError && <div className="error-msg" style={{ marginTop: 8 }}>{fileError}</div>}
+
+      <div className="list-fab">
+        <button className="btn btn-green" onClick={handleAddFile}>{t('workspace.addFile')}</button>
+      </div>
     </div>
   )
 }

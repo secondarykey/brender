@@ -593,17 +593,6 @@ body {
   position: relative;
 }
 /* height:0 の sticky ラッパーでタイルレイアウトに影響せず右上に固定 */
-.ws-add-file-fab-wrap {
-  position: sticky;
-  top: 0;
-  height: 0;
-  text-align: right;
-  z-index: 10;
-}
-.ws-add-file-fab {
-  display: inline-block;
-  margin-top: 4px;
-}
 
 /* ファイル一覧 */
 .file-list {
@@ -1028,6 +1017,25 @@ body {
 }
 
 .btn-secondary:hover:not(:disabled) { background: rgba(255,255,255,0.13); }
+
+.btn-green {
+  background: #27ae60;
+  color: #fff;
+  border: none;
+}
+.btn-green:hover:not(:disabled) { background: #2ecc71; }
+.btn-green:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* 一覧右下の固定ボタン */
+.list-fab {
+  position: sticky;
+  bottom: 16px;
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: none;
+  margin-top: 8px;
+}
+.list-fab > * { pointer-events: all; }
 
 .btn-outline {
   background: transparent;
