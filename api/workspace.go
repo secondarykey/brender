@@ -25,6 +25,9 @@ func CreateWorkspace(projectID string, projectFileID string, name string) (*mode
 		return nil, err
 	}
 	now := time.Now()
+	if err := model.UpdateWorkspaceProcessedAt(ws.ID, &now); err != nil {
+		log.Printf("CreateWorkspace: UpdateWorkspaceProcessedAt: %v", err)
+	}
 	if err := model.UpdateProjectFileProcessedAt(projectFileID, &now); err != nil {
 		log.Printf("CreateWorkspace: UpdateProjectFileProcessedAt: %v", err)
 	}
