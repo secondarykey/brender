@@ -28,11 +28,10 @@ function ImageViewerDialog({ job, onClose }) {
       })
   }, [job])
 
-  // インデックスが変わったら画像を読み込む
+  // インデックスが変わったら画像を読み込む（前の画像は読み込み完了まで表示したまま）
   useEffect(() => {
     if (images.length === 0) return
     setLoadingImg(true)
-    setImgSrc('')
     QueueApi.getImageBase64({ path: images[index] })
       .then(src => {
         setImgSrc(src)
@@ -47,7 +46,6 @@ function ImageViewerDialog({ job, onClose }) {
   if (!job) return null
 
   const filename = images[index] ? images[index].replace(/\\/g, '/').split('/').pop() : ''
-  const loading  = loadingList || loadingImg
 
   return (
     <div className="dialog-overlay" onClick={onClose}>
@@ -57,18 +55,20 @@ function ImageViewerDialog({ job, onClose }) {
         </h3>
 
         <div className="image-viewer-body">
-          {loading && <div className="image-viewer-loading">読み込み中...</div>}
-          {!loading && imgSrc && (
+          {loadingList && <div className="image-viewer-loading">読み込み中...</div>}
+          {imgSrc && (
             <img src={imgSrc} alt={filename} className="image-viewer-img" />
           )}
-          {!loading && !imgSrc && !error && images.length === 0 && (
+          {!loadingList && !imgSrc && !error && images.length === 0 && (
             <div className="image-viewer-empty">画像ファイルが見つかりません</div>
           )}
           {error && <div className="error-msg">{error}</div>}
         </div>
 
         <div className="image-viewer-controls" style={{ visibility: images.length > 0 ? 'visible' : 'hidden' }}>
-          <span className="image-viewer-filename" title={filename}>{filename}</span>
+          <span className="image-viewer-filename" title={filename}>
+            {filename}{loadingImg && <span className="image-viewer-loading-inline"> 読み込み中...</span>}
+          </span>
           <div className="image-viewer-slider-row">
             <input
               type="range"

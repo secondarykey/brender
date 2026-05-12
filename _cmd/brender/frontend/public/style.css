@@ -1490,6 +1490,10 @@ body {
   color: rgba(255,255,255,0.35);
   font-size: 0.9rem;
 }
+.image-viewer-loading-inline {
+  color: rgba(255,255,255,0.35);
+  font-size: 0.75rem;
+}
 .image-viewer-controls {
   display: flex;
   flex-direction: column;
