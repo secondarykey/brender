@@ -365,6 +365,20 @@ export class Project {
              */
             this["name"] = "";
         }
+        if (!("display_order" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["display_order"] = 0;
+        }
+        if (!("processed_at" in $$source)) {
+            /**
+             * @member
+             * @type {time$0.Time | null}
+             */
+            this["processed_at"] = null;
+        }
         if (!("created_at" in $$source)) {
             /**
              * @member
@@ -501,6 +515,20 @@ export class ProjectFile {
              * @type {time$0.Time | null}
              */
             this["file_modified_at"] = null;
+        }
+        if (!("display_order" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["display_order"] = 0;
+        }
+        if (!("processed_at" in $$source)) {
+            /**
+             * @member
+             * @type {time$0.Time | null}
+             */
+            this["processed_at"] = null;
         }
         if (!("created_at" in $$source)) {
             /**
@@ -711,6 +739,20 @@ export class Workspace {
              * @type {boolean}
              */
             this["is_system"] = false;
+        }
+        if (!("display_order" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["display_order"] = 0;
+        }
+        if (!("processed_at" in $$source)) {
+            /**
+             * @member
+             * @type {time$0.Time | null}
+             */
+            this["processed_at"] = null;
         }
         if (!("created_at" in $$source)) {
             /**

@@ -98,4 +98,11 @@ export const ProjectApi = {
   setFileThumbnail: ({ projectID, fileID, imagePath }) =>
     isWails() ? svc().then(s => s.SetFileThumbnail(projectID, fileID, imagePath))
               : serverCall('project', 'set_file_thumbnail', { project_id: projectID, file_id: fileID, image_path: imagePath }),
+
+  /** ワークスペースのサムネイルをファイルサムネイルに設定し、base64 データURIを返す
+   * @param {{ projectID: string, fileID: string, workspaceID: string }} args
+   */
+  setFileThumbnailFromWorkspace: ({ projectID, fileID, workspaceID }) =>
+    isWails() ? svc().then(s => s.SetFileThumbnailFromWorkspace(projectID, fileID, workspaceID))
+              : serverCall('project', 'set_file_thumbnail_from_workspace', { project_id: projectID, file_id: fileID, workspace_id: workspaceID }),
 }

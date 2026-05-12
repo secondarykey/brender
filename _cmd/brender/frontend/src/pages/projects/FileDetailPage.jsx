@@ -59,13 +59,32 @@ function CreateForm({ projectID, fileID, onSaved, onCancel }) {
 // ── ワークスペースカード（サムネイル表示） ──────────────────
 function WorkspaceCard({ projectID, fileID, ws, navigate, projectName, fileName, onRunClick, resolvingWsId }) {
   const { t } = useTranslation()
-  const [thumb, setThumb] = useState(null)
+  const [thumb, setThumb]           = useState(null)
+  const [settingThumb, setSettingThumb] = useState(false)
+  const [thumbMsg, setThumbMsg]     = useState('')
 
   useEffect(() => {
     WorkspaceApi.getThumbnail({ projectID, fileID, workspaceID: ws.id })
       .then(src => setThumb(src || null))
       .catch(() => {})
   }, [projectID, fileID, ws.id])
+
+  const handleSetFileThumbnail = async (e) => {
+    e.stopPropagation()
+    if (settingThumb) return
+    setSettingThumb(true)
+    setThumbMsg('')
+    try {
+      await ProjectApi.setFileThumbnailFromWorkspace({ projectID, fileID, workspaceID: ws.id })
+      setThumbMsg('✓')
+      setTimeout(() => setThumbMsg(''), 2000)
+    } catch (err) {
+      setThumbMsg('✗')
+      setTimeout(() => setThumbMsg(''), 2000)
+    } finally {
+      setSettingThumb(false)
+    }
+  }
 
   return (
     <div
@@ -89,6 +108,13 @@ function WorkspaceCard({ projectID, fileID, ws, navigate, projectName, fileName,
         </div>
       </div>
       <div className="ws-tile-actions">
+        {thumbMsg && <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>{thumbMsg}</span>}
+        <button
+          className="btn btn-sm btn-secondary"
+          onClick={handleSetFileThumbnail}
+          disabled={settingThumb}
+          title={t('workspace.setAsFileThumbnail')}
+        >{t('workspace.setAsFileThumbnail')}</button>
         <button
           className="btn btn-run btn-sm"
           onClick={e => { e.stopPropagation(); onRunClick(ws) }}
@@ -553,7 +579,7 @@ function FileDetailPage({ projectID, projectName, fileID, fileName, navigate }) 
   const [currentFileName, setCurrentFileName] = useState(fileName)
 
   const tabs = [
-    { id: 'workspace', label: t('tabs.fileList') },
+    { id: 'workspace', label: t('tabs.workspaceList') },
     { id: 'settings',  label: t('tabs.settings') },
   ]
 
