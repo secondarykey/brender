@@ -77,4 +77,11 @@ export const ProjectApi = {
   getFileThumbnail: ({ projectID, fileID }) =>
     isWails() ? svc().then(s => s.GetFileThumbnail(projectID, fileID))
               : serverCall('project', 'get_file_thumbnail', { project_id: projectID, file_id: fileID }),
+
+  /** プロジェクトのサムネイル画像を base64 データURIで取得
+   * @param {{ projectID: string }} args
+   */
+  getProjectThumbnail: ({ projectID }) =>
+    isWails() ? svc().then(s => s.GetProjectThumbnail(projectID))
+              : serverCall('project', 'get_project_thumbnail', { project_id: projectID }),
 }

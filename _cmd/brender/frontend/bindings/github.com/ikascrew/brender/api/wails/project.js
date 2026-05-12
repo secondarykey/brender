@@ -77,6 +77,14 @@ export function GetFileThumbnail(projectID, fileID) {
 }
 
 /**
+ * @param {string} projectID
+ * @returns {$CancellablePromise<string>}
+ */
+export function GetProjectThumbnail(projectID) {
+    return $Call.ByID(2529761418, projectID);
+}
+
+/**
  * @returns {$CancellablePromise<(model$0.ProjectDetail | null)[]>}
  */
 export function List() {

@@ -686,6 +686,7 @@ body {
 }
 .file-tile-thumb img { width: 100%; height: 100%; object-fit: contain; }
 .file-tile-thumb-placeholder { color: rgba(255,255,255,0.2); font-size: 0.75rem; }
+.file-tile-thumb .thumbnail-placeholder { width: 100%; height: 100%; border-radius: 0; border: none; }
 .file-tile-info {
   padding: 8px 10px;
   min-width: 0;

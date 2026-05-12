@@ -160,6 +160,20 @@ func convertToJPEG(src, dstDir, dstPath string) error {
 	return jpeg.Encode(f, canvas, &jpeg.Options{Quality: 85})
 }
 
+// GetProjectThumbnail はプロジェクトのサムネイル画像を base64 データURIで返す。
+// {ProjectRoot}/{projectID}/thumbnail.jpg が存在すればそれを返す。存在しない場合は空文字を返す。
+func GetProjectThumbnail(projectID string) (string, error) {
+	env, err := model.GetEnv()
+	if err != nil || env == nil || env.ProjectRoot == "" {
+		return "", nil
+	}
+	thumbPath := filepath.Join(env.ProjectRoot, projectID, "thumbnail.jpg")
+	if _, err := os.Stat(thumbPath); err != nil {
+		return "", nil
+	}
+	return imageToBase64(thumbPath)
+}
+
 // GetWorkspaceThumbnail はワークスペースのサムネイル画像を base64 データURIで返す。
 // {ProjectRoot}/{projectID}/{fileID}/{workspaceID}/thumbnail.jpg が存在すればそれを返す。
 // 存在しない場合はそのワークスペースの完了済みジョブ出力から JPEG を生成して保存する。
