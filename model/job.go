@@ -32,6 +32,7 @@ type Job struct {
 	WorkspaceID   string     `json:"workspace_id"`
 	WorkspaceName string     `json:"workspace_name"`
 	ProjectFileID string     `json:"project_file_id"`
+	FileName      string     `gorm:"-" json:"file_name"` // project_files.name から JOIN で取得（DB非保存）
 	BlenderPath   string     `json:"blender_path"`
 	BlenderFile   string     `json:"blender_file"`
 	OutputDir     string     `json:"output_dir"`
@@ -69,7 +70,10 @@ func GetJob(id string) (*Job, error) {
 
 func ListJobs() ([]*Job, error) {
 	var list []*Job
-	if res := db.Order("enqueued_at desc").Find(&list); res.Error != nil {
+	res := db.Select("jobs.*, project_files.name AS file_name").
+		Joins("LEFT JOIN project_files ON project_files.id = jobs.project_file_id").
+		Order("jobs.enqueued_at desc").Find(&list)
+	if res.Error != nil {
 		return nil, xerrors.Errorf("ListJobs: %w", res.Error)
 	}
 	return list, nil
@@ -105,8 +109,11 @@ func GetLatestJobForThumbnail(workspaceID string) (*Job, error) {
 
 func ListJobsByWorkspace(projectID string, workspaceID string) ([]*Job, error) {
 	var list []*Job
-	if res := db.Where("project_id = ? AND workspace_id = ?", projectID, workspaceID).
-		Order("enqueued_at desc").Find(&list); res.Error != nil {
+	res := db.Select("jobs.*, project_files.name AS file_name").
+		Joins("LEFT JOIN project_files ON project_files.id = jobs.project_file_id").
+		Where("jobs.project_id = ? AND jobs.workspace_id = ?", projectID, workspaceID).
+		Order("jobs.enqueued_at desc").Find(&list)
+	if res.Error != nil {
 		return nil, xerrors.Errorf("ListJobsByWorkspace: %w", res.Error)
 	}
 	return list, nil
@@ -128,8 +135,11 @@ func DeleteJobsByWorkspace(workspaceID string) error {
 
 func ListJobsByProjectFile(projectID string, projectFileID string) ([]*Job, error) {
 	var list []*Job
-	if res := db.Where("project_id = ? AND project_file_id = ?", projectID, projectFileID).
-		Order("enqueued_at desc").Find(&list); res.Error != nil {
+	res := db.Select("jobs.*, project_files.name AS file_name").
+		Joins("LEFT JOIN project_files ON project_files.id = jobs.project_file_id").
+		Where("jobs.project_id = ? AND jobs.project_file_id = ?", projectID, projectFileID).
+		Order("jobs.enqueued_at desc").Find(&list)
+	if res.Error != nil {
 		return nil, xerrors.Errorf("ListJobsByProjectFile: %w", res.Error)
 	}
 	return list, nil

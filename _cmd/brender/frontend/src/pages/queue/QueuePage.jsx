@@ -255,7 +255,7 @@ function HistoryTab({ navigate }) {
                     <button className="link-btn" onClick={e => { e.stopPropagation(); navigate && navigate('job', {
                       job: j,
                       backPage: 'workspace',
-                      backParams: { projectID: j.project_id, projectName: j.project_name, fileID: j.project_file_id, workspaceID: j.workspace_id, workspaceName: j.workspace_name },
+                      backParams: { projectID: j.project_id, projectName: j.project_name, fileID: j.project_file_id, fileName: j.file_name, workspaceID: j.workspace_id, workspaceName: j.workspace_name },
                     })}}>
                       {j.workspace_name || j.workspace_id}
                     </button>
