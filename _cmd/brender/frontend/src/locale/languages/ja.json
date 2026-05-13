@@ -67,10 +67,13 @@
     "history": "実行履歴",
     "environment": "環境",
     "blender": "Blender",
-    "video": "動画"
+    "video": "動画",
+    "jobDetail": "詳細",
+    "renderResults": "レンダリング結果"
   },
   "breadcrumb": {
-    "projects": "プロジェクト"
+    "projects": "プロジェクト",
+    "job": "ジョブ"
   },
   "project": {
     "register": {

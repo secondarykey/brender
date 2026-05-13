@@ -4,6 +4,7 @@ import ProjectListPage from './pages/projects/ProjectListPage'
 import ProjectDetailPage from './pages/projects/ProjectDetailPage'
 import FileDetailPage from './pages/projects/FileDetailPage'
 import WorkspaceDetailPage from './pages/projects/WorkspaceDetailPage'
+import JobPage from './pages/projects/JobPage'
 import QueuePage from './pages/queue/QueuePage'
 import SettingsPage from './pages/settings/SettingsPage'
 import { EnvironmentApi } from './lib/api'
@@ -56,6 +57,15 @@ function App() {
             navigate={navigate}
           />
         )
+      case 'job':
+        return (
+          <JobPage
+            job={p.job}
+            navigate={navigate}
+            backPage={p.backPage}
+            backParams={p.backParams}
+          />
+        )
       case 'queue':
         return <QueuePage key={queueKey} navigate={navigate} />
       case 'settings':
@@ -65,7 +75,7 @@ function App() {
     }
   }
 
-  const section = ['project', 'file', 'workspace'].includes(nav.page) ? 'projects' : nav.page
+  const section = ['project', 'file', 'workspace', 'job'].includes(nav.page) ? 'projects' : nav.page
 
   return (
     <MainLayout currentPage={section} onNavigate={(p) => navigate(p)}>

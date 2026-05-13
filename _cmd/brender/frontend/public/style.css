@@ -1565,6 +1565,20 @@ body {
   color: #fff;
   font-weight: 600;
 }
+/* ── ジョブページ ────────────────────────────────────── */
+.job-page-detail {
+  max-width: 680px;
+  padding-bottom: 24px;
+}
+.job-page-viewer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.job-page-viewer .image-viewer-body {
+  height: 55vh;
+}
+
 /* ── 画像ビュワー ─────────────────────────────────────── */
 .image-viewer-dialog {
   width: min(860px, 92vw);

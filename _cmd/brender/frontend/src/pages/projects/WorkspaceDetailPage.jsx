@@ -2,8 +2,6 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
 import { WorkspaceApi, BlenderApi, QueueApi } from '../../lib/api'
-import JobDetailDialog from '../../components/JobDetailDialog'
-import ImageViewerDialog from '../../components/ImageViewerDialog'
 import Pagination from '../../components/Pagination'
 
 
@@ -55,11 +53,9 @@ function WorkspaceThumbnailPanel({ projectID, fileID, workspaceID }) {
 }
 
 // ── 履歴タブ ──────────────────────────────────────────────
-function HistoryTab({ projectID, workspaceID }) {
+function HistoryTab({ projectID, workspaceID, navigate, projectName, fileName, fileID, workspaceName }) {
   const { t } = useTranslation()
   const [jobs, setJobs]         = useState([])
-  const [selected, setSelected] = useState(null)
-  const [viewing, setViewing]   = useState(null)
   const [page, setPage]         = useState(1)
   const [pageSize, setPageSize] = useState(HISTORY_PAGE_SIZE)
 
@@ -81,22 +77,27 @@ function HistoryTab({ projectID, workspaceID }) {
     return <p className="empty-msg">{t('workspace.noHistory')}</p>
   }
 
+  const openJob = (j) => {
+    navigate('job', {
+      job: j,
+      backPage: 'workspace',
+      backParams: { projectID, projectName, fileID, fileName, workspaceID, workspaceName },
+    })
+  }
+
   return (
     <>
       <div className="queue-history-list">
         {pageJobs.map(j => (
-          <div key={j.id} className="queue-history-item queue-history-item-clickable" onClick={() => setSelected(j)}>
+          <div key={j.id} className="queue-history-item queue-history-item-clickable" onClick={() => openJob(j)}>
             <div className="queue-history-top">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-                <button className="btn btn-sm" onClick={e => { e.stopPropagation(); setViewing(j) }} disabled={!(j.data_status === 2 || j.data_status === 3)}>{t('common.view')}</button>
-                <div className="queue-history-detail" style={{ marginTop: 0 }}>
-                  <span>{j.start_frame}–{j.end_frame}f</span>
-                  {j.engine && <span>{j.engine}</span>}
-                  {j.scene  && <span>{j.scene}</span>}
-                  {j.enqueued_at && (
-                    <span>{new Date(j.enqueued_at).toLocaleString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
-                  )}
-                </div>
+              <div className="queue-history-detail" style={{ marginTop: 0 }}>
+                <span>{j.start_frame}–{j.end_frame}f</span>
+                {j.engine && <span>{j.engine}</span>}
+                {j.scene  && <span>{j.scene}</span>}
+                {j.enqueued_at && (
+                  <span>{new Date(j.enqueued_at).toLocaleString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+                )}
               </div>
               <span className={`status-badge status-${j.status}`}>{statusLabel(j.status)}</span>
             </div>
@@ -108,13 +109,7 @@ function HistoryTab({ projectID, workspaceID }) {
           </div>
         ))}
       </div>
-      <Pagination page={currentPage} totalPages={totalPages} onChange={p => { setPage(p); setSelected(null) }} pageSize={pageSize} onPageSizeChange={p => { setPageSize(p); setPage(1) }} total={jobs.length} />
-      <JobDetailDialog job={selected} onClose={() => setSelected(null)} onDeleted={() => { setSelected(null); load() }}
-        onStatusChanged={(id, status) => {
-          setJobs(prev => prev.map(j => j.id === id ? { ...j, data_status: status } : j))
-          setSelected(prev => prev && prev.id === id ? { ...prev, data_status: status } : prev)
-        }} />
-      <ImageViewerDialog job={viewing} onClose={() => setViewing(null)} />
+      <Pagination page={currentPage} totalPages={totalPages} onChange={p => setPage(p)} pageSize={pageSize} onPageSizeChange={p => { setPageSize(p); setPage(1) }} total={jobs.length} />
     </>
   )
 }
@@ -414,7 +409,15 @@ function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspa
         <div className="ws-detail-right">
           <WorkspaceThumbnailPanel projectID={projectID} fileID={effectiveFileID} workspaceID={workspaceID} />
           <h3 className="ws-detail-section-title">{t('tabs.history')}</h3>
-          <HistoryTab projectID={projectID} workspaceID={workspaceID} />
+          <HistoryTab
+            projectID={projectID}
+            workspaceID={workspaceID}
+            navigate={navigate}
+            projectName={projectName}
+            fileID={effectiveFileID}
+            fileName={effectiveFileName}
+            workspaceName={detail.workspace.name}
+          />
         </div>
       </div>
     </div>
