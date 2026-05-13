@@ -244,6 +244,7 @@
     "setAsThumbnail": "サムネイルに設定",
     "thumbnailSet": "サムネイルを設定しました",
     "createMovie": "動画作成",
+    "movieCreating": "作成中...",
     "movieCreated": "動画を作成しました",
     "playMovie": "▶ 再生"
   },

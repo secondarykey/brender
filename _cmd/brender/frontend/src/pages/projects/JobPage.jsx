@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { QueueApi, WorkspaceApi } from '../../lib/api'
+import { onAppEvent } from '../../lib/appEvents'
 
 const VIDEO_EXTS = new Set(['.mp4', '.mov', '.avi', '.mkv', '.webm', '.m4v'])
 function isVideoFile(name) {
@@ -221,6 +222,7 @@ function RenderResultTab({ job }) {
   const [msg, setMsg]                   = useState('')
   const [settingThumb, setSettingThumb] = useState(false)
   const [moviePath, setMoviePath]       = useState('')
+  const [creatingMovie, setCreatingMovie] = useState(false)
   const playingRef = useRef(false)
   const loopRef    = useRef(false)
 
@@ -276,18 +278,33 @@ function RenderResultTab({ job }) {
     finally { setSettingThumb(false) }
   }
 
+  useEffect(() => {
+    return onAppEvent('movie:created', (data) => {
+      if (data.job_id !== job.id) return
+      setCreatingMovie(false)
+      if (data.error) {
+        setMsg(data.error)
+      } else {
+        setMoviePath(data.path || '')
+        setMsg(t('viewer.movieCreated'))
+      }
+    })
+  }, [job.id, t])
+
   const handleCreateMovie = async () => {
     setMsg('')
+    setCreatingMovie(true)
     try {
-      const path = await WorkspaceApi.createMovie({
+      await WorkspaceApi.createMovie({
         projectID:   job.project_id,
         fileID:      job.project_file_id,
         workspaceID: job.workspace_id,
         jobID:       job.id,
       })
-      setMoviePath(path || '')
-      setMsg(t('viewer.movieCreated'))
-    } catch (e) { setMsg(String(e)) }
+    } catch (e) {
+      setCreatingMovie(false)
+      setMsg(String(e))
+    }
   }
 
   const handlePlayMovie = () => {
@@ -334,8 +351,8 @@ function RenderResultTab({ job }) {
           >⟳ {t('common.loop')}</button>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button className="btn btn-sm btn-secondary" onClick={handleCreateMovie} disabled={settingThumb || images.length === 0}>
-            {t('viewer.createMovie')}
+          <button className="btn btn-sm btn-secondary" onClick={handleCreateMovie} disabled={creatingMovie || settingThumb || images.length === 0}>
+            {creatingMovie ? t('viewer.movieCreating') : t('viewer.createMovie')}
           </button>
           {moviePath && (
             <button className="btn btn-sm btn-run" onClick={handlePlayMovie}>

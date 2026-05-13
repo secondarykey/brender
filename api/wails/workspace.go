@@ -3,6 +3,7 @@ package wails
 import (
 	"github.com/ikascrew/brender/api"
 	"github.com/ikascrew/brender/model"
+	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 type Workspace struct{}
@@ -40,6 +41,22 @@ func (s *Workspace) SetThumbnail(projectID string, fileID string, workspaceID st
 	return api.SetWorkspaceThumbnail(projectID, fileID, workspaceID, imagePath)
 }
 
-func (s *Workspace) CreateMovie(projectID string, fileID string, workspaceID string, jobID string) (string, error) {
-	return api.CreateMovie(projectID, fileID, workspaceID, jobID)
+// movieCreatedEvent は movie:created イベントのペイロード。
+type movieCreatedEvent struct {
+	JobID string `json:"job_id"`
+	Path  string `json:"path"`
+	Error string `json:"error"`
+}
+
+// CreateMovie は ffmpeg による動画作成を goroutine で開始し即返す。
+// 完了時（成功・失敗とも）に "movie:created" イベントを emit する。
+func (s *Workspace) CreateMovie(projectID string, fileID string, workspaceID string, jobID string) {
+	go func() {
+		path, err := api.CreateMovie(projectID, fileID, workspaceID, jobID)
+		ev := movieCreatedEvent{JobID: jobID, Path: path}
+		if err != nil {
+			ev.Error = err.Error()
+		}
+		application.Get().Event.Emit("movie:created", ev)
+	}()
 }
