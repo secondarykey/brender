@@ -10,12 +10,33 @@ import SettingsPage from './pages/settings/SettingsPage'
 import { EnvironmentApi } from './lib/api'
 
 export function VideoPlayer({ path }) {
+  const handleMetadata = async (e) => {
+    const video = e.currentTarget
+    const vw = video.videoWidth
+    const vh = video.videoHeight
+    if (!vw || !vh) return
+    try {
+      const { Window } = await import('@wailsio/runtime')
+      const maxW = Math.min(screen.width  * 0.9, 1920)
+      const maxH = Math.min(screen.height * 0.9, 1080)
+      const scale = Math.min(maxW / vw, maxH / vh, 1)
+      const w = Math.round(vw * scale)
+      const h = Math.round(vh * scale)
+      await Window.SetSize(w, h)
+      Window.Centre()
+    } catch (_) {
+      // Wails runtime が利用できない環境（ブラウザ等）では無視
+    }
+  }
+
   return (
     <div style={{ width: '100%', height: '100%', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <video
         src={`/_movie?path=${encodeURIComponent(path)}`}
         controls
         autoPlay
+        loop
+        onLoadedMetadata={handleMetadata}
         style={{ maxWidth: '100%', maxHeight: '100%' }}
       />
     </div>
