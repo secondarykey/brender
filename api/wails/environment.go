@@ -1,9 +1,7 @@
 package wails
 
 import (
-	"fmt"
 	"os"
-	"time"
 
 	"github.com/ikascrew/brender/api"
 	"github.com/ikascrew/brender/log"
@@ -58,11 +56,19 @@ func (s *Environment) GetSystemLog() (string, error) {
 	return string(data), nil
 }
 
-// OpenSystemLogWindow opens the system log in a new viewer window.
+const sysLogWindowName = "syslog"
+
+// OpenSystemLogWindow opens the system log in a viewer window.
+// If the window is already open, it is focused instead of creating a new one.
 func (s *Environment) OpenSystemLogWindow() error {
-	winName := fmt.Sprintf("syslog-%d", time.Now().UnixNano())
-	application.Get().Window.NewWithOptions(application.WebviewWindowOptions{
-		Name:             winName,
+	app := application.Get()
+	if win, ok := app.Window.GetByName(sysLogWindowName); ok {
+		win.Show()
+		win.Focus()
+		return nil
+	}
+	app.Window.NewWithOptions(application.WebviewWindowOptions{
+		Name:             sysLogWindowName,
 		Title:            "system.log",
 		Width:            900,
 		Height:           700,
