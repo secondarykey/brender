@@ -375,7 +375,10 @@ function JobPage({ job: initialJob, navigate, backPage, backParams }) {
           {bp.workspaceName && (
             <>
               <span className="breadcrumb-sep">›</span>
-              <button className="breadcrumb-link" onClick={() => navigate(backPage, backParams)}>{bp.workspaceName}</button>
+              {bp.workspaceID
+                ? <button className="breadcrumb-link" onClick={() => navigate(backPage, backParams)}>{bp.workspaceName}</button>
+                : <span>{bp.workspaceName}</span>
+              }
             </>
           )}
           <span className="breadcrumb-sep">›</span>

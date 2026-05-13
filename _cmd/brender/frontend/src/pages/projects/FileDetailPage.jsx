@@ -314,7 +314,7 @@ function HistoryTab({ projectID, fileID, navigate, projectName, fileName }) {
     navigate('job', {
       job: j,
       backPage: 'file',
-      backParams: { projectID, projectName, fileID, fileName },
+      backParams: { projectID, projectName, fileID, fileName, workspaceName: j.workspace_name },
     })
   }
 
