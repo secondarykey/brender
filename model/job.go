@@ -32,7 +32,7 @@ type Job struct {
 	WorkspaceID   string     `json:"workspace_id"`
 	WorkspaceName string     `json:"workspace_name"`
 	ProjectFileID string     `json:"project_file_id"`
-	FileName      string     `gorm:"-" json:"file_name"` // project_files.name から JOIN で取得（DB非保存）
+	FileName      string     `gorm:"-:migration" json:"file_name"` // project_files.name から JOIN で取得（カラム非作成）
 	BlenderPath   string     `json:"blender_path"`
 	BlenderFile   string     `json:"blender_file"`
 	OutputDir     string     `json:"output_dir"`
