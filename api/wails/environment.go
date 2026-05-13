@@ -1,6 +1,7 @@
 package wails
 
 import (
+	"log/slog"
 	"os"
 
 	"github.com/ikascrew/brender/api"
@@ -54,6 +55,54 @@ func (s *Environment) GetSystemLog() (string, error) {
 		return "", err
 	}
 	return string(data), nil
+}
+
+var logLevelNames = []string{"TRACE", "DEBUG", "INFO", "NOTICE", "WARN", "ERROR"}
+
+var logLevelMap = map[string]slog.Level{
+	"TRACE":  log.LevelTrace,
+	"DEBUG":  slog.LevelDebug,
+	"INFO":   slog.LevelInfo,
+	"NOTICE": log.LevelNotice,
+	"WARN":   slog.LevelWarn,
+	"ERROR":  slog.LevelError,
+}
+
+func levelToName(lv slog.Level) string {
+	switch {
+	case lv <= log.LevelTrace:
+		return "TRACE"
+	case lv <= slog.LevelDebug:
+		return "DEBUG"
+	case lv < log.LevelNotice:
+		return "INFO"
+	case lv < slog.LevelWarn:
+		return "NOTICE"
+	case lv < slog.LevelError:
+		return "WARN"
+	default:
+		return "ERROR"
+	}
+}
+
+// GetLogLevel returns the current log level name (TRACE/DEBUG/INFO/NOTICE/WARN/ERROR).
+func (s *Environment) GetLogLevel() string {
+	return levelToName(log.GetLevel())
+}
+
+// GetLogLevels returns all available log level names in order.
+func (s *Environment) GetLogLevels() []string {
+	return logLevelNames
+}
+
+// SetLogLevel changes the log level by name.
+func (s *Environment) SetLogLevel(level string) error {
+	lv, ok := logLevelMap[level]
+	if !ok {
+		return nil
+	}
+	log.SetLevel(lv)
+	return nil
 }
 
 const sysLogWindowName = "syslog"

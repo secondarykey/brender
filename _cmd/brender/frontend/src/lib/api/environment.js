@@ -32,6 +32,21 @@ export const EnvironmentApi = {
     isWails() ? svc().then(s => s.GetSystemLog())
               : serverCall('environment', 'get_system_log'),
 
+  /** 現在のログレベル名を取得 */
+  getLogLevel: () =>
+    isWails() ? svc().then(s => s.GetLogLevel())
+              : serverCall('environment', 'get_log_level'),
+
+  /** 利用可能なログレベル名一覧を取得 */
+  getLogLevels: () =>
+    isWails() ? svc().then(s => s.GetLogLevels())
+              : serverCall('environment', 'get_log_levels'),
+
+  /** ログレベルを変更 */
+  setLogLevel: ({ level }) =>
+    isWails() ? svc().then(s => s.SetLogLevel(level))
+              : serverCall('environment', 'set_log_level', { level }),
+
   /** システムログを別ウィンドウで開く */
   openSystemLogWindow: () =>
     isWails() ? svc().then(s => s.OpenSystemLogWindow())

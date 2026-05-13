@@ -12,10 +12,12 @@ function LogViewerApp() {
   const isSysLog = params.has('syslog')
   const title    = isSysLog ? 'system.log' : 'render.log'
 
-  const [log, setLog]     = useState(null)
-  const [error, setError] = useState('')
-  const [tail, setTail]   = useState(false)
-  const preRef            = useRef(null)
+  const [log, setLog]         = useState(null)
+  const [error, setError]     = useState('')
+  const [tail, setTail]       = useState(false)
+  const [logLevel, setLogLevel]   = useState(null)
+  const [logLevels, setLogLevels] = useState(null)
+  const preRef                = useRef(null)
 
   const fetchLog = useCallback(() => {
     const req = isSysLog
@@ -28,6 +30,24 @@ function LogViewerApp() {
 
   // 初回読み込み
   useEffect(() => { fetchLog() }, [fetchLog])
+
+  // システムログ時のみログレベルを取得
+  useEffect(() => {
+    if (!isSysLog) return
+    Promise.all([
+      EnvironmentApi.getLogLevel(),
+      EnvironmentApi.getLogLevels(),
+    ]).then(([lv, lvs]) => {
+      setLogLevel(lv)
+      setLogLevels(lvs)
+    }).catch(() => {})
+  }, [isSysLog])
+
+  const handleLogLevelChange = (level) => {
+    EnvironmentApi.setLogLevel({ level })
+      .then(() => setLogLevel(level))
+      .catch(() => {})
+  }
 
   // tail モード: 1秒ごとに再読み込み
   useEffect(() => {
@@ -45,7 +65,12 @@ function LogViewerApp() {
 
   return (
     <div className="log-viewer-root">
-      <LogTitleBar title={title} />
+      <LogTitleBar
+        title={title}
+        logLevel={logLevel}
+        logLevels={logLevels}
+        onLogLevelChange={handleLogLevelChange}
+      />
       {error && <div className="error-msg" style={{ margin: 12 }}>{error}</div>}
       {log === null && !error && (
         <p className="log-viewer-status">{t('common.loading')}</p>

@@ -2,7 +2,7 @@ import { Window } from '@wailsio/runtime'
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 
-function LogTitleBar({ title }) {
+function LogTitleBar({ title, logLevel, logLevels, onLogLevelChange }) {
   const { t } = useTranslation()
   const [isMac, setIsMac] = useState(false)
 
@@ -16,6 +16,18 @@ function LogTitleBar({ title }) {
   return (
     <div className={`titlebar log-titlebar${isMac ? ' mac' : ''}`}>
       <span className="log-titlebar-title">{title}</span>
+      {logLevels && logLevel && (
+        <select
+          className="log-level-select"
+          value={logLevel}
+          onChange={e => onLogLevelChange?.(e.target.value)}
+          title={t('settings.logLevel')}
+        >
+          {logLevels.map(lv => (
+            <option key={lv} value={lv}>{lv}</option>
+          ))}
+        </select>
+      )}
       {!isMac && (
         <div className="titlebar-controls">
           <button className="titlebar-btn titlebar-btn-min"   onClick={() => Window.Minimise()}       title={t('title.minimum')}>&#8211;</button>
