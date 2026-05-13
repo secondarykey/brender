@@ -11,6 +11,58 @@ import { Create as $Create } from "@wailsio/runtime";
 import * as time$0 from "../../../../time/models.js";
 
 /**
+ * JobFileInfo はジョブ出力ディレクトリのファイル情報。
+ */
+export class JobFileInfo {
+    /**
+     * Creates a new JobFileInfo instance.
+     * @param {Partial<JobFileInfo>} [$$source = {}] - The source object to create the JobFileInfo.
+     */
+    constructor($$source = {}) {
+        if (!("name" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["name"] = "";
+        }
+        if (!("size" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["size"] = 0;
+        }
+        if (!("mod_time" in $$source)) {
+            /**
+             * @member
+             * @type {time$0.Time}
+             */
+            this["mod_time"] = null;
+        }
+        if (!("is_dir" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["is_dir"] = false;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new JobFileInfo instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {JobFileInfo}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new JobFileInfo(/** @type {Partial<JobFileInfo>} */($$parsedSource));
+    }
+}
+
+/**
  * QueueItem combines Queue (active state) with Job (parameters/names) for display.
  */
 export class QueueItem {
