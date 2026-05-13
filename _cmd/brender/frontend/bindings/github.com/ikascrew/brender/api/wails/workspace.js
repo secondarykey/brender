@@ -24,6 +24,17 @@ export function Create(projectID, projectFileID, name) {
 
 /**
  * @param {string} projectID
+ * @param {string} fileID
+ * @param {string} workspaceID
+ * @param {string} jobID
+ * @returns {$CancellablePromise<void>}
+ */
+export function CreateMovie(projectID, fileID, workspaceID, jobID) {
+    return $Call.ByID(711210437, projectID, fileID, workspaceID, jobID);
+}
+
+/**
+ * @param {string} projectID
  * @param {string} workspaceID
  * @returns {$CancellablePromise<void>}
  */

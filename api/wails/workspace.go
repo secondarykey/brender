@@ -39,3 +39,7 @@ func (s *Workspace) GetThumbnail(projectID string, fileID string, workspaceID st
 func (s *Workspace) SetThumbnail(projectID string, fileID string, workspaceID string, imagePath string) (string, error) {
 	return api.SetWorkspaceThumbnail(projectID, fileID, workspaceID, imagePath)
 }
+
+func (s *Workspace) CreateMovie(projectID string, fileID string, workspaceID string, jobID string) error {
+	return api.CreateMovie(projectID, fileID, workspaceID, jobID)
+}

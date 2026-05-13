@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log/slog"
-	"os/exec"
 	"runtime"
 	"strings"
 	"time"
@@ -117,29 +115,10 @@ func (b *Blender) RunWithPID(ctx context.Context) (int, chan error, error) {
 }
 
 func (b *Blender) run(ctx context.Context, args ...string) (int, chan error, error) {
-
 	if args == nil {
 		args = b.createArguments()
 	}
-
-	slog.Info("Blender", "Command", b.cmd, "Arguments", args)
-
-	cmd := exec.CommandContext(ctx, b.cmd, args...)
-	cmd.Stdout = b.Writer
-	cmd.Stderr = b.ErrorWriter
-
-	err := cmd.Start()
-	if err != nil {
-		return -1, nil, xerrors.Errorf("Command start error: %w", err)
-	}
-	pid := cmd.Process.Pid
-
-	ch := make(chan error)
-	go func() {
-		ch <- cmd.Wait()
-	}()
-
-	return pid, ch, nil
+	return runCommand(ctx, b.Writer, b.ErrorWriter, b.cmd, args...)
 }
 
 func (b *Blender) createArguments() []string {

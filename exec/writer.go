@@ -2,7 +2,6 @@ package exec
 
 import (
 	"fmt"
-	"log/slog"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -11,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ikascrew/brender/log"
 	"golang.org/x/xerrors"
 )
 
@@ -111,11 +111,11 @@ type ProcessingResult struct {
 	Log2               string          `json:"log2,omitempty"`
 	BytesReceived      int64           `json:"bytes_received"` // パイプ診断用
 	// サブフレーム進捗（Cycles: tiles / samples、EEVEE: samples）
-	NowTile      int  `json:"now_tile"`      // 完了済みタイル数（0 = タイル情報なし）
+	NowTile      int  `json:"now_tile"` // 完了済みタイル数（0 = タイル情報なし）
 	TotalTiles   int  `json:"total_tiles"`
-	NowSample    int  `json:"now_sample"`    // 現在サンプル（0 = サンプル情報なし）
+	NowSample    int  `json:"now_sample"` // 現在サンプル（0 = サンプル情報なし）
 	TotalSamples int  `json:"total_samples"`
-	FrameActive  bool `json:"frame_active"`  // false = 初期化中（Synchronizing 等）、true = レンダリング開始済み
+	FrameActive  bool `json:"frame_active"` // false = 初期化中（Synchronizing 等）、true = レンダリング開始済み
 }
 
 type logFormat int
@@ -148,10 +148,10 @@ type ProcessingWriter struct {
 	log2          string
 	bytesReceived int64
 
-	nowTile      int
-	totalTiles   int
-	nowSample    int
-	totalSamples int
+	nowTile         int
+	totalTiles      int
+	nowSample       int
+	totalSamples    int
 	frameActive     bool      // サンプル/タイルデータ受信後 true（初期化フェーズを除外）
 	everSawFra      bool      // 一度でも Fra: 行を見たら true（リセットしない sticky フラグ）
 	everHadSamples  bool      // 一度でも totalSamples > 0 を受信したら true（リセットしない）
@@ -504,7 +504,7 @@ func (w *ProcessingWriter) parseLog(line string) {
 	w.everSawFra = true
 
 	// 直前の確定値を保存（タイル遷移の偽データ補正に使用）
-	prevTile   := w.prevNowTile
+	prevTile := w.prevNowTile
 	prevSample := w.prevNowSample
 
 	// サブフレーム値をリセットしてから行を再解析
@@ -530,7 +530,7 @@ func (w *ProcessingWriter) parseLog(line string) {
 		}
 	}
 	// 補正済みの値を次回呼び出し用に保存
-	w.prevNowTile   = w.nowTile
+	w.prevNowTile = w.nowTile
 	w.prevNowSample = w.nowSample
 
 	// totalSamples > 0 が判明した瞬間から frameActive=true。
@@ -651,12 +651,12 @@ func parseFrame(seg string) int {
 	buf = strings.TrimSpace(buf)
 	fields := strings.Fields(buf)
 	if len(fields) == 0 {
-		slog.Warn("parseFrame() empty:" + seg)
+		log.Warn("parseFrame() empty:%s", seg)
 		return -1
 	}
 	v, err := strconv.Atoi(fields[0])
 	if err != nil {
-		slog.Warn("parseFrame() error:" + seg)
+		log.Warn("parseFrame() error:%s", seg)
 		return -1
 	}
 	return v

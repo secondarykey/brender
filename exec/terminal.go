@@ -3,9 +3,10 @@ package exec
 import (
 	"fmt"
 	"io"
-	"log/slog"
 	"os"
 	"strings"
+
+	"github.com/ikascrew/brender/log"
 
 	"golang.org/x/term"
 )
@@ -27,7 +28,7 @@ func NewTerminal(h int) (*Terminal, error) {
 	term.writer = os.Stdout
 	term.width = 80 // default fallback
 	if err := term.setWidth(); err != nil {
-		slog.Warn("terminal width detection failed, using 80")
+		log.Warn("terminal width detection failed, using 80")
 	}
 	return &term, nil
 }
@@ -36,10 +37,9 @@ func (t *Terminal) setWidth() error {
 	if t == nil {
 		return nil
 	}
-	//TODO ?
 	w, _, err := term.GetSize(int(os.Stdout.Fd()))
 	if err != nil {
-		slog.Warn("term.GetSize()")
+		log.Warn("term.GetSize()")
 		return err
 	}
 	t.width = w

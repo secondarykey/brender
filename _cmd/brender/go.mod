@@ -12,7 +12,6 @@ replace github.com/ikascrew/brender => ../../
 
 require (
 	dario.cat/mergo v1.0.2 // indirect
-	github.com/BurntSushi/graphics-go v0.0.0-20160129215708-b43f31a4a966 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProtonMail/go-crypto v1.4.1 // indirect
 	github.com/adrg/xdg v0.5.3 // indirect
