@@ -100,6 +100,7 @@ func (s *Queue) OpenLogWindow(jobID string) error {
 		Title:            title,
 		Width:            900,
 		Height:           700,
+		Frameless:        true,
 		URL:              "/?log=" + jobID,
 		BackgroundColour: application.NewRGB(26, 26, 26),
 	}).Show()

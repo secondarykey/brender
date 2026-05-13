@@ -1303,6 +1303,17 @@ body {
   cursor: text;
 }
 /* ── ログビューアウィンドウ ─────────────────────────── */
+.log-titlebar-title {
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.55);
+  padding-left: 4px;
+  pointer-events: none;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .log-viewer-root {
   display: flex;
   flex-direction: column;

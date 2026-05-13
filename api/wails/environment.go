@@ -72,6 +72,7 @@ func (s *Environment) OpenSystemLogWindow() error {
 		Title:            "system.log",
 		Width:            900,
 		Height:           700,
+		Frameless:        true,
 		URL:              "/?syslog=1",
 		BackgroundColour: application.NewRGB(26, 26, 26),
 	}).Show()

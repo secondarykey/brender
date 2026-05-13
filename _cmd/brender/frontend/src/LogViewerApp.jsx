@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { QueueApi, EnvironmentApi } from './lib/api'
+import LogTitleBar from './components/LogTitleBar'
 
 function LogViewerApp() {
   const { t } = useTranslation()
-  const params  = new URLSearchParams(window.location.search)
-  const jobID   = params.get('log') || ''
+  const params   = new URLSearchParams(window.location.search)
+  const jobID    = params.get('log') || ''
   const isSysLog = params.has('syslog')
+  const title    = isSysLog ? 'system.log' : 'render.log'
   const [log, setLog]     = useState(null)
   const [error, setError] = useState('')
 
@@ -25,6 +27,7 @@ function LogViewerApp() {
 
   return (
     <div className="log-viewer-root">
+      <LogTitleBar title={title} />
       {error && <div className="error-msg" style={{ margin: 12 }}>{error}</div>}
       {log === null && !error && (
         <p className="log-viewer-status">{t('common.loading')}</p>
