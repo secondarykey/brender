@@ -66,7 +66,8 @@
     "queue": "キュー",
     "history": "実行履歴",
     "environment": "環境",
-    "blender": "Blender"
+    "blender": "Blender",
+    "video": "動画"
   },
   "breadcrumb": {
     "projects": "プロジェクト"
@@ -186,7 +187,15 @@
     "noBlenders": "登録されたBlenderはありません",
     "reorderHint": "≡ をドラッグして順序を変更できます。一番上のBlenderがデフォルトとして使用されます。",
     "confirmDeleteBlender": "Blenderを削除しますか？",
-    "noBlenderRegistered": "Blenderが登録されていません（システム設定で追加してください）"
+    "noBlenderRegistered": "Blenderが登録されていません（システム設定で追加してください）",
+    "ffmpegCmd": "ffmpeg コマンド",
+    "ffmpegCmdHint": "ffmpeg の実行ファイルパスまたはコマンド名（空白時は \"ffmpeg\" を使用）",
+    "ffmpegFPS": "FPS",
+    "ffmpegFPSHint": "動画のフレームレート（空白時は 30 を使用）",
+    "ffmpegExt": "入力ファイル拡張子",
+    "ffmpegExtHint": "レンダリング画像の拡張子（例: png、exr）",
+    "ffmpegArgs": "追加引数",
+    "ffmpegArgsHint": "ffmpeg に渡す追加の引数（省略可）"
   },
   "table": {
     "workspace": "ワークスペース",
@@ -218,7 +227,9 @@
     "play": "▶ 再生",
     "stop": "⏹ 停止",
     "setAsThumbnail": "サムネイルに設定",
-    "thumbnailSet": "サムネイルを設定しました"
+    "thumbnailSet": "サムネイルを設定しました",
+    "createMovie": "動画作成",
+    "movieCreated": "動画を作成しました"
   },
   "render": {
     "confirmTitle": "レンダリングを実行しますか？",

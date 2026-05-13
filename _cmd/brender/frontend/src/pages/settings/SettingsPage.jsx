@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import EnvironmentSettings from './EnvironmentSettings'
 import BlenderSettings from './BlenderSettings'
+import VideoSettings from './VideoSettings'
 
 function SettingsPage() {
   const { t } = useTranslation()
@@ -10,11 +11,12 @@ function SettingsPage() {
   const tabs = [
     { id: 'env',     label: t('tabs.environment') },
     { id: 'blender', label: t('tabs.blender') },
+    { id: 'video',   label: t('tabs.video') },
   ]
 
   return (
     <div className="page">
-<div className="tab-nav">
+      <div className="tab-nav">
         {tabs.map(tb => (
           <button
             key={tb.id}
@@ -26,8 +28,9 @@ function SettingsPage() {
         ))}
       </div>
       <div className="tab-content">
-        {tab === 'env' && <EnvironmentSettings />}
+        {tab === 'env'     && <EnvironmentSettings />}
         {tab === 'blender' && <BlenderSettings />}
+        {tab === 'video'   && <VideoSettings />}
       </div>
     </div>
   )

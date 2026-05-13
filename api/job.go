@@ -11,10 +11,6 @@ import (
 
 func CreateMovie(projectID string, fileID string, workspaceID string, jobID string) error {
 
-	fps := 30
-	inext := "png"
-	out := "movie.mp4"
-
 	//システムパスを取得
 	env, err := model.GetEnv()
 	if err != nil {
@@ -24,11 +20,32 @@ func CreateMovie(projectID string, fileID string, workspaceID string, jobID stri
 		return xerrors.New("作業ディレクトリが設定されていません")
 	}
 
+	cmd := env.FfmpegCmd
+	if cmd == "" {
+		cmd = "ffmpeg"
+	}
+	fps := env.FfmpegFPS
+	if fps == 0 {
+		fps = 30
+	}
+	inext := env.FfmpegExt
+	if inext == "" {
+		inext = "png"
+	}
+
+	ext := "mp4"
+	if inext == "exr" {
+		ext = "mp4"
+	}
+	out := "movie." + ext
+
 	jobDir := filepath.Join(env.ProjectRoot, projectID, fileID, workspaceID, jobID)
 	mvFile := filepath.Join(jobDir, out)
 
-	//ffmpeg を実行
-	mp := exec.NewFFmpeg("ffmpeg")
+	mp := exec.NewFFmpeg(cmd)
+	if env.FfmpegArgs != "" {
+		mp.ExtraArgs = env.FfmpegArgs
+	}
 	err = mp.CreateMovie(context.Background(), mvFile, fps, jobDir, inext)
 	if err != nil {
 		return xerrors.Errorf("ffmpeg.CreateMovie() error: %w", err)

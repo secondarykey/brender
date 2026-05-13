@@ -13,8 +13,9 @@ import (
 )
 
 type FFmpeg struct {
-	cmd    string
-	writer io.Writer
+	cmd       string
+	writer    io.Writer
+	ExtraArgs string
 }
 
 func NewFFmpeg(cmd string) *FFmpeg {
@@ -102,9 +103,17 @@ func (ff *FFmpeg) CreateMovie(ctx context.Context, out string, fps int, p string
 	//-pix_fmt yuv420p 静止画から作る時は入れておく
 	// 出力ファイル名
 
-	ch, err := ff.run(ctx, "-nostdin", "y",
+	args := []string{"-nostdin", "y",
 		"-safe", "0", "-f", "concat", "-i", listf,
-		"-r", fmt.Sprintf("%d", fps), "-pix_fmt", "yuv420p", out)
+		"-r", fmt.Sprintf("%d", fps), "-pix_fmt", "yuv420p"}
+	if ff.ExtraArgs != "" {
+		for _, a := range strings.Fields(ff.ExtraArgs) {
+			args = append(args, a)
+		}
+	}
+	args = append(args, out)
+
+	ch, err := ff.run(ctx, args...)
 
 	if err != nil {
 		return err

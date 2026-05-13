@@ -98,17 +98,15 @@ function ImageViewerDialog({ job, onClose }) {
 
   const handleCreateMovie = async () => {
     try {
-      console.log(job)
       await WorkspaceApi.createMovie({
         projectID:   job.project_id,
         fileID:      job.project_file_id,
         workspaceID: job.workspace_id,
         jobID:       job.id,
       })
-      setThumbMsg("Created")
+      setThumbMsg(t('viewer.movieCreated'))
     } catch (e) {
       setThumbMsg(String(e))
-    } finally {
     }
   }
 
@@ -122,6 +120,10 @@ function ImageViewerDialog({ job, onClose }) {
         <h3 className="dialog-title">
           {t('dialog.renderResults')}{job.workspace_name}
         </h3>
+
+        {thumbMsg && (
+          <div className="image-viewer-message">{thumbMsg}</div>
+        )}
 
         <div className="image-viewer-body">
           {loadingList && <div className="image-viewer-loading">{t('common.loading')}</div>}
@@ -168,13 +170,11 @@ function ImageViewerDialog({ job, onClose }) {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
 
-            {thumbMsg && <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>{thumbMsg}</span>}
-
             <button
               className="btn btn-sm btn-secondary"
               onClick={handleCreateMovie}
               disabled={settingThumb || images.length === 0}
-            > 動画作成 </button>
+            >{t('viewer.createMovie')}</button>
 
             <button
               className="btn btn-sm btn-secondary"

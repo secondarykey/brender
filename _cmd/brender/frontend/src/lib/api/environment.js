@@ -19,4 +19,11 @@ export const EnvironmentApi = {
   getWorkDir: () =>
     isWails() ? svc().then(s => s.GetWorkDir())
               : Promise.resolve(''),
+
+  /** ffmpeg 設定を保存
+   * @param {{ cmd: string, fps: number, ext: string, args: string }} args
+   */
+  setFfmpeg: ({ cmd, fps, ext, args }) =>
+    isWails() ? svc().then(s => s.SetFfmpeg(cmd, fps, ext, args))
+              : serverCall('environment', 'set_ffmpeg', { cmd, fps, ext, args }),
 }

@@ -66,7 +66,8 @@
     "queue": "Queue",
     "history": "History",
     "environment": "Environment",
-    "blender": "Blender"
+    "blender": "Blender",
+    "video": "Video"
   },
   "breadcrumb": {
     "projects": "Projects"
@@ -186,7 +187,15 @@
     "noBlenders": "No Blender installations registered",
     "reorderHint": "Drag ≡ to reorder. The top Blender is used as default.",
     "confirmDeleteBlender": "Delete this Blender installation?",
-    "noBlenderRegistered": "No Blender registered (please add in system settings)"
+    "noBlenderRegistered": "No Blender registered (please add in system settings)",
+    "ffmpegCmd": "ffmpeg command",
+    "ffmpegCmdHint": "Path or command name for ffmpeg (defaults to \"ffmpeg\" if empty)",
+    "ffmpegFPS": "FPS",
+    "ffmpegFPSHint": "Video frame rate (defaults to 30 if empty)",
+    "ffmpegExt": "Input file extension",
+    "ffmpegExtHint": "Extension of rendered images (e.g. png, exr)",
+    "ffmpegArgs": "Extra arguments",
+    "ffmpegArgsHint": "Additional arguments to pass to ffmpeg (optional)"
   },
   "table": {
     "workspace": "Workspace",
@@ -218,7 +227,9 @@
     "play": "▶ Play",
     "stop": "⏹ Stop",
     "setAsThumbnail": "Set as thumbnail",
-    "thumbnailSet": "Thumbnail updated"
+    "thumbnailSet": "Thumbnail updated",
+    "createMovie": "Create Video",
+    "movieCreated": "Video created"
   },
   "render": {
     "confirmTitle": "Start rendering?",

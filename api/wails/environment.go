@@ -22,6 +22,15 @@ func (s *Environment) SetRoot(root string) error {
 	return api.SetProjectRoot(root)
 }
 
+func (s *Environment) SetFfmpeg(cmd string, fps int, ext string, args string) error {
+	return api.SetFfmpegSettings(api.FfmpegSettings{
+		Cmd:  cmd,
+		FPS:  fps,
+		Ext:  ext,
+		Args: args,
+	})
+}
+
 // GetWorkDir returns the process working directory for use as a dialog default.
 func (s *Environment) GetWorkDir() string {
 	dir, err := os.Getwd()

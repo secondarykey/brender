@@ -28,3 +28,25 @@ func SetProjectRoot(root string) error {
 	env.ProjectRoot = root
 	return model.SetEnvironment(env)
 }
+
+type FfmpegSettings struct {
+	Cmd  string `json:"ffmpeg_cmd"`
+	FPS  int    `json:"ffmpeg_fps"`
+	Ext  string `json:"ffmpeg_ext"`
+	Args string `json:"ffmpeg_args"`
+}
+
+func SetFfmpegSettings(s FfmpegSettings) error {
+	env, err := model.GetEnv()
+	if err != nil {
+		return xerrors.Errorf("GetEnv error: %w", err)
+	}
+	if env == nil {
+		env = &model.Environment{}
+	}
+	env.FfmpegCmd = s.Cmd
+	env.FfmpegFPS = s.FPS
+	env.FfmpegExt = s.Ext
+	env.FfmpegArgs = s.Args
+	return model.SetEnvironment(env)
+}
