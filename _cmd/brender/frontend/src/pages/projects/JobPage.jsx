@@ -349,7 +349,7 @@ function JobPage({ job: initialJob, navigate, backPage, backParams }) {
   }
 
   const tabs = [
-    { id: 'detail', label: t('tabs.jobDetail') },
+    { id: 'detail', label: t('tabs.jobResult') },
     { id: 'render', label: t('tabs.renderResults') },
   ]
 
@@ -382,7 +382,7 @@ function JobPage({ job: initialJob, navigate, backPage, backParams }) {
             </>
           )}
           <span className="breadcrumb-sep">›</span>
-          <span>{job.workspace_name || t('breadcrumb.job')}</span>
+          <span>{t('breadcrumb.jobResult')}</span>
         </div>
       </div>
 

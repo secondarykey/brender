@@ -68,12 +68,13 @@
     "environment": "Environment",
     "blender": "Blender",
     "video": "Video",
-    "jobDetail": "Detail",
+    "jobResult": "Result",
     "renderResults": "Render Results"
   },
   "breadcrumb": {
     "projects": "Projects",
-    "job": "Job"
+    "job": "Job",
+    "jobResult": "Result"
   },
   "project": {
     "register": {
