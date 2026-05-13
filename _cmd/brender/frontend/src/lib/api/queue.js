@@ -74,6 +74,13 @@ export const QueueApi = {
     isWails() ? svc().then(s => s.ListJobImages(id))
               : serverCall('queue', 'list_job_images', { id }),
 
+  /** ジョブの出力ディレクトリにある全ファイル情報を取得
+   * @param {{ id: string }} args
+   */
+  listJobFiles: ({ id }) =>
+    isWails() ? svc().then(s => s.ListJobFiles(id))
+              : serverCall('queue', 'list_job_files', { id }),
+
   /** 画像ファイルを base64 データ URI として取得
    * @param {{ path: string }} args
    */

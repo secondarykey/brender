@@ -69,7 +69,8 @@
     "blender": "Blender",
     "video": "Video",
     "jobResult": "Result",
-    "renderResults": "Render Results"
+    "renderResults": "Render Results",
+    "dataView": "Data"
   },
   "breadcrumb": {
     "projects": "Projects",
@@ -152,6 +153,7 @@
     "secondsPerFrame": "s/f"
   },
   "job": {
+    "noFiles": "No files found",
     "showLog": "Show Log",
     "noLog": "No log file",
     "deleteDataWarning": "The output folder will be deleted. Job history will be preserved. This action cannot be undone.",

@@ -607,6 +607,46 @@ func ListJobImages(id string) ([]string, error) {
 	return paths, nil
 }
 
+// JobFileInfo はジョブ出力ディレクトリのファイル情報。
+type JobFileInfo struct {
+	Name    string    `json:"name"`
+	Size    int64     `json:"size"`
+	ModTime time.Time `json:"mod_time"`
+	IsDir   bool      `json:"is_dir"`
+}
+
+// ListJobFiles はジョブの出力ディレクトリにある全ファイルの情報を返す。
+func ListJobFiles(id string) ([]*JobFileInfo, error) {
+	j, err := model.GetJob(id)
+	if err != nil {
+		return nil, xerrors.Errorf("ListJobFiles GetJob: %w", err)
+	}
+	if j.OutputDir == "" {
+		return nil, nil
+	}
+	entries, err := os.ReadDir(j.OutputDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, xerrors.Errorf("ListJobFiles ReadDir: %w", err)
+	}
+	list := make([]*JobFileInfo, 0, len(entries))
+	for _, e := range entries {
+		info, err := e.Info()
+		if err != nil {
+			continue
+		}
+		list = append(list, &JobFileInfo{
+			Name:    e.Name(),
+			Size:    info.Size(),
+			ModTime: info.ModTime(),
+			IsDir:   e.IsDir(),
+		})
+	}
+	return list, nil
+}
+
 // GetImageBase64 は指定パスの画像を base64 データ URI として返す。
 func GetImageBase64(path string) (string, error) {
 	data, err := os.ReadFile(path)

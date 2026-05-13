@@ -334,6 +334,51 @@ function RenderResultTab({ job }) {
   )
 }
 
+// ── データ表示タブ ────────────────────────────────────────
+function DataViewTab({ job }) {
+  const { t } = useTranslation()
+  const [files, setFiles]     = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError]     = useState('')
+
+  useEffect(() => {
+    if (!job) return
+    setLoading(true)
+    setError('')
+    QueueApi.listJobFiles({ id: job.id })
+      .then(list => { setFiles(list || []); setLoading(false) })
+      .catch(err => { setError(String(err)); setLoading(false) })
+  }, [job])
+
+  if (loading) return <p className="setting-desc">{t('common.loading')}</p>
+  if (error)   return <div className="error-msg">{error}</div>
+  if (files.length === 0) return <p className="empty-msg">{t('job.noFiles')}</p>
+
+  return (
+    <div className="job-data-view">
+      <p className="setting-desc job-data-path">{job.output_dir}</p>
+      <table className="queue-table">
+        <thead>
+          <tr>
+            <th>{t('table.name')}</th>
+            <th style={{ textAlign: 'right' }}>{t('dialog.dataSize')}</th>
+            <th>{t('dialog.completedAt')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {files.map(f => (
+            <tr key={f.name} className={f.is_dir ? 'job-data-row-dir' : ''}>
+              <td>{f.is_dir ? '📁 ' : ''}{f.name}</td>
+              <td style={{ textAlign: 'right' }}>{f.is_dir ? '—' : formatBytes(f.size)}</td>
+              <td className="date-cell">{new Date(f.mod_time).toLocaleString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
 // ── ページ本体 ────────────────────────────────────────────
 function JobPage({ job: initialJob, navigate, backPage, backParams }) {
   const { t } = useTranslation()
@@ -351,6 +396,7 @@ function JobPage({ job: initialJob, navigate, backPage, backParams }) {
   const tabs = [
     { id: 'detail', label: t('tabs.jobResult') },
     { id: 'render', label: t('tabs.renderResults') },
+    { id: 'data',   label: t('tabs.dataView') },
   ]
 
   const bp = backParams || {}
@@ -404,6 +450,9 @@ function JobPage({ job: initialJob, navigate, backPage, backParams }) {
         )}
         {tab === 'render' && (
           <RenderResultTab job={job} />
+        )}
+        {tab === 'data' && (
+          <DataViewTab job={job} />
         )}
       </div>
     </div>

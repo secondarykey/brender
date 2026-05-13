@@ -69,7 +69,8 @@
     "blender": "Blender",
     "video": "動画",
     "jobResult": "実行結果",
-    "renderResults": "レンダリング結果"
+    "renderResults": "レンダリング結果",
+    "dataView": "データ表示"
   },
   "breadcrumb": {
     "projects": "プロジェクト",
@@ -152,6 +153,7 @@
     "secondsPerFrame": "秒/f"
   },
   "job": {
+    "noFiles": "ファイルが見つかりません",
     "showLog": "ログを表示",
     "noLog": "ログファイルがありません",
     "deleteDataWarning": "出力フォルダを削除します。ジョブ履歴は残ります。この操作は取り消せません。",
