@@ -1,17 +1,18 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import BasicSettings from './BasicSettings'
 import EnvironmentSettings from './EnvironmentSettings'
 import BlenderSettings from './BlenderSettings'
 import VideoSettings from './VideoSettings'
 
 function SettingsPage() {
   const { t } = useTranslation()
-  const [tab, setTab] = useState('env')
+  const [tab, setTab] = useState('basic')
 
   const tabs = [
-    { id: 'env',     label: t('tabs.environment') },
-    { id: 'blender', label: t('tabs.blender') },
-    { id: 'video',   label: t('tabs.video') },
+    { id: 'basic',      label: t('tabs.basic') },
+    { id: 'envSettings', label: t('tabs.envSettings') },
+    { id: 'video',      label: t('tabs.video') },
   ]
 
   return (
@@ -28,9 +29,14 @@ function SettingsPage() {
         ))}
       </div>
       <div className="tab-content">
-        {tab === 'env'     && <EnvironmentSettings />}
-        {tab === 'blender' && <BlenderSettings />}
-        {tab === 'video'   && <VideoSettings />}
+        {tab === 'basic'       && <BasicSettings />}
+        {tab === 'envSettings' && (
+          <>
+            <EnvironmentSettings />
+            <BlenderSettings />
+          </>
+        )}
+        {tab === 'video'       && <VideoSettings />}
       </div>
     </div>
   )

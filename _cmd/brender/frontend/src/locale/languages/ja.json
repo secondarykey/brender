@@ -65,6 +65,8 @@
     "settings": "設定",
     "queue": "キュー",
     "history": "実行履歴",
+    "basic": "基本設定",
+    "envSettings": "環境設定",
     "environment": "環境",
     "blender": "Blender",
     "video": "動画",

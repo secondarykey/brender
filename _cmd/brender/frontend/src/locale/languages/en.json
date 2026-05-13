@@ -65,6 +65,8 @@
     "settings": "Settings",
     "queue": "Queue",
     "history": "History",
+    "basic": "General",
+    "envSettings": "Environment",
     "environment": "Environment",
     "blender": "Blender",
     "video": "Video",
