@@ -9,15 +9,15 @@ import (
 	"golang.org/x/xerrors"
 )
 
-func CreateMovie(projectID string, fileID string, workspaceID string, jobID string) error {
+func CreateMovie(projectID string, fileID string, workspaceID string, jobID string) (string, error) {
 
 	//システムパスを取得
 	env, err := model.GetEnv()
 	if err != nil {
-		return xerrors.Errorf("model.GetEnv() error: %w", err)
+		return "", xerrors.Errorf("model.GetEnv() error: %w", err)
 	}
 	if env == nil || env.ProjectRoot == "" {
-		return xerrors.New("作業ディレクトリが設定されていません")
+		return "", xerrors.New("作業ディレクトリが設定されていません")
 	}
 
 	cmd := env.FfmpegCmd
@@ -48,7 +48,7 @@ func CreateMovie(projectID string, fileID string, workspaceID string, jobID stri
 	}
 	err = mp.CreateMovie(context.Background(), mvFile, fps, jobDir, inext)
 	if err != nil {
-		return xerrors.Errorf("ffmpeg.CreateMovie() error: %w", err)
+		return "", xerrors.Errorf("ffmpeg.CreateMovie() error: %w", err)
 	}
-	return nil
+	return mvFile, nil
 }

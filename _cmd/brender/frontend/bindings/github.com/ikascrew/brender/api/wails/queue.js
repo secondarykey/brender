@@ -183,6 +183,14 @@ export function OpenLogWindow(jobID) {
 }
 
 /**
+ * @param {string} videoPath
+ * @returns {$CancellablePromise<void>}
+ */
+export function OpenMovieWindow(videoPath) {
+    return $Call.ByID(3755692383, videoPath);
+}
+
+/**
  * @param {string} projectID
  * @param {string} workspaceID
  * @returns {$CancellablePromise<api$0.RenderPreview | null>}

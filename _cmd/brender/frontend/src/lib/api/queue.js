@@ -115,4 +115,11 @@ export const QueueApi = {
   openLogWindow: ({ id }) =>
     isWails() ? svc().then(s => s.OpenLogWindow(id))
               : serverCall('queue', 'open_log_window', { id }),
+
+  /** 動画ファイルを別ウィンドウで再生
+   * @param {{ path: string }} args
+   */
+  openMovieWindow: ({ path }) =>
+    isWails() ? svc().then(s => s.OpenMovieWindow(path))
+              : serverCall('queue', 'open_movie_window', { path }),
 }

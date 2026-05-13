@@ -1594,6 +1594,12 @@ body {
   opacity: 0.7;
   font-style: italic;
 }
+.job-data-row-video {
+  cursor: pointer;
+}
+.job-data-row-video:hover td {
+  color: #4a7cdc;
+}
 
 /* ── 画像ビュワー ─────────────────────────────────────── */
 .image-viewer-dialog {

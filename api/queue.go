@@ -610,6 +610,7 @@ func ListJobImages(id string) ([]string, error) {
 // JobFileInfo はジョブ出力ディレクトリのファイル情報。
 type JobFileInfo struct {
 	Name    string    `json:"name"`
+	Path    string    `json:"path"`
 	Size    int64     `json:"size"`
 	ModTime time.Time `json:"mod_time"`
 	IsDir   bool      `json:"is_dir"`
@@ -639,6 +640,7 @@ func ListJobFiles(id string) ([]*JobFileInfo, error) {
 		}
 		list = append(list, &JobFileInfo{
 			Name:    e.Name(),
+			Path:    filepath.Join(j.OutputDir, e.Name()),
 			Size:    info.Size(),
 			ModTime: info.ModTime(),
 			IsDir:   e.IsDir(),

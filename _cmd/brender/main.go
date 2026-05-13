@@ -5,6 +5,7 @@ import (
 	"embed"
 	_ "embed"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -40,6 +41,25 @@ func initDB() error {
 
 func initLocale() error {
 	return nil
+}
+
+// movieAwareHandler は /_movie パスでローカル動画ファイルを配信する。
+// Range リクエスト（シーク）は http.ServeFile が自動で処理する。
+type movieAwareHandler struct {
+	fallback http.Handler
+}
+
+func (h *movieAwareHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path == "/_movie" {
+		p := r.URL.Query().Get("path")
+		if p == "" || !filepath.IsAbs(p) {
+			http.Error(w, "invalid path", http.StatusBadRequest)
+			return
+		}
+		http.ServeFile(w, r, p)
+		return
+	}
+	h.fallback.ServeHTTP(w, r)
 }
 
 func main() {
@@ -81,7 +101,7 @@ func run() error {
 			application.NewService(wails.NewQueue()),
 		},
 		Assets: application.AssetOptions{
-			Handler: application.AssetFileServerFS(assets),
+			Handler: &movieAwareHandler{fallback: application.AssetFileServerFS(assets)},
 		},
 		Mac: application.MacOptions{
 			ApplicationShouldTerminateAfterLastWindowClosed: true,

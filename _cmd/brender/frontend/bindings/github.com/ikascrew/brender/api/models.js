@@ -26,6 +26,13 @@ export class JobFileInfo {
              */
             this["name"] = "";
         }
+        if (!("path" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["path"] = "";
+        }
         if (!("size" in $$source)) {
             /**
              * @member
