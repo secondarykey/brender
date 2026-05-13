@@ -207,7 +207,8 @@
     "ffmpegArgs": "追加引数",
     "ffmpegArgsHint": "ffmpeg に渡す追加の引数（省略可）",
     "systemLog": "システムログ",
-    "openSystemLog": "システムログを開く"
+    "openSystemLog": "システムログを開く",
+    "logLevel": "ログレベル"
   },
   "table": {
     "workspace": "ワークスペース",

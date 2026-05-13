@@ -207,7 +207,8 @@
     "ffmpegArgs": "Extra arguments",
     "ffmpegArgsHint": "Additional arguments to pass to ffmpeg (optional)",
     "systemLog": "System Log",
-    "openSystemLog": "Open System Log"
+    "openSystemLog": "Open System Log",
+    "logLevel": "Log Level"
   },
   "table": {
     "workspace": "Workspace",

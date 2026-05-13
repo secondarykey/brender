@@ -1314,6 +1314,27 @@ body {
   text-overflow: ellipsis;
 }
 
+.log-level-select {
+  --wails-draggable: no-drag;
+  height: 26px;
+  padding: 0 6px;
+  margin-right: 8px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 4px;
+  color: rgba(255,255,255,0.75);
+  font-size: 0.78rem;
+  cursor: pointer;
+  outline: none;
+}
+.log-level-select:hover {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.3);
+}
+.log-level-select option {
+  background: #1e1e1e;
+}
+
 .log-viewer-root {
   display: flex;
   flex-direction: column;

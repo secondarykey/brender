@@ -20,6 +20,24 @@ export function Get() {
 }
 
 /**
+ * GetLogLevel returns the current log level name (TRACE/DEBUG/INFO/NOTICE/WARN/ERROR).
+ * @returns {$CancellablePromise<string>}
+ */
+export function GetLogLevel() {
+    return $Call.ByID(3040438249);
+}
+
+/**
+ * GetLogLevels returns all available log level names in order.
+ * @returns {$CancellablePromise<string[]>}
+ */
+export function GetLogLevels() {
+    return $Call.ByID(3814594414).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType2($result);
+    }));
+}
+
+/**
  * GetSystemLog returns the contents of today's system log file.
  * @returns {$CancellablePromise<string>}
  */
@@ -36,7 +54,8 @@ export function GetWorkDir() {
 }
 
 /**
- * OpenSystemLogWindow opens the system log in a new viewer window.
+ * OpenSystemLogWindow opens the system log in a viewer window.
+ * If the window is already open, it is focused instead of creating a new one.
  * @returns {$CancellablePromise<void>}
  */
 export function OpenSystemLogWindow() {
@@ -56,6 +75,15 @@ export function SetFfmpeg(cmd, fps, ext, outExt, args) {
 }
 
 /**
+ * SetLogLevel changes the log level by name.
+ * @param {string} level
+ * @returns {$CancellablePromise<void>}
+ */
+export function SetLogLevel(level) {
+    return $Call.ByID(3317708141, level);
+}
+
+/**
  * @param {string} root
  * @returns {$CancellablePromise<void>}
  */
@@ -66,3 +94,4 @@ export function SetRoot(root) {
 // Private type creation functions
 const $$createType0 = model$0.Environment.createFrom;
 const $$createType1 = $Create.Nullable($$createType0);
+const $$createType2 = $Create.Array($Create.Any);
