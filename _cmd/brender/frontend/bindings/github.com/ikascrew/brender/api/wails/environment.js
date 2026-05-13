@@ -36,6 +36,14 @@ export function GetWorkDir() {
 }
 
 /**
+ * OpenSystemLogWindow opens the system log in a new viewer window.
+ * @returns {$CancellablePromise<void>}
+ */
+export function OpenSystemLogWindow() {
+    return $Call.ByID(588714768);
+}
+
+/**
  * @param {string} cmd
  * @param {number} fps
  * @param {string} ext

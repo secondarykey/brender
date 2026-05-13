@@ -31,4 +31,9 @@ export const EnvironmentApi = {
   getSystemLog: () =>
     isWails() ? svc().then(s => s.GetSystemLog())
               : serverCall('environment', 'get_system_log'),
+
+  /** システムログを別ウィンドウで開く */
+  openSystemLogWindow: () =>
+    isWails() ? svc().then(s => s.OpenSystemLogWindow())
+              : Promise.resolve(),
 }

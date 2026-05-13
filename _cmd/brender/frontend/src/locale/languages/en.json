@@ -68,7 +68,6 @@
     "history": "History",
     "basic": "General",
     "envSettings": "Environment",
-    "systemLog": "System Log",
     "environment": "Environment",
     "blender": "Blender",
     "video": "Video",
@@ -205,7 +204,9 @@
     "ffmpegOutExt": "Output file extension",
     "ffmpegOutExtHint": "Extension for the output video file (e.g. mp4, mov)",
     "ffmpegArgs": "Extra arguments",
-    "ffmpegArgsHint": "Additional arguments to pass to ffmpeg (optional)"
+    "ffmpegArgsHint": "Additional arguments to pass to ffmpeg (optional)",
+    "systemLog": "System Log",
+    "openSystemLog": "Open System Log"
   },
   "table": {
     "workspace": "Workspace",

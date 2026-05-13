@@ -1,11 +1,14 @@
 package wails
 
 import (
+	"fmt"
 	"os"
+	"time"
 
 	"github.com/ikascrew/brender/api"
 	"github.com/ikascrew/brender/log"
 	"github.com/ikascrew/brender/model"
+	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 type Environment struct{}
@@ -53,4 +56,18 @@ func (s *Environment) GetSystemLog() (string, error) {
 		return "", err
 	}
 	return string(data), nil
+}
+
+// OpenSystemLogWindow opens the system log in a new viewer window.
+func (s *Environment) OpenSystemLogWindow() error {
+	winName := fmt.Sprintf("syslog-%d", time.Now().UnixNano())
+	application.Get().Window.NewWithOptions(application.WebviewWindowOptions{
+		Name:             winName,
+		Title:            "system.log",
+		Width:            900,
+		Height:           700,
+		URL:              "/?syslog=1",
+		BackgroundColour: application.NewRGB(26, 26, 26),
+	}).Show()
+	return nil
 }

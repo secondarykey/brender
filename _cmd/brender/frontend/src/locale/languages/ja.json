@@ -68,7 +68,6 @@
     "history": "実行履歴",
     "basic": "基本設定",
     "envSettings": "環境設定",
-    "systemLog": "システムログ",
     "environment": "環境",
     "blender": "Blender",
     "video": "動画",
@@ -205,7 +204,9 @@
     "ffmpegOutExt": "出力ファイル拡張子",
     "ffmpegOutExtHint": "出力する動画ファイルの拡張子（例: mp4、mov）",
     "ffmpegArgs": "追加引数",
-    "ffmpegArgsHint": "ffmpeg に渡す追加の引数（省略可）"
+    "ffmpegArgsHint": "ffmpeg に渡す追加の引数（省略可）",
+    "systemLog": "システムログ",
+    "openSystemLog": "システムログを開く"
   },
   "table": {
     "workspace": "ワークスペース",
