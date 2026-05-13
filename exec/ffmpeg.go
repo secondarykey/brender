@@ -103,7 +103,7 @@ func (ff *FFmpeg) CreateMovie(ctx context.Context, out string, fps int, p string
 	//-pix_fmt yuv420p 静止画から作る時は入れておく
 	// 出力ファイル名
 
-	args := []string{"-nostdin", "y",
+	args := []string{"-nostdin", "-y",
 		"-safe", "0", "-f", "concat", "-i", listf,
 		"-r", fmt.Sprintf("%d", fps), "-pix_fmt", "yuv420p"}
 	if ff.ExtraArgs != "" {
