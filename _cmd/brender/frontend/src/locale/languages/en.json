@@ -28,7 +28,8 @@
     "enqueueing": "Adding...",
     "deleteData": "Delete Data",
     "dragToReorder": "Drag to reorder",
-    "error": "Error: "
+    "error": "Error: ",
+    "reload": "Reload"
   },
   "menu": {
     "project": "Project",
@@ -67,6 +68,7 @@
     "history": "History",
     "basic": "General",
     "envSettings": "Environment",
+    "systemLog": "System Log",
     "environment": "Environment",
     "blender": "Blender",
     "video": "Video",

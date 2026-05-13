@@ -117,6 +117,41 @@ export class Environment {
              */
             this["server"] = false;
         }
+        if (!("ffmpeg_cmd" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["ffmpeg_cmd"] = "";
+        }
+        if (!("ffmpeg_fps" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["ffmpeg_fps"] = 0;
+        }
+        if (!("ffmpeg_ext" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["ffmpeg_ext"] = "";
+        }
+        if (!("ffmpeg_out_ext" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["ffmpeg_out_ext"] = "";
+        }
+        if (!("ffmpeg_args" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["ffmpeg_args"] = "";
+        }
         if (!("created_at" in $$source)) {
             /**
              * @member
@@ -205,6 +240,14 @@ export class Job {
              * @type {string}
              */
             this["project_file_id"] = "";
+        }
+        if (!("file_name" in $$source)) {
+            /**
+             * project_files.name から JOIN で取得（カラム非作成）
+             * @member
+             * @type {string}
+             */
+            this["file_name"] = "";
         }
         if (!("blender_path" in $$source)) {
             /**

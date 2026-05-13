@@ -26,4 +26,9 @@ export const EnvironmentApi = {
   setFfmpeg: ({ cmd, fps, ext, outExt, args }) =>
     isWails() ? svc().then(s => s.SetFfmpeg(cmd, fps, ext, outExt, args))
               : serverCall('environment', 'set_ffmpeg', { cmd, fps, ext, out_ext: outExt, args }),
+
+  /** システムログの内容を取得 */
+  getSystemLog: () =>
+    isWails() ? svc().then(s => s.GetSystemLog())
+              : serverCall('environment', 'get_system_log'),
 }

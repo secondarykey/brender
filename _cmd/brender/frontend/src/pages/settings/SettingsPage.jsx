@@ -4,6 +4,7 @@ import BasicSettings from './BasicSettings'
 import EnvironmentSettings from './EnvironmentSettings'
 import BlenderSettings from './BlenderSettings'
 import VideoSettings from './VideoSettings'
+import SystemLogSettings from './SystemLogSettings'
 
 function SettingsPage() {
   const { t } = useTranslation()
@@ -13,6 +14,7 @@ function SettingsPage() {
     { id: 'basic',      label: t('tabs.basic') },
     { id: 'envSettings', label: t('tabs.envSettings') },
     { id: 'video',      label: t('tabs.video') },
+    { id: 'systemLog',  label: t('tabs.systemLog') },
   ]
 
   return (
@@ -37,6 +39,7 @@ function SettingsPage() {
           </>
         )}
         {tab === 'video'       && <VideoSettings />}
+        {tab === 'systemLog'   && <SystemLogSettings />}
       </div>
     </div>
   )

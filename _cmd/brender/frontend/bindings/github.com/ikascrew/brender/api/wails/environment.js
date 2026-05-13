@@ -20,11 +20,31 @@ export function Get() {
 }
 
 /**
+ * GetSystemLog returns the contents of today's system log file.
+ * @returns {$CancellablePromise<string>}
+ */
+export function GetSystemLog() {
+    return $Call.ByID(1191007214);
+}
+
+/**
  * GetWorkDir returns the process working directory for use as a dialog default.
  * @returns {$CancellablePromise<string>}
  */
 export function GetWorkDir() {
     return $Call.ByID(3827899719);
+}
+
+/**
+ * @param {string} cmd
+ * @param {number} fps
+ * @param {string} ext
+ * @param {string} outExt
+ * @param {string} args
+ * @returns {$CancellablePromise<void>}
+ */
+export function SetFfmpeg(cmd, fps, ext, outExt, args) {
+    return $Call.ByID(1734480084, cmd, fps, ext, outExt, args);
 }
 
 /**

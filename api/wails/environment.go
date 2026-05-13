@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/ikascrew/brender/api"
+	"github.com/ikascrew/brender/log"
 	"github.com/ikascrew/brender/model"
 )
 
@@ -39,4 +40,17 @@ func (s *Environment) GetWorkDir() string {
 		return ""
 	}
 	return dir
+}
+
+// GetSystemLog returns the contents of today's system log file.
+func (s *Environment) GetSystemLog() (string, error) {
+	path := log.Path()
+	if path == "" {
+		return "", nil
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
 }

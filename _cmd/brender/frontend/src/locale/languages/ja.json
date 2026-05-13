@@ -28,7 +28,8 @@
     "enqueueing": "追加中...",
     "deleteData": "データ削除",
     "dragToReorder": "ドラッグで並び替え",
-    "error": "エラー: "
+    "error": "エラー: ",
+    "reload": "再読み込み"
   },
   "menu": {
     "project": "プロジェクト",
@@ -67,6 +68,7 @@
     "history": "実行履歴",
     "basic": "基本設定",
     "envSettings": "環境設定",
+    "systemLog": "システムログ",
     "environment": "環境",
     "blender": "Blender",
     "video": "動画",
