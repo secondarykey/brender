@@ -1,17 +1,19 @@
 package main
 
 import (
+	"context"
 	"embed"
 	_ "embed"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/ikascrew/brender/api"
 	"github.com/ikascrew/brender/api/wails"
+	"github.com/ikascrew/brender/log"
 	"github.com/ikascrew/brender/model"
+	"golang.org/x/xerrors"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
@@ -23,6 +25,7 @@ var assets embed.FS
 var appVersion string
 
 func initDB() error {
+
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return err
@@ -35,20 +38,31 @@ func initDB() error {
 	return model.Init(filepath.Join(dir, "brender.db"))
 }
 
-func initLog() error {
-	return nil
-}
-
 func initLocale() error {
 	return nil
 }
 
 func main() {
 
-	//ログ関連の処理
+	err := run()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "run() error: %+v", err)
+		os.Exit(1)
+	}
+}
 
-	if err := initDB(); err != nil {
-		log.Fatal(err)
+func run() error {
+
+	logger, err := log.Init(context.Background())
+	if err != nil {
+		return xerrors.Errorf("log.Init() error: %w", err)
+	}
+
+	log.Notice("= Brender Version: %s", strings.TrimSpace(appVersion))
+
+	err = initDB()
+	if err != nil {
+		return xerrors.Errorf("initDB() error: %w", err)
 	}
 
 	//国際化関連の初期処理
@@ -58,6 +72,7 @@ func main() {
 	app := application.New(application.Options{
 		Name:        "Brender",
 		Description: "Blender rendering manager",
+		Logger:      logger,
 		Services: []application.Service{
 			application.NewService(wails.NewBlender()),
 			application.NewService(wails.NewEnvironment()),
@@ -74,7 +89,10 @@ func main() {
 	})
 
 	dev := app.Env.Info().Debug
-	log.Println(fmt.Sprintf("Version: %s(DEVMode:%t)", strings.TrimSpace(appVersion), dev))
+	if dev {
+		//ログをInfoに落とす
+		log.Info("Develop Mode")
+	}
 
 	app.Window.NewWithOptions(application.WebviewWindowOptions{
 		Title:     "brender",
@@ -95,6 +113,7 @@ func main() {
 	}
 
 	if err := app.Run(); err != nil {
-		log.Fatal(err)
+		return xerrors.Errorf("app.Run() error: %w", err)
 	}
+	return nil
 }

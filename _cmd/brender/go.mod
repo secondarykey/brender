@@ -1,10 +1,11 @@
 module main
 
-go 1.25.0
+go 1.26
 
 require (
 	github.com/ikascrew/brender v0.0.0
 	github.com/wailsapp/wails/v3 v3.0.0-alpha.88
+	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da
 )
 
 replace github.com/ikascrew/brender => ../../
@@ -15,6 +16,7 @@ require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProtonMail/go-crypto v1.4.1 // indirect
 	github.com/adrg/xdg v0.5.3 // indirect
+	github.com/anthonynsimon/bild v0.15.0 // indirect
 	github.com/bep/debounce v1.2.1 // indirect
 	github.com/cloudflare/circl v1.6.3 // indirect
 	github.com/coder/websocket v1.8.14 // indirect
@@ -60,7 +62,6 @@ require (
 	golang.org/x/term v0.43.0 // indirect
 	golang.org/x/text v0.37.0 // indirect
 	golang.org/x/tools v0.45.0 // indirect
-	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gorm.io/gorm v1.31.1 // indirect
 	modernc.org/libc v1.72.3 // indirect

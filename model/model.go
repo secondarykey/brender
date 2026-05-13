@@ -3,6 +3,8 @@ package model
 import (
 	"time"
 
+	"github.com/ikascrew/brender/log"
+
 	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 )
@@ -31,8 +33,12 @@ type MetaFields struct {
 }
 
 func Init(dsn string) error {
+
+	conf := &gorm.Config{}
+	conf.Logger = log.NewDBLogger()
+
 	var err error
-	db, err = gorm.Open(sqlite.Open(dsn), &gorm.Config{})
+	db, err = gorm.Open(sqlite.Open(dsn), conf)
 	if err != nil {
 		return err
 	}
