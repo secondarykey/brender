@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { QueueApi } from '../../lib/api'
 import JobDetailDialog from '../../components/JobDetailDialog'
-import ImageViewerDialog from '../../components/ImageViewerDialog'
 import Pagination from '../../components/Pagination'
 
 function StatusBadge({ status }) {
@@ -214,7 +213,6 @@ function HistoryTab({ navigate }) {
   const [jobs, setJobs]         = useState([])
   const [error, setError]       = useState('')
   const [selected, setSelected] = useState(null)
-  const [viewing, setViewing]   = useState(null)
   const [page, setPage]         = useState(1)
   const [pageSize, setPageSize] = useState(PAGE_SIZE)
 
@@ -242,10 +240,8 @@ function HistoryTab({ navigate }) {
           <table className="queue-table">
             <thead>
               <tr>
-                <th></th>
                 <th>{t('table.workspace')}</th>
                 <th>{t('table.status')}</th>
-                <th>{t('table.project')}</th>
                 <th>{t('table.engine')}</th>
                 <th>{t('table.frames')}</th>
                 <th>{t('table.enqueuedAt')}</th>
@@ -255,14 +251,11 @@ function HistoryTab({ navigate }) {
             <tbody>
               {pageJobs.map(j => (
                 <tr key={j.id} className={`${j.status === 'error' ? 'row-error' : ''} row-clickable`} onClick={() => setSelected(j)}>
-                  <td onClick={e => e.stopPropagation()}>
-                    {(j.data_status === 2 || j.data_status === 3) && (
-                      <button className="btn btn-sm" onClick={() => setViewing(j)}>{t('common.view')}</button>
-                    )}
-                  </td>
                   <td>
-                    <button className="link-btn" onClick={e => { e.stopPropagation(); navigate && navigate('workspace', {
-                      projectID: j.project_id, projectName: j.project_name, workspaceID: j.workspace_id,
+                    <button className="link-btn" onClick={e => { e.stopPropagation(); navigate && navigate('job', {
+                      job: j,
+                      backPage: 'workspace',
+                      backParams: { projectID: j.project_id, projectName: j.project_name, fileID: j.project_file_id, workspaceID: j.workspace_id, workspaceName: j.workspace_name },
                     })}}>
                       {j.workspace_name || j.workspace_id}
                     </button>
@@ -274,11 +267,6 @@ function HistoryTab({ navigate }) {
                         {j.error_msg.slice(0, 60)}{j.error_msg.length > 60 ? '…' : ''}
                       </div>
                     )}
-                  </td>
-                  <td>
-                    <button className="link-btn" onClick={() => navigate && navigate('project', { id: j.project_id })}>
-                      {j.project_name || j.project_id}
-                    </button>
                   </td>
                   <td>{j.engine || t('common.default')}</td>
                   <td className="frames-cell">{j.start_frame}–{j.end_frame}</td>
@@ -296,7 +284,6 @@ function HistoryTab({ navigate }) {
           setJobs(prev => prev.map(j => j.id === id ? { ...j, data_status: status } : j))
           setSelected(prev => prev && prev.id === id ? { ...prev, data_status: status } : prev)
         }} />
-      <ImageViewerDialog job={viewing} onClose={() => setViewing(null)} />
     </>
   )
 }
