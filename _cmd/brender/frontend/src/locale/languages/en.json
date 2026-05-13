@@ -237,6 +237,7 @@
     "setAsThumbnail": "Set as thumbnail",
     "thumbnailSet": "Thumbnail updated",
     "createMovie": "Create Video",
+    "movieCreating": "Creating...",
     "movieCreated": "Video created",
     "playMovie": "▶ Play"
   },

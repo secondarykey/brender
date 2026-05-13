@@ -23,11 +23,13 @@ export function Create(projectID, projectFileID, name) {
 }
 
 /**
+ * CreateMovie は ffmpeg による動画作成を goroutine で開始し即返す。
+ * 完了時（成功・失敗とも）に "movie:created" イベントを emit する。
  * @param {string} projectID
  * @param {string} fileID
  * @param {string} workspaceID
  * @param {string} jobID
- * @returns {$CancellablePromise<string>}
+ * @returns {$CancellablePromise<void>}
  */
 export function CreateMovie(projectID, fileID, workspaceID, jobID) {
     return $Call.ByID(711210437, projectID, fileID, workspaceID, jobID);
