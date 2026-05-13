@@ -72,6 +72,10 @@ func (s *Queue) ListJobImages(id string) ([]string, error) {
 	return api.ListJobImages(id)
 }
 
+func (s *Queue) ListJobFiles(id string) ([]*api.JobFileInfo, error) {
+	return api.ListJobFiles(id)
+}
+
 func (s *Queue) GetImageBase64(path string) (string, error) {
 	return api.GetImageBase64(path)
 }

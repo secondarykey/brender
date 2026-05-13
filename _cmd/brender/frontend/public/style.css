@@ -1639,6 +1639,22 @@ body {
   height: 55vh;
 }
 
+/* ── データ表示タブ ──────────────────────────────────── */
+.job-data-view {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.job-data-path {
+  font-size: 0.78rem;
+  word-break: break-all;
+  opacity: 0.6;
+}
+.job-data-row-dir td {
+  opacity: 0.7;
+  font-style: italic;
+}
+
 /* ── 画像ビュワー ─────────────────────────────────────── */
 .image-viewer-dialog {
   width: min(860px, 92vw);
