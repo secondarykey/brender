@@ -2,6 +2,12 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { QueueApi, WorkspaceApi } from '../../lib/api'
 
+const VIDEO_EXTS = new Set(['.mp4', '.mov', '.avi', '.mkv', '.webm', '.m4v'])
+function isVideoFile(name) {
+  const ext = name.lastIndexOf('.')
+  return ext !== -1 && VIDEO_EXTS.has(name.slice(ext).toLowerCase())
+}
+
 // ── ユーティリティ ────────────────────────────────────────
 function dataStatusClass(s) {
   if (s % 2 === 1) return 'data-status-locked'
@@ -214,6 +220,7 @@ function RenderResultTab({ job }) {
   const [loop, setLoop]                 = useState(false)
   const [msg, setMsg]                   = useState('')
   const [settingThumb, setSettingThumb] = useState(false)
+  const [moviePath, setMoviePath]       = useState('')
   const playingRef = useRef(false)
   const loopRef    = useRef(false)
 
@@ -272,14 +279,19 @@ function RenderResultTab({ job }) {
   const handleCreateMovie = async () => {
     setMsg('')
     try {
-      await WorkspaceApi.createMovie({
+      const path = await WorkspaceApi.createMovie({
         projectID:   job.project_id,
         fileID:      job.project_file_id,
         workspaceID: job.workspace_id,
         jobID:       job.id,
       })
+      setMoviePath(path || '')
       setMsg(t('viewer.movieCreated'))
     } catch (e) { setMsg(String(e)) }
+  }
+
+  const handlePlayMovie = () => {
+    if (moviePath) QueueApi.openMovieWindow({ path: moviePath })
   }
 
   const filename = images[index] ? images[index].replace(/\\/g, '/').split('/').pop() : ''
@@ -325,6 +337,11 @@ function RenderResultTab({ job }) {
           <button className="btn btn-sm btn-secondary" onClick={handleCreateMovie} disabled={settingThumb || images.length === 0}>
             {t('viewer.createMovie')}
           </button>
+          {moviePath && (
+            <button className="btn btn-sm btn-run" onClick={handlePlayMovie}>
+              {t('viewer.playMovie')}
+            </button>
+          )}
           <button className="btn btn-sm btn-secondary" onClick={handleSetThumbnail} disabled={settingThumb || images.length === 0}>
             {settingThumb ? '...' : t('viewer.setAsThumbnail')}
           </button>
@@ -366,13 +383,21 @@ function DataViewTab({ job }) {
           </tr>
         </thead>
         <tbody>
-          {files.map(f => (
-            <tr key={f.name} className={f.is_dir ? 'job-data-row-dir' : ''}>
-              <td>{f.is_dir ? '📁 ' : ''}{f.name}</td>
-              <td style={{ textAlign: 'right' }}>{f.is_dir ? '—' : formatBytes(f.size)}</td>
-              <td className="date-cell">{new Date(f.mod_time).toLocaleString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })}</td>
-            </tr>
-          ))}
+          {files.map(f => {
+            const canPlay = !f.is_dir && isVideoFile(f.name)
+            return (
+              <tr
+                key={f.name}
+                className={`${f.is_dir ? 'job-data-row-dir' : ''} ${canPlay ? 'job-data-row-video' : ''}`.trim()}
+                onClick={canPlay ? () => QueueApi.openMovieWindow({ path: f.path }) : undefined}
+                title={canPlay ? t('viewer.playMovie') : undefined}
+              >
+                <td>{f.is_dir ? '📁 ' : canPlay ? '▶ ' : ''}{f.name}</td>
+                <td style={{ textAlign: 'right' }}>{f.is_dir ? '—' : formatBytes(f.size)}</td>
+                <td className="date-cell">{new Date(f.mod_time).toLocaleString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })}</td>
+              </tr>
+            )
+          })}
         </tbody>
       </table>
     </div>

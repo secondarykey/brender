@@ -244,7 +244,8 @@
     "setAsThumbnail": "Set as thumbnail",
     "thumbnailSet": "Thumbnail updated",
     "createMovie": "Create Video",
-    "movieCreated": "Video created"
+    "movieCreated": "Video created",
+    "playMovie": "▶ Play"
   },
   "render": {
     "confirmTitle": "Start rendering?",

@@ -2,6 +2,8 @@ package wails
 
 import (
 	"fmt"
+	"net/url"
+	"path/filepath"
 	"time"
 
 	"github.com/ikascrew/brender/api"
@@ -90,6 +92,20 @@ func (s *Queue) UnlockJob(id string) error {
 
 func (s *Queue) GetJobLog(id string) (string, error) {
 	return api.GetJobLog(id)
+}
+
+func (s *Queue) OpenMovieWindow(videoPath string) error {
+	title := filepath.Base(videoPath)
+	winName := fmt.Sprintf("movie-%d", time.Now().UnixNano())
+	application.Get().Window.NewWithOptions(application.WebviewWindowOptions{
+		Name:             winName,
+		Title:            title,
+		Width:            1280,
+		Height:           720,
+		URL:              "/?movie=" + url.QueryEscape(videoPath),
+		BackgroundColour: application.NewRGB(0, 0, 0),
+	}).Show()
+	return nil
 }
 
 func (s *Queue) OpenLogWindow(jobID string) error {

@@ -9,7 +9,21 @@ import QueuePage from './pages/queue/QueuePage'
 import SettingsPage from './pages/settings/SettingsPage'
 import { EnvironmentApi } from './lib/api'
 
+export function VideoPlayer({ path }) {
+  return (
+    <div style={{ width: '100%', height: '100%', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <video
+        src={`/_movie?path=${encodeURIComponent(path)}`}
+        controls
+        autoPlay
+        style={{ maxWidth: '100%', maxHeight: '100%' }}
+      />
+    </div>
+  )
+}
+
 function App() {
+
   const [nav, setNav]         = useState({ page: 'projects', params: {} })
   const [queueKey, setQueueKey] = useState(0)
 
