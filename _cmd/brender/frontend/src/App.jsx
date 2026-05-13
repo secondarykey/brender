@@ -23,6 +23,14 @@ function App() {
       .catch(() => {})
   }, [])
 
+  useEffect(() => {
+    const handler = e => {
+      if (e.key === 'F12') EnvironmentApi.openSystemLogWindow()
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
+
   const navigate = (page, params = {}) => {
     if (page === 'queue') setQueueKey(k => k + 1)
     setNav({ page, params })
