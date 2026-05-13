@@ -33,11 +33,11 @@ func CreateMovie(projectID string, fileID string, workspaceID string, jobID stri
 		inext = "png"
 	}
 
-	ext := "mp4"
-	if inext == "exr" {
-		ext = "mp4"
+	outext := env.FfmpegOutExt
+	if outext == "" {
+		outext = "mp4"
 	}
-	out := "movie." + ext
+	out := "movie." + outext
 
 	jobDir := filepath.Join(env.ProjectRoot, projectID, fileID, workspaceID, jobID)
 	mvFile := filepath.Join(jobDir, out)

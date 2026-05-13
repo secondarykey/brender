@@ -30,10 +30,11 @@ func SetProjectRoot(root string) error {
 }
 
 type FfmpegSettings struct {
-	Cmd  string `json:"ffmpeg_cmd"`
-	FPS  int    `json:"ffmpeg_fps"`
-	Ext  string `json:"ffmpeg_ext"`
-	Args string `json:"ffmpeg_args"`
+	Cmd    string `json:"ffmpeg_cmd"`
+	FPS    int    `json:"ffmpeg_fps"`
+	Ext    string `json:"ffmpeg_ext"`
+	OutExt string `json:"ffmpeg_out_ext"`
+	Args   string `json:"ffmpeg_args"`
 }
 
 func SetFfmpegSettings(s FfmpegSettings) error {
@@ -47,6 +48,7 @@ func SetFfmpegSettings(s FfmpegSettings) error {
 	env.FfmpegCmd = s.Cmd
 	env.FfmpegFPS = s.FPS
 	env.FfmpegExt = s.Ext
+	env.FfmpegOutExt = s.OutExt
 	env.FfmpegArgs = s.Args
 	return model.SetEnvironment(env)
 }

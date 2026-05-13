@@ -11,10 +11,11 @@ type Environment struct {
 	ID          uint   `gorm:"primaryKey" json:"id"`
 	ProjectRoot string `json:"root"`
 	Server      bool   `json:"server"`
-	FfmpegCmd   string `json:"ffmpeg_cmd"`
-	FfmpegFPS   int    `json:"ffmpeg_fps"`
-	FfmpegExt   string `json:"ffmpeg_ext"`
-	FfmpegArgs  string `json:"ffmpeg_args"`
+	FfmpegCmd    string `json:"ffmpeg_cmd"`
+	FfmpegFPS    int    `json:"ffmpeg_fps"`
+	FfmpegExt    string `json:"ffmpeg_ext"`
+	FfmpegOutExt string `json:"ffmpeg_out_ext"`
+	FfmpegArgs   string `json:"ffmpeg_args"`
 	MetaFields
 }
 

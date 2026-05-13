@@ -194,6 +194,8 @@
     "ffmpegFPSHint": "動画のフレームレート（空白時は 30 を使用）",
     "ffmpegExt": "入力ファイル拡張子",
     "ffmpegExtHint": "レンダリング画像の拡張子（例: png、exr）",
+    "ffmpegOutExt": "出力ファイル拡張子",
+    "ffmpegOutExtHint": "出力する動画ファイルの拡張子（例: mp4、mov）",
     "ffmpegArgs": "追加引数",
     "ffmpegArgsHint": "ffmpeg に渡す追加の引数（省略可）"
   },

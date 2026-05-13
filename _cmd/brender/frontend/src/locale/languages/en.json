@@ -194,6 +194,8 @@
     "ffmpegFPSHint": "Video frame rate (defaults to 30 if empty)",
     "ffmpegExt": "Input file extension",
     "ffmpegExtHint": "Extension of rendered images (e.g. png, exr)",
+    "ffmpegOutExt": "Output file extension",
+    "ffmpegOutExtHint": "Extension for the output video file (e.g. mp4, mov)",
     "ffmpegArgs": "Extra arguments",
     "ffmpegArgsHint": "Additional arguments to pass to ffmpeg (optional)"
   },

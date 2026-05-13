@@ -7,6 +7,7 @@ function VideoSettings() {
   const [cmd,    setCmd]    = useState('')
   const [fps,    setFps]    = useState('')
   const [ext,    setExt]    = useState('')
+  const [outExt, setOutExt] = useState('')
   const [args,   setArgs]   = useState('')
   const [saving, setSaving] = useState(false)
   const [error,  setError]  = useState('')
@@ -16,10 +17,11 @@ function VideoSettings() {
     EnvironmentApi.get()
       .then(env => {
         if (!env) return
-        setCmd(env.ffmpeg_cmd  || '')
-        setFps(env.ffmpeg_fps  ? String(env.ffmpeg_fps) : '')
-        setExt(env.ffmpeg_ext  || '')
-        setArgs(env.ffmpeg_args || '')
+        setCmd(env.ffmpeg_cmd     || '')
+        setFps(env.ffmpeg_fps     ? String(env.ffmpeg_fps) : '')
+        setExt(env.ffmpeg_ext     || '')
+        setOutExt(env.ffmpeg_out_ext || '')
+        setArgs(env.ffmpeg_args   || '')
       })
       .catch(err => setError(String(err)))
   }, [])
@@ -33,6 +35,7 @@ function VideoSettings() {
         cmd,
         fps: fps ? parseInt(fps, 10) : 0,
         ext,
+        outExt,
         args,
       })
       setSaved(true)
@@ -81,6 +84,19 @@ function VideoSettings() {
           value={ext}
           onChange={e => { setExt(e.target.value); setSaved(false) }}
           placeholder="png"
+        />
+      </div>
+
+      <div className="form-group">
+        <label className="form-label">{t('settings.ffmpegOutExt')}</label>
+        <p className="setting-desc">{t('settings.ffmpegOutExtHint')}</p>
+        <input
+          className="form-input"
+          type="text"
+          style={{ width: 160 }}
+          value={outExt}
+          onChange={e => { setOutExt(e.target.value); setSaved(false) }}
+          placeholder="mp4"
         />
       </div>
 
