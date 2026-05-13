@@ -1343,6 +1343,32 @@ body {
   color: rgba(255,255,255,0.4);
   font-size: 0.9rem;
 }
+.log-tail-btn {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(30,30,30,0.92);
+  color: rgba(255,255,255,0.5);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.log-tail-btn:hover {
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.9);
+}
+.log-tail-btn.active {
+  background: #4a7cdc;
+  border-color: #4a7cdc;
+  color: #fff;
+}
 .job-detail-error {
   background: rgba(241,126,114,0.1);
   border: 1px solid rgba(241,126,114,0.3);

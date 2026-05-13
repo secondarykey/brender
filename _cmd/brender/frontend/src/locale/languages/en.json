@@ -157,6 +157,7 @@
   "job": {
     "showLog": "Show Log",
     "noLog": "No log file",
+    "tail": "Follow tail",
     "deleteDataWarning": "The output folder will be deleted. Job history will be preserved. This action cannot be undone.",
     "deleteDataAction": "Delete Data",
     "deleteWarning": "The output folder will also be deleted. This action cannot be undone."

@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { QueueApi, EnvironmentApi } from './lib/api'
 import LogTitleBar from './components/LogTitleBar'
+
+const TAIL_INTERVAL = 1000
 
 function LogViewerApp() {
   const { t } = useTranslation()
@@ -9,21 +11,37 @@ function LogViewerApp() {
   const jobID    = params.get('log') || ''
   const isSysLog = params.has('syslog')
   const title    = isSysLog ? 'system.log' : 'render.log'
+
   const [log, setLog]     = useState(null)
   const [error, setError] = useState('')
+  const [tail, setTail]   = useState(false)
+  const preRef            = useRef(null)
 
-  useEffect(() => {
-    if (isSysLog) {
-      EnvironmentApi.getSystemLog()
-        .then(text => setLog(text ?? ''))
-        .catch(err => setError(String(err)))
-      return
-    }
-    if (!jobID) { setLog(''); return }
-    QueueApi.getJobLog({ id: jobID })
+  const fetchLog = useCallback(() => {
+    const req = isSysLog
+      ? EnvironmentApi.getSystemLog()
+      : (jobID ? QueueApi.getJobLog({ id: jobID }) : Promise.resolve(''))
+    req
       .then(text => setLog(text ?? ''))
       .catch(err => setError(String(err)))
-  }, [jobID, isSysLog])
+  }, [isSysLog, jobID])
+
+  // 初回読み込み
+  useEffect(() => { fetchLog() }, [fetchLog])
+
+  // tail モード: 1秒ごとに再読み込み
+  useEffect(() => {
+    if (!tail) return
+    const id = setInterval(fetchLog, TAIL_INTERVAL)
+    return () => clearInterval(id)
+  }, [tail, fetchLog])
+
+  // tail ON のとき、ログ更新のたびに末尾へスクロール
+  useEffect(() => {
+    if (tail && preRef.current) {
+      preRef.current.scrollTop = preRef.current.scrollHeight
+    }
+  }, [log, tail])
 
   return (
     <div className="log-viewer-root">
@@ -36,8 +54,15 @@ function LogViewerApp() {
         <p className="log-viewer-status">{t('job.noLog')}</p>
       )}
       {log && (
-        <pre className="log-viewer-pre">{log}</pre>
+        <pre ref={preRef} className="log-viewer-pre">{log}</pre>
       )}
+      <button
+        className={`log-tail-btn${tail ? ' active' : ''}`}
+        onClick={() => setTail(v => !v)}
+        title={t('job.tail')}
+      >
+        ↓
+      </button>
     </div>
   )
 }
