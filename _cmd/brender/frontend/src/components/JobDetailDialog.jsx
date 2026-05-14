@@ -156,6 +156,7 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
 
           <div className="job-detail-section">
             <Row label={t('dialog.scene')}    value={job.scene   || t('common.default')} />
+            <Row label={t('dialog.camera')}  value={job.camera} />
             <Row label={t('dialog.engine')}  value={job.engine  || t('common.default')} />
             <Row label={t('dialog.frames')}  value={`${job.start_frame} – ${job.end_frame}${job.frame_step > 1 ? ` (${t('dialog.step')}${job.frame_step})` : ''}`} />
             <Row label={t('dialog.threads')}  value={job.thread === 0 ? t('common.automatic') : String(job.thread)} />

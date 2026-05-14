@@ -180,6 +180,7 @@
     "project": "Project",
     "workspace": "Workspace",
     "scene": "Scene",
+    "camera": "Camera",
     "engine": "Engine",
     "frames": "Frames",
     "step": "Step ",
