@@ -264,7 +264,7 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
   const cameraDefault = !form.camera && sceneInfo?.Camera ? sceneInfo.Camera : null
   const engineDefault = !form.engine && sceneInfo?.Engine ? sceneInfo.Engine : null
   const frameDefault  = !specifyFrames && sceneInfo ? `${sceneInfo.Start} 〜 ${sceneInfo.End}` : null
-  const threadDefault = form.thread === 0 && cpuCount ? `全 ${cpuCount} コア` : null
+  const threadsHint   = cpuCount ? `0 = 自動（最大 ${cpuCount} コア）` : '0 = 自動'
 
   return (
     <div className="form workspace" style={{ maxWidth: 640 }}>
@@ -305,14 +305,11 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
         <div className="form-field" style={{ flex: 1 }}>
           <label className="form-label">{t('workspace.samples')}</label>
           <input className="form-input" style={{ textAlign: 'right' }} type="number" min={0} value={form.samples} onChange={e => set('samples', Number(e.target.value))} />
-          <span className="form-hint">{t('workspace.samplesHint')}</span>
         </div>
         <div className="form-field" style={{ flex: 1 }}>
-          <label className="form-label">
-            {t('workspace.threads')}
-            <DefaultTag value={threadDefault} />
-          </label>
+          <label className="form-label">{t('workspace.threads')}</label>
           <input className="form-input" style={{ textAlign: 'right' }} type="number" min={0} value={form.thread} onChange={e => set('thread', Number(e.target.value))} />
+          <span className="form-hint">{threadsHint}</span>
         </div>
       </div>
 
