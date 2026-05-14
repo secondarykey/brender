@@ -52,7 +52,7 @@ function App() {
     WorkDirApi.list()
       .then(list => {
         const hasActive = (list || []).some(w => w.status === 'active')
-        if (!hasActive) setNav({ page: 'settings', params: {} })
+        if (!hasActive) setNav({ page: 'settings', params: { tab: 'envSettings' } })
       })
       .catch(() => {})
   }, [])
@@ -111,7 +111,7 @@ function App() {
       case 'queue':
         return <QueuePage key={queueKey} navigate={navigate} />
       case 'settings':
-        return <SettingsPage />
+        return <SettingsPage initialTab={p.tab} />
       default:
         return <ProjectListPage navigate={navigate} />
     }

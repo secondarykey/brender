@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ProjectApi, WorkDirApi } from '../../lib/api'
+import { ProjectApi, WorkDirApi, BlenderApi } from '../../lib/api'
 import SortSelect from '../../components/SortSelect'
 
 function WorkDirBadge({ status, t }) {
@@ -57,6 +57,7 @@ function ProjectListPage({ navigate }) {
   const [workDirMap, setWorkDirMap] = useState({})
   const [error, setError]       = useState('')
   const [hasWorkDir, setHasWorkDir] = useState(true)
+  const [hasBlender, setHasBlender] = useState(true)
   const [creating, setCreating] = useState(false)
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('viewMode:projects') || 'list')
   const [sort, setSort]         = useState(() => localStorage.getItem('sort:projects') || 'display_order')
@@ -84,10 +85,15 @@ function ProjectListPage({ navigate }) {
         setHasWorkDir(dirs.some(w => w.status === 'active'))
       })
       .catch(() => setHasWorkDir(false))
+    BlenderApi.list()
+      .then(list => setHasBlender((list || []).length > 0))
+      .catch(() => setHasBlender(false))
   }, [])
 
+  const canCreate = hasWorkDir && hasBlender
+
   const handleCreate = async () => {
-    if (!hasWorkDir || creating) return
+    if (!canCreate || creating) return
     setCreating(true)
     try {
       const d = await ProjectApi.create({ name: 'New Project Name' })
@@ -104,7 +110,13 @@ function ProjectListPage({ navigate }) {
       {!hasWorkDir && (
         <div className="notice-banner">
           {t('project.rootNotSet')}
-          <button className="btn-link" onClick={() => navigate('settings')}>{t('project.configureInSettings')}</button>
+          <button className="btn-link" onClick={() => navigate('settings', { tab: 'envSettings' })}>{t('project.configureInSettings')}</button>
+        </div>
+      )}
+      {hasWorkDir && !hasBlender && (
+        <div className="notice-banner">
+          {t('settings.noBlenderRegistered')}
+          <button className="btn-link" onClick={() => navigate('settings', { tab: 'envSettings' })}>{t('project.configureInSettings')}</button>
         </div>
       )}
 
@@ -113,7 +125,7 @@ function ProjectListPage({ navigate }) {
       {projects.length === 0 ? (
         <div className="empty-state">
           <p>{t('project.empty')}</p>
-          <button className="btn btn-green" onClick={handleCreate} disabled={!hasWorkDir || creating}>{t('project.createFirst')}</button>
+          <button className="btn btn-green" onClick={handleCreate} disabled={!canCreate || creating}>{t('project.createFirst')}</button>
         </div>
       ) : (
         <>
@@ -174,7 +186,7 @@ function ProjectListPage({ navigate }) {
       )}
 
       <div className="list-fab">
-        <button className="btn btn-green" onClick={handleCreate} disabled={!hasWorkDir || creating}>
+        <button className="btn btn-green" onClick={handleCreate} disabled={!canCreate || creating}>
           {creating ? t('common.registering') : t('project.register.transition')}
         </button>
       </div>

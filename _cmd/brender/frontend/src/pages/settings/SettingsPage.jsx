@@ -5,14 +5,14 @@ import EnvironmentSettings from './EnvironmentSettings'
 import BlenderSettings from './BlenderSettings'
 import VideoSettings from './VideoSettings'
 
-function SettingsPage() {
+function SettingsPage({ initialTab }) {
   const { t } = useTranslation()
-  const [tab, setTab] = useState('basic')
+  const [tab, setTab] = useState(initialTab || 'basic')
 
   const tabs = [
     { id: 'basic',       label: t('tabs.basic') },
-    { id: 'envSettings', label: t('tabs.envSettings') },
     { id: 'video',       label: t('tabs.video') },
+    { id: 'envSettings', label: t('tabs.envSettings') },
   ]
 
   return (
@@ -30,13 +30,13 @@ function SettingsPage() {
       </div>
       <div className="tab-content">
         {tab === 'basic'       && <BasicSettings />}
+        {tab === 'video'       && <VideoSettings />}
         {tab === 'envSettings' && (
           <>
             <EnvironmentSettings />
             <div style={{ marginTop: 12 }}><BlenderSettings /></div>
           </>
         )}
-        {tab === 'video'       && <VideoSettings />}
       </div>
     </div>
   )
