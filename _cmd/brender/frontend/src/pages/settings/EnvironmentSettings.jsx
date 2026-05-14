@@ -27,6 +27,15 @@ function fmtBytes(bytes) {
   return (bytes / 1024 ** 3).toFixed(1) + ' GB'
 }
 
+function InfoRow({ label, value, last }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: last ? 0 : 6 }}>
+      <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.5)' }}>{label}</span>
+      <span style={{ fontSize: '0.85rem' }}>{value}</span>
+    </div>
+  )
+}
+
 // ── 編集ダイアログ ────────────────────────────────────────
 function EditDialog({ wd, onClose, onSaved }) {
   const { t } = useTranslation()
@@ -111,15 +120,19 @@ function EditDialog({ wd, onClose, onSaved }) {
   const busy        = saving || changeDirProgress !== null
   const saveBlocked = busy || (pathChanged && !checkInfo)
 
+  const row = { marginBottom: 16 }
+  const lbl = { display: 'block', fontSize: '0.82rem', color: 'rgba(255,255,255,0.5)', marginBottom: 6 }
+
   return (
     <div className="dialog-overlay" onClick={busy ? undefined : onClose}>
       <div className="dialog" onClick={e => e.stopPropagation()}>
         <h3 className="dialog-title">{t('settings.workDirs.editTitle')}</h3>
         <div className="dialog-body">
 
-          <div className="form-group">
-            <label className="form-label">{t('settings.workDirs.path')}</label>
-            <div style={{ display: 'flex', gap: 8, marginTop: 4, alignItems: 'center' }}>
+          {/* Path */}
+          <div style={row}>
+            <span style={lbl}>{t('settings.workDirs.path')}</span>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <span style={{ flex: 1, fontFamily: 'monospace', fontSize: '0.85rem', wordBreak: 'break-all', color: pathChanged ? '#fff' : 'rgba(255,255,255,0.7)' }}>
                 {path}
               </span>
@@ -129,8 +142,9 @@ function EditDialog({ wd, onClose, onSaved }) {
             </div>
           </div>
 
-          <div className="form-group" style={{ marginTop: 16 }}>
-            <label className="form-label">{t('settings.workDirs.status')}</label>
+          {/* Status */}
+          <div style={row}>
+            <span style={lbl}>{t('settings.workDirs.status')}</span>
             <select
               className="form-select"
               style={{ width: 160 }}
@@ -144,46 +158,35 @@ function EditDialog({ wd, onClose, onSaved }) {
             </select>
           </div>
 
-          <div className="form-group" style={{ marginTop: 16 }}>
-            <label className="form-label">{t('settings.workDirs.check')}</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4 }}>
-              <button className="btn btn-sm" onClick={handleCheck} disabled={checking || busy}>
-                {checking ? t('common.processing') : t('settings.workDirs.check')}
-              </button>
-              {pathChanged && !checkInfo && (
-                <span style={{ fontSize: '0.82rem', color: 'rgba(255,200,100,0.9)' }}>
-                  {t('settings.workDirs.checkRequired')}
-                </span>
-              )}
-            </div>
-            {checkInfo && (
-              <table style={{ marginTop: 10, fontSize: '0.85rem', borderCollapse: 'collapse', width: '100%' }}>
-                <tbody>
-                  <tr>
-                    <td style={{ color: 'rgba(255,255,255,0.5)', paddingRight: 16, paddingBottom: 4 }}>{t('settings.workDirs.projects')}</td>
-                    <td>{checkInfo.projectCount} {t('settings.workDirs.projectsUnit')}</td>
-                  </tr>
-                  <tr>
-                    <td style={{ color: 'rgba(255,255,255,0.5)', paddingRight: 16, paddingBottom: 4 }}>{t('settings.workDirs.dataSize')}</td>
-                    <td>{fmtBytes(checkInfo.dataSize)}</td>
-                  </tr>
-                  <tr>
-                    <td style={{ color: 'rgba(255,255,255,0.5)', paddingRight: 16 }}>{t('settings.workDirs.freeSpace')} ({pathChanged ? t('settings.workDirs.destination') : t('settings.workDirs.current')})</td>
-                    <td>
-                      {checkInfo.exists
-                        ? fmtBytes(checkInfo.free)
-                        : <span className="badge-red">{t('settings.workDirs.notExists')}</span>
-                      }
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+          {/* Check */}
+          <div style={{ ...row, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button className="btn btn-sm" onClick={handleCheck} disabled={checking || busy}>
+              {checking ? t('common.processing') : t('settings.workDirs.check')}
+            </button>
+            {pathChanged && !checkInfo && (
+              <span style={{ fontSize: '0.82rem', color: 'rgba(255,200,100,0.85)' }}>
+                {t('settings.workDirs.checkRequired')}
+              </span>
             )}
           </div>
 
+          {/* Check results */}
+          {checkInfo && (
+            <div style={{ ...row, background: 'rgba(255,255,255,0.04)', borderRadius: 6, padding: '10px 14px' }}>
+              <InfoRow label={t('settings.workDirs.projects')}  value={`${checkInfo.projectCount} ${t('settings.workDirs.projectsUnit')}`} />
+              <InfoRow label={t('settings.workDirs.dataSize')}  value={fmtBytes(checkInfo.dataSize)} />
+              <InfoRow
+                label={`${t('settings.workDirs.freeSpace')} (${pathChanged ? t('settings.workDirs.destination') : t('settings.workDirs.current')})`}
+                value={checkInfo.exists ? fmtBytes(checkInfo.free) : <span className="badge-red">{t('settings.workDirs.notExists')}</span>}
+                last
+              />
+            </div>
+          )}
+
+          {/* Migration progress */}
           {changeDirProgress && (
-            <div style={{ marginTop: 12 }}>
-              <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', marginBottom: 4 }}>
+            <div style={row}>
+              <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', marginBottom: 6 }}>
                 {t('project.migrateRunning')} {Math.round(changeDirProgress.pct * 100)}%
               </div>
               <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 4, height: 6 }}>
@@ -192,7 +195,7 @@ function EditDialog({ wd, onClose, onSaved }) {
             </div>
           )}
 
-          {error && <div className="error-msg" style={{ marginTop: 12 }}>{error}</div>}
+          {error && <div className="error-msg">{error}</div>}
         </div>
         <div className="dialog-actions">
           <button className="btn btn-ghost" onClick={onClose} disabled={busy}>{t('common.cancel')}</button>
