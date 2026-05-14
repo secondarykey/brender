@@ -329,6 +329,7 @@ function HistoryTab({ projectID, fileID, navigate, projectName, fileName }) {
                 <div className="queue-history-detail" style={{ marginTop: 4 }}>
                   <span>{j.start_frame}–{j.end_frame}f</span>
                   {j.engine && <span>{j.engine}</span>}
+                  {j.camera && <span>{j.camera}</span>}
                   {j.enqueued_at && (
                     <span>{new Date(j.enqueued_at).toLocaleString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
                   )}
