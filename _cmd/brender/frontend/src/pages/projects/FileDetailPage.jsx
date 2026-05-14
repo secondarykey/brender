@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
-import { WorkspaceApi, QueueApi, ProjectApi, BlenderApi } from '../../lib/api'
+import { WorkspaceApi, QueueApi, ProjectApi, BlenderApi, WorkDirApi } from '../../lib/api'
 import Pagination from '../../components/Pagination'
 import SortSelect from '../../components/SortSelect'
 
 
 // ── ワークスペースカード（サムネイル表示） ──────────────────
-function WorkspaceCard({ projectID, fileID, ws, navigate, projectName, fileName, onRunClick, resolvingWsId, thumbnailMode, onSetThumbnail }) {
+function WorkspaceCard({ projectID, fileID, ws, navigate, projectName, fileName, onRunClick, resolvingWsId, thumbnailMode, onSetThumbnail, workDirLocked }) {
   const { t } = useTranslation()
   const [thumb, setThumb] = useState(null)
 
@@ -51,7 +51,7 @@ function WorkspaceCard({ projectID, fileID, ws, navigate, projectName, fileName,
           <button
             className="btn btn-run btn-sm"
             onClick={e => { e.stopPropagation(); onRunClick(ws) }}
-            disabled={resolvingWsId !== null}
+            disabled={resolvingWsId !== null || workDirLocked}
           >
             ▶ {t('common.run')}
           </button>
@@ -62,7 +62,7 @@ function WorkspaceCard({ projectID, fileID, ws, navigate, projectName, fileName,
 }
 
 // ── ワークスペースタブ ─────────────────────────────────────
-function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEnqueued }) {
+function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEnqueued, workDirLocked }) {
   const { t } = useTranslation()
   const [workspaces, setWorkspaces] = useState([])
   const [creating, setCreating]     = useState(false) // 作成中フラグ
@@ -191,7 +191,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
                   <button
                     className="btn btn-run btn-sm ws-item-run-btn"
                     onClick={() => handleRunClick(ws)}
-                    disabled={resolvingWsId !== null}
+                    disabled={resolvingWsId !== null || workDirLocked}
                   >
                     ▶ {t('common.run')}
                   </button>
@@ -233,6 +233,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
                 resolvingWsId={resolvingWsId}
                 thumbnailMode={thumbnailMode}
                 onSetThumbnail={handleSetThumbnail}
+                workDirLocked={workDirLocked}
               />
             ))}
           </div>
@@ -559,6 +560,16 @@ function FileDetailPage({ projectID, projectName, fileID, fileName, navigate }) 
   const { t } = useTranslation()
   const [tab, setTab] = useState('workspace')
   const [currentFileName, setCurrentFileName] = useState(fileName)
+  const [workDirStatus, setWorkDirStatus] = useState(null)
+
+  useEffect(() => {
+    Promise.all([ProjectApi.get({ id: projectID }), WorkDirApi.list()])
+      .then(([d, dirs]) => {
+        const wd = (dirs || []).find(w => w.id === d?.project?.work_dir_id)
+        setWorkDirStatus(wd?.status || null)
+      })
+      .catch(() => {})
+  }, [projectID])
 
   const tabs = [
     { id: 'workspace', label: t('tabs.workspaceList') },
@@ -576,6 +587,13 @@ function FileDetailPage({ projectID, projectName, fileID, fileName, navigate }) 
           <span>{currentFileName}</span>
         </div>
       </div>
+
+      {workDirStatus === 'lock' && (
+        <div className="notice-banner notice-error">{t('project.workDirLockError')}</div>
+      )}
+      {workDirStatus === 'inactive' && (
+        <div className="notice-banner">{t('project.workDirInactiveWarning')}</div>
+      )}
 
       <div className="tab-nav">
         {tabs.map(tb => (
@@ -600,6 +618,7 @@ function FileDetailPage({ projectID, projectName, fileID, fileName, navigate }) 
                 fileName={currentFileName}
                 navigate={navigate}
                 onEnqueued={() => navigate('queue')}
+                workDirLocked={workDirStatus === 'lock'}
               />
             </div>
             <div className="ws-detail-right">

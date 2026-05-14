@@ -510,6 +510,13 @@ func startNextWaiting() {
 		scheduleMu.Unlock()
 		return
 	}
+	// 待機中にロックされた場合はジョブを起動しない
+	if p, pErr := model.SelectProject(j.ProjectID); pErr == nil && p != nil {
+		if wd, wErr := model.GetWorkDir(p.WorkDirID); wErr == nil && wd != nil && wd.Status == model.WorkDirStatusLock {
+			scheduleMu.Unlock()
+			return
+		}
+	}
 	_ = model.MarkQueueStarting(q.ID)
 	scheduleMu.Unlock()
 

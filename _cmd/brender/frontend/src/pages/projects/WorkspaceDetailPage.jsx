@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
-import { WorkspaceApi, BlenderApi, QueueApi } from '../../lib/api'
+import { WorkspaceApi, BlenderApi, QueueApi, ProjectApi, WorkDirApi } from '../../lib/api'
 import Pagination from '../../components/Pagination'
 
 
@@ -122,7 +122,7 @@ function DefaultTag({ value, t }) {
 }
 
 // ── 設定タブ ──────────────────────────────────────────────
-function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onDeleted, onTestEnqueued }) {
+function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onDeleted, onTestEnqueued, workDirLocked }) {
   const { t } = useTranslation()
   const [blenders, setBlenders]             = useState([])
   const [engines, setEngines]               = useState([])
@@ -414,7 +414,7 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
       <div className="form-actions">
         <button className="btn btn-danger" onClick={() => setConfirm(true)}>{t('common.delete')}</button>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn btn-run" onClick={handleTestEncode} disabled={testEnqueueing}>
+          <button className="btn btn-run" onClick={handleTestEncode} disabled={testEnqueueing || workDirLocked}>
             {testEnqueueing ? t('common.enqueueing') : t('workspace.testRender')}
           </button>
           <button className="btn" onClick={handleSave} disabled={saving}>
@@ -465,6 +465,7 @@ function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspa
   const [detail, setDetail]           = useState(null)
   const [error, setError]             = useState('')
   const [historyReload, setHistoryReload] = useState(0)
+  const [workDirStatus, setWorkDirStatus] = useState(null)
 
   const load = useCallback(() => {
     WorkspaceApi.get({ projectID, workspaceID })
@@ -473,6 +474,15 @@ function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspa
   }, [projectID, workspaceID])
 
   useEffect(() => { load() }, [load])
+
+  useEffect(() => {
+    Promise.all([ProjectApi.get({ id: projectID }), WorkDirApi.list()])
+      .then(([d, dirs]) => {
+        const wd = (dirs || []).find(w => w.id === d?.project?.work_dir_id)
+        setWorkDirStatus(wd?.status || null)
+      })
+      .catch(() => {})
+  }, [projectID])
 
   if (error && !detail) {
     return <div className="page"><div className="error-msg">{error}</div></div>
@@ -502,6 +512,13 @@ function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspa
         </div>
       </div>
 
+      {workDirStatus === 'lock' && (
+        <div className="notice-banner notice-error">{t('project.workDirLockError')}</div>
+      )}
+      {workDirStatus === 'inactive' && (
+        <div className="notice-banner">{t('project.workDirInactiveWarning')}</div>
+      )}
+
       <div className="ws-detail-split">
         <div className="ws-detail-left">
           <SettingsTab
@@ -512,6 +529,7 @@ function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspa
             onUpdated={() => navigate('file', { projectID, projectName, fileID: effectiveFileID, fileName: effectiveFileName })}
             onDeleted={() => navigate('file', { projectID, projectName, fileID: effectiveFileID, fileName: effectiveFileName })}
             onTestEnqueued={() => setHistoryReload(n => n + 1)}
+            workDirLocked={workDirStatus === 'lock'}
           />
         </div>
         <div className="ws-detail-right">
