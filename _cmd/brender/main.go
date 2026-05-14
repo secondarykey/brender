@@ -116,7 +116,7 @@ func run() error {
 
 	app.Window.NewWithOptions(application.WebviewWindowOptions{
 		Title:     "brender",
-		Width:     1280,
+		Width:     1600,
 		Height:    800,
 		Frameless: true,
 		Mac: application.MacWindow{
