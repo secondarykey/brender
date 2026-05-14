@@ -213,6 +213,7 @@
   "settings": {
     "language": "Language",
     "selectFolder": "Select Folder",
+    "selectDirectory": "Select Directory",
     "workDirs": {
       "title": "Work Directories",
       "add": "+ Add WorkDirectory",
@@ -221,6 +222,7 @@
       "status": "Status",
       "freeSpace": "Free Space",
       "check": "Check",
+      "checkSpace": "Check Space",
       "statusActive": "Active",
       "statusInactive": "Inactive",
       "statusLock": "Locked",

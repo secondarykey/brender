@@ -213,6 +213,7 @@
   "settings": {
     "language": "言語",
     "selectFolder": "フォルダを選択",
+    "selectDirectory": "ディレクトリを選択",
     "workDirs": {
       "title": "作業ディレクトリ",
       "add": "+ Add WorkDirectory",
@@ -221,6 +222,7 @@
       "status": "ステータス",
       "freeSpace": "空き容量",
       "check": "チェック",
+      "checkSpace": "容量をチェック",
       "statusActive": "有効",
       "statusInactive": "警告",
       "statusLock": "ロック",

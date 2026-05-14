@@ -125,8 +125,8 @@ function EditDialog({ wd, onClose, onSaved }) {
 
   return (
     <div className="dialog-overlay" onClick={busy ? undefined : onClose}>
-      <div className="dialog" onClick={e => e.stopPropagation()}>
-        <h3 className="dialog-title">{t('settings.workDirs.editTitle')}</h3>
+      <div className="dialog dialog-wide" onClick={e => e.stopPropagation()}>
+        <h3 className="dialog-title" style={{ marginBottom: 0 }}>{t('settings.workDirs.editTitle')}</h3>
         <div className="dialog-body">
 
           {/* Path */}
@@ -137,7 +137,7 @@ function EditDialog({ wd, onClose, onSaved }) {
                 {path}
               </span>
               <button className="btn btn-sm" onClick={handleBrowse} disabled={busy} style={{ flexShrink: 0 }}>
-                {t('settings.selectFolder')}
+                {t('settings.selectDirectory')}
               </button>
             </div>
           </div>
@@ -145,6 +145,7 @@ function EditDialog({ wd, onClose, onSaved }) {
           {/* Status */}
           <div style={row}>
             <span style={lbl}>{t('settings.workDirs.status')}</span>
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
             <select
               className="form-select"
               style={{ width: 160 }}
@@ -156,12 +157,13 @@ function EditDialog({ wd, onClose, onSaved }) {
               <option value="inactive">{t('settings.workDirs.statusInactive')}</option>
               <option value="lock">{t('settings.workDirs.statusLock')}</option>
             </select>
+            </div>
           </div>
 
           {/* Check */}
           <div style={{ ...row, display: 'flex', alignItems: 'center', gap: 12 }}>
             <button className="btn btn-sm" onClick={handleCheck} disabled={checking || busy}>
-              {checking ? t('common.processing') : t('settings.workDirs.check')}
+              {checking ? t('common.processing') : t('settings.workDirs.checkSpace')}
             </button>
             {pathChanged && !checkInfo && (
               <span style={{ fontSize: '0.82rem', color: 'rgba(255,200,100,0.85)' }}>
