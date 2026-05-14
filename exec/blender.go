@@ -124,9 +124,9 @@ func (b *Blender) run(ctx context.Context, args ...string) (int, chan error, err
 func (b *Blender) createArguments() []string {
 
 	args := make([]string, 0, 20)
-	// -b は常に必要（バックグラウンドモード）
-	args = append(args, "-b")
+	//ファイル指定がある場合
 	if b.File != "" {
+		args = append(args, "-b")
 		args = append(args, b.File)
 	}
 
