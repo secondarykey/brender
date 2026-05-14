@@ -1,18 +1,36 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
 import { WorkspaceApi, ProjectApi, BlenderApi } from '../../../lib/api'
+import { onAppEvent } from '../../../lib/appEvents'
 import SortSelect from '../../../components/SortSelect'
 
 // ── サムネイルタイル ──────────────────────────────────────
 function FileCard({ projectID, g, navigate, projectName, thumbnailMode, onSetThumbnail }) {
   const { t } = useTranslation()
   const [thumb, setThumb] = useState(null)
+  const thumbRef = useRef(null)
+
+  const fetchThumb = () => {
+    ProjectApi.getFileThumbnail({ projectID, fileID: g.file.id })
+      .then(src => {
+        const val = src || null
+        thumbRef.current = val
+        setThumb(val)
+      })
+      .catch(() => {})
+  }
 
   useEffect(() => {
-    ProjectApi.getFileThumbnail({ projectID, fileID: g.file.id })
-      .then(src => setThumb(src || null))
-      .catch(() => {})
+    fetchThumb()
+  }, [projectID, g.file.id])
+
+  // サムネイルがまだない場合、キュー変化イベントで再取得する
+  useEffect(() => {
+    const off = onAppEvent('queue:changed', () => {
+      if (!thumbRef.current) fetchThumb()
+    })
+    return off
   }, [projectID, g.file.id])
 
   const fileName = g.file.name || g.file.path.split(/[/\\]/).pop()

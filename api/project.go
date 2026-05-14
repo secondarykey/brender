@@ -1,7 +1,7 @@
 package api
 
 import (
-	"log"
+	"log/slog"
 	"os"
 	"time"
 
@@ -45,12 +45,12 @@ func AddProjectFile(projectID, path string) (*model.ProjectFile, error) {
 	}
 	now := time.Now()
 	if err := model.UpdateProjectFileProcessedAt(f.ID, &now); err != nil {
-		log.Printf("AddProjectFile: UpdateProjectFileProcessedAt: %v", err)
+		slog.Error("AddProjectFile: UpdateProjectFileProcessedAt", "error", err)
 	}
 	touchProjectProcessedAt(projectID)
 	go func() {
 		if err := CreateThumbnailWorkspace(projectID, f); err != nil {
-			log.Printf("thumbnail workspace creation failed for file %s: %v", f.ID, err)
+			slog.Error("thumbnail workspace creation failed", "fileID", f.ID, "error", err)
 		}
 	}()
 	return f, nil
@@ -98,7 +98,7 @@ func CreateProject(name string) (*model.ProjectDetail, error) {
 	}
 	now := time.Now()
 	if err := model.UpdateProjectProcessedAt(d.Project.ID, &now); err != nil {
-		log.Printf("CreateProject: UpdateProjectProcessedAt: %v", err)
+		slog.Error("CreateProject: UpdateProjectProcessedAt", "error", err)
 	}
 	return d, nil
 }
@@ -106,6 +106,6 @@ func CreateProject(name string) (*model.ProjectDetail, error) {
 func touchProjectProcessedAt(projectID string) {
 	now := time.Now()
 	if err := model.UpdateProjectProcessedAt(projectID, &now); err != nil {
-		log.Printf("touchProjectProcessedAt(%s): %v", projectID, err)
+		slog.Error("touchProjectProcessedAt", "projectID", projectID, "error", err)
 	}
 }

@@ -17,6 +17,7 @@ var MigrationHook func(projectID string, status string, pct float64)
 var WorkDirChangeDirHook func(workDirID uint, status string, pct float64)
 
 // GetProjectBaseDir はプロジェクトの作業ディレクトリ基底パスを返す。
+// WorkDirID が未設定（0）の場合はデフォルト作業ディレクトリを自動割り当てする。
 func GetProjectBaseDir(projectID string) (string, error) {
 	p, err := model.SelectProject(projectID)
 	if err != nil {
@@ -24,6 +25,19 @@ func GetProjectBaseDir(projectID string) (string, error) {
 	}
 	if p == nil {
 		return "", xerrors.Errorf("GetProjectBaseDir: project not found: %s", projectID)
+	}
+	if p.WorkDirID == 0 {
+		wd, err := model.GetDefaultWorkDir()
+		if err != nil {
+			return "", xerrors.Errorf("GetProjectBaseDir GetDefaultWorkDir: %w", err)
+		}
+		if wd == nil {
+			return "", xerrors.New("作業ディレクトリが設定されていません（システム設定で追加してください）")
+		}
+		if err := model.UpdateProjectWorkDir(projectID, wd.ID); err != nil {
+			return "", xerrors.Errorf("GetProjectBaseDir UpdateProjectWorkDir: %w", err)
+		}
+		return wd.Path, nil
 	}
 	wd, err := model.GetWorkDir(p.WorkDirID)
 	if err != nil {
