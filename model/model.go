@@ -43,6 +43,7 @@ func Init(dsn string) error {
 		return err
 	}
 
+	db.AutoMigrate(&WorkDir{})
 	db.AutoMigrate(&Environment{})
 	db.AutoMigrate(&BlenderInstall{})
 	db.AutoMigrate(&Project{})

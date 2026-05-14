@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
-import { ProjectApi } from '../../../lib/api'
+import { ProjectApi, WorkDirApi } from '../../../lib/api'
+import { onAppEvent } from '../../../lib/appEvents'
 
 const IMAGE_FILTER = [{ DisplayName: 'Image', Pattern: '*.jpg;*.jpeg;*.png;*.bmp;*.webp' }]
 
@@ -44,7 +45,114 @@ function ProjectThumbnailPanel({ projectID }) {
   )
 }
 
-function SettingsTab({ detail, focusName, onUpdated, onDeleted }) {
+function WorkDirSection({ projectID, workDir, workDirs, onMigrated }) {
+  const { t } = useTranslation()
+  const [showMigrate, setShowMigrate]       = useState(false)
+  const [targetID, setTargetID]             = useState('')
+  const [migrating, setMigrating]           = useState(false)
+  const [migrateProgress, setMigrateProgress] = useState(null)
+  const [migrateError, setMigrateError]     = useState('')
+
+  const activeTargets = workDirs.filter(w => w.status === 'active' && (!workDir || w.id !== workDir.id))
+
+  useEffect(() => {
+    if (activeTargets.length > 0 && !targetID) {
+      setTargetID(String(activeTargets[0].id))
+    }
+  }, [workDirs])
+
+  useEffect(() => {
+    const off = onAppEvent('workdir:migrate', data => {
+      if (data.project_id !== projectID) return
+      setMigrateProgress(data)
+      if (data.status === 'done') {
+        setMigrating(false)
+        setShowMigrate(false)
+        setMigrateProgress(null)
+        onMigrated()
+      } else if (data.status === 'error') {
+        setMigrateError(t('project.migrateError'))
+        setMigrating(false)
+      }
+    })
+    return off
+  }, [projectID])
+
+  const handleMigrate = async () => {
+    if (!targetID) return
+    setMigrateError('')
+    setMigrating(true)
+    setMigrateProgress(null)
+    try {
+      await WorkDirApi.startMigration({ projectID, newWorkDirID: Number(targetID) })
+    } catch (err) {
+      setMigrateError(String(err))
+      setMigrating(false)
+    }
+  }
+
+  return (
+    <div style={{ marginTop: 24 }}>
+      <h3 className="ws-detail-section-title">{t('project.workDir')}</h3>
+      <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', fontFamily: 'monospace', wordBreak: 'break-all' }}>
+        {workDir ? workDir.path : '—'}
+      </div>
+      {workDir && (
+        <button className="btn btn-sm" style={{ marginTop: 8 }} onClick={() => setShowMigrate(true)}>
+          {t('project.migrate')}
+        </button>
+      )}
+
+      {showMigrate && (
+        <div className="dialog-overlay" onClick={() => !migrating && setShowMigrate(false)}>
+          <div className="dialog" onClick={e => e.stopPropagation()}>
+            <h3 className="dialog-title">{t('project.migrateTitle')}</h3>
+            <div className="dialog-body">
+              <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 13, marginBottom: 12 }}>
+                {t('project.migrateWarning')}
+              </p>
+              {activeTargets.length === 0 ? (
+                <p style={{ color: '#f17e72', fontSize: 13 }}>No active work directories available.</p>
+              ) : (
+                <select
+                  className="select-sm"
+                  value={targetID}
+                  onChange={e => setTargetID(e.target.value)}
+                  disabled={migrating}
+                  style={{ width: '100%' }}
+                >
+                  {activeTargets.map(w => (
+                    <option key={w.id} value={String(w.id)}>{w.path}</option>
+                  ))}
+                </select>
+              )}
+              {migrateProgress && (
+                <div style={{ marginTop: 10, fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>
+                  {t('project.migrateRunning')} {Math.round((migrateProgress.pct || 0) * 100)}%
+                </div>
+              )}
+              {migrateError && <div className="error-msg" style={{ marginTop: 8 }}>{migrateError}</div>}
+            </div>
+            <div className="dialog-actions">
+              <button className="btn btn-ghost" onClick={() => setShowMigrate(false)} disabled={migrating}>
+                {t('common.cancel')}
+              </button>
+              <button
+                className="btn"
+                onClick={handleMigrate}
+                disabled={migrating || !targetID || activeTargets.length === 0}
+              >
+                {migrating ? t('project.migrateRunning') : t('project.migrateConfirm')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function SettingsTab({ detail, focusName, workDir, workDirs, onUpdated, onDeleted }) {
   const { t } = useTranslation()
   const [form, setForm]         = useState(null)
   const [saving, setSaving]     = useState(false)
@@ -131,6 +239,13 @@ function SettingsTab({ detail, focusName, onUpdated, onDeleted }) {
             </button>
           </div>
         </div>
+
+        <WorkDirSection
+          projectID={detail.project.id}
+          workDir={workDir}
+          workDirs={workDirs || []}
+          onMigrated={onUpdated}
+        />
 
         {confirm && (
           <div className="dialog-overlay" onClick={() => setConfirm(false)}>

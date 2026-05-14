@@ -1,12 +1,23 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ProjectApi, EnvironmentApi } from '../../lib/api'
+import { ProjectApi, EnvironmentApi, WorkDirApi } from '../../lib/api'
 import SortSelect from '../../components/SortSelect'
 
+function WorkDirBadge({ status, t }) {
+  if (status === 'lock') {
+    return <span className="badge-red" style={{ marginLeft: 6, fontSize: 11 }}>{t('settings.workDirs.statusLock')}</span>
+  }
+  if (status === 'inactive') {
+    return <span className="badge-yellow" style={{ marginLeft: 6, fontSize: 11 }}>{t('settings.workDirs.statusInactive')}</span>
+  }
+  return null
+}
+
 // ── プロジェクトタイル（サムネイル表示） ──────────────────
-function ProjectTile({ d, navigate }) {
+function ProjectTile({ d, workDirMap, navigate }) {
   const { t } = useTranslation()
   const [thumb, setThumb] = useState(null)
+  const wd = workDirMap[d.project.work_dir_id]
 
   useEffect(() => {
     ProjectApi.getProjectThumbnail({ projectID: d.project.id })
@@ -23,7 +34,10 @@ function ProjectTile({ d, navigate }) {
         }
       </div>
       <div className="file-tile-info">
-        <div className="file-tile-name" title={d.project.name}>{d.project.name}</div>
+        <div className="file-tile-name" title={d.project.name}>
+          {d.project.name}
+          {wd && <WorkDirBadge status={wd.status} t={t} />}
+        </div>
         {d.files.length > 0 && (
           <div className="project-files" style={{ marginTop: 4 }}>
             {d.files.slice(0, 3).map(f => (
@@ -40,6 +54,7 @@ function ProjectTile({ d, navigate }) {
 function ProjectListPage({ navigate }) {
   const { t } = useTranslation()
   const [projects, setProjects] = useState([])
+  const [workDirMap, setWorkDirMap] = useState({})
   const [error, setError]       = useState('')
   const [hasRoot, setHasRoot]   = useState(true)
   const [creating, setCreating] = useState(false)
@@ -63,6 +78,13 @@ function ProjectListPage({ navigate }) {
       .then(env => setHasRoot(!!(env && env.root)))
       .catch(() => setHasRoot(false))
     load(sort)
+    WorkDirApi.list()
+      .then(list => {
+        const map = {}
+        for (const w of (list || [])) map[w.id] = w
+        setWorkDirMap(map)
+      })
+      .catch(() => {})
   }, [])
 
   const handleCreate = async () => {
@@ -114,32 +136,38 @@ function ProjectListPage({ navigate }) {
 
           {viewMode === 'list' ? (
             <div className="project-list">
-              {projects.map(d => (
-                <div
-                  key={d.project.id}
-                  className="project-card"
-                  onClick={() => navigate('project', { id: d.project.id })}
-                >
-                  <div className="project-card-header">
-                    <span className="project-name">{d.project.name}</span>
-                    {d.blender && (
-                      <span className="project-blender-badge">
-                        {d.blender.name} {d.blender.version}
+              {projects.map(d => {
+                const wd = workDirMap[d.project.work_dir_id]
+                return (
+                  <div
+                    key={d.project.id}
+                    className="project-card"
+                    onClick={() => navigate('project', { id: d.project.id })}
+                  >
+                    <div className="project-card-header">
+                      <span className="project-name">
+                        {d.project.name}
+                        {wd && <WorkDirBadge status={wd.status} t={t} />}
                       </span>
-                    )}
+                      {d.blender && (
+                        <span className="project-blender-badge">
+                          {d.blender.name} {d.blender.version}
+                        </span>
+                      )}
+                    </div>
+                    <div className="project-files">
+                      {d.files.map(f => (
+                        <span key={f.id} className="project-file-chip">{f.name}</span>
+                      ))}
+                    </div>
                   </div>
-                  <div className="project-files">
-                    {d.files.map(f => (
-                      <span key={f.id} className="project-file-chip">{f.name}</span>
-                    ))}
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           ) : (
             <div className="file-tile-grid">
               {projects.map(d => (
-                <ProjectTile key={d.project.id} d={d} navigate={navigate} />
+                <ProjectTile key={d.project.id} d={d} workDirMap={workDirMap} navigate={navigate} />
               ))}
             </div>
           )}

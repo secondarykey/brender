@@ -14,6 +14,7 @@ import (
 type Project struct {
 	ID           string     `gorm:"primaryKey" json:"id"`
 	Name         string     `json:"name"`
+	WorkDirID    uint       `json:"work_dir_id"`
 	DisplayOrder int        `gorm:"default:99999" json:"display_order"`
 	ProcessedAt  *time.Time `json:"processed_at"`
 	MetaFields   `gorm:"embedded"`
@@ -206,10 +207,11 @@ func UpdateProjectFileProcessedAt(id string, t *time.Time) error {
 	return nil
 }
 
-func CreateProject(name string, paths []string) (*ProjectDetail, error) {
+func CreateProject(name string, paths []string, workDirID uint) (*ProjectDetail, error) {
 	p := &Project{
-		ID:   newProjectID(),
-		Name: name,
+		ID:        newProjectID(),
+		Name:      name,
+		WorkDirID: workDirID,
 	}
 	if res := db.Create(p); res.Error != nil {
 		return nil, xerrors.Errorf("CreateProject: %w", res.Error)
@@ -228,4 +230,11 @@ func CreateProject(name string, paths []string) (*ProjectDetail, error) {
 	}
 
 	return loadProjectDetail(p)
+}
+
+func UpdateProjectWorkDir(projectID string, workDirID uint) error {
+	if res := db.Model(&Project{}).Where("id = ?", projectID).Update("work_dir_id", workDirID); res.Error != nil {
+		return xerrors.Errorf("UpdateProjectWorkDir: %w", res.Error)
+	}
+	return nil
 }

@@ -50,7 +50,7 @@ func AddProjectFile(projectID, path string) (*model.ProjectFile, error) {
 	touchProjectProcessedAt(projectID)
 	go func() {
 		if err := CreateThumbnailWorkspace(projectID, f); err != nil {
-			log.Printf("thumbnail workspace creation failed for file %d: %v", f.ID, err)
+			log.Printf("thumbnail workspace creation failed for file %s: %v", f.ID, err)
 		}
 	}()
 	return f, nil
@@ -88,7 +88,11 @@ func CreateProject(name string) (*model.ProjectDetail, error) {
 	if name == "" {
 		return nil, xerrors.New("project name is required")
 	}
-	d, err := model.CreateProject(name, nil)
+	p := &model.Project{}
+	if err := AssignDefaultWorkDir(p); err != nil {
+		return nil, err
+	}
+	d, err := model.CreateProject(name, nil, p.WorkDirID)
 	if err != nil {
 		return nil, err
 	}

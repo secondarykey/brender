@@ -100,6 +100,7 @@ func run() error {
 			application.NewService(wails.NewProject()),
 			application.NewService(wails.NewWorkspace()),
 			application.NewService(wails.NewQueue()),
+			application.NewService(wails.NewWorkDir()),
 		},
 		Assets: application.AssetOptions{
 			Handler: &movieAwareHandler{fallback: application.AssetFileServerFS(assets)},
@@ -135,6 +136,15 @@ func run() error {
 	// キュー変化イベントをフロントエンドへ通知
 	api.QueueChangedHook = func(count int64) {
 		application.Get().Event.Emit("queue:changed", count)
+	}
+
+	// 移行進捗イベントをフロントエンドへ通知
+	api.MigrationHook = func(projectID string, status string, pct float64) {
+		application.Get().Event.Emit("workdir:migrate", map[string]interface{}{
+			"project_id": projectID,
+			"status":     status,
+			"pct":        pct,
+		})
 	}
 
 	if err := app.Run(); err != nil {

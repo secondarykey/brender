@@ -1754,3 +1754,15 @@ body {
   color: rgba(255,255,255,0.4);
   padding: 0 6px;
 }
+
+/* ── Work dir status badges ── */
+.badge-green  { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 600; background: rgba(39,174,96,0.2);   color: #5dde8e; }
+.badge-yellow { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 600; background: rgba(255,180,0,0.2);   color: rgba(255,220,100,0.9); }
+.badge-red    { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 600; background: rgba(231,76,60,0.2);    color: #f17e72; }
+
+/* ── Notice banner variants ── */
+.notice-banner.notice-error {
+  background: rgba(192,57,43,0.12);
+  border-color: rgba(192,57,43,0.35);
+  color: rgba(255,130,120,0.9);
+}

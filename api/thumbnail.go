@@ -42,16 +42,16 @@ func CreateThumbnailWorkspace(projectID string, file *model.ProjectFile) error {
 }
 
 // GetFileThumbnail はファイルのサムネイル画像を base64 データURIで返す。
-// {ProjectRoot}/{projectID}/{fileID}/thumbnail.jpg が存在すればそれを返す。
+// {baseDir}/{projectID}/{fileID}/thumbnail.jpg が存在すればそれを返す。
 // 存在しない場合は IsSystem ワークスペースの完了済みジョブ出力から JPEG を生成して保存する。
 // サムネイルが作れない場合は空文字を返す（エラーなし）。
 func GetFileThumbnail(projectID string, fileID string) (string, error) {
-	env, err := model.GetEnv()
-	if err != nil || env == nil || env.ProjectRoot == "" {
+	baseDir, err := GetProjectBaseDir(projectID)
+	if err != nil {
 		return "", nil
 	}
 
-	thumbDir := filepath.Join(env.ProjectRoot, projectID, fileID)
+	thumbDir := filepath.Join(baseDir, projectID, fileID)
 	thumbPath := filepath.Join(thumbDir, "thumbnail.jpg")
 
 	if _, err := os.Stat(thumbPath); err == nil {
@@ -105,7 +105,6 @@ const (
 // makeBlurredBackground は元画像をカバースケールで 640×360 に拡大クロップし、
 // bild/blur でガウスブラーをかけた背景を返す。
 func makeBlurredBackground(src image.Image, bounds image.Rectangle, srcW, srcH int) *image.RGBA {
-	// cover スケール: 短辺ではなく長辺基準で全面を埋める
 	coverScaleX := float64(thumbW) / float64(srcW)
 	coverScaleY := float64(thumbH) / float64(srcH)
 	coverScale := coverScaleX
@@ -115,17 +114,14 @@ func makeBlurredBackground(src image.Image, bounds image.Rectangle, srcW, srcH i
 	coverW := int(float64(srcW) * coverScale)
 	coverH := int(float64(srcH) * coverScale)
 
-	// 元画像を cover サイズにスケール
 	covered := image.NewRGBA(image.Rect(0, 0, coverW, coverH))
 	xdraw.BiLinear.Scale(covered, covered.Bounds(), src, bounds, xdraw.Src, nil)
 
-	// 中央クロップで 640×360 を切り出す
 	cropX := (coverW - thumbW) / 2
 	cropY := (coverH - thumbH) / 2
 	cropped := image.NewRGBA(image.Rect(0, 0, thumbW, thumbH))
 	xdraw.Copy(cropped, image.Point{}, covered, image.Rect(cropX, cropY, cropX+thumbW, cropY+thumbH), xdraw.Src, nil)
 
-	// ガウスブラーをかけて背景画像として返す
 	blurred := blur.Gaussian(cropped, 20)
 	canvas := image.NewRGBA(image.Rect(0, 0, thumbW, thumbH))
 	stdDraw.Draw(canvas, canvas.Bounds(), blurred, image.Point{}, stdDraw.Src)
@@ -156,7 +152,6 @@ func convertToJPEG(src, dstDir, dstPath string) error {
 	srcW := bounds.Dx()
 	srcH := bounds.Dy()
 
-	// アスペクト比を保ったまま 640x360 内に収めるスケールを計算 (contain)
 	scaleX := float64(thumbW) / float64(srcW)
 	scaleY := float64(thumbH) / float64(srcH)
 	scale := scaleX
@@ -189,11 +184,11 @@ func convertToJPEG(src, dstDir, dstPath string) error {
 
 // SetProjectThumbnail は imagePath の画像を 640x360 JPEG に変換してプロジェクトサムネイルとして保存し、base64 データURIを返す。
 func SetProjectThumbnail(projectID, imagePath string) (string, error) {
-	env, err := model.GetEnv()
-	if err != nil || env == nil || env.ProjectRoot == "" {
-		return "", xerrors.New("作業ディレクトリが設定されていません")
+	baseDir, err := GetProjectBaseDir(projectID)
+	if err != nil {
+		return "", xerrors.Errorf("SetProjectThumbnail: %w", err)
 	}
-	thumbDir := filepath.Join(env.ProjectRoot, projectID)
+	thumbDir := filepath.Join(baseDir, projectID)
 	thumbPath := filepath.Join(thumbDir, "thumbnail.jpg")
 	if err := convertToJPEG(imagePath, thumbDir, thumbPath); err != nil {
 		return "", xerrors.Errorf("SetProjectThumbnail: %w", err)
@@ -203,11 +198,11 @@ func SetProjectThumbnail(projectID, imagePath string) (string, error) {
 
 // SetFileThumbnail は imagePath の画像を 640x360 JPEG に変換してファイルサムネイルとして保存し、base64 データURIを返す。
 func SetFileThumbnail(projectID, fileID, imagePath string) (string, error) {
-	env, err := model.GetEnv()
-	if err != nil || env == nil || env.ProjectRoot == "" {
-		return "", xerrors.New("作業ディレクトリが設定されていません")
+	baseDir, err := GetProjectBaseDir(projectID)
+	if err != nil {
+		return "", xerrors.Errorf("SetFileThumbnail: %w", err)
 	}
-	thumbDir := filepath.Join(env.ProjectRoot, projectID, fileID)
+	thumbDir := filepath.Join(baseDir, projectID, fileID)
 	thumbPath := filepath.Join(thumbDir, "thumbnail.jpg")
 	if err := convertToJPEG(imagePath, thumbDir, thumbPath); err != nil {
 		return "", xerrors.Errorf("SetFileThumbnail: %w", err)
@@ -217,11 +212,11 @@ func SetFileThumbnail(projectID, fileID, imagePath string) (string, error) {
 
 // SetWorkspaceThumbnail は imagePath の画像を 640x360 JPEG に変換してワークスペースサムネイルとして保存し、base64 データURIを返す。
 func SetWorkspaceThumbnail(projectID, fileID, workspaceID, imagePath string) (string, error) {
-	env, err := model.GetEnv()
-	if err != nil || env == nil || env.ProjectRoot == "" {
-		return "", xerrors.New("作業ディレクトリが設定されていません")
+	baseDir, err := GetProjectBaseDir(projectID)
+	if err != nil {
+		return "", xerrors.Errorf("SetWorkspaceThumbnail: %w", err)
 	}
-	thumbDir := filepath.Join(env.ProjectRoot, projectID, fileID, workspaceID)
+	thumbDir := filepath.Join(baseDir, projectID, fileID, workspaceID)
 	thumbPath := filepath.Join(thumbDir, "thumbnail.jpg")
 	if err := convertToJPEG(imagePath, thumbDir, thumbPath); err != nil {
 		return "", xerrors.Errorf("SetWorkspaceThumbnail: %w", err)
@@ -231,13 +226,13 @@ func SetWorkspaceThumbnail(projectID, fileID, workspaceID, imagePath string) (st
 
 // SetFileThumbnailFromWorkspace はワークスペースのサムネイル（またはジョブ出力）をファイルサムネイルとして保存し、base64 データURIを返す。
 func SetFileThumbnailFromWorkspace(projectID, fileID, workspaceID string) (string, error) {
-	env, err := model.GetEnv()
-	if err != nil || env == nil || env.ProjectRoot == "" {
-		return "", xerrors.New("作業ディレクトリが設定されていません")
+	baseDir, err := GetProjectBaseDir(projectID)
+	if err != nil {
+		return "", xerrors.Errorf("SetFileThumbnailFromWorkspace: %w", err)
 	}
 
-	wsThumbPath := filepath.Join(env.ProjectRoot, projectID, fileID, workspaceID, "thumbnail.jpg")
-	fileThumbDir := filepath.Join(env.ProjectRoot, projectID, fileID)
+	wsThumbPath := filepath.Join(baseDir, projectID, fileID, workspaceID, "thumbnail.jpg")
+	fileThumbDir := filepath.Join(baseDir, projectID, fileID)
 	fileThumbPath := filepath.Join(fileThumbDir, "thumbnail.jpg")
 
 	srcPath := ""
@@ -263,13 +258,13 @@ func SetFileThumbnailFromWorkspace(projectID, fileID, workspaceID string) (strin
 
 // SetProjectThumbnailFromFile はファイルのサムネイル（またはジョブ出力）をプロジェクトサムネイルとして保存し、base64 データURIを返す。
 func SetProjectThumbnailFromFile(projectID, fileID string) (string, error) {
-	env, err := model.GetEnv()
-	if err != nil || env == nil || env.ProjectRoot == "" {
-		return "", xerrors.New("作業ディレクトリが設定されていません")
+	baseDir, err := GetProjectBaseDir(projectID)
+	if err != nil {
+		return "", xerrors.Errorf("SetProjectThumbnailFromFile: %w", err)
 	}
 
-	fileThumbPath := filepath.Join(env.ProjectRoot, projectID, fileID, "thumbnail.jpg")
-	projectThumbDir := filepath.Join(env.ProjectRoot, projectID)
+	fileThumbPath := filepath.Join(baseDir, projectID, fileID, "thumbnail.jpg")
+	projectThumbDir := filepath.Join(baseDir, projectID)
 	projectThumbPath := filepath.Join(projectThumbDir, "thumbnail.jpg")
 
 	srcPath := ""
@@ -298,13 +293,13 @@ func SetProjectThumbnailFromFile(projectID, fileID string) (string, error) {
 }
 
 // GetProjectThumbnail はプロジェクトのサムネイル画像を base64 データURIで返す。
-// {ProjectRoot}/{projectID}/thumbnail.jpg が存在すればそれを返す。存在しない場合は空文字を返す。
+// {baseDir}/{projectID}/thumbnail.jpg が存在すればそれを返す。存在しない場合は空文字を返す。
 func GetProjectThumbnail(projectID string) (string, error) {
-	env, err := model.GetEnv()
-	if err != nil || env == nil || env.ProjectRoot == "" {
+	baseDir, err := GetProjectBaseDir(projectID)
+	if err != nil {
 		return "", nil
 	}
-	thumbPath := filepath.Join(env.ProjectRoot, projectID, "thumbnail.jpg")
+	thumbPath := filepath.Join(baseDir, projectID, "thumbnail.jpg")
 	if _, err := os.Stat(thumbPath); err != nil {
 		return "", nil
 	}
@@ -312,16 +307,16 @@ func GetProjectThumbnail(projectID string) (string, error) {
 }
 
 // GetWorkspaceThumbnail はワークスペースのサムネイル画像を base64 データURIで返す。
-// {ProjectRoot}/{projectID}/{fileID}/{workspaceID}/thumbnail.jpg が存在すればそれを返す。
+// {baseDir}/{projectID}/{fileID}/{workspaceID}/thumbnail.jpg が存在すればそれを返す。
 // 存在しない場合はそのワークスペースの完了済みジョブ出力から JPEG を生成して保存する。
 // サムネイルが作れない場合は空文字を返す（エラーなし）。
 func GetWorkspaceThumbnail(projectID, fileID, workspaceID string) (string, error) {
-	env, err := model.GetEnv()
-	if err != nil || env == nil || env.ProjectRoot == "" {
+	baseDir, err := GetProjectBaseDir(projectID)
+	if err != nil {
 		return "", nil
 	}
 
-	thumbDir := filepath.Join(env.ProjectRoot, projectID, fileID, workspaceID)
+	thumbDir := filepath.Join(baseDir, projectID, fileID, workspaceID)
 	thumbPath := filepath.Join(thumbDir, "thumbnail.jpg")
 
 	if _, err := os.Stat(thumbPath); err == nil {

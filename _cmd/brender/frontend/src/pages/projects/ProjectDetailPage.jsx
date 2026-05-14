@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ProjectApi } from '../../lib/api'
+import { ProjectApi, WorkDirApi } from '../../lib/api'
 import WorkspaceTab from './tabs/WorkspaceTab'
 import SettingsTab from './tabs/SettingsTab'
 
 function ProjectDetailPage({ id, initialTab, focusName, navigate }) {
   const { t } = useTranslation()
-  const [detail, setDetail] = useState(null)
-  const [tab, setTab] = useState(initialTab || 'workspace')
-  const [error, setError] = useState('')
+  const [detail, setDetail]   = useState(null)
+  const [workDir, setWorkDir] = useState(null)
+  const [workDirs, setWorkDirs] = useState([])
+  const [tab, setTab]         = useState(initialTab || 'workspace')
+  const [error, setError]     = useState('')
 
   const tabs = [
     { id: 'workspace', label: t('tabs.fileList') },
@@ -16,8 +18,13 @@ function ProjectDetailPage({ id, initialTab, focusName, navigate }) {
   ]
 
   const load = () => {
-    ProjectApi.get({ id })
-      .then(setDetail)
+    Promise.all([ProjectApi.get({ id }), WorkDirApi.list()])
+      .then(([d, list]) => {
+        setDetail(d)
+        const dirs = list || []
+        setWorkDirs(dirs)
+        setWorkDir(dirs.find(w => w.id === d.project.work_dir_id) || null)
+      })
       .catch(err => setError(String(err)))
   }
 
@@ -43,6 +50,17 @@ function ProjectDetailPage({ id, initialTab, focusName, navigate }) {
         </div>
       </div>
 
+      {workDir?.status === 'lock' && (
+        <div className="notice-banner notice-error">
+          {t('project.workDirLockError')}
+        </div>
+      )}
+      {workDir?.status === 'inactive' && (
+        <div className="notice-banner">
+          {t('project.workDirInactiveWarning')}
+        </div>
+      )}
+
       <div className="tab-nav">
         {tabs.map(tb => (
           <button
@@ -64,7 +82,14 @@ function ProjectDetailPage({ id, initialTab, focusName, navigate }) {
           />
         )}
         {tab === 'settings' && (
-          <SettingsTab detail={detail} focusName={focusName} onUpdated={load} onDeleted={() => navigate('projects')} />
+          <SettingsTab
+            detail={detail}
+            focusName={focusName}
+            workDir={workDir}
+            workDirs={workDirs}
+            onUpdated={load}
+            onDeleted={() => navigate('projects')}
+          />
         )}
       </div>
     </div>

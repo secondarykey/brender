@@ -223,12 +223,22 @@ func TestEnqueue(projectID, workspaceID string, params TestRenderParams) (*model
 
 // EnqueueWithPreview は解決済みの RenderPreview を使ってジョブを作成・実行する。
 func EnqueueWithPreview(projectID, workspaceID string, preview *RenderPreview) (*model.Queue, error) {
-	env, err := model.GetEnv()
+	baseDir, err := GetProjectBaseDir(projectID)
 	if err != nil {
-		return nil, xerrors.Errorf("GetEnv: %w", err)
+		return nil, xerrors.Errorf("GetProjectBaseDir: %w", err)
 	}
-	if env == nil || env.ProjectRoot == "" {
-		return nil, xerrors.New("作業ディレクトリが設定されていません（システム設定で設定してください）")
+
+	// Lock チェック
+	p, err := model.SelectProject(projectID)
+	if err != nil || p == nil {
+		return nil, xerrors.Errorf("project not found: %w", err)
+	}
+	wd, err := model.GetWorkDir(p.WorkDirID)
+	if err != nil || wd == nil {
+		return nil, xerrors.New("作業ディレクトリが設定されていません")
+	}
+	if wd.Status == model.WorkDirStatusLock {
+		return nil, xerrors.New("作業ディレクトリがロックされています。移行後に実行してください")
 	}
 
 	exists, err := model.ExistsQueueByWorkspace(projectID, workspaceID)
@@ -244,7 +254,7 @@ func EnqueueWithPreview(projectID, workspaceID string, preview *RenderPreview) (
 		return nil, xerrors.Errorf("NewQueueID: %w", err)
 	}
 
-	outputDir := filepath.Join(env.ProjectRoot, projectID, preview.ProjectFileID, workspaceID, id)
+	outputDir := filepath.Join(baseDir, projectID, preview.ProjectFileID, workspaceID, id)
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
 		return nil, xerrors.Errorf("MkdirAll: %w", err)
 	}
