@@ -69,6 +69,15 @@ func UpdateWorkDir(wd *WorkDir) error {
 	return nil
 }
 
+func ReorderWorkDirs(ids []uint) error {
+	for i, id := range ids {
+		if res := db.Model(&WorkDir{}).Where("id = ?", id).Update("priority", i); res.Error != nil {
+			return xerrors.Errorf("ReorderWorkDirs: %w", res.Error)
+		}
+	}
+	return nil
+}
+
 func DeleteWorkDir(id uint) error {
 	if res := db.Delete(&WorkDir{}, "id = ?", id); res.Error != nil {
 		return xerrors.Errorf("DeleteWorkDir: %w", res.Error)

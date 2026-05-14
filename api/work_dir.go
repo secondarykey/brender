@@ -78,6 +78,10 @@ func UpdateWorkDir(id uint, path string, priority int, status string) (*model.Wo
 	return wd, nil
 }
 
+func ReorderWorkDirs(ids []uint) error {
+	return model.ReorderWorkDirs(ids)
+}
+
 func DeleteWorkDir(id uint) error {
 	count, err := model.CountProjectsByWorkDir(id)
 	if err != nil {

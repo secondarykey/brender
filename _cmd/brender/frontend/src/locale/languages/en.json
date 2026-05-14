@@ -226,7 +226,8 @@
       "confirmDelete": "Delete this work directory?",
       "deleteWarning": "Cannot delete if projects are using it.",
       "addTitle": "Add Work Directory",
-      "notExists": "Directory does not exist"
+      "notExists": "Directory does not exist",
+      "empty": "No work directories registered"
     },
     "addBlender": "+ Add Blender",
     "noBlenders": "No Blender installations registered",

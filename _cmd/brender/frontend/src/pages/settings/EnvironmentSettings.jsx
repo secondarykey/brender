@@ -1,34 +1,24 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
 import { WorkDirApi } from '../../lib/api'
 
-// ── 空き容量を GB 表示に変換 ────────────────────────────────
 function fmtGB(bytes) {
-  if (!bytes) return '—'
+  if (!bytes) return null
   return (bytes / (1024 ** 3)).toFixed(1) + ' GB'
 }
 
-// ── ステータスバッジ ─────────────────────────────────────────
-function StatusBadge({ status, t }) {
-  const map = {
-    active:   { cls: 'badge-green',  label: t('settings.workDirs.statusActive') },
-    inactive: { cls: 'badge-yellow', label: t('settings.workDirs.statusInactive') },
-    lock:     { cls: 'badge-red',    label: t('settings.workDirs.statusLock') },
-  }
-  const { cls, label } = map[status] || map.active
-  return <span className={`status-badge ${cls}`}>{label}</span>
-}
-
-// ── 作業ディレクトリ一覧パネル ───────────────────────────────
-function WorkDirPanel() {
+function EnvironmentSettings() {
   const { t } = useTranslation()
-  const [dirs, setDirs]     = useState([])
-  const [error, setError]   = useState('')
-  const [adding, setAdding] = useState(false)
-  const [newPath, setNewPath]         = useState('')
-  const [newPriority, setNewPriority] = useState(0)
-  const [diskInfo, setDiskInfo]       = useState({})
+  const [dirs, setDirs]       = useState([])
+  const [error, setError]     = useState('')
+  const [adding, setAdding]   = useState(false)
+  const [newPath, setNewPath] = useState('')
+  const [diskInfo, setDiskInfo] = useState({})
+  const [confirm, setConfirm]   = useState(null)
+  const [deleting, setDeleting] = useState(false)
+  const dragIndex = useRef(null)
+  const [dragOver, setDragOver] = useState(null)
 
   const load = () => {
     WorkDirApi.list()
@@ -38,15 +28,40 @@ function WorkDirPanel() {
 
   useEffect(() => { load() }, [])
 
-  const handleCheck = async (wd) => {
+  // ── ドラッグ並び替え ──────────────────────────────────────
+  const handleDragStart = (e, index) => {
+    dragIndex.current = index
+    e.dataTransfer.effectAllowed = 'move'
+  }
+  const handleDragOver = (e, index) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDragOver(index)
+  }
+  const handleDragLeave = () => setDragOver(null)
+  const handleDragEnd   = () => { dragIndex.current = null; setDragOver(null) }
+
+  const handleDrop = async (e, dropIndex) => {
+    e.preventDefault()
+    setDragOver(null)
+    const from = dragIndex.current
+    dragIndex.current = null
+    if (from === null || from === dropIndex) return
+
+    const next = [...dirs]
+    const [moved] = next.splice(from, 1)
+    next.splice(dropIndex, 0, moved)
+    setDirs(next)
+
     try {
-      const info = await WorkDirApi.checkDir({ path: wd.path })
-      setDiskInfo(prev => ({ ...prev, [wd.id]: info }))
+      await WorkDirApi.reorder({ ids: next.map(d => d.id) })
     } catch (err) {
       setError(String(err))
+      load()
     }
   }
 
+  // ── ステータス変更 ────────────────────────────────────────
   const handleStatusChange = async (wd, status) => {
     try {
       await WorkDirApi.update({ id: wd.id, path: wd.path, priority: wd.priority, status })
@@ -56,16 +71,34 @@ function WorkDirPanel() {
     }
   }
 
-  const handleDelete = async (wd) => {
-    if (!window.confirm(t('settings.workDirs.confirmDelete') + '\n' + t('settings.workDirs.deleteWarning'))) return
+  // ── チェック ─────────────────────────────────────────────
+  const handleCheck = async (wd) => {
     try {
-      await WorkDirApi.delete({ id: wd.id })
-      load()
+      const info = await WorkDirApi.checkDir({ path: wd.path })
+      setDiskInfo(prev => ({ ...prev, [wd.id]: info }))
     } catch (err) {
       setError(String(err))
     }
   }
 
+  // ── 削除 ─────────────────────────────────────────────────
+  const handleDelete = async () => {
+    if (!confirm) return
+    setDeleting(true)
+    setError('')
+    try {
+      await WorkDirApi.delete({ id: confirm.id })
+      setConfirm(null)
+      load()
+    } catch (err) {
+      setError(String(err))
+      setConfirm(null)
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  // ── 追加 ─────────────────────────────────────────────────
   const handleSelectDir = async () => {
     try {
       const dir = await Dialogs.OpenFile({ CanChooseDirectories: true, CanChooseFiles: false })
@@ -76,113 +109,141 @@ function WorkDirPanel() {
   const handleAdd = async () => {
     if (!newPath) return
     try {
-      await WorkDirApi.create({ path: newPath, priority: newPriority })
+      await WorkDirApi.create({ path: newPath, priority: dirs.length })
       setAdding(false)
       setNewPath('')
-      setNewPriority(0)
       load()
     } catch (err) {
       setError(String(err))
     }
   }
 
+  const handleCancelAdd = () => { setAdding(false); setNewPath('') }
+
   return (
     <div>
       <h2 className="section-title">{t('settings.workDirs.title')}</h2>
 
+      <div className="toolbar">
+        {!adding && (
+          <button className="btn" onClick={() => setAdding(true)}>
+            {t('settings.workDirs.add')}
+          </button>
+        )}
+      </div>
+
       {error && <div className="error-msg">{error}</div>}
 
-      <table className="data-table" style={{ marginBottom: 12 }}>
-        <thead>
-          <tr>
-            <th>{t('settings.workDirs.path')}</th>
-            <th style={{ width: 60 }}>{t('settings.workDirs.priority')}</th>
-            <th style={{ width: 90 }}>{t('settings.workDirs.status')}</th>
-            <th style={{ width: 100 }}>{t('settings.workDirs.freeSpace')}</th>
-            <th style={{ width: 160 }}></th>
-          </tr>
-        </thead>
-        <tbody>
-          {dirs.map(wd => {
-            const info = diskInfo[wd.id]
-            return (
-              <tr key={wd.id}>
-                <td style={{ fontFamily: 'monospace', fontSize: 12 }}>
-                  {wd.path}
-                  {info && !info.exists && (
-                    <span className="badge-red" style={{ marginLeft: 8, fontSize: 11 }}>
-                      {t('settings.workDirs.notExists')}
-                    </span>
-                  )}
-                </td>
-                <td style={{ textAlign: 'center' }}>{wd.priority}</td>
-                <td>
-                  <select
-                    className="select-sm"
-                    value={wd.status}
-                    onChange={e => handleStatusChange(wd, e.target.value)}
-                  >
-                    <option value="active">{t('settings.workDirs.statusActive')}</option>
-                    <option value="inactive">{t('settings.workDirs.statusInactive')}</option>
-                    <option value="lock">{t('settings.workDirs.statusLock')}</option>
-                  </select>
-                </td>
-                <td style={{ textAlign: 'right', fontSize: 12 }}>
-                  {info ? (info.exists ? fmtGB(info.free) : '—') : '—'}
-                </td>
-                <td style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
-                  <button className="btn btn-sm" onClick={() => handleCheck(wd)}>
-                    {t('settings.workDirs.check')}
-                  </button>
-                  <button className="btn btn-sm btn-danger" onClick={() => handleDelete(wd)}>
-                    {t('common.delete')}
-                  </button>
-                </td>
-              </tr>
-            )
-          })}
-          {dirs.length === 0 && (
-            <tr><td colSpan={5} style={{ textAlign: 'center', color: '#888' }}>—</td></tr>
+      {dirs.length === 0 && !adding ? (
+        <p className="empty-msg">{t('settings.workDirs.empty')}</p>
+      ) : (
+        <>
+          {dirs.length > 0 && (
+            <p className="setting-desc" style={{ marginBottom: 8 }}>
+              {t('common.dragToReorder')}
+            </p>
           )}
-        </tbody>
-      </table>
+          <table className="blender-table">
+            <thead>
+              <tr>
+                <th style={{ width: 32 }}></th>
+                <th>{t('settings.workDirs.path')}</th>
+                <th style={{ width: 100 }}>{t('settings.workDirs.status')}</th>
+                <th style={{ width: 90 }}>{t('settings.workDirs.freeSpace')}</th>
+                <th style={{ width: 110 }}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {dirs.map((wd, index) => {
+                const info = diskInfo[wd.id]
+                const free = info?.exists ? fmtGB(info.free) : (info ? '—' : null)
+                return (
+                  <tr
+                    key={wd.id}
+                    draggable
+                    onDragStart={e => handleDragStart(e, index)}
+                    onDragOver={e => handleDragOver(e, index)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={e => handleDrop(e, index)}
+                    onDragEnd={handleDragEnd}
+                    className={dragOver === index ? 'drag-over' : ''}
+                  >
+                    <td className="drag-handle" title={t('common.dragToReorder')}>≡</td>
+                    <td className="path-cell">
+                      {wd.path}
+                      {info && !info.exists && (
+                        <span className="badge-red" style={{ marginLeft: 8, fontSize: 11 }}>
+                          {t('settings.workDirs.notExists')}
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      <select
+                        className="select-sm"
+                        value={wd.status}
+                        onChange={e => handleStatusChange(wd, e.target.value)}
+                      >
+                        <option value="active">{t('settings.workDirs.statusActive')}</option>
+                        <option value="inactive">{t('settings.workDirs.statusInactive')}</option>
+                        <option value="lock">{t('settings.workDirs.statusLock')}</option>
+                      </select>
+                    </td>
+                    <td style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.55)', textAlign: 'right' }}>
+                      {free ?? '—'}
+                    </td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
+                      <button className="btn btn-sm" onClick={() => handleCheck(wd)} style={{ marginRight: 4 }}>
+                        {t('settings.workDirs.check')}
+                      </button>
+                      <button className="btn btn-sm btn-danger" onClick={() => setConfirm(wd)}>
+                        {t('common.delete')}
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </>
+      )}
 
-      {adding ? (
-        <div className="setting-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', width: '100%' }}>
-            <input
-              className="input-field"
-              style={{ flex: 1 }}
-              value={newPath}
-              onChange={e => setNewPath(e.target.value)}
-              placeholder={t('settings.workDirs.path')}
-            />
-            <button className="btn btn-sm" onClick={handleSelectDir}>{t('settings.selectFolder')}</button>
-          </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <label style={{ fontSize: 13 }}>{t('settings.workDirs.priority')}</label>
-            <input
-              type="number"
-              className="input-field"
-              style={{ width: 80 }}
-              value={newPriority}
-              onChange={e => setNewPriority(Number(e.target.value))}
-            />
-            <button className="btn" onClick={handleAdd} disabled={!newPath}>{t('common.create')}</button>
-            <button className="btn btn-ghost" onClick={() => { setAdding(false); setNewPath(''); setNewPriority(0) }}>
-              {t('common.cancel')}
-            </button>
+      {adding && (
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 12 }}>
+          <input
+            className="input-field"
+            style={{ flex: 1 }}
+            value={newPath}
+            onChange={e => setNewPath(e.target.value)}
+            placeholder={t('settings.workDirs.path')}
+            autoFocus
+          />
+          <button className="btn btn-sm" onClick={handleSelectDir}>{t('settings.selectFolder')}</button>
+          <button className="btn" onClick={handleAdd} disabled={!newPath}>{t('common.create')}</button>
+          <button className="btn btn-ghost" onClick={handleCancelAdd}>{t('common.cancel')}</button>
+        </div>
+      )}
+
+      {confirm && (
+        <div className="dialog-overlay" onClick={() => setConfirm(null)}>
+          <div className="dialog" onClick={e => e.stopPropagation()}>
+            <h3 className="dialog-title">{t('settings.workDirs.confirmDelete')}</h3>
+            <div className="dialog-body">
+              <p><span className="dialog-label">{t('settings.workDirs.path')}</span>{confirm.path}</p>
+              <p style={{ marginTop: 10, color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>
+                {t('settings.workDirs.deleteWarning')}
+              </p>
+            </div>
+            <div className="dialog-actions">
+              <button className="btn btn-ghost" onClick={() => setConfirm(null)}>{t('common.cancel')}</button>
+              <button className="btn btn-danger" onClick={handleDelete} disabled={deleting}>
+                {deleting ? t('common.deleting') : t('common.delete')}
+              </button>
+            </div>
           </div>
         </div>
-      ) : (
-        <button className="btn" onClick={() => setAdding(true)}>{t('settings.workDirs.add')}</button>
       )}
     </div>
   )
-}
-
-function EnvironmentSettings() {
-  return <WorkDirPanel />
 }
 
 export default EnvironmentSettings

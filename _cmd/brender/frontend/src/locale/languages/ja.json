@@ -226,7 +226,8 @@
       "confirmDelete": "この作業ディレクトリを削除しますか？",
       "deleteWarning": "使用中のプロジェクトがある場合は削除できません。",
       "addTitle": "作業ディレクトリを追加",
-      "notExists": "ディレクトリが存在しません"
+      "notExists": "ディレクトリが存在しません",
+      "empty": "作業ディレクトリが登録されていません"
     },
     "addBlender": "+ Blender を追加",
     "noBlenders": "登録されたBlenderはありません",

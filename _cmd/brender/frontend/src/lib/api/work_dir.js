@@ -15,6 +15,10 @@ export const WorkDirApi = {
     isWails() ? svc().then(s => s.Update(id, path, priority, status))
               : serverCall('work_dir', 'update', { id, path, priority, status }),
 
+  reorder: ({ ids }) =>
+    isWails() ? svc().then(s => s.Reorder(ids))
+              : serverCall('work_dir', 'reorder', { ids }),
+
   delete: ({ id }) =>
     isWails() ? svc().then(s => s.Delete(id))
               : serverCall('work_dir', 'delete', { id }),

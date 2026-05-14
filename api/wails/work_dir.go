@@ -21,6 +21,10 @@ func (w *WorkDir) Update(id uint, path string, priority int, status string) (*mo
 	return api.UpdateWorkDir(id, path, priority, status)
 }
 
+func (w *WorkDir) Reorder(ids []uint) error {
+	return api.ReorderWorkDirs(ids)
+}
+
 func (w *WorkDir) Delete(id uint) error {
 	return api.DeleteWorkDir(id)
 }
