@@ -135,6 +135,7 @@
     "engineHint": "If not set: the default engine in the .blend file will be used",
     "frameRange": "Frame Range",
     "specifyFrames": "Specify frames",
+    "specifyFrameRange": "Specify frame range",
     "startFrame": "Start",
     "endFrame": "End",
     "frameStep": "Step",

@@ -310,10 +310,9 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
       </div>
 
       <div className="form-field">
-        <label className="form-label">{t('workspace.frameRange')}</label>
-        <label className="form-checkbox-label">
+        <label className="form-checkbox-label form-label">
           <input type="checkbox" checked={specifyFrames} onChange={e => handleSpecifyFrames(e.target.checked)} />
-          {t('workspace.specifyFrames')}
+          {t('workspace.specifyFrameRange')}
         </label>
         {specifyFrames && (
           <div className="form-row" style={{ marginTop: 8 }}>

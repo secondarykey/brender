@@ -135,6 +135,7 @@
     "engineHint": "未設定の場合: .blend ファイルのデフォルトエンジンが使用されます",
     "frameRange": "フレーム範囲",
     "specifyFrames": "フレームを指定する",
+    "specifyFrameRange": "フレーム範囲を指定する",
     "startFrame": "開始",
     "endFrame": "終了",
     "frameStep": "ステップ",
