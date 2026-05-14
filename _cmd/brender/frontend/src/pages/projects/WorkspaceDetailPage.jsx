@@ -300,14 +300,14 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
             <input className="form-input" value={form.engine} onChange={e => set('engine', e.target.value)} placeholder={t('workspace.enginePlaceholder')} />
           )}
         </div>
-        <div className="form-field" style={{ flex: '0 0 80px' }}>
+        <div className="form-field" style={{ flex: '0 0 80px', minWidth: 0 }}>
           <label className="form-label">{t('workspace.samples')}</label>
-          <input className="form-input" style={{ textAlign: 'right' }} type="number" min={0} value={form.samples} onChange={e => set('samples', Number(e.target.value))} />
+          <input className="form-input" style={{ textAlign: 'right', width: '100%' }} type="number" min={0} value={form.samples} onChange={e => set('samples', Number(e.target.value))} />
         </div>
-        <div className="form-field" style={{ flex: '0 0 80px' }}>
+        <div className="form-field" style={{ flex: '0 0 80px', minWidth: 0 }}>
           <label className="form-label">{t('workspace.threads')}</label>
-          <input className="form-input" style={{ textAlign: 'right' }} type="number" min={0} value={form.thread} onChange={e => set('thread', Number(e.target.value))} />
-          <span className="form-hint">{threadsHint}</span>
+          <input className="form-input" style={{ textAlign: 'right', width: '100%' }} type="number" min={0} value={form.thread} onChange={e => set('thread', Number(e.target.value))} />
+          <span className="form-hint" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{threadsHint}</span>
         </div>
       </div>
 
