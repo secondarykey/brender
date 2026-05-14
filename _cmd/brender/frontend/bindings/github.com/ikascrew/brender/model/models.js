@@ -243,7 +243,7 @@ export class Job {
         }
         if (!("file_name" in $$source)) {
             /**
-             * project_files.name から JOIN で取得（カラム非作成）
+             * project_files.name から JOIN で取得（カラム非作成・書き込み不可）
              * @member
              * @type {string}
              */

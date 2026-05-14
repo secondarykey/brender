@@ -54,8 +54,6 @@ func Init(ctx context.Context) (*slog.Logger, error) {
 	slog.SetDefault(logger)
 	gLogger = logger
 
-	Notice("Log Level:%v", logLevel.Level())
-
 	return logger, nil
 }
 

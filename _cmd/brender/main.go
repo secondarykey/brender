@@ -5,6 +5,7 @@ import (
 	"embed"
 	_ "embed"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -110,14 +111,18 @@ func run() error {
 
 	dev := app.Env.Info().Debug
 	if dev {
+		log.SetLevel(slog.LevelInfo)
 		//ログをInfoに落とす
 		log.Info("Develop Mode")
 	}
 
+	//サムネイル表示を３にした場合 1140x700 程度
+	//4 は 1450x850 程度？
+
 	app.Window.NewWithOptions(application.WebviewWindowOptions{
 		Title:     "brender",
-		Width:     1600,
-		Height:    800,
+		Width:     1460,
+		Height:    840,
 		Frameless: true,
 		Mac: application.MacWindow{
 			Backdrop: application.MacBackdropTranslucent,
