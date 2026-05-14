@@ -214,7 +214,7 @@
     "selectFolder": "フォルダを選択",
     "workDirs": {
       "title": "作業ディレクトリ",
-      "add": "+ 追加",
+      "add": "+ Add WorkDirectory",
       "path": "パス",
       "priority": "優先度",
       "status": "ステータス",

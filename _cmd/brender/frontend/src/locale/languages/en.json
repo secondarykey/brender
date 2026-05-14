@@ -214,7 +214,7 @@
     "selectFolder": "Select Folder",
     "workDirs": {
       "title": "Work Directories",
-      "add": "+ Add",
+      "add": "+ Add WorkDirectory",
       "path": "Path",
       "priority": "Priority",
       "status": "Status",
