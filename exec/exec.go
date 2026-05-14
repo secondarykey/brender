@@ -116,7 +116,9 @@ func RunEngines(cmd string) ([]string, error) {
 	b.ErrorWriter = &w
 
 	err = b.Run("-E", "help", "-b")
-	if err != nil {
+	// Blender 4.x (少なくとも 4.5) は -E help -b が成功しても非ゼロ終了コードを返す。
+	// 出力に期待するヘッダが含まれていればエラーを無視する。
+	if err != nil && !strings.Contains(w.String(), "Blender Engine Listing:") {
 		return nil, xerrors.Errorf("blender command error: %w", err)
 	}
 

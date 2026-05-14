@@ -220,12 +220,13 @@ func (b *Blender) RunTool() error {
 	}
 	//wait
 	err = <-errCh
-	if err != nil {
-		return xerrors.Errorf("blender running error: %w", err)
-	}
-
 	b.Tool = parseTool(w.String())
 	b.Python = ""
+	// Blender 4.x (少なくとも 4.5) は Python ツールが正常終了しても非ゼロを返す。
+	// パース結果にシーンが含まれていれば成功とみなしエラーを無視する。
+	if err != nil && len(b.Tool.Scenes) == 0 {
+		return xerrors.Errorf("blender running error: %w", err)
+	}
 
 	return nil
 }
