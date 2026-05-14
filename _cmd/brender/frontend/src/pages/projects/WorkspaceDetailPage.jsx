@@ -407,7 +407,7 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
       {error     && <div className="error-msg">{error}</div>}
       {saved     && <div className="success-msg">{t('common.saved')}</div>}
       {testError && <div className="error-msg">{testError}</div>}
-      {testEnqueued && <div className="success-msg">{t('workspace.testEnqueued')}</div>}
+      {testEnqueued && <div className="warning-msg">{t('workspace.testEnqueued')}</div>}
 
       <div className="form-actions">
         <button className="btn btn-danger" onClick={() => setConfirm(true)}>{t('common.delete')}</button>

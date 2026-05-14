@@ -154,7 +154,7 @@
     "blendDefault": ".blend default",
     "setAsFileThumbnail": "Set as file thumbnail",
     "testRender": "Test Encode",
-    "testEnqueued": "Added to queue"
+    "testEnqueued": "Added to queue with sample 8 and middle frame. Settings have not been saved — save before the actual render if needed."
   },
   "queue": {
     "noJobs": "No running or waiting jobs",

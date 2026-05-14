@@ -485,6 +485,12 @@ body {
   font-size: 0.85rem;
 }
 
+.warning-msg {
+  margin-top: 10px;
+  color: #e8a010;
+  font-size: 0.85rem;
+}
+
 .empty-msg {
   color: rgba(255,255,255,0.35);
   font-size: 0.88rem;

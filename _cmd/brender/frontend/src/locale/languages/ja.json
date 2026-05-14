@@ -154,7 +154,7 @@
     "blendDefault": ".blend のデフォルト",
     "setAsFileThumbnail": "ファイルサムネイルに設定",
     "testRender": "テストエンコード",
-    "testEnqueued": "キューに追加しました"
+    "testEnqueued": "サンプル8・中間フレームをキューに追加しました。設定値の保存は行っていません。本番レンダリング前に必要なら保存してください。"
   },
   "queue": {
     "noJobs": "実行中・待機中のジョブはありません",
