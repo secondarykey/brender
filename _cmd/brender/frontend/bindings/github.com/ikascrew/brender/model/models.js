@@ -103,13 +103,6 @@ export class Environment {
              */
             this["id"] = 0;
         }
-        if (!("root" in $$source)) {
-            /**
-             * @member
-             * @type {string}
-             */
-            this["root"] = "";
-        }
         if (!("server" in $$source)) {
             /**
              * @member
@@ -415,6 +408,13 @@ export class Project {
              */
             this["name"] = "";
         }
+        if (!("work_dir_id" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["work_dir_id"] = 0;
+        }
         if (!("display_order" in $$source)) {
             /**
              * @member
@@ -685,6 +685,76 @@ export class Queue {
     static createFrom($$source = {}) {
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         return new Queue(/** @type {Partial<Queue>} */($$parsedSource));
+    }
+}
+
+export class WorkDir {
+    /**
+     * Creates a new WorkDir instance.
+     * @param {Partial<WorkDir>} [$$source = {}] - The source object to create the WorkDir.
+     */
+    constructor($$source = {}) {
+        if (!("id" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["id"] = 0;
+        }
+        if (!("path" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["path"] = "";
+        }
+        if (!("priority" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["priority"] = 0;
+        }
+        if (!("status" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["status"] = "";
+        }
+        if (!("created_at" in $$source)) {
+            /**
+             * @member
+             * @type {time$0.Time | null}
+             */
+            this["created_at"] = null;
+        }
+        if (!("updated_at" in $$source)) {
+            /**
+             * @member
+             * @type {time$0.Time | null}
+             */
+            this["updated_at"] = null;
+        }
+        if (!("deleted_at" in $$source)) {
+            /**
+             * @member
+             * @type {gorm$0.DeletedAt}
+             */
+            this["deleted_at"] = null;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new WorkDir instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {WorkDir}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new WorkDir(/** @type {Partial<WorkDir>} */($$parsedSource));
     }
 }
 

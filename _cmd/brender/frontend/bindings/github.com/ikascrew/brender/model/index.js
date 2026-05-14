@@ -10,6 +10,7 @@ export {
     ProjectDetail,
     ProjectFile,
     Queue,
+    WorkDir,
     Workspace,
     WorkspaceDetail,
     WorkspacesByFile

@@ -6,11 +6,13 @@ import * as Blender from "./blender.js";
 import * as Environment from "./environment.js";
 import * as Project from "./project.js";
 import * as Queue from "./queue.js";
+import * as WorkDir from "./workdir.js";
 import * as Workspace from "./workspace.js";
 export {
     Blender,
     Environment,
     Project,
     Queue,
+    WorkDir,
     Workspace
 };

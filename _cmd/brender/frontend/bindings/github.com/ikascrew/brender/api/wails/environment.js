@@ -46,14 +46,6 @@ export function GetSystemLog() {
 }
 
 /**
- * GetWorkDir returns the process working directory for use as a dialog default.
- * @returns {$CancellablePromise<string>}
- */
-export function GetWorkDir() {
-    return $Call.ByID(3827899719);
-}
-
-/**
  * OpenSystemLogWindow opens the system log in a viewer window.
  * If the window is already open, it is focused instead of creating a new one.
  * @returns {$CancellablePromise<void>}
@@ -81,14 +73,6 @@ export function SetFfmpeg(cmd, fps, ext, outExt, args) {
  */
 export function SetLogLevel(level) {
     return $Call.ByID(3317708141, level);
-}
-
-/**
- * @param {string} root
- * @returns {$CancellablePromise<void>}
- */
-export function SetRoot(root) {
-    return $Call.ByID(496585617, root);
 }
 
 // Private type creation functions
