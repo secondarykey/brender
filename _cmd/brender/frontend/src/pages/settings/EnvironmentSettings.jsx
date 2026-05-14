@@ -70,7 +70,7 @@ function EditDialog({ wd, onClose, onSaved }) {
   const handleBrowse = async () => {
     try {
       const dir = await Dialogs.OpenFile({ CanChooseDirectories: true, CanChooseFiles: false })
-      if (dir) { setPath(dir); setCheckInfo(null) }
+      if (dir) setPath(dir)
     } catch (err) {
       setError(String(err))
     }
@@ -89,6 +89,7 @@ function EditDialog({ wd, onClose, onSaved }) {
         exists:       disk.exists,
         projectCount: stats.project_count,
         dataSize:     stats.data_size,
+        checkedPath:  path,
       })
     } catch (err) {
       setError(String(err))
@@ -117,8 +118,9 @@ function EditDialog({ wd, onClose, onSaved }) {
     }
   }
 
-  const busy        = saving || changeDirProgress !== null
-  const saveBlocked = busy || (pathChanged && !checkInfo)
+  const busy           = saving || changeDirProgress !== null
+  const checkStale     = checkInfo && checkInfo.checkedPath !== path
+  const saveBlocked    = busy
 
   const row = { marginBottom: 16 }
   const lbl = { display: 'block', fontSize: '0.82rem', color: 'rgba(255,255,255,0.5)', marginBottom: 6 }
@@ -165,20 +167,20 @@ function EditDialog({ wd, onClose, onSaved }) {
             <button className="btn btn-sm" onClick={handleCheck} disabled={checking || busy}>
               {checking ? t('common.processing') : t('settings.workDirs.checkSpace')}
             </button>
-            {pathChanged && !checkInfo && (
+            {checkStale && (
               <span style={{ fontSize: '0.82rem', color: 'rgba(255,200,100,0.85)' }}>
-                {t('settings.workDirs.checkRequired')}
+                {t('settings.workDirs.checkStale')}
               </span>
             )}
           </div>
 
           {/* Check results */}
           {checkInfo && (
-            <div style={{ ...row, background: 'rgba(255,255,255,0.04)', borderRadius: 6, padding: '10px 14px' }}>
+            <div style={{ ...row, background: 'rgba(255,255,255,0.04)', borderRadius: 6, padding: '10px 14px', opacity: checkStale ? 0.5 : 1 }}>
               <InfoRow label={t('settings.workDirs.projects')}  value={`${checkInfo.projectCount} ${t('settings.workDirs.projectsUnit')}`} />
               <InfoRow label={t('settings.workDirs.dataSize')}  value={fmtBytes(checkInfo.dataSize)} />
               <InfoRow
-                label={`${t('settings.workDirs.freeSpace')} (${pathChanged ? t('settings.workDirs.destination') : t('settings.workDirs.current')})`}
+                label={`${t('settings.workDirs.freeSpace')} (${checkInfo.checkedPath !== wd.path ? t('settings.workDirs.destination') : t('settings.workDirs.current')})`}
                 value={checkInfo.exists ? fmtBytes(checkInfo.free) : <span className="badge-red">{t('settings.workDirs.notExists')}</span>}
                 last
               />

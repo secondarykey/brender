@@ -233,6 +233,7 @@
       "empty": "No work directories registered",
       "editTitle": "Edit Work Directory",
       "checkRequired": "Check is required when changing the path",
+      "checkStale": "Directory changed — re-check recommended",
       "projects": "Projects",
       "projectsUnit": "",
       "dataSize": "Data Size",

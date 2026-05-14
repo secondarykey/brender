@@ -233,6 +233,7 @@
       "empty": "作業ディレクトリが登録されていません",
       "editTitle": "作業ディレクトリを編集",
       "checkRequired": "パスを変更する場合はチェックが必要です",
+      "checkStale": "ディレクトリが変更されました。再チェックを推奨します",
       "projects": "プロジェクト数",
       "projectsUnit": "件",
       "dataSize": "データサイズ",
