@@ -53,7 +53,7 @@ function WorkspaceThumbnailPanel({ projectID, fileID, workspaceID }) {
 }
 
 // ── 履歴タブ ──────────────────────────────────────────────
-function HistoryTab({ projectID, workspaceID, navigate, projectName, fileName, fileID, workspaceName }) {
+function HistoryTab({ projectID, workspaceID, navigate, projectName, fileName, fileID, workspaceName, reloadTrigger }) {
   const { t } = useTranslation()
   const [jobs, setJobs]         = useState([])
   const [page, setPage]         = useState(1)
@@ -65,7 +65,7 @@ function HistoryTab({ projectID, workspaceID, navigate, projectName, fileName, f
       .catch(() => {})
   }, [projectID, workspaceID])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => { load() }, [load, reloadTrigger])
 
   const statusLabel = (s) => ({ completed: t('status.completed'), error: t('status.error'), cancelled: t('status.cancelled') })[s] ?? s
 
@@ -121,7 +121,7 @@ function DefaultTag({ value, t }) {
 }
 
 // ── 設定タブ ──────────────────────────────────────────────
-function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onDeleted }) {
+function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onDeleted, onTestEnqueued }) {
   const { t } = useTranslation()
   const [blenders, setBlenders]             = useState([])
   const [engines, setEngines]               = useState([])
@@ -277,6 +277,7 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
         },
       })
       setTestEnqueued(true)
+      if (onTestEnqueued) onTestEnqueued()
     } catch (err) {
       setTestError(String(err))
     } finally {
@@ -460,8 +461,9 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
 // ── ページ本体 ────────────────────────────────────────────
 function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspaceID, focusName, navigate }) {
   const { t } = useTranslation()
-  const [detail, setDetail] = useState(null)
-  const [error, setError]   = useState('')
+  const [detail, setDetail]           = useState(null)
+  const [error, setError]             = useState('')
+  const [historyReload, setHistoryReload] = useState(0)
 
   const load = useCallback(() => {
     WorkspaceApi.get({ projectID, workspaceID })
@@ -508,6 +510,7 @@ function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspa
             focusName={focusName}
             onUpdated={() => navigate('file', { projectID, projectName, fileID: effectiveFileID, fileName: effectiveFileName })}
             onDeleted={() => navigate('file', { projectID, projectName, fileID: effectiveFileID, fileName: effectiveFileName })}
+            onTestEnqueued={() => setHistoryReload(n => n + 1)}
           />
         </div>
         <div className="ws-detail-right">
@@ -521,6 +524,7 @@ function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspa
             fileID={effectiveFileID}
             fileName={effectiveFileName}
             workspaceName={detail.workspace.name}
+            reloadTrigger={historyReload}
           />
         </div>
       </div>
