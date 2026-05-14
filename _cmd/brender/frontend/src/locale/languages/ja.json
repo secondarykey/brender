@@ -29,7 +29,8 @@
     "deleteData": "データ削除",
     "dragToReorder": "ドラッグで並び替え",
     "error": "エラー: ",
-    "reload": "再読み込み"
+    "reload": "再読み込み",
+    "edit": "編集"
   },
   "menu": {
     "project": "プロジェクト",
@@ -227,7 +228,8 @@
       "deleteWarning": "使用中のプロジェクトがある場合は削除できません。",
       "addTitle": "作業ディレクトリを追加",
       "notExists": "ディレクトリが存在しません",
-      "empty": "作業ディレクトリが登録されていません"
+      "empty": "作業ディレクトリが登録されていません",
+      "editTitle": "作業ディレクトリを編集"
     },
     "addBlender": "+ Blender を追加",
     "noBlenders": "登録されたBlenderはありません",

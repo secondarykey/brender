@@ -8,11 +8,110 @@ function fmtGB(bytes) {
   return (bytes / (1024 ** 3)).toFixed(1) + ' GB'
 }
 
+function StatusBadge({ status, t }) {
+  const map = {
+    active:   { cls: 'badge-green',  label: t('settings.workDirs.statusActive') },
+    inactive: { cls: 'badge-yellow', label: t('settings.workDirs.statusInactive') },
+    lock:     { cls: 'badge-red',    label: t('settings.workDirs.statusLock') },
+  }
+  const { cls, label } = map[status] || map.active
+  return <span className={cls}>{label}</span>
+}
+
+// ── 編集ダイアログ ────────────────────────────────────────
+function EditDialog({ wd, onClose, onSaved }) {
+  const { t } = useTranslation()
+  const [status, setStatus]   = useState(wd.status)
+  const [saving, setSaving]   = useState(false)
+  const [checking, setChecking] = useState(false)
+  const [diskInfo, setDiskInfo] = useState(null)
+  const [error, setError]     = useState('')
+
+  const handleCheck = async () => {
+    setChecking(true)
+    setError('')
+    try {
+      const info = await WorkDirApi.checkDir({ path: wd.path })
+      setDiskInfo(info)
+    } catch (err) {
+      setError(String(err))
+    } finally {
+      setChecking(false)
+    }
+  }
+
+  const handleSave = async () => {
+    setSaving(true)
+    setError('')
+    try {
+      await WorkDirApi.update({ id: wd.id, path: wd.path, priority: wd.priority, status })
+      onSaved()
+      onClose()
+    } catch (err) {
+      setError(String(err))
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="dialog-overlay" onClick={onClose}>
+      <div className="dialog" onClick={e => e.stopPropagation()}>
+        <h3 className="dialog-title">{t('settings.workDirs.editTitle')}</h3>
+        <div className="dialog-body">
+          <p style={{ marginBottom: 16 }}>
+            <span className="dialog-label">{t('settings.workDirs.path')}</span>
+            <span style={{ fontFamily: 'monospace', fontSize: '0.85rem', wordBreak: 'break-all' }}>{wd.path}</span>
+          </p>
+
+          <div className="form-group">
+            <label className="form-label">{t('settings.workDirs.status')}</label>
+            <select
+              className="form-select"
+              style={{ width: 160 }}
+              value={status}
+              onChange={e => setStatus(e.target.value)}
+            >
+              <option value="active">{t('settings.workDirs.statusActive')}</option>
+              <option value="inactive">{t('settings.workDirs.statusInactive')}</option>
+              <option value="lock">{t('settings.workDirs.statusLock')}</option>
+            </select>
+          </div>
+
+          <div className="form-group" style={{ marginTop: 16 }}>
+            <label className="form-label">{t('settings.workDirs.freeSpace')}</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4 }}>
+              <button className="btn btn-sm" onClick={handleCheck} disabled={checking}>
+                {checking ? t('common.processing') : t('settings.workDirs.check')}
+              </button>
+              {diskInfo && (
+                <span style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.7)' }}>
+                  {diskInfo.exists
+                    ? (fmtGB(diskInfo.free) ?? '—')
+                    : <span className="badge-red">{t('settings.workDirs.notExists')}</span>
+                  }
+                </span>
+              )}
+            </div>
+          </div>
+
+          {error && <div className="error-msg" style={{ marginTop: 12 }}>{error}</div>}
+        </div>
+        <div className="dialog-actions">
+          <button className="btn btn-ghost" onClick={onClose}>{t('common.cancel')}</button>
+          <button className="btn" onClick={handleSave} disabled={saving}>
+            {saving ? t('common.saving') : t('common.save')}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function EnvironmentSettings() {
   const { t } = useTranslation()
-  const [dirs, setDirs]         = useState([])
-  const [error, setError]       = useState('')
-  const [diskInfo, setDiskInfo] = useState({})
+  const [dirs, setDirs]       = useState([])
+  const [error, setError]     = useState('')
+  const [editing, setEditing] = useState(null)
   const dragIndex = useRef(null)
   const [dragOver, setDragOver] = useState(null)
 
@@ -57,26 +156,6 @@ function EnvironmentSettings() {
     }
   }
 
-  // ── ステータス変更 ────────────────────────────────────────
-  const handleStatusChange = async (wd, status) => {
-    try {
-      await WorkDirApi.update({ id: wd.id, path: wd.path, priority: wd.priority, status })
-      load()
-    } catch (err) {
-      setError(String(err))
-    }
-  }
-
-  // ── チェック ─────────────────────────────────────────────
-  const handleCheck = async (wd) => {
-    try {
-      const info = await WorkDirApi.checkDir({ path: wd.path })
-      setDiskInfo(prev => ({ ...prev, [wd.id]: info }))
-    } catch (err) {
-      setError(String(err))
-    }
-  }
-
   // ── 削除 ─────────────────────────────────────────────────
   const handleDelete = async (wd) => {
     setError('')
@@ -117,75 +196,55 @@ function EnvironmentSettings() {
         <p className="empty-msg">{t('settings.workDirs.empty')}</p>
       ) : (
         <>
-          {dirs.length > 0 && (
-            <p className="setting-desc" style={{ marginBottom: 8 }}>
-              {t('common.dragToReorder')}
-            </p>
-          )}
+          <p className="setting-desc" style={{ marginBottom: 8 }}>
+            {t('common.dragToReorder')}
+          </p>
           <table className="blender-table">
             <thead>
               <tr>
                 <th style={{ width: 32 }}></th>
                 <th>{t('settings.workDirs.path')}</th>
-                <th style={{ width: 100 }}>{t('settings.workDirs.status')}</th>
-                <th style={{ width: 90 }}>{t('settings.workDirs.freeSpace')}</th>
+                <th style={{ width: 90 }}>{t('settings.workDirs.status')}</th>
                 <th style={{ width: 110 }}></th>
               </tr>
             </thead>
             <tbody>
-              {dirs.map((wd, index) => {
-                const info = diskInfo[wd.id]
-                const free = info?.exists ? fmtGB(info.free) : (info ? '—' : null)
-                return (
-                  <tr
-                    key={wd.id}
-                    draggable
-                    onDragStart={e => handleDragStart(e, index)}
-                    onDragOver={e => handleDragOver(e, index)}
-                    onDragLeave={handleDragLeave}
-                    onDrop={e => handleDrop(e, index)}
-                    onDragEnd={handleDragEnd}
-                    className={dragOver === index ? 'drag-over' : ''}
-                  >
-                    <td className="drag-handle" title={t('common.dragToReorder')}>≡</td>
-                    <td className="path-cell">
-                      {wd.path}
-                      {info && !info.exists && (
-                        <span className="badge-red" style={{ marginLeft: 8, fontSize: 11 }}>
-                          {t('settings.workDirs.notExists')}
-                        </span>
-                      )}
-                    </td>
-                    <td>
-                      <select
-                        className="form-select"
-                        value={wd.status}
-                        onChange={e => handleStatusChange(wd, e.target.value)}
-                      >
-                        <option value="active">{t('settings.workDirs.statusActive')}</option>
-                        <option value="inactive">{t('settings.workDirs.statusInactive')}</option>
-                        <option value="lock">{t('settings.workDirs.statusLock')}</option>
-                      </select>
-                    </td>
-                    <td style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.55)', textAlign: 'right' }}>
-                      {free ?? '—'}
-                    </td>
-                    <td style={{ whiteSpace: 'nowrap' }}>
-                      <button className="btn btn-sm" onClick={() => handleCheck(wd)} style={{ marginRight: 4 }}>
-                        {t('settings.workDirs.check')}
-                      </button>
-                      <button className="btn btn-sm btn-danger" onClick={() => handleDelete(wd)}>
-                        {t('common.delete')}
-                      </button>
-                    </td>
-                  </tr>
-                )
-              })}
+              {dirs.map((wd, index) => (
+                <tr
+                  key={wd.id}
+                  draggable
+                  onDragStart={e => handleDragStart(e, index)}
+                  onDragOver={e => handleDragOver(e, index)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={e => handleDrop(e, index)}
+                  onDragEnd={handleDragEnd}
+                  className={dragOver === index ? 'drag-over' : ''}
+                >
+                  <td className="drag-handle" title={t('common.dragToReorder')}>≡</td>
+                  <td className="path-cell">{wd.path}</td>
+                  <td><StatusBadge status={wd.status} t={t} /></td>
+                  <td style={{ whiteSpace: 'nowrap' }}>
+                    <button className="btn btn-sm" onClick={() => setEditing(wd)} style={{ marginRight: 4 }}>
+                      {t('common.edit')}
+                    </button>
+                    <button className="btn btn-sm btn-danger" onClick={() => handleDelete(wd)}>
+                      {t('common.delete')}
+                    </button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </>
       )}
 
+      {editing && (
+        <EditDialog
+          wd={editing}
+          onClose={() => setEditing(null)}
+          onSaved={load}
+        />
+      )}
     </div>
   )
 }

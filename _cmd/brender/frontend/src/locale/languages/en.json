@@ -29,7 +29,8 @@
     "deleteData": "Delete Data",
     "dragToReorder": "Drag to reorder",
     "error": "Error: ",
-    "reload": "Reload"
+    "reload": "Reload",
+    "edit": "Edit"
   },
   "menu": {
     "project": "Project",
@@ -227,7 +228,8 @@
       "deleteWarning": "Cannot delete if projects are using it.",
       "addTitle": "Add Work Directory",
       "notExists": "Directory does not exist",
-      "empty": "No work directories registered"
+      "empty": "No work directories registered",
+      "editTitle": "Edit Work Directory"
     },
     "addBlender": "+ Add Blender",
     "noBlenders": "No Blender installations registered",
