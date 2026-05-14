@@ -18,6 +18,7 @@ import (
 	"golang.org/x/xerrors"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
+	"github.com/wailsapp/wails/v3/pkg/events"
 )
 
 //go:embed all:frontend/dist
@@ -120,7 +121,7 @@ func run() error {
 	//サムネイル表示を３にした場合 1140x700 程度
 	//4 は 1450x850 程度？
 
-	app.Window.NewWithOptions(application.WebviewWindowOptions{
+	mainWin := app.Window.NewWithOptions(application.WebviewWindowOptions{
 		Title:     "brender",
 		Width:     1460,
 		Height:    840,
@@ -131,6 +132,10 @@ func run() error {
 		},
 		BackgroundColour: application.NewRGB(26, 26, 26),
 		URL:              "/",
+	})
+	// メインウィンドウが閉じられたらアプリ全体を終了する（ログウィンドウも閉じる）
+	mainWin.RegisterHook(events.Common.WindowClosing, func(_ *application.WindowEvent) {
+		application.Get().Quit()
 	})
 
 	// キュー変化イベントをフロントエンドへ通知
