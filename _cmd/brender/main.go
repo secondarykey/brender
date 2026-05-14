@@ -147,6 +147,15 @@ func run() error {
 		})
 	}
 
+	// パス変更進捗イベントをフロントエンドへ通知
+	api.WorkDirRenameHook = func(workDirID uint, status string, pct float64) {
+		application.Get().Event.Emit("workdir:rename", map[string]interface{}{
+			"work_dir_id": workDirID,
+			"status":      status,
+			"pct":         pct,
+		})
+	}
+
 	if err := app.Run(); err != nil {
 		return xerrors.Errorf("app.Run() error: %w", err)
 	}

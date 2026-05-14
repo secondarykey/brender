@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
 import { WorkDirApi } from '../../lib/api'
+import { onAppEvent } from '../../lib/appEvents'
 
 function fmtGB(bytes) {
   if (!bytes) return null
@@ -21,17 +22,49 @@ function StatusBadge({ status, t }) {
 // ── 編集ダイアログ ────────────────────────────────────────
 function EditDialog({ wd, onClose, onSaved }) {
   const { t } = useTranslation()
+  const [path, setPath]       = useState(wd.path)
   const [status, setStatus]   = useState(wd.status)
   const [saving, setSaving]   = useState(false)
   const [checking, setChecking] = useState(false)
   const [diskInfo, setDiskInfo] = useState(null)
   const [error, setError]     = useState('')
+  const [renameProgress, setRenameProgress] = useState(null) // null | { pct, status }
+
+  useEffect(() => {
+    const off = onAppEvent('workdir:rename', data => {
+      if (data.work_dir_id !== wd.id) return
+      if (data.status === 'done') {
+        setRenameProgress(null)
+        onSaved()
+        onClose()
+      } else if (data.status === 'error') {
+        setRenameProgress(null)
+        setError(t('project.migrateError'))
+        setSaving(false)
+      } else {
+        setRenameProgress({ pct: data.pct, status: data.status })
+      }
+    })
+    return off
+  }, [wd.id, onSaved, onClose, t])
+
+  const handleBrowse = async () => {
+    try {
+      const dir = await Dialogs.OpenFile({ CanChooseDirectories: true, CanChooseFiles: false })
+      if (dir) {
+        setPath(dir)
+        setDiskInfo(null)
+      }
+    } catch (err) {
+      setError(String(err))
+    }
+  }
 
   const handleCheck = async () => {
     setChecking(true)
     setError('')
     try {
-      const info = await WorkDirApi.checkDir({ path: wd.path })
+      const info = await WorkDirApi.checkDir({ path })
       setDiskInfo(info)
     } catch (err) {
       setError(String(err))
@@ -43,33 +76,57 @@ function EditDialog({ wd, onClose, onSaved }) {
   const handleSave = async () => {
     setSaving(true)
     setError('')
+    const pathChanged = path !== wd.path
     try {
-      await WorkDirApi.update({ id: wd.id, path: wd.path, priority: wd.priority, status })
-      onSaved()
-      onClose()
+      if (pathChanged) {
+        // パス変更: 非同期移行を開始（完了はイベントで受け取る）
+        await WorkDirApi.update({ id: wd.id, path: wd.path, priority: wd.priority, status })
+        await WorkDirApi.renameDir({ id: wd.id, newPath: path })
+        setRenameProgress({ pct: 0, status: 'running' })
+        // onClose は workdir:rename done イベントで呼ばれる
+      } else {
+        await WorkDirApi.update({ id: wd.id, path: wd.path, priority: wd.priority, status })
+        onSaved()
+        onClose()
+      }
     } catch (err) {
       setError(String(err))
       setSaving(false)
     }
   }
 
+  const busy = saving || renameProgress !== null
+
   return (
-    <div className="dialog-overlay" onClick={onClose}>
+    <div className="dialog-overlay" onClick={busy ? undefined : onClose}>
       <div className="dialog" onClick={e => e.stopPropagation()}>
         <h3 className="dialog-title">{t('settings.workDirs.editTitle')}</h3>
         <div className="dialog-body">
-          <p style={{ marginBottom: 16 }}>
-            <span className="dialog-label">{t('settings.workDirs.path')}</span>
-            <span style={{ fontFamily: 'monospace', fontSize: '0.85rem', wordBreak: 'break-all' }}>{wd.path}</span>
-          </p>
 
           <div className="form-group">
+            <label className="form-label">{t('settings.workDirs.path')}</label>
+            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+              <input
+                className="form-input"
+                style={{ flex: 1, fontFamily: 'monospace', fontSize: '0.85rem' }}
+                value={path}
+                onChange={e => { setPath(e.target.value); setDiskInfo(null) }}
+                disabled={busy}
+              />
+              <button className="btn btn-sm" onClick={handleBrowse} disabled={busy}>
+                {t('settings.selectFolder')}
+              </button>
+            </div>
+          </div>
+
+          <div className="form-group" style={{ marginTop: 16 }}>
             <label className="form-label">{t('settings.workDirs.status')}</label>
             <select
               className="form-select"
               style={{ width: 160 }}
               value={status}
               onChange={e => setStatus(e.target.value)}
+              disabled={busy}
             >
               <option value="active">{t('settings.workDirs.statusActive')}</option>
               <option value="inactive">{t('settings.workDirs.statusInactive')}</option>
@@ -80,7 +137,7 @@ function EditDialog({ wd, onClose, onSaved }) {
           <div className="form-group" style={{ marginTop: 16 }}>
             <label className="form-label">{t('settings.workDirs.freeSpace')}</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4 }}>
-              <button className="btn btn-sm" onClick={handleCheck} disabled={checking}>
+              <button className="btn btn-sm" onClick={handleCheck} disabled={checking || busy}>
                 {checking ? t('common.processing') : t('settings.workDirs.check')}
               </button>
               {diskInfo && (
@@ -94,12 +151,23 @@ function EditDialog({ wd, onClose, onSaved }) {
             </div>
           </div>
 
+          {renameProgress && (
+            <div style={{ marginTop: 12 }}>
+              <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', marginBottom: 4 }}>
+                {t('project.migrateRunning')} {Math.round(renameProgress.pct * 100)}%
+              </div>
+              <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 4, height: 6 }}>
+                <div style={{ background: '#4a7cdc', borderRadius: 4, height: 6, width: `${Math.round(renameProgress.pct * 100)}%`, transition: 'width 0.3s' }} />
+              </div>
+            </div>
+          )}
+
           {error && <div className="error-msg" style={{ marginTop: 12 }}>{error}</div>}
         </div>
         <div className="dialog-actions">
-          <button className="btn btn-ghost" onClick={onClose}>{t('common.cancel')}</button>
-          <button className="btn" onClick={handleSave} disabled={saving}>
-            {saving ? t('common.saving') : t('common.save')}
+          <button className="btn btn-ghost" onClick={onClose} disabled={busy}>{t('common.cancel')}</button>
+          <button className="btn" onClick={handleSave} disabled={busy}>
+            {renameProgress ? t('project.migrateRunning') : saving ? t('common.saving') : t('common.save')}
           </button>
         </div>
       </div>

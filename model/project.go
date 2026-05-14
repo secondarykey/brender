@@ -232,6 +232,14 @@ func CreateProject(name string, paths []string, workDirID uint) (*ProjectDetail,
 	return loadProjectDetail(p)
 }
 
+func ListProjectsByWorkDir(workDirID uint) ([]*Project, error) {
+	var projects []*Project
+	if res := db.Where("work_dir_id = ?", workDirID).Find(&projects); res.Error != nil {
+		return nil, xerrors.Errorf("ListProjectsByWorkDir: %w", res.Error)
+	}
+	return projects, nil
+}
+
 func UpdateProjectWorkDir(projectID string, workDirID uint) error {
 	if res := db.Model(&Project{}).Where("id = ?", projectID).Update("work_dir_id", workDirID); res.Error != nil {
 		return xerrors.Errorf("UpdateProjectWorkDir: %w", res.Error)

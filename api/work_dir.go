@@ -13,6 +13,9 @@ import (
 // 呼び出し元（Wails サービス層など）で設定する。
 var MigrationHook func(projectID string, status string, pct float64)
 
+// WorkDirRenameHook は作業ディレクトリのパス変更進捗・完了時に呼ばれるフック。
+var WorkDirRenameHook func(workDirID uint, status string, pct float64)
+
 // GetProjectBaseDir はプロジェクトの作業ディレクトリ基底パスを返す。
 func GetProjectBaseDir(projectID string) (string, error) {
 	p, err := model.SelectProject(projectID)
@@ -158,6 +161,60 @@ func StartMigrateProjectWorkDir(projectID string, newWorkDirID uint) error {
 
 		if MigrationHook != nil {
 			MigrationHook(projectID, "done", 1.0)
+		}
+	}()
+	return nil
+}
+
+// StartRenameWorkDir は作業ディレクトリのパスを変更し、参照プロジェクトのファイルを非同期で移動する。
+func StartRenameWorkDir(id uint, newPath string) error {
+	wd, err := model.GetWorkDir(id)
+	if err != nil || wd == nil {
+		return xerrors.New("作業ディレクトリが見つかりません")
+	}
+	if wd.Path == newPath {
+		return nil
+	}
+	if err := os.MkdirAll(newPath, 0755); err != nil {
+		return xerrors.Errorf("新しいパスの作成に失敗しました: %w", err)
+	}
+
+	go func() {
+		oldPath := wd.Path
+		projects, err := model.ListProjectsByWorkDir(id)
+		if err != nil || len(projects) == 0 {
+			// ファイル移動なし、パスだけ更新
+			wd.Path = newPath
+			model.UpdateWorkDir(wd)
+			if WorkDirRenameHook != nil {
+				WorkDirRenameHook(id, "done", 1.0)
+			}
+			return
+		}
+
+		total := len(projects)
+		for i, p := range projects {
+			idx := i
+			migrateProjectFiles(oldPath, newPath, p.ID, func(pct float64) {
+				overall := (float64(idx) + pct) / float64(total)
+				if WorkDirRenameHook != nil {
+					WorkDirRenameHook(id, "running", overall)
+				}
+			})
+			model.UpdateJobOutputDirPrefix(p.ID, oldPath, newPath)
+			os.RemoveAll(filepath.Join(oldPath, p.ID))
+		}
+
+		wd.Path = newPath
+		if err := model.UpdateWorkDir(wd); err != nil {
+			if WorkDirRenameHook != nil {
+				WorkDirRenameHook(id, "error", 0)
+			}
+			return
+		}
+
+		if WorkDirRenameHook != nil {
+			WorkDirRenameHook(id, "done", 1.0)
 		}
 	}()
 	return nil
