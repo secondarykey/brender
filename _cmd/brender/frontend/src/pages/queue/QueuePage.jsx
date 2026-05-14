@@ -240,17 +240,28 @@ function HistoryTab({ navigate }) {
           <table className="queue-table">
             <thead>
               <tr>
-                <th>{t('table.workspace')}</th>
                 <th>{t('table.status')}</th>
+                <th>{t('table.workspace')}</th>
                 <th>{t('table.engine')}</th>
+                <th>{t('table.scene')}</th>
+                <th>{t('table.camera')}</th>
                 <th>{t('table.frames')}</th>
-                <th>{t('table.enqueuedAt')}</th>
+                <th>{t('table.startedAt')}</th>
+                <th>{t('table.completedAt')}</th>
                 <th>{t('table.duration')}</th>
               </tr>
             </thead>
             <tbody>
               {pageJobs.map(j => (
                 <tr key={j.id} className={`${j.status === 'error' ? 'row-error' : ''} row-clickable`} onClick={() => setSelected(j)}>
+                  <td>
+                    <StatusBadge status={j.status || 'running'} />
+                    {j.status === 'error' && j.error_msg && (
+                      <div className="queue-history-error" title={j.error_msg}>
+                        {j.error_msg.slice(0, 40)}{j.error_msg.length > 40 ? '…' : ''}
+                      </div>
+                    )}
+                  </td>
                   <td>
                     <button className="link-btn" onClick={e => { e.stopPropagation(); navigate && navigate('job', {
                       job: j,
@@ -260,17 +271,12 @@ function HistoryTab({ navigate }) {
                       {j.workspace_name || j.workspace_id}
                     </button>
                   </td>
-                  <td>
-                    <StatusBadge status={j.status || 'running'} />
-                    {j.status === 'error' && j.error_msg && (
-                      <div className="queue-history-error" title={j.error_msg}>
-                        {j.error_msg.slice(0, 60)}{j.error_msg.length > 60 ? '…' : ''}
-                      </div>
-                    )}
-                  </td>
-                  <td>{j.engine || t('common.default')}</td>
+                  <td>{j.engine || '—'}</td>
+                  <td>{j.scene  || '—'}</td>
+                  <td>{j.camera || '—'}</td>
                   <td className="frames-cell">{j.start_frame}–{j.end_frame}</td>
-                  <td className="date-cell">{formatDate(j.enqueued_at)}</td>
+                  <td className="date-cell">{formatDate(j.started_at)}</td>
+                  <td className="date-cell">{formatDate(j.completed_at)}</td>
                   <td className="duration-cell">{duration(j.started_at, j.completed_at, t)}</td>
                 </tr>
               ))}
