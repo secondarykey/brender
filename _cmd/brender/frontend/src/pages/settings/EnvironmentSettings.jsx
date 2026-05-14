@@ -40,12 +40,6 @@ function EditDialog({ wd, onClose, onSaved }) {
 
   const pathChanged = path !== wd.path
 
-  // パスが変わったらチェック結果をリセット
-  const handlePathChange = (val) => {
-    setPath(val)
-    setCheckInfo(null)
-  }
-
   useEffect(() => {
     const off = onAppEvent('workdir:changedir', data => {
       if (data.work_dir_id !== wd.id) return
@@ -67,7 +61,7 @@ function EditDialog({ wd, onClose, onSaved }) {
   const handleBrowse = async () => {
     try {
       const dir = await Dialogs.OpenFile({ CanChooseDirectories: true, CanChooseFiles: false })
-      if (dir) handlePathChange(dir)
+      if (dir) { setPath(dir); setCheckInfo(null) }
     } catch (err) {
       setError(String(err))
     }
@@ -125,15 +119,11 @@ function EditDialog({ wd, onClose, onSaved }) {
 
           <div className="form-group">
             <label className="form-label">{t('settings.workDirs.path')}</label>
-            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-              <input
-                className="form-input"
-                style={{ flex: 1, fontFamily: 'monospace', fontSize: '0.85rem' }}
-                value={path}
-                onChange={e => handlePathChange(e.target.value)}
-                disabled={busy}
-              />
-              <button className="btn btn-sm" onClick={handleBrowse} disabled={busy}>
+            <div style={{ display: 'flex', gap: 8, marginTop: 4, alignItems: 'center' }}>
+              <span style={{ flex: 1, fontFamily: 'monospace', fontSize: '0.85rem', wordBreak: 'break-all', color: pathChanged ? '#fff' : 'rgba(255,255,255,0.7)' }}>
+                {path}
+              </span>
+              <button className="btn btn-sm" onClick={handleBrowse} disabled={busy} style={{ flexShrink: 0 }}>
                 {t('settings.selectFolder')}
               </button>
             </div>
