@@ -28,10 +28,10 @@ function EditDialog({ wd, onClose, onSaved }) {
   const [checking, setChecking] = useState(false)
   const [diskInfo, setDiskInfo] = useState(null)
   const [error, setError]     = useState('')
-  const [renameProgress, setRenameProgress] = useState(null) // null | { pct, status }
+  const [changeDirProgress, setRenameProgress] = useState(null) // null | { pct, status }
 
   useEffect(() => {
-    const off = onAppEvent('workdir:rename', data => {
+    const off = onAppEvent('workdir:changedir', data => {
       if (data.work_dir_id !== wd.id) return
       if (data.status === 'done') {
         setRenameProgress(null)
@@ -81,9 +81,9 @@ function EditDialog({ wd, onClose, onSaved }) {
       if (pathChanged) {
         // パス変更: 非同期移行を開始（完了はイベントで受け取る）
         await WorkDirApi.update({ id: wd.id, path: wd.path, priority: wd.priority, status })
-        await WorkDirApi.renameDir({ id: wd.id, newPath: path })
+        await WorkDirApi.changeDir({ id: wd.id, newPath: path })
         setRenameProgress({ pct: 0, status: 'running' })
-        // onClose は workdir:rename done イベントで呼ばれる
+        // onClose は workdir:changedir done イベントで呼ばれる
       } else {
         await WorkDirApi.update({ id: wd.id, path: wd.path, priority: wd.priority, status })
         onSaved()
@@ -95,7 +95,7 @@ function EditDialog({ wd, onClose, onSaved }) {
     }
   }
 
-  const busy = saving || renameProgress !== null
+  const busy = saving || changeDirProgress !== null
 
   return (
     <div className="dialog-overlay" onClick={busy ? undefined : onClose}>
@@ -151,13 +151,13 @@ function EditDialog({ wd, onClose, onSaved }) {
             </div>
           </div>
 
-          {renameProgress && (
+          {changeDirProgress && (
             <div style={{ marginTop: 12 }}>
               <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', marginBottom: 4 }}>
-                {t('project.migrateRunning')} {Math.round(renameProgress.pct * 100)}%
+                {t('project.migrateRunning')} {Math.round(changeDirProgress.pct * 100)}%
               </div>
               <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 4, height: 6 }}>
-                <div style={{ background: '#4a7cdc', borderRadius: 4, height: 6, width: `${Math.round(renameProgress.pct * 100)}%`, transition: 'width 0.3s' }} />
+                <div style={{ background: '#4a7cdc', borderRadius: 4, height: 6, width: `${Math.round(changeDirProgress.pct * 100)}%`, transition: 'width 0.3s' }} />
               </div>
             </div>
           )}
@@ -167,7 +167,7 @@ function EditDialog({ wd, onClose, onSaved }) {
         <div className="dialog-actions">
           <button className="btn btn-ghost" onClick={onClose} disabled={busy}>{t('common.cancel')}</button>
           <button className="btn" onClick={handleSave} disabled={busy}>
-            {renameProgress ? t('project.migrateRunning') : saving ? t('common.saving') : t('common.save')}
+            {changeDirProgress ? t('project.migrateRunning') : saving ? t('common.saving') : t('common.save')}
           </button>
         </div>
       </div>

@@ -31,7 +31,7 @@ export const WorkDirApi = {
     isWails() ? svc().then(s => s.StartMigration(projectID, newWorkDirID))
               : serverCall('work_dir', 'start_migration', { project_id: projectID, new_work_dir_id: newWorkDirID }),
 
-  renameDir: ({ id, newPath }) =>
-    isWails() ? svc().then(s => s.RenameDir(id, newPath))
-              : serverCall('work_dir', 'rename_dir', { id, new_path: newPath }),
+  changeDir: ({ id, newPath }) =>
+    isWails() ? svc().then(s => s.ChangeDir(id, newPath))
+              : serverCall('work_dir', 'change_dir', { id, new_path: newPath }),
 }

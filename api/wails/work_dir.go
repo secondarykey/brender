@@ -37,6 +37,6 @@ func (w *WorkDir) StartMigration(projectID string, newWorkDirID uint) error {
 	return api.StartMigrateProjectWorkDir(projectID, newWorkDirID)
 }
 
-func (w *WorkDir) RenameDir(id uint, newPath string) error {
-	return api.StartRenameWorkDir(id, newPath)
+func (w *WorkDir) ChangeDir(id uint, newPath string) error {
+	return api.StartChangeWorkDir(id, newPath)
 }

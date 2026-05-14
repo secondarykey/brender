@@ -11,6 +11,15 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 import * as model$0 from "../../model/models.js";
 
 /**
+ * @param {number} id
+ * @param {string} newPath
+ * @returns {$CancellablePromise<void>}
+ */
+export function ChangeDir(id, newPath) {
+    return $Call.ByID(392798479, id, newPath);
+}
+
+/**
  * @param {string} path
  * @returns {$CancellablePromise<{ [_ in string]?: any }>}
  */
@@ -46,15 +55,6 @@ export function List() {
     return $Call.ByID(3171867880).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType3($result);
     }));
-}
-
-/**
- * @param {number} id
- * @param {string} newPath
- * @returns {$CancellablePromise<void>}
- */
-export function RenameDir(id, newPath) {
-    return $Call.ByID(182271465, id, newPath);
 }
 
 /**

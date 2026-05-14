@@ -13,8 +13,8 @@ import (
 // 呼び出し元（Wails サービス層など）で設定する。
 var MigrationHook func(projectID string, status string, pct float64)
 
-// WorkDirRenameHook は作業ディレクトリのパス変更進捗・完了時に呼ばれるフック。
-var WorkDirRenameHook func(workDirID uint, status string, pct float64)
+// WorkDirChangeDirHook は作業ディレクトリのパス変更進捗・完了時に呼ばれるフック。
+var WorkDirChangeDirHook func(workDirID uint, status string, pct float64)
 
 // GetProjectBaseDir はプロジェクトの作業ディレクトリ基底パスを返す。
 func GetProjectBaseDir(projectID string) (string, error) {
@@ -166,8 +166,8 @@ func StartMigrateProjectWorkDir(projectID string, newWorkDirID uint) error {
 	return nil
 }
 
-// StartRenameWorkDir は作業ディレクトリのパスを変更し、参照プロジェクトのファイルを非同期で移動する。
-func StartRenameWorkDir(id uint, newPath string) error {
+// StartChangeWorkDir は作業ディレクトリのパスを変更し、参照プロジェクトのファイルを非同期で移動する。
+func StartChangeWorkDir(id uint, newPath string) error {
 	wd, err := model.GetWorkDir(id)
 	if err != nil || wd == nil {
 		return xerrors.New("作業ディレクトリが見つかりません")
@@ -186,8 +186,8 @@ func StartRenameWorkDir(id uint, newPath string) error {
 			// ファイル移動なし、パスだけ更新
 			wd.Path = newPath
 			model.UpdateWorkDir(wd)
-			if WorkDirRenameHook != nil {
-				WorkDirRenameHook(id, "done", 1.0)
+			if WorkDirChangeDirHook != nil {
+				WorkDirChangeDirHook(id, "done", 1.0)
 			}
 			return
 		}
@@ -197,8 +197,8 @@ func StartRenameWorkDir(id uint, newPath string) error {
 			idx := i
 			migrateProjectFiles(oldPath, newPath, p.ID, func(pct float64) {
 				overall := (float64(idx) + pct) / float64(total)
-				if WorkDirRenameHook != nil {
-					WorkDirRenameHook(id, "running", overall)
+				if WorkDirChangeDirHook != nil {
+					WorkDirChangeDirHook(id, "running", overall)
 				}
 			})
 			model.UpdateJobOutputDirPrefix(p.ID, oldPath, newPath)
@@ -207,14 +207,14 @@ func StartRenameWorkDir(id uint, newPath string) error {
 
 		wd.Path = newPath
 		if err := model.UpdateWorkDir(wd); err != nil {
-			if WorkDirRenameHook != nil {
-				WorkDirRenameHook(id, "error", 0)
+			if WorkDirChangeDirHook != nil {
+				WorkDirChangeDirHook(id, "error", 0)
 			}
 			return
 		}
 
-		if WorkDirRenameHook != nil {
-			WorkDirRenameHook(id, "done", 1.0)
+		if WorkDirChangeDirHook != nil {
+			WorkDirChangeDirHook(id, "done", 1.0)
 		}
 	}()
 	return nil
