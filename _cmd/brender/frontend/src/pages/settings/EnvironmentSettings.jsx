@@ -179,7 +179,7 @@ function EnvironmentSettings() {
                     </td>
                     <td>
                       <select
-                        className="select-sm"
+                        className="form-select"
                         value={wd.status}
                         onChange={e => handleStatusChange(wd, e.target.value)}
                       >
@@ -210,7 +210,7 @@ function EnvironmentSettings() {
       {adding && (
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 12 }}>
           <input
-            className="input-field"
+            className="form-input"
             style={{ flex: 1 }}
             value={newPath}
             onChange={e => setNewPath(e.target.value)}

@@ -115,7 +115,7 @@ function WorkDirSection({ projectID, workDir, workDirs, onMigrated }) {
                 <p style={{ color: '#f17e72', fontSize: 13 }}>No active work directories available.</p>
               ) : (
                 <select
-                  className="select-sm"
+                  className="form-select"
                   value={targetID}
                   onChange={e => setTargetID(e.target.value)}
                   disabled={migrating}
