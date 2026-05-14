@@ -226,21 +226,22 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
   if (!form) return null
 
   return (
-    <div className="form workspace" style={{ maxWidth: 520 }}>
-      <div className="form-field">
-        <label className="form-label">{t('workspace.name')} <span className="required">*</span></label>
-        <input ref={nameRef} className="form-input" value={form.name} onChange={e => set('name', e.target.value)} />
-      </div>
-
-      <div className="form-field">
-        <label className="form-label">{t('workspace.blender')}</label>
-        <select className="form-select" value={form.blenderInstallID} onChange={e => set('blenderInstallID', Number(e.target.value))}>
-          <option value={0}>{t('common.notSet')}</option>
-          {blenders.map(b => (
-            <option key={b.id} value={b.id}>{b.name} ({b.version || t('common.versionUnknown')})</option>
-          ))}
-        </select>
-        <span className="form-hint">{t('workspace.blenderHint')}</span>
+    <div className="form workspace" style={{ maxWidth: 640 }}>
+      <div className="form-row">
+        <div className="form-field" style={{ flex: 1 }}>
+          <label className="form-label">{t('workspace.name')} <span className="required">*</span></label>
+          <input ref={nameRef} className="form-input" value={form.name} onChange={e => set('name', e.target.value)} />
+        </div>
+        <div className="form-field" style={{ flex: 2 }}>
+          <label className="form-label">{t('workspace.blender')}</label>
+          <select className="form-select" value={form.blenderInstallID} onChange={e => set('blenderInstallID', Number(e.target.value))}>
+            <option value={0}>{t('common.notSet')}</option>
+            {blenders.map(b => (
+              <option key={b.id} value={b.id}>{b.name} ({b.version || t('common.versionUnknown')})</option>
+            ))}
+          </select>
+          <span className="form-hint">{t('workspace.blenderHint')}</span>
+        </div>
       </div>
 
       <div className="form-field">
@@ -256,23 +257,29 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
         <span className="form-hint">{t('workspace.sceneHint')}</span>
       </div>
 
-      <div className="form-field">
-        <label className="form-label">{t('workspace.renderEngine')}</label>
-        {engines.length > 0 ? (
-          <select className="form-select" value={form.engine} onChange={e => set('engine', e.target.value)} disabled={enginesLoading}>
-            <option value="">{t('common.notSet')}</option>
-            {engines.map(eng => <option key={eng} value={eng}>{eng}</option>)}
-          </select>
-        ) : (
-          <input className="form-input" value={form.engine} onChange={e => set('engine', e.target.value)} placeholder={t('workspace.enginePlaceholder')} />
-        )}
-        <span className="form-hint">{t('workspace.engineHint')}</span>
-      </div>
-
-      <div className="form-field">
-        <label className="form-label">{t('workspace.samples')}</label>
-        <input className="form-input" style={{ width: 120 }} type="number" min={0} value={form.samples} onChange={e => set('samples', Number(e.target.value))} />
-        <span className="form-hint">{t('workspace.samplesHint')}</span>
+      <div className="form-row" style={{ alignItems: 'flex-start' }}>
+        <div className="form-field" style={{ flex: 2 }}>
+          <label className="form-label">{t('workspace.renderEngine')}</label>
+          {engines.length > 0 ? (
+            <select className="form-select" value={form.engine} onChange={e => set('engine', e.target.value)} disabled={enginesLoading}>
+              <option value="">{t('common.notSet')}</option>
+              {engines.map(eng => <option key={eng} value={eng}>{eng}</option>)}
+            </select>
+          ) : (
+            <input className="form-input" value={form.engine} onChange={e => set('engine', e.target.value)} placeholder={t('workspace.enginePlaceholder')} />
+          )}
+          <span className="form-hint">{t('workspace.engineHint')}</span>
+        </div>
+        <div className="form-field" style={{ flex: 1 }}>
+          <label className="form-label">{t('workspace.samples')}</label>
+          <input className="form-input" style={{ textAlign: 'right' }} type="number" min={0} value={form.samples} onChange={e => set('samples', Number(e.target.value))} />
+          <span className="form-hint">{t('workspace.samplesHint')}</span>
+        </div>
+        <div className="form-field" style={{ flex: 1 }}>
+          <label className="form-label">{t('workspace.threads')}</label>
+          <input className="form-input" style={{ textAlign: 'right' }} type="number" min={0} value={form.thread} onChange={e => set('thread', Number(e.target.value))} />
+          <span className="form-hint">{t('workspace.threadsHint')}</span>
+        </div>
       </div>
 
       <div className="form-field">
@@ -285,26 +292,20 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
           <div className="form-row" style={{ marginTop: 8 }}>
             <div className="form-field">
               <label className="form-label">{t('workspace.startFrame')}</label>
-              <input className="form-input" style={{ width: 100 }} type="number" min={0} value={form.startFrame} onChange={e => set('startFrame', Number(e.target.value))} />
+              <input className="form-input" style={{ width: 100, textAlign: 'right' }} type="number" min={0} value={form.startFrame} onChange={e => set('startFrame', Number(e.target.value))} />
             </div>
             <div className="form-field">
               <label className="form-label">{t('workspace.endFrame')}</label>
-              <input className="form-input" style={{ width: 100 }} type="number" min={0} value={form.endFrame} onChange={e => set('endFrame', Number(e.target.value))} />
+              <input className="form-input" style={{ width: 100, textAlign: 'right' }} type="number" min={0} value={form.endFrame} onChange={e => set('endFrame', Number(e.target.value))} />
             </div>
             <div className="form-field">
               <label className="form-label">{t('workspace.frameStep')}</label>
-              <input className="form-input" style={{ width: 80 }} type="number" min={1} value={form.frameStep} onChange={e => set('frameStep', Number(e.target.value))} />
+              <input className="form-input" style={{ width: 80, textAlign: 'right' }} type="number" min={1} value={form.frameStep} onChange={e => set('frameStep', Number(e.target.value))} />
               <span className="form-hint">{t('workspace.frameStepHint')}</span>
             </div>
           </div>
         )}
         <span className="form-hint">{t('workspace.frameRangeHint')}</span>
-      </div>
-
-      <div className="form-field">
-        <label className="form-label">{t('workspace.threads')}</label>
-        <input className="form-input" style={{ width: 120 }} type="number" min={0} value={form.thread} onChange={e => set('thread', Number(e.target.value))} />
-        <span className="form-hint">{t('workspace.threadsHint')}</span>
       </div>
 
       {error && <div className="error-msg">{error}</div>}
