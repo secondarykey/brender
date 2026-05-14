@@ -241,7 +241,7 @@ function HistoryTab({ navigate }) {
             <thead>
               <tr>
                 <th>{t('table.status')}</th>
-                <th>{t('table.workspace')}</th>
+                <th>{t('breadcrumb.jobResult')}</th>
                 <th>{t('table.engine')}</th>
                 <th>{t('table.scene')}</th>
                 <th>{t('table.camera')}</th>
