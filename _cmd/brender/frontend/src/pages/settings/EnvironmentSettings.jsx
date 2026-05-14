@@ -129,6 +129,32 @@ function EditDialog({ wd, onClose, onSaved }) {
         <h3 className="dialog-title" style={{ marginBottom: 0 }}>{t('settings.workDirs.editTitle')}</h3>
         <div className="dialog-body">
 
+          {/* Check space */}
+          <div style={row}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: checkInfo ? 8 : 0 }}>
+              {!checkInfo && (
+                <span style={{ fontSize: '0.82rem', color: 'rgba(255,200,100,0.85)' }}>
+                  {t('settings.workDirs.checkPrompt')}
+                </span>
+              )}
+              {checkInfo && <span />}
+              <button className="btn btn-sm" onClick={handleCheck} disabled={checking || busy} style={{ marginLeft: 'auto' }}>
+                {checking ? t('common.processing') : t('settings.workDirs.checkSpace')}
+              </button>
+            </div>
+            {checkInfo && (
+              <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 6, padding: '10px 14px' }}>
+                <InfoRow label={t('settings.workDirs.projects')} value={`${checkInfo.projectCount} ${t('settings.workDirs.projectsUnit')}`} />
+                <InfoRow label={t('settings.workDirs.dataSize')} value={fmtBytes(checkInfo.dataSize)} />
+                <InfoRow
+                  label={t('settings.workDirs.freeSpace')}
+                  value={checkInfo.exists ? fmtBytes(checkInfo.free) : <span className="badge-red">{t('settings.workDirs.notExists')}</span>}
+                  last
+                />
+              </div>
+            )}
+          </div>
+
           {/* Path */}
           <div style={row}>
             <span style={lbl}>{t('settings.workDirs.path')}</span>
@@ -146,37 +172,24 @@ function EditDialog({ wd, onClose, onSaved }) {
           <div style={row}>
             <span style={lbl}>{t('settings.workDirs.status')}</span>
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <select
-              className="form-select"
-              style={{ width: 160 }}
-              value={status}
-              onChange={e => setStatus(e.target.value)}
-              disabled={busy}
-            >
-              <option value="active">{t('settings.workDirs.statusActive')}</option>
-              <option value="inactive">{t('settings.workDirs.statusInactive')}</option>
-              <option value="lock">{t('settings.workDirs.statusLock')}</option>
-            </select>
+              <select
+                className="form-select"
+                style={{ width: 160 }}
+                value={status}
+                onChange={e => setStatus(e.target.value)}
+                disabled={busy}
+              >
+                <option value="active">{t('settings.workDirs.statusActive')}</option>
+                <option value="inactive">{t('settings.workDirs.statusInactive')}</option>
+                <option value="lock">{t('settings.workDirs.statusLock')}</option>
+              </select>
             </div>
           </div>
 
-          {/* Check */}
-          <div style={{ ...row, display: 'flex', alignItems: 'center', gap: 12 }}>
-            <button className="btn btn-sm" onClick={handleCheck} disabled={checking || busy}>
-              {checking ? t('common.processing') : t('settings.workDirs.checkSpace')}
-            </button>
-          </div>
-
-          {/* Check results */}
-          {checkInfo && (
-            <div style={{ ...row, background: 'rgba(255,255,255,0.04)', borderRadius: 6, padding: '10px 14px' }}>
-              <InfoRow label={t('settings.workDirs.projects')}  value={`${checkInfo.projectCount} ${t('settings.workDirs.projectsUnit')}`} />
-              <InfoRow label={t('settings.workDirs.dataSize')}  value={fmtBytes(checkInfo.dataSize)} />
-              <InfoRow
-                label={t('settings.workDirs.freeSpace')}
-                value={checkInfo.exists ? fmtBytes(checkInfo.free) : <span className="badge-red">{t('settings.workDirs.notExists')}</span>}
-                last
-              />
+          {/* Path change warning */}
+          {pathChanged && (
+            <div style={{ ...row, fontSize: '0.82rem', color: 'rgba(255,200,100,0.85)' }}>
+              {t('settings.workDirs.pathChangeWarning')}
             </div>
           )}
 

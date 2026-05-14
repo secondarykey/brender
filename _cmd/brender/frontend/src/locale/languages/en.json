@@ -234,6 +234,8 @@
       "editTitle": "Edit Work Directory",
       "checkRequired": "Check is required when changing the path",
       "checkStale": "Directory changed — re-check recommended",
+      "checkPrompt": "Please check the directory space before continuing",
+      "pathChangeWarning": "Saving will move project files to the new directory, which may take some time",
       "projects": "Projects",
       "projectsUnit": "",
       "dataSize": "Data Size",

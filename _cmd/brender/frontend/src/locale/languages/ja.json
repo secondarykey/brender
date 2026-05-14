@@ -234,6 +234,8 @@
       "editTitle": "作業ディレクトリを編集",
       "checkRequired": "パスを変更する場合はチェックが必要です",
       "checkStale": "ディレクトリが変更されました。再チェックを推奨します",
+      "checkPrompt": "ディレクトリには容量のチェックをしてください",
+      "pathChangeWarning": "保存すると対象のプロジェクトのファイルが移動する為、時間がかかる可能性があります",
       "projects": "プロジェクト数",
       "projectsUnit": "件",
       "dataSize": "データサイズ",
