@@ -36,6 +36,35 @@ def printScenes():
 
     print("{{ .SceneEndFlag }}")
 
+def getSamples(obj,props):
+
+    target = obj
+    for prop in props:
+        if hasattr(target,prop):
+            target = getattr(target,prop)
+        else:
+            return -1
+
+    return target
+
+def printSamples():
+
+    scenes = bpy.data.scenes
+  
+    propArray = [["display","render_aa"],["eevee","taa_render_samples"],["cycles","samples"]]
+
+    print("{{ .SamplesStartFlag }}")
+    for key, value in scenes.items():
+
+        row = []
+        for props in propArray:
+            s = getSamples(value,props)
+            row.append(str(s))
+
+        print("\t".join(row))
+
+    print("{{ .SamplesEndFlag }}")
+
 def printCameras():
 
     camera_usage = defaultdict(list)
@@ -62,5 +91,6 @@ def printCameras():
 if __name__ == "__main__":
     print("{{ .ToolStartFlag }}")
     printScenes()
+    printSamples()
     printCameras()
     print("{{ .ToolEndFlag }}")

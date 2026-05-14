@@ -18,7 +18,7 @@ def setSamples():
 {{ else if .Samples.IsEevee }}
     scene.eevee.taa_render_samples = {{ .Samples.Value }}
 {{ else if .Samples.IsWorkbench }}
-    scene.cycles.render_aa = '{{ .Samples.Value }}'
+    scene.display.render_aa = '{{ .Samples.Value }}'
 {{ end }}
     print("== samples set [{{.Samples.Value}}]")
 

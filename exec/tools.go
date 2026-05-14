@@ -45,21 +45,24 @@ func getToolPythonFile() (string, error) {
 }
 
 const (
-	ToolFlag   = "=BRENDER PYTHON TOOL %s"
-	SceneFlag  = "==SCENES %s"
-	CameraFlag = "==CAMERA %s"
-	StartFlag  = "START"
-	EndFlag    = "END"
-	FileName   = "brender-tool_*.py"
+	ToolFlag    = "=BRENDER PYTHON TOOL %s"
+	SceneFlag   = "==SCENES %s"
+	CameraFlag  = "==CAMERA %s"
+	SamplesFlag = "==SAMPLES %s"
+	StartFlag   = "START"
+	EndFlag     = "END"
+	FileName    = "brender-tool_*.py"
 )
 
 var (
-	ToolStart   = fmt.Sprintf(ToolFlag, StartFlag)
-	ToolEnd     = fmt.Sprintf(ToolFlag, EndFlag)
-	SceneStart  = fmt.Sprintf(SceneFlag, StartFlag)
-	SceneEnd    = fmt.Sprintf(SceneFlag, EndFlag)
-	CameraStart = fmt.Sprintf(CameraFlag, StartFlag)
-	CameraEnd   = fmt.Sprintf(CameraFlag, EndFlag)
+	ToolStart    = fmt.Sprintf(ToolFlag, StartFlag)
+	ToolEnd      = fmt.Sprintf(ToolFlag, EndFlag)
+	SceneStart   = fmt.Sprintf(SceneFlag, StartFlag)
+	SceneEnd     = fmt.Sprintf(SceneFlag, EndFlag)
+	CameraStart  = fmt.Sprintf(CameraFlag, StartFlag)
+	CameraEnd    = fmt.Sprintf(CameraFlag, EndFlag)
+	SamplesStart = fmt.Sprintf(SamplesFlag, StartFlag)
+	SamplesEnd   = fmt.Sprintf(SamplesFlag, EndFlag)
 )
 
 /**
@@ -73,16 +76,19 @@ func createToolPythonFile() (string, error) {
 	}
 
 	dto := struct {
-		ToolStartFlag   string
-		ToolEndFlag     string
-		SceneStartFlag  string
-		SceneEndFlag    string
-		CameraStartFlag string
-		CameraEndFlag   string
+		ToolStartFlag    string
+		ToolEndFlag      string
+		SceneStartFlag   string
+		SceneEndFlag     string
+		CameraStartFlag  string
+		CameraEndFlag    string
+		SamplesStartFlag string
+		SamplesEndFlag   string
 	}{
 		ToolStart, ToolEnd,
 		SceneStart, SceneEnd,
 		CameraStart, CameraEnd,
+		SamplesStart, SamplesEnd,
 	}
 
 	fp, err := os.CreateTemp("", FileName)
