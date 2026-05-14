@@ -52,7 +52,8 @@
     "none": "No data",
     "locked": "Locked",
     "available": "Available",
-    "deleted": "Deleted"
+    "deleted": "Deleted",
+    "corrupted": "Corrupted"
   },
   "sort": {
     "label": "Sort",

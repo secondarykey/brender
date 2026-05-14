@@ -469,7 +469,7 @@ func finishJob(id string, success bool, errMsg string, diskSize int64) {
 	dataStatus := model.JobDataAvailable
 	if !success {
 		status = model.JobError
-		dataStatus = model.JobDataNone
+		dataStatus = model.JobDataCorrupted
 	}
 	if err := model.UpdateJobDone(id, status, errMsg, &now, diskSize, dataStatus); err != nil {
 		log.Println("UpdateJobDone error:", err)
@@ -611,7 +611,7 @@ func CancelQueue(id string) error {
 	if j != nil {
 		diskSize = calcDirSize(j.OutputDir)
 	}
-	if err := model.UpdateJobDone(q.ID, model.JobCancelled, "", &now, diskSize, model.JobDataNone); err != nil {
+	if err := model.UpdateJobDone(q.ID, model.JobCancelled, "", &now, diskSize, model.JobDataCorrupted); err != nil {
 		log.Println("UpdateJobDone(cancelled) error:", err)
 	}
 	wasRunning := q.Status == model.QueueRunning

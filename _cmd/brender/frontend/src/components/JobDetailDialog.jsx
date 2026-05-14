@@ -8,6 +8,7 @@ function dataStatusClass(s) {
   if (s === 0)     return 'data-status-none'
   if (s === 2)     return 'data-status-available'
   if (s === 4)     return 'data-status-deleted'
+  if (s === 6)     return 'data-status-corrupted'
   return ''
 }
 
@@ -17,6 +18,7 @@ function DataStatusBadge({ status }) {
     0: t('dataStatus.none'),
     2: t('dataStatus.available'),
     4: t('dataStatus.deleted'),
+    6: t('dataStatus.corrupted'),
   }
   const label = status % 2 === 1 ? t('dataStatus.locked') : (labels[status] ?? String(status))
   return <span className={`data-status-badge ${dataStatusClass(status)}`}>{label}</span>
@@ -169,7 +171,7 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
             <Row label={t('dialog.dataSize')} value={
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={dataStatus >= 4 ? { textDecoration: 'line-through', opacity: 0.5 } : undefined}>{formatBytes(job.disk_size)}</span>
-                {dataStatus === 2 && (
+                {(dataStatus === 2 || dataStatus === 6) && (
                   <button className="btn btn-sm btn-danger" onClick={() => setConfirmData(true)} disabled={isLocked}>
                     {t('common.deleteData')}
                   </button>

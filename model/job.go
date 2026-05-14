@@ -15,12 +15,14 @@ const (
 )
 
 const (
-	JobDataNone          = 0 // データなし
-	JobDataNoneLocked    = 1 // データなし（ロック）
-	JobDataAvailable     = 2 // データあり
-	JobDataAvailableLocked = 3 // データあり（ロック）
-	JobDataDeleted       = 4 // データ削除
-	JobDataDeletedLocked = 5 // データ削除（ロック）
+	JobDataNone             = 0 // データなし
+	JobDataNoneLocked       = 1 // データなし（ロック）
+	JobDataAvailable        = 2 // データあり
+	JobDataAvailableLocked  = 3 // データあり（ロック）
+	JobDataDeleted          = 4 // データ削除
+	JobDataDeletedLocked    = 5 // データ削除（ロック）
+	JobDataCorrupted        = 6 // データ破損（エラー・キャンセル時の不完全出力）
+	JobDataCorruptedLocked  = 7 // データ破損（ロック）
 )
 
 // Job はレンダリング実行の完了済み履歴レコード。

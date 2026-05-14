@@ -52,7 +52,8 @@
     "none": "データなし",
     "locked": "ロック",
     "available": "あり",
-    "deleted": "データ削除"
+    "deleted": "データ削除",
+    "corrupted": "データ破損"
   },
   "sort": {
     "label": "並び順",
