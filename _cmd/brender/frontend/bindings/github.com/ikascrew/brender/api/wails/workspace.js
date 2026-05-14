@@ -93,6 +93,7 @@ export function SetThumbnail(projectID, fileID, workspaceID, imagePath) {
  * @param {string} name
  * @param {number} blenderInstallID
  * @param {string} scene
+ * @param {string} camera
  * @param {string} engine
  * @param {number} startFrame
  * @param {number} endFrame
@@ -101,8 +102,8 @@ export function SetThumbnail(projectID, fileID, workspaceID, imagePath) {
  * @param {number} samples
  * @returns {$CancellablePromise<model$0.WorkspaceDetail | null>}
  */
-export function Update(projectID, workspaceID, name, blenderInstallID, scene, engine, startFrame, endFrame, frameStep, thread, samples) {
-    return $Call.ByID(971734846, projectID, workspaceID, name, blenderInstallID, scene, engine, startFrame, endFrame, frameStep, thread, samples).then(/** @type {($result: any) => any} */(($result) => {
+export function Update(projectID, workspaceID, name, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples) {
+    return $Call.ByID(971734846, projectID, workspaceID, name, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType3($result);
     }));
 }

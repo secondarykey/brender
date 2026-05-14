@@ -219,7 +219,7 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
       await WorkspaceApi.update({
         projectID, workspaceID, name: form.name.trim(),
         blenderInstallID: form.blenderInstallID,
-        scene: form.scene, engine: form.engine,
+        scene: form.scene, camera: form.camera, engine: form.engine,
         startFrame: form.startFrame, endFrame: form.endFrame,
         frameStep: form.frameStep, thread: form.thread,
         samples: form.samples,

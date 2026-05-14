@@ -16,6 +16,7 @@ type Workspace struct {
 	BlenderInstallID uint       `json:"blender_install_id"` // 0 = プロジェクトのデフォルト使用
 	Name             string     `json:"name"`
 	Scene            string     `json:"scene"`
+	Camera           string     `json:"camera"`
 	Engine           string     `json:"engine"`              // "" = Blender デフォルト
 	StartFrame       int        `json:"start"`
 	EndFrame         int        `json:"end"`
@@ -126,7 +127,7 @@ func CreateSystemWorkspace(projectID string, projectFileID string, name string, 
 	return w, nil
 }
 
-func UpdateWorkspace(projectID string, workspaceID string, name string, blenderInstallID uint, scene, engine string, startFrame, endFrame, frameStep, thread, samples int) (*WorkspaceDetail, error) {
+func UpdateWorkspace(projectID string, workspaceID string, name string, blenderInstallID uint, scene, camera, engine string, startFrame, endFrame, frameStep, thread, samples int) (*WorkspaceDetail, error) {
 	var w Workspace
 	if res := db.First(&w, "id = ? AND project_id = ?", workspaceID, projectID); res.Error != nil {
 		return nil, xerrors.Errorf("UpdateWorkspace find: %w", res.Error)
@@ -134,6 +135,7 @@ func UpdateWorkspace(projectID string, workspaceID string, name string, blenderI
 	w.Name = name
 	w.BlenderInstallID = blenderInstallID
 	w.Scene = scene
+	w.Camera = camera
 	w.Engine = engine
 	w.StartFrame = startFrame
 	w.EndFrame = endFrame

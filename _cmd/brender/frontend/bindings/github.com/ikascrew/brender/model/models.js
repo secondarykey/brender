@@ -730,6 +730,13 @@ export class Workspace {
              */
             this["scene"] = "";
         }
+        if (!("camera" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["camera"] = "";
+        }
         if (!("engine" in $$source)) {
             /**
              * "" = Blender デフォルト
