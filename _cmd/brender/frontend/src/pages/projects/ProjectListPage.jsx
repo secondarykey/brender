@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ProjectApi, EnvironmentApi, WorkDirApi } from '../../lib/api'
+import { ProjectApi, WorkDirApi } from '../../lib/api'
 import SortSelect from '../../components/SortSelect'
 
 function WorkDirBadge({ status, t }) {
@@ -56,7 +56,7 @@ function ProjectListPage({ navigate }) {
   const [projects, setProjects] = useState([])
   const [workDirMap, setWorkDirMap] = useState({})
   const [error, setError]       = useState('')
-  const [hasRoot, setHasRoot]   = useState(true)
+  const [hasWorkDir, setHasWorkDir] = useState(true)
   const [creating, setCreating] = useState(false)
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('viewMode:projects') || 'list')
   const [sort, setSort]         = useState(() => localStorage.getItem('sort:projects') || 'display_order')
@@ -74,21 +74,20 @@ function ProjectListPage({ navigate }) {
   }
 
   useEffect(() => {
-    EnvironmentApi.get()
-      .then(env => setHasRoot(!!(env && env.root)))
-      .catch(() => setHasRoot(false))
     load(sort)
     WorkDirApi.list()
       .then(list => {
+        const dirs = list || []
         const map = {}
-        for (const w of (list || [])) map[w.id] = w
+        for (const w of dirs) map[w.id] = w
         setWorkDirMap(map)
+        setHasWorkDir(dirs.some(w => w.status === 'active'))
       })
-      .catch(() => {})
+      .catch(() => setHasWorkDir(false))
   }, [])
 
   const handleCreate = async () => {
-    if (!hasRoot || creating) return
+    if (!hasWorkDir || creating) return
     setCreating(true)
     try {
       const d = await ProjectApi.create({ name: 'New Project Name' })
@@ -102,7 +101,7 @@ function ProjectListPage({ navigate }) {
 
   return (
     <div className="page">
-      {!hasRoot && (
+      {!hasWorkDir && (
         <div className="notice-banner">
           {t('project.rootNotSet')}
           <button className="btn-link" onClick={() => navigate('settings')}>{t('project.configureInSettings')}</button>
@@ -114,7 +113,7 @@ function ProjectListPage({ navigate }) {
       {projects.length === 0 ? (
         <div className="empty-state">
           <p>{t('project.empty')}</p>
-          <button className="btn btn-green" onClick={handleCreate} disabled={!hasRoot || creating}>{t('project.createFirst')}</button>
+          <button className="btn btn-green" onClick={handleCreate} disabled={!hasWorkDir || creating}>{t('project.createFirst')}</button>
         </div>
       ) : (
         <>
@@ -175,7 +174,7 @@ function ProjectListPage({ navigate }) {
       )}
 
       <div className="list-fab">
-        <button className="btn btn-green" onClick={handleCreate} disabled={!hasRoot || creating}>
+        <button className="btn btn-green" onClick={handleCreate} disabled={!hasWorkDir || creating}>
           {creating ? t('common.registering') : t('project.register.transition')}
         </button>
       </div>

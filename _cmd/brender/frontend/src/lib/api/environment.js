@@ -8,18 +8,6 @@ export const EnvironmentApi = {
     isWails() ? svc().then(s => s.Get())
               : serverCall('environment', 'get'),
 
-  /** プロジェクトルートディレクトリを設定
-   * @param {{ root: string }} args
-   */
-  setRoot: ({ root }) =>
-    isWails() ? svc().then(s => s.SetRoot(root))
-              : serverCall('environment', 'set_root', { root }),
-
-  /** ダイアログのデフォルトパス用に作業ディレクトリを取得（Wails 専用） */
-  getWorkDir: () =>
-    isWails() ? svc().then(s => s.GetWorkDir())
-              : Promise.resolve(''),
-
   /** ffmpeg 設定を保存
    * @param {{ cmd: string, fps: number, ext: string, args: string }} args
    */

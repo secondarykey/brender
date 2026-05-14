@@ -11,13 +11,17 @@ import (
 
 func CreateMovie(projectID string, fileID string, workspaceID string, jobID string) (string, error) {
 
-	//システムパスを取得
+	baseDir, err := GetProjectBaseDir(projectID)
+	if err != nil {
+		return "", xerrors.Errorf("GetProjectBaseDir error: %w", err)
+	}
+
 	env, err := model.GetEnv()
 	if err != nil {
 		return "", xerrors.Errorf("model.GetEnv() error: %w", err)
 	}
-	if env == nil || env.ProjectRoot == "" {
-		return "", xerrors.New("作業ディレクトリが設定されていません")
+	if env == nil {
+		env = &model.Environment{}
 	}
 
 	cmd := env.FfmpegCmd
@@ -39,7 +43,7 @@ func CreateMovie(projectID string, fileID string, workspaceID string, jobID stri
 	}
 	out := "movie." + outext
 
-	jobDir := filepath.Join(env.ProjectRoot, projectID, fileID, workspaceID, jobID)
+	jobDir := filepath.Join(baseDir, projectID, fileID, workspaceID, jobID)
 	mvFile := filepath.Join(jobDir, out)
 
 	mp := exec.NewFFmpeg(cmd)

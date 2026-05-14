@@ -211,8 +211,6 @@
   },
   "settings": {
     "language": "Language",
-    "workingDir": "Working Directory (Legacy)",
-    "workingDirHint": "Specify the folder to save projects and rendering results.",
     "selectFolder": "Select Folder",
     "workDirs": {
       "title": "Work Directories",

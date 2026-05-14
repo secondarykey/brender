@@ -2,8 +2,6 @@ package exec
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -11,7 +9,6 @@ import (
 	"time"
 
 	"github.com/ikascrew/brender/log"
-	"golang.org/x/xerrors"
 )
 
 // サブフレーム進捗パターン（Cycles / EEVEE）
@@ -25,73 +22,6 @@ var (
 	// "Rendering 25 / 64 samples"  (EEVEE)
 	reEevee = regexp.MustCompile(`Rendering\s+(\d+)\s*/\s*(\d+)\s+samples`)
 )
-
-type jobWriter struct {
-	projectId   string
-	workspaceId string
-
-	JobID string
-
-	logFP  *os.File
-	lockFP *ProcessingWriter
-
-	lockFile string
-}
-
-func createJobWriter(pId string, wId string, jobId string, start, end int) (*jobWriter, error) {
-
-	var err error
-
-	var jw jobWriter
-	jw.projectId = pId
-	jw.workspaceId = wId
-	jw.JobID = jobId
-
-	logDir := filepath.Join(getLogDir(pId))
-	jw.logFP, err = os.Create(filepath.Join(logDir, jobId+".log"))
-	if err != nil {
-		return nil, xerrors.Errorf("create log file error: %w", err)
-	}
-
-	jw.lockFile = filepath.Join(logDir, jobId+".lock")
-
-	//TODO 中間処理用のWriterを渡していた
-	_, err = os.Create(jw.lockFile)
-	if err != nil {
-		return nil, xerrors.Errorf("create processing lock file error: %w", err)
-	}
-	jw.lockFP = newProcessingWriter(start, end)
-
-	return &jw, nil
-}
-
-func (w *jobWriter) Write(b []byte) (int, error) {
-	v, err := w.logFP.Write(b)
-	if err != nil {
-		return v, xerrors.Errorf("logFP write error: %w", err)
-	}
-	v, err = w.lockFP.Write(b)
-	if err != nil {
-		return v, xerrors.Errorf("lockFP write error: %w", err)
-	}
-	return v, nil
-}
-
-func (w *jobWriter) Close() error {
-	w.logFP.Close()
-	w.lockFP.Close()
-	os.Remove(w.lockFile)
-	return nil
-}
-
-func (w *jobWriter) GetThumbnailID() (string, string) {
-	if strings.Contains(w.lockFile, ProjectThumbPrefix) {
-		return w.projectId, ""
-	} else if strings.Contains(w.lockFile, WorkspaceThumbPrefix) {
-		return w.projectId, w.workspaceId
-	}
-	return "", ""
-}
 
 // ProcessingResult はBlenderレンダリング処理の状態スナップショットです。
 // JSON出力やコマンド側での整形表示に利用します。

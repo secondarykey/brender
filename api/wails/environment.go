@@ -21,10 +21,6 @@ func (s *Environment) Get() (*model.Environment, error) {
 	return api.GetEnvironment()
 }
 
-func (s *Environment) SetRoot(root string) error {
-	return api.SetProjectRoot(root)
-}
-
 func (s *Environment) SetFfmpeg(cmd string, fps int, ext string, outExt string, args string) error {
 	return api.SetFfmpegSettings(api.FfmpegSettings{
 		Cmd:    cmd,
@@ -33,15 +29,6 @@ func (s *Environment) SetFfmpeg(cmd string, fps int, ext string, outExt string, 
 		OutExt: outExt,
 		Args:   args,
 	})
-}
-
-// GetWorkDir returns the process working directory for use as a dialog default.
-func (s *Environment) GetWorkDir() string {
-	dir, err := os.Getwd()
-	if err != nil {
-		return ""
-	}
-	return dir
 }
 
 // GetSystemLog returns the contents of today's system log file.

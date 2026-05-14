@@ -7,7 +7,7 @@ import WorkspaceDetailPage from './pages/projects/WorkspaceDetailPage'
 import JobPage from './pages/projects/JobPage'
 import QueuePage from './pages/queue/QueuePage'
 import SettingsPage from './pages/settings/SettingsPage'
-import { EnvironmentApi } from './lib/api'
+import { EnvironmentApi, WorkDirApi } from './lib/api'
 
 export function VideoPlayer({ path }) {
   const handleMetadata = async (e) => {
@@ -49,11 +49,10 @@ function App() {
   const [queueKey, setQueueKey] = useState(0)
 
   useEffect(() => {
-    EnvironmentApi.get()
-      .then(env => {
-        if (!env || !env.root) {
-          setNav({ page: 'settings', params: {} })
-        }
+    WorkDirApi.list()
+      .then(list => {
+        const hasActive = (list || []).some(w => w.status === 'active')
+        if (!hasActive) setNav({ page: 'settings', params: {} })
       })
       .catch(() => {})
   }, [])

@@ -2,10 +2,6 @@ package exec
 
 import (
 	"bufio"
-	"fmt"
-	"log"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -148,62 +144,6 @@ func parseEngines(b *strings.Builder) ([]string, error) {
 	return engines, nil
 }
 
-func IsProjectThumbnailLock(pId string) bool {
-	logDir := getLogDir(pId)
-	lockFile := filepath.Join(logDir, ProjectThumbJobName+".lock")
-	if _, err := os.Stat(lockFile); err == nil {
-		return true
-	}
-	return false
-}
-
-func IsWorkspaceThumbnailLock(pId string, wId string) bool {
-	logDir := getLogDir(pId)
-	jobId := fmt.Sprintf(WorkspaceThumbJobName, wId)
-	lockFile := filepath.Join(logDir, jobId+".lock")
-	if _, err := os.Stat(lockFile); err == nil {
-		return true
-	}
-	return false
-}
-
-func getWorkspaceRenderingFile(pId string, wId string) string {
-	logDir := getLogDir(pId)
-	reg := fmt.Sprintf(RenderingJobNameGlob, wId)
-
-	files, err := filepath.Glob(filepath.Join(logDir, reg))
-	if err != nil {
-		return ""
-	}
-
-	if len(files) == 0 {
-		return ""
-	}
-	if len(files) > 1 {
-		log.Println("LockFile duplicate")
-	}
-	return files[0]
-}
-
-func IsWorkspaceRendering(pId string, wId string) bool {
-	file := getWorkspaceRenderingFile(pId, wId)
-	if file == "" {
-		return false
-	}
-	return true
-}
-
-func GetRenderingTime(pId string, wId string) *RenderingTime {
-	file := getWorkspaceRenderingFile(pId, wId)
-	if file == "" {
-		return nil
-	}
-	rt, err := createRenderingTime(file)
-	if err != nil {
-		return nil
-	}
-	return rt
-}
 
 func GetBlenderFile(p *model.Project) string {
 	f, err := model.FirstFile(p.ID)
