@@ -51,6 +51,18 @@ export const BlenderApi = {
     isWails() ? svc().then(s => s.GetCameras(installID, fileID))
               : serverCall('blender', 'get_cameras', { install_id: installID, file_id: fileID }),
 
+  /** Tool データ（シーン詳細・カメラ一覧）を一括取得
+   * @param {{ installID: number, fileID: string }} args
+   */
+  getToolData: ({ installID, fileID }) =>
+    isWails() ? svc().then(s => s.GetToolData(installID, fileID))
+              : serverCall('blender', 'get_tool_data', { install_id: installID, file_id: fileID }),
+
+  /** システムの論理 CPU コア数を取得 */
+  getCPUCount: () =>
+    isWails() ? svc().then(s => s.GetCPUCount())
+              : serverCall('blender', 'get_cpu_count'),
+
   /** Blender GUI でファイルを開く（非同期・ノンブロッキング）
    * @param {{ installID: number, filePath: string }} args
    */

@@ -114,16 +114,21 @@ function HistoryTab({ projectID, workspaceID, navigate, projectName, fileName, f
   )
 }
 
+// ── デフォルト値ヒント ────────────────────────────────────
+function DefaultTag({ value }) {
+  if (!value) return null
+  return <span className="form-default-tag">（未設定時 = {value}）</span>
+}
+
 // ── 設定タブ ──────────────────────────────────────────────
 function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onDeleted }) {
   const { t } = useTranslation()
   const [blenders, setBlenders]             = useState([])
   const [engines, setEngines]               = useState([])
   const [enginesLoading, setEnginesLoading] = useState(false)
-  const [scenes, setScenes]                 = useState([])
-  const [scenesLoading, setScenesLoading]   = useState(false)
-  const [allCameras, setAllCameras]         = useState([])
-  const [camerasLoading, setCamerasLoading] = useState(false)
+  const [toolData, setToolData]             = useState(null)
+  const [toolLoading, setToolLoading]       = useState(false)
+  const [cpuCount, setCpuCount]             = useState(null)
   const [form, setForm]                     = useState(null)
   const [specifyFrames, setSpecifyFrames]   = useState(false)
   const [saving, setSaving]                 = useState(false)
@@ -172,9 +177,8 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
   }
 
   useEffect(() => {
-    BlenderApi.list()
-      .then(list => setBlenders(list || []))
-      .catch(() => {})
+    BlenderApi.list().then(list => setBlenders(list || [])).catch(() => {})
+    BlenderApi.getCPUCount().then(n => setCpuCount(n)).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -187,23 +191,32 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
       .catch(() => setEngines([]))
       .finally(() => setEnginesLoading(false))
 
-    if (!fid || fid === 0) {
-      setScenes([])
-      setAllCameras([])
+    if (!fid) {
+      setToolData(null)
       return
     }
-    setScenesLoading(true)
-    BlenderApi.getScenes({ installID: form.blenderInstallID, fileID: fid })
-      .then(list => setScenes(list || []))
-      .catch(() => setScenes([]))
-      .finally(() => setScenesLoading(false))
-
-    setCamerasLoading(true)
-    BlenderApi.getCameras({ installID: form.blenderInstallID, fileID: fid })
-      .then(list => setAllCameras(list || []))
-      .catch(() => setAllCameras([]))
-      .finally(() => setCamerasLoading(false))
+    setToolLoading(true)
+    BlenderApi.getToolData({ installID: form.blenderInstallID, fileID: fid })
+      .then(data => setToolData(data || null))
+      .catch(() => setToolData(null))
+      .finally(() => setToolLoading(false))
   }, [form?.blenderInstallID, detail?.workspace?.project_file_id])
+
+  // ── デフォルト値の導出 ───────────────────────────────────
+  const fileRecord    = detail?.project_files?.find(f => f.id === detail?.workspace?.project_file_id)
+  const fileScene     = fileRecord?.scene || ''
+  const fileBlenderID = fileRecord?.blender_install_id || 0
+
+  const defaultBlender = form?.blenderInstallID === 0
+    ? (blenders.find(b => b.id === fileBlenderID) || blenders[0] || null)
+    : null
+
+  const activeScene        = toolData?.Scenes?.find(s => s.Active) || null
+  const effectiveSceneName = form?.scene || fileScene || activeScene?.Name || ''
+  const sceneInfo          = toolData?.Scenes?.find(s => s.Name === effectiveSceneName) || activeScene
+
+  const allCameras = toolData?.Cameras || []
+  const scenes     = toolData?.Scenes?.map(s => s.Name) || []
 
   const set = (key, val) => {
     setSaved(false)
@@ -235,6 +248,15 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
 
   if (!form) return null
 
+  const blenderDefault = defaultBlender
+    ? `${defaultBlender.name}${defaultBlender.version ? ' ' + defaultBlender.version : ''}`
+    : null
+  const sceneDefault  = !form.scene ? (fileScene || activeScene?.Name || null) : null
+  const cameraDefault = !form.camera && sceneInfo?.Camera ? sceneInfo.Camera : null
+  const engineDefault = !form.engine && sceneInfo?.Engine ? sceneInfo.Engine : null
+  const frameDefault  = !specifyFrames && sceneInfo ? `${sceneInfo.Start} 〜 ${sceneInfo.End}` : null
+  const threadDefault = form.thread === 0 && cpuCount ? `全 ${cpuCount} コア` : null
+
   return (
     <div className="form workspace" style={{ maxWidth: 640 }}>
       <div className="form-row">
@@ -243,20 +265,25 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
           <input ref={nameRef} className="form-input" value={form.name} onChange={e => set('name', e.target.value)} />
         </div>
         <div className="form-field" style={{ flex: 2 }}>
-          <label className="form-label">{t('workspace.blender')}</label>
+          <label className="form-label">
+            {t('workspace.blender')}
+            <DefaultTag value={blenderDefault} />
+          </label>
           <select className="form-select" value={form.blenderInstallID} onChange={e => set('blenderInstallID', Number(e.target.value))}>
             <option value={0}>{t('common.notSet')}</option>
             {blenders.map(b => (
               <option key={b.id} value={b.id}>{b.name} ({b.version || t('common.versionUnknown')})</option>
             ))}
           </select>
-          <span className="form-hint">{t('workspace.blenderHint')}</span>
         </div>
       </div>
 
       <div className="form-row" style={{ alignItems: 'flex-start' }}>
         <div className="form-field" style={{ flex: 2 }}>
-          <label className="form-label">{t('workspace.renderEngine')}</label>
+          <label className="form-label">
+            {t('workspace.renderEngine')}
+            <DefaultTag value={engineDefault} />
+          </label>
           {engines.length > 0 ? (
             <select className="form-select" value={form.engine} onChange={e => set('engine', e.target.value)} disabled={enginesLoading}>
               <option value="">{t('common.notSet')}</option>
@@ -265,7 +292,6 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
           ) : (
             <input className="form-input" value={form.engine} onChange={e => set('engine', e.target.value)} placeholder={t('workspace.enginePlaceholder')} />
           )}
-          <span className="form-hint">{t('workspace.engineHint')}</span>
         </div>
         <div className="form-field" style={{ flex: 1 }}>
           <label className="form-label">{t('workspace.samples')}</label>
@@ -273,32 +299,39 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
           <span className="form-hint">{t('workspace.samplesHint')}</span>
         </div>
         <div className="form-field" style={{ flex: 1 }}>
-          <label className="form-label">{t('workspace.threads')}</label>
+          <label className="form-label">
+            {t('workspace.threads')}
+            <DefaultTag value={threadDefault} />
+          </label>
           <input className="form-input" style={{ textAlign: 'right' }} type="number" min={0} value={form.thread} onChange={e => set('thread', Number(e.target.value))} />
-          <span className="form-hint">{t('workspace.threadsHint')}</span>
         </div>
       </div>
 
       <div className="form-row" style={{ alignItems: 'flex-start' }}>
         <div className="form-field" style={{ flex: 1 }}>
-          <label className="form-label">{t('workspace.scene')}</label>
+          <label className="form-label">
+            {t('workspace.scene')}
+            <DefaultTag value={sceneDefault} />
+          </label>
           {scenes.length > 0 ? (
-            <select className="form-select" value={form.scene} onChange={e => { set('scene', e.target.value); set('camera', '') }} disabled={scenesLoading}>
+            <select className="form-select" value={form.scene} onChange={e => { set('scene', e.target.value); set('camera', '') }} disabled={toolLoading}>
               <option value="">{t('common.notSet')}</option>
               {scenes.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           ) : (
             <input className="form-input" value={form.scene} onChange={e => set('scene', e.target.value)} placeholder={t('common.notSetPlaceholder')} />
           )}
-          <span className="form-hint">{t('workspace.sceneHint')}</span>
         </div>
         <div className="form-field" style={{ flex: 1 }}>
-          <label className="form-label">{t('workspace.camera')}</label>
+          <label className="form-label">
+            {t('workspace.camera')}
+            <DefaultTag value={cameraDefault} />
+          </label>
           <select
             className="form-select"
             value={form.camera}
             onChange={e => set('camera', e.target.value)}
-            disabled={camerasLoading}
+            disabled={toolLoading}
           >
             <option value="">{t('common.notSet')}</option>
             {allCameras
@@ -313,6 +346,7 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
         <label className="form-checkbox-label form-label">
           <input type="checkbox" checked={specifyFrames} onChange={e => handleSpecifyFrames(e.target.checked)} />
           {t('workspace.specifyFrameRange')}
+          <DefaultTag value={frameDefault} />
         </label>
         {specifyFrames && (
           <div className="form-row" style={{ marginTop: 8 }}>
@@ -331,7 +365,6 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
             </div>
           </div>
         )}
-        <span className="form-hint">{t('workspace.frameRangeHint')}</span>
       </div>
 
       {error && <div className="error-msg">{error}</div>}

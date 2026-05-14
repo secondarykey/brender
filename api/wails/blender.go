@@ -1,6 +1,8 @@
 package wails
 
 import (
+	"runtime"
+
 	"github.com/ikascrew/brender/api"
 	"github.com/ikascrew/brender/exec"
 	"github.com/ikascrew/brender/model"
@@ -43,4 +45,12 @@ func (s *Blender) GetScenes(installID uint, fileID string) ([]string, error) {
 
 func (s *Blender) GetCameras(installID uint, fileID string) ([]exec.CameraTool, error) {
 	return api.GetCameras(installID, fileID)
+}
+
+func (s *Blender) GetToolData(installID uint, fileID string) (*exec.Tool, error) {
+	return api.GetToolData(installID, fileID)
+}
+
+func (s *Blender) GetCPUCount() int {
+	return runtime.NumCPU()
 }

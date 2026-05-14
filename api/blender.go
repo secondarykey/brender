@@ -104,6 +104,34 @@ func OpenBlenderFile(installID uint, filePath string) error {
 	return cmd.Start()
 }
 
+func GetToolData(installID uint, fileID string) (*exec.Tool, error) {
+	var blenderPath string
+	if installID != 0 {
+		install, err := model.GetBlenderInstall(installID)
+		if err != nil {
+			return nil, xerrors.Errorf("GetBlenderInstall: %w", err)
+		}
+		if install == nil {
+			return nil, xerrors.Errorf("blender install not found: %d", installID)
+		}
+		blenderPath = install.Path
+	} else {
+		b, err := model.FirstBlender()
+		if err != nil || b == nil {
+			return nil, xerrors.New("Blenderが登録されていません")
+		}
+		blenderPath = b.Path
+	}
+	file, err := model.GetProjectFile(fileID)
+	if err != nil {
+		return nil, xerrors.Errorf("GetProjectFile: %w", err)
+	}
+	if file == nil {
+		return nil, xerrors.Errorf("project file not found: %s", fileID)
+	}
+	return exec.RunToolData(blenderPath, file.Path)
+}
+
 func GetCameras(installID uint, fileID string) ([]exec.CameraTool, error) {
 	var blenderPath string
 	if installID != 0 {

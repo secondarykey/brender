@@ -22,6 +22,13 @@ export function Delete(id) {
 }
 
 /**
+ * @returns {$CancellablePromise<number>}
+ */
+export function GetCPUCount() {
+    return $Call.ByID(4125144201);
+}
+
+/**
  * @param {number} installID
  * @param {string} fileID
  * @returns {$CancellablePromise<exec$0.CameraTool[]>}
@@ -54,11 +61,22 @@ export function GetScenes(installID, fileID) {
 }
 
 /**
+ * @param {number} installID
+ * @param {string} fileID
+ * @returns {$CancellablePromise<exec$0.Tool | null>}
+ */
+export function GetToolData(installID, fileID) {
+    return $Call.ByID(282637138, installID, fileID).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType4($result);
+    }));
+}
+
+/**
  * @returns {$CancellablePromise<(model$0.BlenderInstall | null)[]>}
  */
 export function List() {
     return $Call.ByID(2583559636).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType5($result);
+        return $$createType7($result);
     }));
 }
 
@@ -77,7 +95,7 @@ export function OpenFile(installID, filePath) {
  */
 export function Register(path) {
     return $Call.ByID(3243524325, path).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType4($result);
+        return $$createType6($result);
     }));
 }
 
@@ -93,6 +111,8 @@ export function Reorder(ids) {
 const $$createType0 = exec$0.CameraTool.createFrom;
 const $$createType1 = $Create.Array($$createType0);
 const $$createType2 = $Create.Array($Create.Any);
-const $$createType3 = model$0.BlenderInstall.createFrom;
+const $$createType3 = exec$0.Tool.createFrom;
 const $$createType4 = $Create.Nullable($$createType3);
-const $$createType5 = $Create.Array($$createType4);
+const $$createType5 = model$0.BlenderInstall.createFrom;
+const $$createType6 = $Create.Nullable($$createType5);
+const $$createType7 = $Create.Array($$createType6);

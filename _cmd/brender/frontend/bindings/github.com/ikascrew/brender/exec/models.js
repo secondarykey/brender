@@ -52,5 +52,150 @@ export class CameraTool {
     }
 }
 
+export class SceneTool {
+    /**
+     * Creates a new SceneTool instance.
+     * @param {Partial<SceneTool>} [$$source = {}] - The source object to create the SceneTool.
+     */
+    constructor($$source = {}) {
+        if (!("Active" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["Active"] = false;
+        }
+        if (!("Name" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["Name"] = "";
+        }
+        if (!("Start" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["Start"] = 0;
+        }
+        if (!("End" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["End"] = 0;
+        }
+        if (!("Camera" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["Camera"] = "";
+        }
+        if (!("X" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["X"] = 0;
+        }
+        if (!("Y" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["Y"] = 0;
+        }
+        if (!("Engine" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["Engine"] = "";
+        }
+        if (!("Output" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["Output"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new SceneTool instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {SceneTool}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new SceneTool(/** @type {Partial<SceneTool>} */($$parsedSource));
+    }
+}
+
+export class Tool {
+    /**
+     * Creates a new Tool instance.
+     * @param {Partial<Tool>} [$$source = {}] - The source object to create the Tool.
+     */
+    constructor($$source = {}) {
+        if (!("Version" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["Version"] = "";
+        }
+        if (!("Build" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["Build"] = "";
+        }
+        if (!("Scenes" in $$source)) {
+            /**
+             * @member
+             * @type {SceneTool[]}
+             */
+            this["Scenes"] = [];
+        }
+        if (!("Cameras" in $$source)) {
+            /**
+             * @member
+             * @type {CameraTool[]}
+             */
+            this["Cameras"] = [];
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new Tool instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {Tool}
+     */
+    static createFrom($$source = {}) {
+        const $$createField2_0 = $$createType2;
+        const $$createField3_0 = $$createType4;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("Scenes" in $$parsedSource) {
+            $$parsedSource["Scenes"] = $$createField2_0($$parsedSource["Scenes"]);
+        }
+        if ("Cameras" in $$parsedSource) {
+            $$parsedSource["Cameras"] = $$createField3_0($$parsedSource["Cameras"]);
+        }
+        return new Tool(/** @type {Partial<Tool>} */($$parsedSource));
+    }
+}
+
 // Private type creation functions
 const $$createType0 = $Create.Array($Create.Any);
+const $$createType1 = SceneTool.createFrom;
+const $$createType2 = $Create.Array($$createType1);
+const $$createType3 = CameraTool.createFrom;
+const $$createType4 = $Create.Array($$createType3);
