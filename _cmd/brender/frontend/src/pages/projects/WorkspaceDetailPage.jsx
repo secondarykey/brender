@@ -136,8 +136,9 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
   const [saved, setSaved]                   = useState(false)
   const [confirm, setConfirm]               = useState(false)
   const [deleting, setDeleting]             = useState(false)
-  const nameRef = useRef(null)
-  const hasFocused = useRef(false)
+  const nameRef      = useRef(null)
+  const hasFocused   = useRef(false)
+  const lastFrameSpec = useRef(null) // OFF 直前のフレーム値を退避
 
   useEffect(() => {
     const start = detail.workspace.start ?? 0
@@ -155,6 +156,7 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
       samples:          detail.workspace.samples || 0,
     })
     setSpecifyFrames(!isFrameDefault(start, end))
+    lastFrameSpec.current = null
     setSaved(false)
     setError('')
   }, [detail])
@@ -166,15 +168,6 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
       hasFocused.current = true
     }
   }, [focusName, form])
-
-  const handleSpecifyFrames = (checked) => {
-    setSpecifyFrames(checked)
-    if (!checked) {
-      setForm(prev => ({ ...prev, startFrame: 0, endFrame: -1 }))
-    } else if (isFrameDefault(form.startFrame, form.endFrame)) {
-      setForm(prev => ({ ...prev, startFrame: 1, endFrame: 1, frameStep: 1 }))
-    }
-  }
 
   useEffect(() => {
     BlenderApi.list().then(list => setBlenders(list || [])).catch(() => {})
@@ -217,6 +210,22 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
 
   const allCameras = toolData?.Cameras || []
   const scenes     = toolData?.Scenes?.map(s => s.Name) || []
+
+  const handleSpecifyFrames = (checked) => {
+    setSpecifyFrames(checked)
+    if (!checked) {
+      lastFrameSpec.current = { startFrame: form.startFrame, endFrame: form.endFrame, frameStep: form.frameStep }
+      setForm(prev => ({ ...prev, startFrame: 0, endFrame: -1 }))
+    } else if (lastFrameSpec.current) {
+      setForm(prev => ({ ...prev, ...lastFrameSpec.current }))
+    } else {
+      setForm(prev => ({ ...prev,
+        startFrame: sceneInfo?.Start ?? 1,
+        endFrame:   sceneInfo?.End   ?? 1,
+        frameStep:  1,
+      }))
+    }
+  }
 
   const set = (key, val) => {
     setSaved(false)
