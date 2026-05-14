@@ -107,9 +107,11 @@ function WorkDirSection({ projectID, workDir, workDirs, onMigrated }) {
         {workDir ? workDir.path : '—'}
       </div>
       {workDir && (
-        <button className="btn btn-sm" style={{ marginTop: 8 }} onClick={() => setShowMigrate(true)}>
-          {t('project.migrate')}
-        </button>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
+          <button className="btn btn-sm" onClick={() => setShowMigrate(true)}>
+            {t('project.migrate')}
+          </button>
+        </div>
       )}
         </>
       )}
