@@ -42,6 +42,7 @@ type Job struct {
 	EndFrame      int        `json:"end_frame"`
 	FrameStep     int        `json:"frame_step"`
 	Thread        int        `json:"thread"`
+	Camera        string     `json:"camera"`
 	Samples       int        `json:"samples"`     // 0 = Blender デフォルト
 	Status        string     `json:"status"`      // completed / error / cancelled
 	ErrorMsg      string     `json:"error_msg"`

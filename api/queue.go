@@ -48,6 +48,7 @@ type RenderPreview struct {
 	FrameStep     int    `json:"frame_step"`
 	Thread        int    `json:"thread"`
 	Samples       int    `json:"samples"`
+	Camera        string `json:"camera"`
 }
 
 // PreviewRender はToolを実行してレンダリングパラメータを解決・検証する。
@@ -106,6 +107,12 @@ func PreviewRender(projectID, workspaceID string) (*RenderPreview, error) {
 		engine = st.Engine
 	}
 
+	// カメラ: ワークスペース指定 → シーンのデフォルト（ツール取得）の順でフォールバック
+	camera := w.Camera
+	if camera == "" {
+		camera = st.Camera
+	}
+
 	return &RenderPreview{
 		ProjectName:   p.Name,
 		WorkspaceName: w.Name,
@@ -119,6 +126,7 @@ func PreviewRender(projectID, workspaceID string) (*RenderPreview, error) {
 		FrameStep:     w.FrameStep,
 		Thread:        w.Thread,
 		Samples:       w.Samples,
+		Camera:        camera,
 	}, nil
 }
 
@@ -169,6 +177,7 @@ func EnqueueWithPreview(projectID, workspaceID string, preview *RenderPreview) (
 		FrameStep:     preview.FrameStep,
 		Thread:        preview.Thread,
 		Samples:       preview.Samples,
+		Camera:        preview.Camera,
 		EnqueuedAt:    &now,
 	}
 	if err := model.CreateJob(job); err != nil {
@@ -280,6 +289,12 @@ func executeQueue(q *model.Queue, job *model.Job) {
 		run.Samples.Set = true
 		run.Samples.Value = job.Samples
 		run.Samples.IsCycles, run.Samples.IsEevee, run.Samples.IsWorkbench = exec.EngineFlags(job.Engine)
+	}
+
+	if job.Camera != "" {
+		run.Camera.Set = true
+		run.Camera.Scene = job.Scene
+		run.Camera.Name = job.Camera
 	}
 
 	if runScript, rsErr := exec.GetRunPythonFile(run); rsErr == nil {
