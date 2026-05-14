@@ -17,6 +17,13 @@ export const QueueApi = {
     isWails() ? svc().then(s => s.EnqueueWithPreview(projectID, workspaceID, preview))
               : serverCall('queue', 'enqueue_with_preview', { project_id: projectID, workspace_id: workspaceID, preview }),
 
+  /** テストレンダリング（サンプル8・中間1フレーム）をキューに追加
+   * @param {{ projectID: string, workspaceID: string, params: object }} args
+   */
+  testEnqueue: ({ projectID, workspaceID, params }) =>
+    isWails() ? svc().then(s => s.TestEnqueue(projectID, workspaceID, params))
+              : serverCall('queue', 'test_enqueue', { project_id: projectID, workspace_id: workspaceID, params }),
+
   /** 実行中キュー一覧を取得 */
   list: () =>
     isWails() ? svc().then(s => s.List())

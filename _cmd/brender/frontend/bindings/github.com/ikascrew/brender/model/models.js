@@ -312,6 +312,13 @@ export class Job {
              */
             this["thread"] = 0;
         }
+        if (!("camera" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["camera"] = "";
+        }
         if (!("samples" in $$source)) {
             /**
              * 0 = Blender デフォルト

@@ -152,7 +152,9 @@
     "deleteWarning": "関連するジョブ履歴も削除されます。この操作は取り消せません。",
     "confirmRender": "レンダリングを実行しますか？",
     "blendDefault": ".blend のデフォルト",
-    "setAsFileThumbnail": "ファイルサムネイルに設定"
+    "setAsFileThumbnail": "ファイルサムネイルに設定",
+    "testRender": "テストエンコード",
+    "testEnqueued": "キューに追加しました"
   },
   "queue": {
     "noJobs": "実行中・待機中のジョブはありません",

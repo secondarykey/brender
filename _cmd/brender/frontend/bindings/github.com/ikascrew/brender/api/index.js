@@ -5,5 +5,6 @@
 export {
     JobFileInfo,
     QueueItem,
-    RenderPreview
+    RenderPreview,
+    TestRenderParams
 } from "./models.js";

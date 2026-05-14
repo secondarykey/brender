@@ -341,6 +341,13 @@ export class RenderPreview {
              */
             this["samples"] = 0;
         }
+        if (!("camera" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["camera"] = "";
+        }
 
         Object.assign(this, $$source);
     }
@@ -353,5 +360,78 @@ export class RenderPreview {
     static createFrom($$source = {}) {
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         return new RenderPreview(/** @type {Partial<RenderPreview>} */($$parsedSource));
+    }
+}
+
+/**
+ * TestRenderParams はテストレンダリングのインラインパラメータ（ワークスペースへの保存は行わない）
+ */
+export class TestRenderParams {
+    /**
+     * Creates a new TestRenderParams instance.
+     * @param {Partial<TestRenderParams>} [$$source = {}] - The source object to create the TestRenderParams.
+     */
+    constructor($$source = {}) {
+        if (!("blender_install_id" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["blender_install_id"] = 0;
+        }
+        if (!("scene" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["scene"] = "";
+        }
+        if (!("camera" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["camera"] = "";
+        }
+        if (!("engine" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["engine"] = "";
+        }
+        if (!("start_frame" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["start_frame"] = 0;
+        }
+        if (!("end_frame" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["end_frame"] = 0;
+        }
+        if (!("thread" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["thread"] = 0;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new TestRenderParams instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {TestRenderParams}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new TestRenderParams(/** @type {Partial<TestRenderParams>} */($$parsedSource));
     }
 }

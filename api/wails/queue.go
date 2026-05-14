@@ -30,6 +30,10 @@ func (s *Queue) Enqueue(projectID string, workspaceID string) (*model.Queue, err
 	return api.Enqueue(projectID, workspaceID)
 }
 
+func (s *Queue) TestEnqueue(projectID string, workspaceID string, params api.TestRenderParams) (*model.Queue, error) {
+	return api.TestEnqueue(projectID, workspaceID, params)
+}
+
 func (s *Queue) List() ([]*model.Queue, error) {
 	return api.ListQueues()
 }

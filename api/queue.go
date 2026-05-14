@@ -130,6 +130,97 @@ func PreviewRender(projectID, workspaceID string) (*RenderPreview, error) {
 	}, nil
 }
 
+// TestRenderParams はテストレンダリングのインラインパラメータ（ワークスペースへの保存は行わない）
+type TestRenderParams struct {
+	BlenderInstallID uint   `json:"blender_install_id"`
+	Scene            string `json:"scene"`
+	Camera           string `json:"camera"`
+	Engine           string `json:"engine"`
+	StartFrame       int    `json:"start_frame"`
+	EndFrame         int    `json:"end_frame"`
+	Thread           int    `json:"thread"`
+}
+
+// TestEnqueue は現在のフォーム値でサンプル8・中間1フレームのテストレンダリングをキューに追加する。
+// ワークスペースへの保存は行わない。
+func TestEnqueue(projectID, workspaceID string, params TestRenderParams) (*model.Queue, error) {
+	w, err := model.SelectWorkspace(projectID, workspaceID)
+	if err != nil || w == nil {
+		return nil, xerrors.Errorf("workspace not found: %w", err)
+	}
+	p, err := model.SelectProject(projectID)
+	if err != nil || p == nil {
+		return nil, xerrors.Errorf("project not found: %w", err)
+	}
+
+	var fileBlenderID uint
+	var fileScene string
+	if w.ProjectFileID != "" {
+		pf, pfErr := model.GetProjectFile(w.ProjectFileID)
+		if pfErr == nil && pf != nil {
+			fileBlenderID = pf.BlenderInstallID
+			fileScene = pf.Scene
+		}
+	}
+
+	blenderPath, err := resolveBlenderPath(params.BlenderInstallID, fileBlenderID)
+	if err != nil {
+		return nil, xerrors.Errorf("resolveBlenderPath: %w", err)
+	}
+	blenderFile, err := resolveBlenderFile(w.ProjectFileID, projectID)
+	if err != nil {
+		return nil, xerrors.Errorf("resolveBlenderFile: %w", err)
+	}
+
+	scene := params.Scene
+	if scene == "" {
+		scene = fileScene
+	}
+
+	st, toolErr := exec.ResolveScene(blenderPath, blenderFile, scene)
+	if toolErr != nil {
+		return nil, xerrors.Errorf("レンダリング前検証エラー: %w", toolErr)
+	}
+
+	// フレーム範囲: 未指定 (0,-1) はシーンのデフォルトを使用
+	startFrame := params.StartFrame
+	endFrame := params.EndFrame
+	if startFrame == 0 && endFrame == -1 {
+		startFrame = st.Start
+		endFrame = st.End
+	}
+
+	// 中間フレーム1枚のみレンダリング
+	testFrame := (startFrame + endFrame) / 2
+
+	engine := params.Engine
+	if engine == "" {
+		engine = st.Engine
+	}
+	camera := params.Camera
+	if camera == "" {
+		camera = st.Camera
+	}
+
+	preview := &RenderPreview{
+		ProjectName:   p.Name,
+		WorkspaceName: w.Name + " (Test)",
+		ProjectFileID: w.ProjectFileID,
+		BlenderPath:   blenderPath,
+		BlenderFile:   blenderFile,
+		Scene:         st.Name,
+		Engine:        engine,
+		StartFrame:    testFrame,
+		EndFrame:      testFrame,
+		FrameStep:     1,
+		Thread:        params.Thread,
+		Samples:       8,
+		Camera:        camera,
+	}
+
+	return EnqueueWithPreview(projectID, workspaceID, preview)
+}
+
 // EnqueueWithPreview は解決済みの RenderPreview を使ってジョブを作成・実行する。
 func EnqueueWithPreview(projectID, workspaceID string, preview *RenderPreview) (*model.Queue, error) {
 	env, err := model.GetEnv()

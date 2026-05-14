@@ -136,6 +136,9 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
   const [saved, setSaved]                   = useState(false)
   const [confirm, setConfirm]               = useState(false)
   const [deleting, setDeleting]             = useState(false)
+  const [testEnqueueing, setTestEnqueueing] = useState(false)
+  const [testEnqueued, setTestEnqueued]     = useState(false)
+  const [testError, setTestError]           = useState('')
   const nameRef      = useRef(null)
   const hasFocused   = useRef(false)
   const lastFrameSpec = useRef(null) // OFF 直前のフレーム値を退避
@@ -252,6 +255,32 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
       setError(String(err))
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleTestEncode = async () => {
+    setTestError('')
+    setTestEnqueued(false)
+    setTestEnqueueing(true)
+    try {
+      await QueueApi.testEnqueue({
+        projectID,
+        workspaceID,
+        params: {
+          blender_install_id: form.blenderInstallID,
+          scene:       form.scene,
+          camera:      form.camera,
+          engine:      form.engine,
+          start_frame: form.startFrame,
+          end_frame:   form.endFrame,
+          thread:      form.thread,
+        },
+      })
+      setTestEnqueued(true)
+    } catch (err) {
+      setTestError(String(err))
+    } finally {
+      setTestEnqueueing(false)
     }
   }
 
@@ -375,14 +404,21 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
         )}
       </div>
 
-      {error && <div className="error-msg">{error}</div>}
-      {saved && <div className="success-msg">{t('common.saved')}</div>}
+      {error     && <div className="error-msg">{error}</div>}
+      {saved     && <div className="success-msg">{t('common.saved')}</div>}
+      {testError && <div className="error-msg">{testError}</div>}
+      {testEnqueued && <div className="success-msg">{t('workspace.testEnqueued')}</div>}
 
       <div className="form-actions">
         <button className="btn btn-danger" onClick={() => setConfirm(true)}>{t('common.delete')}</button>
-        <button className="btn" onClick={handleSave} disabled={saving}>
-          {saving ? t('common.saving') : t('common.save')}
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-run" onClick={handleTestEncode} disabled={testEnqueueing}>
+            {testEnqueueing ? t('common.enqueueing') : t('workspace.testRender')}
+          </button>
+          <button className="btn" onClick={handleSave} disabled={saving}>
+            {saving ? t('common.saving') : t('common.save')}
+          </button>
+        </div>
       </div>
 
       {confirm && (

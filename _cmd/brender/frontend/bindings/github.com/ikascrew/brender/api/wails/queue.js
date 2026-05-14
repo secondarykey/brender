@@ -202,6 +202,18 @@ export function PreviewRender(projectID, workspaceID) {
 }
 
 /**
+ * @param {string} projectID
+ * @param {string} workspaceID
+ * @param {api$0.TestRenderParams} params
+ * @returns {$CancellablePromise<model$0.Queue | null>}
+ */
+export function TestEnqueue(projectID, workspaceID, params) {
+    return $Call.ByID(3172873857, projectID, workspaceID, params).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType1($result);
+    }));
+}
+
+/**
  * @param {string} id
  * @returns {$CancellablePromise<void>}
  */
