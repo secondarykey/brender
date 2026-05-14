@@ -33,7 +33,7 @@ function SettingsPage() {
         {tab === 'envSettings' && (
           <>
             <EnvironmentSettings />
-            <BlenderSettings />
+            <div style={{ marginTop: 12 }}><BlenderSettings /></div>
           </>
         )}
         {tab === 'video'       && <VideoSettings />}
