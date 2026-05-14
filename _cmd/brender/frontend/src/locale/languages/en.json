@@ -62,8 +62,10 @@
   },
   "tabs": {
     "fileList": "Files",
-    "workspaceList": "Workspace",
+    "workspaceList": "Workspace List",
     "settings": "Settings",
+    "projectSettings": "Project Settings",
+    "fileSettings": "File Settings",
     "queue": "Queue",
     "history": "History",
     "basic": "General",
@@ -76,7 +78,7 @@
     "dataView": "Data"
   },
   "breadcrumb": {
-    "projects": "Projects",
+    "projects": "Project List",
     "job": "Job",
     "jobResult": "Result"
   },

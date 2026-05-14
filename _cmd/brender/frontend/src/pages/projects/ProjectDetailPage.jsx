@@ -12,7 +12,7 @@ function ProjectDetailPage({ id, initialTab, focusName, navigate }) {
 
   const tabs = [
     { id: 'workspace', label: t('tabs.fileList') },
-    { id: 'settings',  label: t('tabs.settings') },
+    { id: 'settings',  label: t('tabs.projectSettings') },
   ]
 
   const load = () => {
