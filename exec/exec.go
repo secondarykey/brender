@@ -104,47 +104,20 @@ func RunCameras(cmd, filePath string) ([]CameraTool, error) {
 	return b.Tool.Cameras, nil
 }
 
+// RunEngines は Python ツール経由でレンダリングエンジン一覧を取得する。
+// Blender 4.5 以降で -E help -b がクラッシュする問題を回避するため Python を使用する。
 func RunEngines(cmd string) ([]string, error) {
-
 	b, err := NewBlender(cmd)
 	if err != nil {
 		return nil, xerrors.Errorf("NewBlender() error: %w", err)
 	}
-
-	var w strings.Builder
-	b.Writer = &w
-	b.ErrorWriter = &w
-
-	err = b.Run("-E", "help", "-b")
-	// Blender 4.x (少なくとも 4.5) は -E help -b が成功しても非ゼロ終了コードを返す。
-	// 出力に期待するヘッダが含まれていればエラーを無視する。
-	if err != nil && !strings.Contains(w.String(), "Blender Engine Listing:") {
-		return nil, xerrors.Errorf("blender command error: %w", err)
+	b.File = ""
+	if err := b.RunTool(); err != nil {
+		return nil, xerrors.Errorf("RunEngines RunTool: %w", err)
 	}
-
-	return parseEngines(&w)
+	return b.Tool.Engines, nil
 }
 
-/**
- * 文字列（-E help -b 出力）からエンジンリストを抜き出す
- */
-func parseEngines(b *strings.Builder) ([]string, error) {
-
-	r := strings.NewReader(b.String())
-	s := bufio.NewScanner(r)
-
-	engines := make([]string, 0, 10)
-	start := false
-	for s.Scan() {
-		line := s.Text()
-		if strings.Index(line, "Blender Engine Listing:") == 0 {
-			start = true
-		} else if start {
-			engines = append(engines, strings.Trim(line, " \t"))
-		}
-	}
-	return engines, nil
-}
 
 
 func GetBlenderFile(p *model.Project) string {

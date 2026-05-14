@@ -48,6 +48,7 @@ const (
 	ToolFlag   = "=BRENDER PYTHON TOOL %s"
 	SceneFlag  = "==SCENES %s"
 	CameraFlag = "==CAMERA %s"
+	EngineFlag = "==ENGINES %s"
 	StartFlag  = "START"
 	EndFlag    = "END"
 	FileName   = "brender-tool_*.py"
@@ -60,6 +61,8 @@ var (
 	SceneEnd    = fmt.Sprintf(SceneFlag, EndFlag)
 	CameraStart = fmt.Sprintf(CameraFlag, StartFlag)
 	CameraEnd   = fmt.Sprintf(CameraFlag, EndFlag)
+	EngineStart = fmt.Sprintf(EngineFlag, StartFlag)
+	EngineEnd   = fmt.Sprintf(EngineFlag, EndFlag)
 )
 
 /**
@@ -79,10 +82,13 @@ func createToolPythonFile() (string, error) {
 		SceneEndFlag    string
 		CameraStartFlag string
 		CameraEndFlag   string
+		EngineStartFlag string
+		EngineEndFlag   string
 	}{
 		ToolStart, ToolEnd,
 		SceneStart, SceneEnd,
 		CameraStart, CameraEnd,
+		EngineStart, EngineEnd,
 	}
 
 	fp, err := os.CreateTemp("", FileName)
@@ -103,6 +109,7 @@ type Tool struct {
 	Build   string
 	Scenes  []SceneTool
 	Cameras []CameraTool
+	Engines []string
 }
 
 func (t Tool) ActiveScene() SceneTool {
@@ -140,6 +147,7 @@ func parseTool(stdout string) Tool {
 	tool := false
 	scene := false
 	camera := false
+	engine := false
 	ended := false
 
 	rtn := Tool{}
@@ -148,8 +156,6 @@ func parseTool(stdout string) Tool {
 
 		line := scanner.Text()
 
-		//slog.Info(line)
-		//ツール用に出力しているセパレータを判定
 		switch {
 		case strings.Index(line, ToolStart) == 0:
 			tool = true
@@ -164,6 +170,10 @@ func parseTool(stdout string) Tool {
 			camera = true
 		case strings.Index(line, CameraEnd) == 0:
 			camera = false
+		case strings.Index(line, EngineStart) == 0:
+			engine = true
+		case strings.Index(line, EngineEnd) == 0:
+			engine = false
 		case tool:
 			if scene {
 				s := parseScene(line)
@@ -171,6 +181,10 @@ func parseTool(stdout string) Tool {
 			} else if camera {
 				c := parseCamera(line)
 				rtn.Cameras = append(rtn.Cameras, c)
+			} else if engine {
+				if line != "" {
+					rtn.Engines = append(rtn.Engines, line)
+				}
 			}
 		case !version && strings.Index(line, "Blender") == 0:
 			csv := strings.Split(line, " ")
@@ -179,7 +193,6 @@ func parseTool(stdout string) Tool {
 				version = true
 				if len(csv) >= 3 {
 					remain := strings.Join(csv[2:], " ")
-					//"()"を除去
 					rtn.Build = remain[1 : len(remain)-1]
 				}
 			}
