@@ -244,19 +244,6 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
         </div>
       </div>
 
-      <div className="form-field">
-        <label className="form-label">{t('workspace.scene')}</label>
-        {scenes.length > 0 ? (
-          <select className="form-select" value={form.scene} onChange={e => set('scene', e.target.value)} disabled={scenesLoading}>
-            <option value="">{t('common.notSet')}</option>
-            {scenes.map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
-        ) : (
-          <input className="form-input" value={form.scene} onChange={e => set('scene', e.target.value)} placeholder={t('common.notSetPlaceholder')} />
-        )}
-        <span className="form-hint">{t('workspace.sceneHint')}</span>
-      </div>
-
       <div className="form-row" style={{ alignItems: 'flex-start' }}>
         <div className="form-field" style={{ flex: 2 }}>
           <label className="form-label">{t('workspace.renderEngine')}</label>
@@ -280,6 +267,19 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
           <input className="form-input" style={{ textAlign: 'right' }} type="number" min={0} value={form.thread} onChange={e => set('thread', Number(e.target.value))} />
           <span className="form-hint">{t('workspace.threadsHint')}</span>
         </div>
+      </div>
+
+      <div className="form-field">
+        <label className="form-label">{t('workspace.scene')}</label>
+        {scenes.length > 0 ? (
+          <select className="form-select" value={form.scene} onChange={e => set('scene', e.target.value)} disabled={scenesLoading}>
+            <option value="">{t('common.notSet')}</option>
+            {scenes.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+        ) : (
+          <input className="form-input" value={form.scene} onChange={e => set('scene', e.target.value)} placeholder={t('common.notSetPlaceholder')} />
+        )}
+        <span className="form-hint">{t('workspace.sceneHint')}</span>
       </div>
 
       <div className="form-field">
