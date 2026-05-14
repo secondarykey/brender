@@ -63,6 +63,7 @@
     "fileList": "ファイル一覧",
     "workspaceList": "ワークスペース",
     "settings": "設定",
+    "projectSettings": "プロジェクト設定",
     "queue": "キュー",
     "history": "実行履歴",
     "environment": "環境",

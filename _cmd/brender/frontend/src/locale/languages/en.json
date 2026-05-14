@@ -63,6 +63,7 @@
     "fileList": "Files",
     "workspaceList": "Workspace",
     "settings": "Settings",
+    "projectSettings": "Project Settings",
     "queue": "Queue",
     "history": "History",
     "environment": "Environment",
