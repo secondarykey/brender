@@ -8,6 +8,9 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
+import * as exec$0 from "../../exec/models.js";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
 import * as model$0 from "../../model/models.js";
 
 /**
@@ -20,11 +23,22 @@ export function Delete(id) {
 
 /**
  * @param {number} installID
+ * @param {string} fileID
+ * @returns {$CancellablePromise<exec$0.CameraTool[]>}
+ */
+export function GetCameras(installID, fileID) {
+    return $Call.ByID(909400876, installID, fileID).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType1($result);
+    }));
+}
+
+/**
+ * @param {number} installID
  * @returns {$CancellablePromise<string[]>}
  */
 export function GetEngines(installID) {
     return $Call.ByID(2944509355, installID).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType0($result);
+        return $$createType2($result);
     }));
 }
 
@@ -35,7 +49,7 @@ export function GetEngines(installID) {
  */
 export function GetScenes(installID, fileID) {
     return $Call.ByID(1000048201, installID, fileID).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType0($result);
+        return $$createType2($result);
     }));
 }
 
@@ -44,7 +58,7 @@ export function GetScenes(installID, fileID) {
  */
 export function List() {
     return $Call.ByID(2583559636).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType3($result);
+        return $$createType5($result);
     }));
 }
 
@@ -63,7 +77,7 @@ export function OpenFile(installID, filePath) {
  */
 export function Register(path) {
     return $Call.ByID(3243524325, path).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType2($result);
+        return $$createType4($result);
     }));
 }
 
@@ -76,7 +90,9 @@ export function Reorder(ids) {
 }
 
 // Private type creation functions
-const $$createType0 = $Create.Array($Create.Any);
-const $$createType1 = model$0.BlenderInstall.createFrom;
-const $$createType2 = $Create.Nullable($$createType1);
-const $$createType3 = $Create.Array($$createType2);
+const $$createType0 = exec$0.CameraTool.createFrom;
+const $$createType1 = $Create.Array($$createType0);
+const $$createType2 = $Create.Array($Create.Any);
+const $$createType3 = model$0.BlenderInstall.createFrom;
+const $$createType4 = $Create.Nullable($$createType3);
+const $$createType5 = $Create.Array($$createType4);

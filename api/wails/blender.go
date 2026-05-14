@@ -2,6 +2,7 @@ package wails
 
 import (
 	"github.com/ikascrew/brender/api"
+	"github.com/ikascrew/brender/exec"
 	"github.com/ikascrew/brender/model"
 )
 
@@ -38,4 +39,8 @@ func (s *Blender) GetEngines(installID uint) ([]string, error) {
 
 func (s *Blender) GetScenes(installID uint, fileID string) ([]string, error) {
 	return api.GetScenes(installID, fileID)
+}
+
+func (s *Blender) GetCameras(installID uint, fileID string) ([]exec.CameraTool, error) {
+	return api.GetCameras(installID, fileID)
 }

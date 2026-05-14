@@ -129,6 +129,7 @@
     "blenderHint": "未設定の場合: ファイルのデフォルト → Blender一覧の先頭 の順で使用されます",
     "scene": "シーン",
     "sceneHint": "未設定の場合: ファイルのデフォルト → .blend ファイルのデフォルト の順で使用されます",
+    "camera": "カメラ",
     "renderEngine": "レンダーエンジン",
     "enginePlaceholder": "未設定（例: CYCLES）",
     "engineHint": "未設定の場合: .blend ファイルのデフォルトエンジンが使用されます",

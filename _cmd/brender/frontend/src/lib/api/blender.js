@@ -44,6 +44,13 @@ export const BlenderApi = {
     isWails() ? svc().then(s => s.GetScenes(installID, fileID))
               : serverCall('blender', 'get_scenes', { install_id: installID, file_id: fileID }),
 
+  /** カメラ一覧を取得
+   * @param {{ installID: number, fileID: string }} args
+   */
+  getCameras: ({ installID, fileID }) =>
+    isWails() ? svc().then(s => s.GetCameras(installID, fileID))
+              : serverCall('blender', 'get_cameras', { install_id: installID, file_id: fileID }),
+
   /** Blender GUI でファイルを開く（非同期・ノンブロッキング）
    * @param {{ installID: number, filePath: string }} args
    */

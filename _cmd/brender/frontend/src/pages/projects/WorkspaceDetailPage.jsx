@@ -122,6 +122,8 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
   const [enginesLoading, setEnginesLoading] = useState(false)
   const [scenes, setScenes]                 = useState([])
   const [scenesLoading, setScenesLoading]   = useState(false)
+  const [allCameras, setAllCameras]         = useState([])
+  const [camerasLoading, setCamerasLoading] = useState(false)
   const [form, setForm]                     = useState(null)
   const [specifyFrames, setSpecifyFrames]   = useState(false)
   const [saving, setSaving]                 = useState(false)
@@ -139,6 +141,7 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
       name:             detail.workspace.name,
       blenderInstallID: detail.workspace.blender_install_id,
       scene:            detail.workspace.scene || '',
+      camera:           detail.workspace.camera || '',
       engine:           detail.workspace.engine || '',
       startFrame:       start,
       endFrame:         end,
@@ -186,6 +189,7 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
 
     if (!fid || fid === 0) {
       setScenes([])
+      setAllCameras([])
       return
     }
     setScenesLoading(true)
@@ -193,6 +197,12 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
       .then(list => setScenes(list || []))
       .catch(() => setScenes([]))
       .finally(() => setScenesLoading(false))
+
+    setCamerasLoading(true)
+    BlenderApi.getCameras({ installID: form.blenderInstallID, fileID: fid })
+      .then(list => setAllCameras(list || []))
+      .catch(() => setAllCameras([]))
+      .finally(() => setCamerasLoading(false))
   }, [form?.blenderInstallID, detail?.workspace?.project_file_id])
 
   const set = (key, val) => {
@@ -269,17 +279,34 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
         </div>
       </div>
 
-      <div className="form-field">
-        <label className="form-label">{t('workspace.scene')}</label>
-        {scenes.length > 0 ? (
-          <select className="form-select" value={form.scene} onChange={e => set('scene', e.target.value)} disabled={scenesLoading}>
+      <div className="form-row" style={{ alignItems: 'flex-start' }}>
+        <div className="form-field" style={{ flex: 1 }}>
+          <label className="form-label">{t('workspace.scene')}</label>
+          {scenes.length > 0 ? (
+            <select className="form-select" value={form.scene} onChange={e => { set('scene', e.target.value); set('camera', '') }} disabled={scenesLoading}>
+              <option value="">{t('common.notSet')}</option>
+              {scenes.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          ) : (
+            <input className="form-input" value={form.scene} onChange={e => set('scene', e.target.value)} placeholder={t('common.notSetPlaceholder')} />
+          )}
+          <span className="form-hint">{t('workspace.sceneHint')}</span>
+        </div>
+        <div className="form-field" style={{ flex: 1 }}>
+          <label className="form-label">{t('workspace.camera')}</label>
+          <select
+            className="form-select"
+            value={form.camera}
+            onChange={e => set('camera', e.target.value)}
+            disabled={camerasLoading}
+          >
             <option value="">{t('common.notSet')}</option>
-            {scenes.map(s => <option key={s} value={s}>{s}</option>)}
+            {allCameras
+              .filter(c => !form.scene || (c.Scenes && c.Scenes.includes(form.scene)))
+              .map(c => <option key={c.Name} value={c.Name}>{c.Name}</option>)
+            }
           </select>
-        ) : (
-          <input className="form-input" value={form.scene} onChange={e => set('scene', e.target.value)} placeholder={t('common.notSetPlaceholder')} />
-        )}
-        <span className="form-hint">{t('workspace.sceneHint')}</span>
+        </div>
       </div>
 
       <div className="form-field">

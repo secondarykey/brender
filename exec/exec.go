@@ -84,6 +84,18 @@ func ResolveFrameRange(cmd, filePath, scene string) (start, end int, err error) 
 	return st.Start, st.End, err
 }
 
+func RunCameras(cmd, filePath string) ([]CameraTool, error) {
+	b, err := NewBlender(cmd)
+	if err != nil {
+		return nil, xerrors.Errorf("NewBlender: %w", err)
+	}
+	b.File = filePath
+	if err := b.RunTool(); err != nil {
+		return nil, xerrors.Errorf("RunTool: %w", err)
+	}
+	return b.Tool.Cameras, nil
+}
+
 func RunEngines(cmd string) ([]string, error) {
 
 	b, err := NewBlender(cmd)
