@@ -166,6 +166,31 @@ func StartMigrateProjectWorkDir(projectID string, newWorkDirID uint) error {
 	return nil
 }
 
+// GetWorkDirStats は指定 work_dir のプロジェクト数とデータサイズを返す。
+func GetWorkDirStats(id uint) (map[string]interface{}, error) {
+	wd, err := model.GetWorkDir(id)
+	if err != nil || wd == nil {
+		return nil, xerrors.New("work dir not found")
+	}
+	count, err := model.CountProjectsByWorkDir(id)
+	if err != nil {
+		return nil, xerrors.Errorf("GetWorkDirStats: %w", err)
+	}
+	var dataSize int64
+	filepath.WalkDir(wd.Path, func(_ string, d os.DirEntry, err error) error {
+		if err == nil && !d.IsDir() {
+			if info, e := d.Info(); e == nil {
+				dataSize += info.Size()
+			}
+		}
+		return nil
+	})
+	return map[string]interface{}{
+		"project_count": count,
+		"data_size":     dataSize,
+	}, nil
+}
+
 // StartChangeWorkDir は作業ディレクトリのパスを変更し、参照プロジェクトのファイルを非同期で移動する。
 func StartChangeWorkDir(id uint, newPath string) error {
 	wd, err := model.GetWorkDir(id)

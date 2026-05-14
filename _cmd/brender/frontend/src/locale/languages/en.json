@@ -229,7 +229,13 @@
       "addTitle": "Add Work Directory",
       "notExists": "Directory does not exist",
       "empty": "No work directories registered",
-      "editTitle": "Edit Work Directory"
+      "editTitle": "Edit Work Directory",
+      "checkRequired": "Check is required when changing the path",
+      "projects": "Projects",
+      "projectsUnit": "",
+      "dataSize": "Data Size",
+      "destination": "destination",
+      "current": "current"
     },
     "addBlender": "+ Add Blender",
     "noBlenders": "No Blender installations registered",

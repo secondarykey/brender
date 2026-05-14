@@ -49,6 +49,16 @@ export function Delete(id) {
 }
 
 /**
+ * @param {number} id
+ * @returns {$CancellablePromise<{ [_ in string]?: any }>}
+ */
+export function GetWorkDirStats(id) {
+    return $Call.ByID(4010536251, id).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType0($result);
+    }));
+}
+
+/**
  * @returns {$CancellablePromise<(model$0.WorkDir | null)[]>}
  */
 export function List() {

@@ -19,30 +19,46 @@ function StatusBadge({ status, t }) {
   return <span className={cls}>{label}</span>
 }
 
+function fmtBytes(bytes) {
+  if (!bytes) return '0 B'
+  if (bytes < 1024) return bytes + ' B'
+  if (bytes < 1024 ** 2) return (bytes / 1024).toFixed(1) + ' KB'
+  if (bytes < 1024 ** 3) return (bytes / 1024 ** 2).toFixed(1) + ' MB'
+  return (bytes / 1024 ** 3).toFixed(1) + ' GB'
+}
+
 // ── 編集ダイアログ ────────────────────────────────────────
 function EditDialog({ wd, onClose, onSaved }) {
   const { t } = useTranslation()
-  const [path, setPath]       = useState(wd.path)
-  const [status, setStatus]   = useState(wd.status)
-  const [saving, setSaving]   = useState(false)
-  const [checking, setChecking] = useState(false)
-  const [diskInfo, setDiskInfo] = useState(null)
-  const [error, setError]     = useState('')
-  const [changeDirProgress, setRenameProgress] = useState(null) // null | { pct, status }
+  const [path, setPath]           = useState(wd.path)
+  const [status, setStatus]       = useState(wd.status)
+  const [saving, setSaving]       = useState(false)
+  const [checking, setChecking]   = useState(false)
+  const [checkInfo, setCheckInfo] = useState(null) // null | { free, exists, projectCount, dataSize }
+  const [error, setError]         = useState('')
+  const [changeDirProgress, setChangeDirProgress] = useState(null) // null | { pct }
+
+  const pathChanged = path !== wd.path
+
+  // パスが変わったらチェック結果をリセット
+  const handlePathChange = (val) => {
+    setPath(val)
+    setCheckInfo(null)
+  }
 
   useEffect(() => {
     const off = onAppEvent('workdir:changedir', data => {
       if (data.work_dir_id !== wd.id) return
       if (data.status === 'done') {
-        setRenameProgress(null)
+        setChangeDirProgress(null)
         onSaved()
         onClose()
       } else if (data.status === 'error') {
-        setRenameProgress(null)
+        setChangeDirProgress(null)
         setError(t('project.migrateError'))
         setSaving(false)
       } else {
-        setRenameProgress({ pct: data.pct, status: data.status })
+        setChangeDirProgress({ pct: data.pct })
       }
     })
     return off
@@ -51,10 +67,7 @@ function EditDialog({ wd, onClose, onSaved }) {
   const handleBrowse = async () => {
     try {
       const dir = await Dialogs.OpenFile({ CanChooseDirectories: true, CanChooseFiles: false })
-      if (dir) {
-        setPath(dir)
-        setDiskInfo(null)
-      }
+      if (dir) handlePathChange(dir)
     } catch (err) {
       setError(String(err))
     }
@@ -64,8 +77,16 @@ function EditDialog({ wd, onClose, onSaved }) {
     setChecking(true)
     setError('')
     try {
-      const info = await WorkDirApi.checkDir({ path })
-      setDiskInfo(info)
+      const [disk, stats] = await Promise.all([
+        WorkDirApi.checkDir({ path }),
+        WorkDirApi.getWorkDirStats({ id: wd.id }),
+      ])
+      setCheckInfo({
+        free:         disk.free,
+        exists:       disk.exists,
+        projectCount: stats.project_count,
+        dataSize:     stats.data_size,
+      })
     } catch (err) {
       setError(String(err))
     } finally {
@@ -76,13 +97,11 @@ function EditDialog({ wd, onClose, onSaved }) {
   const handleSave = async () => {
     setSaving(true)
     setError('')
-    const pathChanged = path !== wd.path
     try {
       if (pathChanged) {
-        // パス変更: 非同期移行を開始（完了はイベントで受け取る）
         await WorkDirApi.update({ id: wd.id, path: wd.path, priority: wd.priority, status })
         await WorkDirApi.changeDir({ id: wd.id, newPath: path })
-        setRenameProgress({ pct: 0, status: 'running' })
+        setChangeDirProgress({ pct: 0 })
         // onClose は workdir:changedir done イベントで呼ばれる
       } else {
         await WorkDirApi.update({ id: wd.id, path: wd.path, priority: wd.priority, status })
@@ -95,7 +114,8 @@ function EditDialog({ wd, onClose, onSaved }) {
     }
   }
 
-  const busy = saving || changeDirProgress !== null
+  const busy        = saving || changeDirProgress !== null
+  const saveBlocked = busy || (pathChanged && !checkInfo)
 
   return (
     <div className="dialog-overlay" onClick={busy ? undefined : onClose}>
@@ -110,7 +130,7 @@ function EditDialog({ wd, onClose, onSaved }) {
                 className="form-input"
                 style={{ flex: 1, fontFamily: 'monospace', fontSize: '0.85rem' }}
                 value={path}
-                onChange={e => { setPath(e.target.value); setDiskInfo(null) }}
+                onChange={e => handlePathChange(e.target.value)}
                 disabled={busy}
               />
               <button className="btn btn-sm" onClick={handleBrowse} disabled={busy}>
@@ -135,20 +155,40 @@ function EditDialog({ wd, onClose, onSaved }) {
           </div>
 
           <div className="form-group" style={{ marginTop: 16 }}>
-            <label className="form-label">{t('settings.workDirs.freeSpace')}</label>
+            <label className="form-label">{t('settings.workDirs.check')}</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4 }}>
               <button className="btn btn-sm" onClick={handleCheck} disabled={checking || busy}>
                 {checking ? t('common.processing') : t('settings.workDirs.check')}
               </button>
-              {diskInfo && (
-                <span style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.7)' }}>
-                  {diskInfo.exists
-                    ? (fmtGB(diskInfo.free) ?? '—')
-                    : <span className="badge-red">{t('settings.workDirs.notExists')}</span>
-                  }
+              {pathChanged && !checkInfo && (
+                <span style={{ fontSize: '0.82rem', color: 'rgba(255,200,100,0.9)' }}>
+                  {t('settings.workDirs.checkRequired')}
                 </span>
               )}
             </div>
+            {checkInfo && (
+              <table style={{ marginTop: 10, fontSize: '0.85rem', borderCollapse: 'collapse', width: '100%' }}>
+                <tbody>
+                  <tr>
+                    <td style={{ color: 'rgba(255,255,255,0.5)', paddingRight: 16, paddingBottom: 4 }}>{t('settings.workDirs.projects')}</td>
+                    <td>{checkInfo.projectCount} {t('settings.workDirs.projectsUnit')}</td>
+                  </tr>
+                  <tr>
+                    <td style={{ color: 'rgba(255,255,255,0.5)', paddingRight: 16, paddingBottom: 4 }}>{t('settings.workDirs.dataSize')}</td>
+                    <td>{fmtBytes(checkInfo.dataSize)}</td>
+                  </tr>
+                  <tr>
+                    <td style={{ color: 'rgba(255,255,255,0.5)', paddingRight: 16 }}>{t('settings.workDirs.freeSpace')} ({pathChanged ? t('settings.workDirs.destination') : t('settings.workDirs.current')})</td>
+                    <td>
+                      {checkInfo.exists
+                        ? fmtBytes(checkInfo.free)
+                        : <span className="badge-red">{t('settings.workDirs.notExists')}</span>
+                      }
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            )}
           </div>
 
           {changeDirProgress && (
@@ -166,7 +206,7 @@ function EditDialog({ wd, onClose, onSaved }) {
         </div>
         <div className="dialog-actions">
           <button className="btn btn-ghost" onClick={onClose} disabled={busy}>{t('common.cancel')}</button>
-          <button className="btn" onClick={handleSave} disabled={busy}>
+          <button className="btn" onClick={handleSave} disabled={saveBlocked}>
             {changeDirProgress ? t('project.migrateRunning') : saving ? t('common.saving') : t('common.save')}
           </button>
         </div>

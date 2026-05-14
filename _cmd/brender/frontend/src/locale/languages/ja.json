@@ -229,7 +229,13 @@
       "addTitle": "作業ディレクトリを追加",
       "notExists": "ディレクトリが存在しません",
       "empty": "作業ディレクトリが登録されていません",
-      "editTitle": "作業ディレクトリを編集"
+      "editTitle": "作業ディレクトリを編集",
+      "checkRequired": "パスを変更する場合はチェックが必要です",
+      "projects": "プロジェクト数",
+      "projectsUnit": "件",
+      "dataSize": "データサイズ",
+      "destination": "移動先",
+      "current": "現在"
     },
     "addBlender": "+ Blender を追加",
     "noBlenders": "登録されたBlenderはありません",

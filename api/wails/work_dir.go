@@ -37,6 +37,10 @@ func (w *WorkDir) StartMigration(projectID string, newWorkDirID uint) error {
 	return api.StartMigrateProjectWorkDir(projectID, newWorkDirID)
 }
 
+func (w *WorkDir) GetWorkDirStats(id uint) (map[string]interface{}, error) {
+	return api.GetWorkDirStats(id)
+}
+
 func (w *WorkDir) ChangeDir(id uint, newPath string) error {
 	return api.StartChangeWorkDir(id, newPath)
 }
