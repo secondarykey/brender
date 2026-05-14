@@ -285,7 +285,7 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
         </div>
       </div>
 
-      <div className="form-row" style={{ alignItems: 'flex-start' }}>
+      <div className="form-row" style={{ alignItems: 'flex-start', marginTop: 12 }}>
         <div className="form-field" style={{ flex: 2 }}>
           <label className="form-label">
             {t('workspace.renderEngine')}
