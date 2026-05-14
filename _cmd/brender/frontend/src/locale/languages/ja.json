@@ -61,9 +61,10 @@
   },
   "tabs": {
     "fileList": "ファイル一覧",
-    "workspaceList": "ワークスペース",
+    "workspaceList": "ワークスペース一覧",
     "settings": "設定",
     "projectSettings": "プロジェクト設定",
+    "fileSettings": "ファイル設定",
     "queue": "キュー",
     "history": "実行履歴",
     "environment": "環境",

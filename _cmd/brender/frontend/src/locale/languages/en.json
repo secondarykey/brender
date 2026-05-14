@@ -61,9 +61,10 @@
   },
   "tabs": {
     "fileList": "Files",
-    "workspaceList": "Workspace",
+    "workspaceList": "Workspace List",
     "settings": "Settings",
     "projectSettings": "Project Settings",
+    "fileSettings": "File Settings",
     "queue": "Queue",
     "history": "History",
     "environment": "Environment",

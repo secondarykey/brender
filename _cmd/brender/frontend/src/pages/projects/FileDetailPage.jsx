@@ -561,7 +561,7 @@ function FileDetailPage({ projectID, projectName, fileID, fileName, navigate }) 
 
   const tabs = [
     { id: 'workspace', label: t('tabs.workspaceList') },
-    { id: 'settings',  label: t('tabs.settings') },
+    { id: 'settings',  label: t('tabs.fileSettings') },
   ]
 
   return (
