@@ -10,13 +10,9 @@ function fmtGB(bytes) {
 
 function EnvironmentSettings() {
   const { t } = useTranslation()
-  const [dirs, setDirs]       = useState([])
-  const [error, setError]     = useState('')
-  const [adding, setAdding]   = useState(false)
-  const [newPath, setNewPath] = useState('')
+  const [dirs, setDirs]         = useState([])
+  const [error, setError]       = useState('')
   const [diskInfo, setDiskInfo] = useState({})
-  const [confirm, setConfirm]   = useState(null)
-  const [deleting, setDeleting] = useState(false)
   const dragIndex = useRef(null)
   const [dragOver, setDragOver] = useState(null)
 
@@ -82,59 +78,42 @@ function EnvironmentSettings() {
   }
 
   // ── 削除 ─────────────────────────────────────────────────
-  const handleDelete = async () => {
-    if (!confirm) return
-    setDeleting(true)
+  const handleDelete = async (wd) => {
     setError('')
     try {
-      await WorkDirApi.delete({ id: confirm.id })
-      setConfirm(null)
+      await WorkDirApi.delete({ id: wd.id })
       load()
     } catch (err) {
       setError(String(err))
-      setConfirm(null)
-    } finally {
-      setDeleting(false)
     }
   }
 
   // ── 追加 ─────────────────────────────────────────────────
-  const handleSelectDir = async () => {
+  const handleAdd = async () => {
+    setError('')
     try {
       const dir = await Dialogs.OpenFile({ CanChooseDirectories: true, CanChooseFiles: false })
-      if (dir) setNewPath(dir)
-    } catch {}
-  }
-
-  const handleAdd = async () => {
-    if (!newPath) return
-    try {
-      await WorkDirApi.create({ path: newPath, priority: dirs.length })
-      setAdding(false)
-      setNewPath('')
+      if (!dir) return
+      await WorkDirApi.create({ path: dir, priority: dirs.length })
       load()
     } catch (err) {
       setError(String(err))
     }
   }
-
-  const handleCancelAdd = () => { setAdding(false); setNewPath('') }
 
   return (
     <div>
       <h2 className="section-title">{t('settings.workDirs.title')}</h2>
 
       <div className="toolbar">
-        {!adding && (
-          <button className="btn" onClick={() => setAdding(true)}>
-            {t('settings.workDirs.add')}
-          </button>
-        )}
+        <button className="btn" onClick={handleAdd}>
+          {t('settings.workDirs.add')}
+        </button>
       </div>
 
       {error && <div className="error-msg">{error}</div>}
 
-      {dirs.length === 0 && !adding ? (
+      {dirs.length === 0 ? (
         <p className="empty-msg">{t('settings.workDirs.empty')}</p>
       ) : (
         <>
@@ -195,7 +174,7 @@ function EnvironmentSettings() {
                       <button className="btn btn-sm" onClick={() => handleCheck(wd)} style={{ marginRight: 4 }}>
                         {t('settings.workDirs.check')}
                       </button>
-                      <button className="btn btn-sm btn-danger" onClick={() => setConfirm(wd)}>
+                      <button className="btn btn-sm btn-danger" onClick={() => handleDelete(wd)}>
                         {t('common.delete')}
                       </button>
                     </td>
@@ -207,41 +186,6 @@ function EnvironmentSettings() {
         </>
       )}
 
-      {adding && (
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 12 }}>
-          <input
-            className="form-input"
-            style={{ flex: 1 }}
-            value={newPath}
-            onChange={e => setNewPath(e.target.value)}
-            placeholder={t('settings.workDirs.path')}
-            autoFocus
-          />
-          <button className="btn btn-sm" onClick={handleSelectDir}>{t('settings.selectFolder')}</button>
-          <button className="btn" onClick={handleAdd} disabled={!newPath}>{t('common.create')}</button>
-          <button className="btn btn-ghost" onClick={handleCancelAdd}>{t('common.cancel')}</button>
-        </div>
-      )}
-
-      {confirm && (
-        <div className="dialog-overlay" onClick={() => setConfirm(null)}>
-          <div className="dialog" onClick={e => e.stopPropagation()}>
-            <h3 className="dialog-title">{t('settings.workDirs.confirmDelete')}</h3>
-            <div className="dialog-body">
-              <p><span className="dialog-label">{t('settings.workDirs.path')}</span>{confirm.path}</p>
-              <p style={{ marginTop: 10, color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>
-                {t('settings.workDirs.deleteWarning')}
-              </p>
-            </div>
-            <div className="dialog-actions">
-              <button className="btn btn-ghost" onClick={() => setConfirm(null)}>{t('common.cancel')}</button>
-              <button className="btn btn-danger" onClick={handleDelete} disabled={deleting}>
-                {deleting ? t('common.deleting') : t('common.delete')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
