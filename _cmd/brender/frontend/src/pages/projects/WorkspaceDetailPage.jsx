@@ -67,7 +67,7 @@ function HistoryTab({ projectID, workspaceID, navigate, projectName, fileName, f
 
   useEffect(() => { load() }, [load, reloadTrigger])
 
-  const statusLabel = (s) => ({ completed: t('status.completed'), error: t('status.error'), cancelled: t('status.cancelled') })[s] ?? s
+  const statusLabel = (s) => ({ completed: t('status.completed'), error: t('status.error'), cancelled: t('status.cancelled'), running: t('status.running'), waiting: t('status.waiting') })[s] ?? t('status.running')
 
   const totalPages  = Math.max(1, Math.ceil(jobs.length / pageSize))
   const currentPage = Math.min(page, totalPages)
@@ -100,7 +100,7 @@ function HistoryTab({ projectID, workspaceID, navigate, projectName, fileName, f
                   <span>{new Date(j.enqueued_at).toLocaleString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
                 )}
               </div>
-              <span className={`status-badge status-${j.status}`}>{statusLabel(j.status)}</span>
+              <span className={`status-badge status-${j.status || 'running'}`}>{statusLabel(j.status)}</span>
             </div>
             {j.status === 'error' && j.error_msg && (
               <div className="queue-history-error">

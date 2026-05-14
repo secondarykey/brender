@@ -80,7 +80,7 @@ function DetailTab({ job, onDeleted, onDataStatusChanged }) {
     waiting:   t('status.waiting'),
   }
 
-  const status   = job.status || 'completed'
+  const status   = job.status || 'running'
   const isLocked = dataStatus % 2 === 1
 
   const updateStatus = (next) => {
