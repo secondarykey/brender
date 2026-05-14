@@ -45,9 +45,18 @@ function ProjectThumbnailPanel({ projectID }) {
   )
 }
 
+function fmtBytes(b) {
+  if (b == null) return '…'
+  if (b < 1024) return `${b} B`
+  if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`
+  if (b < 1024 * 1024 * 1024) return `${(b / 1024 / 1024).toFixed(1)} MB`
+  return `${(b / 1024 / 1024 / 1024).toFixed(2)} GB`
+}
+
 function WorkDirSection({ projectID, workDir, workDirs, onMigrated }) {
   const { t } = useTranslation()
   const [open, setOpen]                     = useState(false)
+  const [diskSize, setDiskSize]             = useState(null)
   const [showMigrate, setShowMigrate]       = useState(false)
   const [targetID, setTargetID]             = useState('')
   const [migrating, setMigrating]           = useState(false)
@@ -55,6 +64,13 @@ function WorkDirSection({ projectID, workDir, workDirs, onMigrated }) {
   const [migrateError, setMigrateError]     = useState('')
 
   const activeTargets = workDirs.filter(w => w.status === 'active' && (!workDir || w.id !== workDir.id))
+
+  useEffect(() => {
+    if (!open) return
+    WorkDirApi.getProjectDiskSize({ projectID })
+      .then(size => setDiskSize(size))
+      .catch(() => setDiskSize(null))
+  }, [open, projectID])
 
   useEffect(() => {
     if (activeTargets.length > 0 && !targetID) {
@@ -105,6 +121,9 @@ function WorkDirSection({ projectID, workDir, workDirs, onMigrated }) {
         <>
       <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', fontFamily: 'monospace', wordBreak: 'break-all' }}>
         {workDir ? workDir.path : '—'}
+      </div>
+      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>
+        {t('project.diskUsage')}: {fmtBytes(diskSize)}
       </div>
       {workDir && (
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>

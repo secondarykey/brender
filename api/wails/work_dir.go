@@ -44,3 +44,7 @@ func (w *WorkDir) GetWorkDirStats(id uint) (map[string]interface{}, error) {
 func (w *WorkDir) ChangeDir(id uint, newPath string) error {
 	return api.StartChangeWorkDir(id, newPath)
 }
+
+func (w *WorkDir) GetProjectDiskSize(projectID string) (int64, error) {
+	return api.GetProjectDiskSize(projectID)
+}

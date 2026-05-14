@@ -191,6 +191,25 @@ func GetWorkDirStats(id uint) (map[string]interface{}, error) {
 	}, nil
 }
 
+// GetProjectDiskSize はプロジェクトのデータサイズ（作業ディレクトリ内の {projectID}/ 以下）をバイトで返す。
+func GetProjectDiskSize(projectID string) (int64, error) {
+	baseDir, err := GetProjectBaseDir(projectID)
+	if err != nil {
+		return 0, xerrors.Errorf("GetProjectDiskSize: %w", err)
+	}
+	dir := filepath.Join(baseDir, projectID)
+	var total int64
+	filepath.WalkDir(dir, func(_ string, d os.DirEntry, err error) error {
+		if err == nil && !d.IsDir() {
+			if info, e := d.Info(); e == nil {
+				total += info.Size()
+			}
+		}
+		return nil
+	})
+	return total, nil
+}
+
 // StartChangeWorkDir は作業ディレクトリのパスを変更し、参照プロジェクトのファイルを非同期で移動する。
 func StartChangeWorkDir(id uint, newPath string) error {
 	wd, err := model.GetWorkDir(id)

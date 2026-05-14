@@ -38,4 +38,8 @@ export const WorkDirApi = {
   changeDir: ({ id, newPath }) =>
     isWails() ? svc().then(s => s.ChangeDir(id, newPath))
               : serverCall('work_dir', 'change_dir', { id, new_path: newPath }),
+
+  getProjectDiskSize: ({ projectID }) =>
+    isWails() ? svc().then(s => s.GetProjectDiskSize(projectID))
+              : serverCall('work_dir', 'get_project_disk_size', { project_id: projectID }),
 }

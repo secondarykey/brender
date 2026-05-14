@@ -107,7 +107,8 @@
     "migrateConfirm": "移行を開始する",
     "migrateRunning": "移行中...",
     "migrateDone": "移行が完了しました",
-    "migrateError": "移行中にエラーが発生しました"
+    "migrateError": "移行中にエラーが発生しました",
+    "diskUsage": "使用容量"
   },
   "file": {
     "displayName": "ファイル名称",

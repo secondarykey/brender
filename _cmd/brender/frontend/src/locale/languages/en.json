@@ -107,7 +107,8 @@
     "migrateConfirm": "Start Migration",
     "migrateRunning": "Migrating...",
     "migrateDone": "Migration completed",
-    "migrateError": "An error occurred during migration"
+    "migrateError": "An error occurred during migration",
+    "diskUsage": "Disk usage"
   },
   "file": {
     "displayName": "File Name",

@@ -49,6 +49,14 @@ export function Delete(id) {
 }
 
 /**
+ * @param {string} projectID
+ * @returns {$CancellablePromise<number>}
+ */
+export function GetProjectDiskSize(projectID) {
+    return $Call.ByID(4049842553, projectID);
+}
+
+/**
  * @param {number} id
  * @returns {$CancellablePromise<{ [_ in string]?: any }>}
  */
