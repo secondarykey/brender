@@ -47,6 +47,7 @@ function ProjectThumbnailPanel({ projectID }) {
 
 function WorkDirSection({ projectID, workDir, workDirs, onMigrated }) {
   const { t } = useTranslation()
+  const [open, setOpen]                     = useState(false)
   const [showMigrate, setShowMigrate]       = useState(false)
   const [targetID, setTargetID]             = useState('')
   const [migrating, setMigrating]           = useState(false)
@@ -93,7 +94,15 @@ function WorkDirSection({ projectID, workDir, workDirs, onMigrated }) {
 
   return (
     <div style={{ marginTop: 24 }}>
-      <h3 className="ws-detail-section-title">{t('project.workDir')}</h3>
+      <h3
+        className="ws-detail-section-title"
+        style={{ cursor: 'pointer', userSelect: 'none' }}
+        onClick={() => setOpen(v => !v)}
+      >
+        {open ? '▾' : '▸'} {t('project.workDir')}
+      </h3>
+      {open && (
+        <>
       <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', fontFamily: 'monospace', wordBreak: 'break-all' }}>
         {workDir ? workDir.path : '—'}
       </div>
@@ -101,6 +110,8 @@ function WorkDirSection({ projectID, workDir, workDirs, onMigrated }) {
         <button className="btn btn-sm" style={{ marginTop: 8 }} onClick={() => setShowMigrate(true)}>
           {t('project.migrate')}
         </button>
+      )}
+        </>
       )}
 
       {showMigrate && (
