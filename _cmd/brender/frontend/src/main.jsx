@@ -1,6 +1,7 @@
 import ReactDOM from 'react-dom/client'
-import App, { VideoPlayer } from './App'
+import App from './App'
 import LogViewerApp from './LogViewerApp'
+import MovieViewerApp from './MovieViewerApp'
 import './languages'
 
 const params = new URLSearchParams(window.location.search)
@@ -10,7 +11,7 @@ const moviePath = params.get('movie')
 let Root
 
 if (moviePath) {
-  Root = () => <VideoPlayer path={moviePath} />
+  Root = MovieViewerApp
 } else if (isLogWindow) {
   Root = LogViewerApp
 } else {

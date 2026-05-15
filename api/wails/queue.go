@@ -106,6 +106,7 @@ func (s *Queue) OpenMovieWindow(videoPath string) error {
 		Title:            title,
 		Width:            1280,
 		Height:           720,
+		Frameless:        true,
 		URL:              "/?movie=" + url.QueryEscape(videoPath),
 		BackgroundColour: application.NewRGB(0, 0, 0),
 	}).Show()
