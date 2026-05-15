@@ -4,6 +4,7 @@ import { Dialogs } from '@wailsio/runtime'
 import { QueueApi, WorkspaceApi } from '../../lib/api'
 import { onAppEvent } from '../../lib/appEvents'
 import { useMessage } from '../../lib/toast'
+import ConfirmDialog from '../../components/ConfirmDialog'
 
 const VIDEO_EXTS = new Set(['.mp4', '.mov', '.avi', '.mkv', '.webm', '.m4v'])
 const IMAGE_EXTS = new Set(['.png', '.jpg', '.jpeg', '.exr', '.tiff', '.tif', '.bmp', '.hdr', '.webp', '.tga'])
@@ -191,32 +192,32 @@ function DetailTab({ job, onDeleted, onDataStatusChanged }) {
         )}
       </div>
 
-      {confirmData ? (
-        <div className="job-delete-confirm">
-          <span className="job-delete-confirm-msg">{t('job.deleteDataWarning')}</span>
-          <div className="dialog-actions" style={{ marginTop: 12 }}>
-            <button className="btn btn-ghost" onClick={() => setConfirmData(false)} disabled={deletingData}>{t('common.cancel')}</button>
-            <button className="btn btn-danger" onClick={handleDeleteData} disabled={deletingData}>
-              {deletingData ? t('common.deleting') : t('job.deleteDataAction')}
-            </button>
-          </div>
-        </div>
-      ) : confirm ? (
-        <div className="job-delete-confirm">
-          <span className="job-delete-confirm-msg">{t('job.deleteWarning')}</span>
-          <div className="dialog-actions" style={{ marginTop: 12 }}>
-            <button className="btn btn-ghost" onClick={() => setConfirm(false)} disabled={deleting}>{t('common.cancel')}</button>
-            <button className="btn btn-danger" onClick={handleDelete} disabled={deleting}>
-              {deleting ? t('common.deleting') : t('common.delete')}
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="dialog-actions" style={{ justifyContent: 'space-between', marginTop: 16 }}>
-          <button className="btn btn-danger" onClick={() => setConfirm(true)} disabled={isLocked}>{t('common.delete')}</button>
-          <button className="btn btn-ghost" onClick={() => QueueApi.openLogWindow({ id: job.id })}>{t('job.showLog')}</button>
-        </div>
-      )}
+      <div className="dialog-actions" style={{ justifyContent: 'space-between', marginTop: 16 }}>
+        <button className="btn btn-danger" onClick={() => setConfirm(true)} disabled={isLocked}>{t('common.delete')}</button>
+        <button className="btn btn-ghost" onClick={() => QueueApi.openLogWindow({ id: job.id })}>{t('job.showLog')}</button>
+      </div>
+
+      <ConfirmDialog
+        open={confirm}
+        title={t('common.delete')}
+        onCancel={() => setConfirm(false)}
+        onConfirm={handleDelete}
+        confirmLabel={deleting ? t('common.deleting') : t('common.delete')}
+        busy={deleting}
+      >
+        <p>{t('job.deleteWarning')}</p>
+      </ConfirmDialog>
+
+      <ConfirmDialog
+        open={confirmData}
+        title={t('common.deleteData')}
+        onCancel={() => setConfirmData(false)}
+        onConfirm={handleDeleteData}
+        confirmLabel={deletingData ? t('common.deleting') : t('job.deleteDataAction')}
+        busy={deletingData}
+      >
+        <p>{t('job.deleteDataWarning')}</p>
+      </ConfirmDialog>
     </div>
   )
 }
