@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Dialogs } from '@wailsio/runtime'
 import { QueueApi, WorkspaceApi } from '../../lib/api'
 import { onAppEvent } from '../../lib/appEvents'
 
@@ -375,9 +376,11 @@ function RenderResultTab({ job }) {
 // ── データ表示タブ ────────────────────────────────────────
 function DataViewTab({ job }) {
   const { t } = useTranslation()
-  const [files, setFiles]     = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError]     = useState('')
+  const [files, setFiles]               = useState([])
+  const [loading, setLoading]           = useState(true)
+  const [error, setError]               = useState('')
+  const [downloading, setDownloading]   = useState(false)
+  const [dlError, setDlError]           = useState('')
 
   useEffect(() => {
     if (!job) return
@@ -388,13 +391,40 @@ function DataViewTab({ job }) {
       .catch(err => { setError(String(err)); setLoading(false) })
   }, [job])
 
+  const handleDownload = async () => {
+    const savePath = await Dialogs.SaveFile({
+      DefaultFilename: job.id + '.zip',
+      Filters: [{ DisplayName: 'ZIP Archive', Pattern: '*.zip' }],
+    })
+    if (!savePath) return
+    setDownloading(true)
+    setDlError('')
+    try {
+      await QueueApi.zipJobData({ id: job.id, savePath })
+    } catch (err) {
+      setDlError(String(err))
+    } finally {
+      setDownloading(false)
+    }
+  }
+
   if (loading) return <p className="setting-desc">{t('common.loading')}</p>
   if (error)   return <div className="error-msg">{error}</div>
   if (files.length === 0) return <p className="empty-msg">{t('job.noFiles')}</p>
 
+  const canDownload = job && (job.data_status === 2 || job.data_status === 3 || job.data_status === 6 || job.data_status === 7)
+
   return (
     <div className="job-data-view">
-      <p className="setting-desc job-data-path">{job.output_dir}</p>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+        <p className="setting-desc job-data-path" style={{ margin: 0 }}>{job.output_dir}</p>
+        {canDownload && (
+          <button className="btn btn-sm btn-ghost" onClick={handleDownload} disabled={downloading}>
+            {downloading ? t('common.downloading') : t('common.downloadZip')}
+          </button>
+        )}
+      </div>
+      {dlError && <div className="error-msg" style={{ marginBottom: 8 }}>{dlError}</div>}
       <table className="queue-table">
         <thead>
           <tr>

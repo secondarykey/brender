@@ -27,6 +27,8 @@
     "cancelAction": "Cancel",
     "enqueueing": "Adding...",
     "deleteData": "Delete Data",
+    "downloadZip": "Download ZIP",
+    "downloading": "Downloading...",
     "dragToReorder": "Drag to reorder",
     "error": "Error: ",
     "reload": "Reload",

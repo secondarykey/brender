@@ -98,6 +98,10 @@ func (s *Queue) GetJobLog(id string) (string, error) {
 	return api.GetJobLog(id)
 }
 
+func (s *Queue) ZipJobData(id string, savePath string) error {
+	return api.ZipJobData(id, savePath)
+}
+
 func (s *Queue) OpenMovieWindow(videoPath string) error {
 	title := filepath.Base(videoPath)
 	winName := fmt.Sprintf("movie-%d", time.Now().UnixNano())

@@ -27,6 +27,8 @@
     "cancelAction": "キャンセルする",
     "enqueueing": "追加中...",
     "deleteData": "データ削除",
+    "downloadZip": "ZIPダウンロード",
+    "downloading": "ダウンロード中...",
     "dragToReorder": "ドラッグで並び替え",
     "error": "エラー: ",
     "reload": "再読み込み",
