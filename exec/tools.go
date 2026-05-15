@@ -46,24 +46,21 @@ func getToolPythonFile() (string, error) {
 
 const (
 	ToolFlag    = "=BRENDER PYTHON TOOL %s"
-	SceneFlag   = "==SCENES %s"
-	CameraFlag  = "==CAMERA %s"
-	SamplesFlag = "==SAMPLES %s"
+	Flags       = "===="
+	SceneFlag   = "SCENES"
+	CameraFlag  = "CAMERA"
+	SamplesFlag = "SAMPLES"
 	StartFlag   = "START"
 	EndFlag     = "END"
 	FileName    = "brender-tool_*.py"
 )
 
-var (
-	ToolStart    = fmt.Sprintf(ToolFlag, StartFlag)
-	ToolEnd      = fmt.Sprintf(ToolFlag, EndFlag)
-	SceneStart   = fmt.Sprintf(SceneFlag, StartFlag)
-	SceneEnd     = fmt.Sprintf(SceneFlag, EndFlag)
-	CameraStart  = fmt.Sprintf(CameraFlag, StartFlag)
-	CameraEnd    = fmt.Sprintf(CameraFlag, EndFlag)
-	SamplesStart = fmt.Sprintf(SamplesFlag, StartFlag)
-	SamplesEnd   = fmt.Sprintf(SamplesFlag, EndFlag)
-)
+var parsers = []*parser{
+	newParser(EngineFlag, parseEngine),
+	newParser(SceneFlag, parseScene),
+	newParser(CameraFlag, parseCamera),
+	newParser(SamplesFlag, parseSamples),
+}
 
 /**
  * ツール用のPythonファイルを作成する
@@ -75,21 +72,8 @@ func createToolPythonFile() (string, error) {
 		return "", xerrors.Errorf("template.ParseFS() error: %w", err)
 	}
 
-	dto := struct {
-		ToolStartFlag    string
-		ToolEndFlag      string
-		SceneStartFlag   string
-		SceneEndFlag     string
-		CameraStartFlag  string
-		CameraEndFlag    string
-		SamplesStartFlag string
-		SamplesEndFlag   string
-	}{
-		ToolStart, ToolEnd,
-		SceneStart, SceneEnd,
-		CameraStart, CameraEnd,
-		SamplesStart, SamplesEnd,
-	}
+	//現状DTO なし
+	dto := struct{}{}
 
 	fp, err := os.CreateTemp("", FileName)
 	if err != nil {
@@ -107,11 +91,12 @@ func createToolPythonFile() (string, error) {
 type Tool struct {
 	Version string
 	Build   string
-	Scenes  []SceneTool
-	Cameras []CameraTool
+	Engines []string
+	Scenes  []*SceneTool
+	Cameras []*CameraTool
 }
 
-func (t Tool) ActiveScene() SceneTool {
+func (t Tool) ActiveScene() *SceneTool {
 	for _, s := range t.Scenes {
 		if s.Active {
 			return s
@@ -121,15 +106,16 @@ func (t Tool) ActiveScene() SceneTool {
 }
 
 type SceneTool struct {
-	Active bool
-	Name   string
-	Start  int
-	End    int
-	Camera string
-	X      int
-	Y      int
-	Engine string
-	Output string
+	Active  bool
+	Name    string
+	Start   int
+	End     int
+	Camera  string
+	X       int
+	Y       int
+	Engine  string
+	Output  string
+	Samples map[string]int
 }
 
 type CameraTool struct {
@@ -138,17 +124,29 @@ type CameraTool struct {
 	Output string
 }
 
+type parser struct {
+	Name   string
+	Parser func(string) interface{}
+}
+
+func newParser(name string, fn func(string) interface{}) *parser {
+	var p parser
+	p.Name = name
+	p.Parser = fn
+	return &p
+}
+
 func parseTool(stdout string) Tool {
 
 	scanner := bufio.NewScanner(strings.NewReader(stdout))
 
 	version := false
 	tool := false
-	scene := false
-	camera := false
 	ended := false
 
 	rtn := Tool{}
+
+	var p *parser
 
 	for scanner.Scan() {
 
@@ -162,34 +160,62 @@ func parseTool(stdout string) Tool {
 		case strings.Index(line, ToolEnd) == 0:
 			tool = false
 			ended = true
-		case strings.Index(line, SceneStart) == 0:
-			scene = true
-		case strings.Index(line, SceneEnd) == 0:
-			scene = false
-		case strings.Index(line, CameraStart) == 0:
-			camera = true
-		case strings.Index(line, CameraEnd) == 0:
-			camera = false
-		case tool:
-			if scene {
-				s := parseScene(line)
-				rtn.Scenes = append(rtn.Scenes, s)
-			} else if camera {
-				c := parseCamera(line)
-				rtn.Cameras = append(rtn.Cameras, c)
-			}
-		case !version && strings.Index(line, "Blender") == 0:
-			csv := strings.Split(line, " ")
-			if len(csv) >= 2 {
-				rtn.Version = csv[1]
-				version = true
-				if len(csv) >= 3 {
-					remain := strings.Join(csv[2:], " ")
-					//"()"を除去
-					rtn.Build = remain[1 : len(remain)-1]
+		case p != nil:
+
+			if isParseEnd(p, line) {
+				p = nil
+			} else {
+
+				obj := p.Parser(line)
+
+				if p.Name == EngineFlag {
+					if v, ok := obj.(string); ok {
+						rtn.Engines = append(rtn.Engines, v)
+					}
+				} else if p.Name == SceneFlag {
+					if v, ok := obj.(*SceneTool); ok {
+						rtn.Scenes = append(rtn.Scenes, v)
+					}
+				} else if p.Name == CameraFlag {
+					if v, ok := obj.(*CameraTool); ok {
+						rtn.Cameras = append(rtn.Cameras, v)
+					}
+				} else if p.Name == SamplesFlag {
+					//エンジンのサンプル数
+					if v, ok := obj.([]string); ok {
+						//シーン名の位置にサンプル数を設定
+						for _, scene := range scenes {
+							if v[0] == scene.Name {
+								scene.Samples["WORKBENTCH"] = samples[0]
+								scene.Samples["EEVEE"] = samples[1]
+								scene.Samples["CYCLES"] = samples[2]
+								break
+							}
+						}
+					}
 				}
 			}
+
 		default:
+
+			if !version && strings.Index(line, "Blender") == 0 {
+				csv := strings.Split(line, " ")
+				if len(csv) >= 2 {
+					rtn.Version = csv[1]
+					version = true
+					if len(csv) >= 3 {
+						remain := strings.Join(csv[2:], " ")
+						//"()"を除去
+						rtn.Build = remain[1 : len(remain)-1]
+					}
+				}
+			} else {
+				wk := isParseStart(line)
+				if wk != nil {
+					p = wk
+				}
+			}
+
 		}
 
 		if ended {
@@ -200,16 +226,32 @@ func parseTool(stdout string) Tool {
 	return rtn
 }
 
-func NewSceneTool() SceneTool {
+// パーサーの始点
+func isParseStart(line string) *parser {
+	for _, p := range parsers {
+		if strings.Contains(line, fmt.Sprintf("%s %s %s", Flags, p.Name, StartStart)) {
+			return p
+		}
+	}
+	return nil
+}
+
+// パーサーの終点
+func isParseEnd(p *parser, line string) bool {
+	return strings.Contains(line, fmt.Sprintf("%s %s %s", Flags, p.Name, EndFlag))
+}
+
+func NewSceneTool() *SceneTool {
 	var s SceneTool
 	s.Active = false
 	s.Start = -1
 	s.End = -1
 	s.Name = ""
-	return s
+	s.Samples = make(map[string]int)
+	return &s
 }
 
-func parseScene(line string) SceneTool {
+func parseScene(line string) *SceneTool {
 
 	s := NewSceneTool()
 	s.Output = line
@@ -241,14 +283,22 @@ func parseScene(line string) SceneTool {
 	return s
 }
 
-func NewCameraTool() CameraTool {
+func setSamples(scenes []*SceneTool, line string) {
+
+}
+
+func parseSamples(line string) []string {
+	return strings.Split(line, "\t")
+}
+
+func NewCameraTool() *CameraTool {
 	var c CameraTool
 	c.Name = ""
 	c.Scenes = nil
-	return c
+	return &c
 }
 
-func parseCamera(line string) CameraTool {
+func parseCamera(line string) *CameraTool {
 
 	c := NewCameraTool()
 	c.Output = line

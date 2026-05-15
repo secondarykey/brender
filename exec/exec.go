@@ -2,6 +2,7 @@ package exec
 
 import (
 	"bufio"
+	"context"
 	"strings"
 	"time"
 
@@ -50,7 +51,7 @@ func RunScenes(cmd, filePath string) ([]string, error) {
 // ResolveScene は .blend ファイルを Tool で解析し指定シーンの情報を返す。
 // scene が空の場合はアクティブシーンを使用する。
 // シーン名が指定されていて存在しない場合はエラーを返す。
-func ResolveScene(cmd, filePath, scene string) (SceneTool, error) {
+func ResolveScene(cmd, filePath, scene string) (*SceneTool, error) {
 	b, err := NewBlender(cmd)
 	if err != nil {
 		return NewSceneTool(), xerrors.Errorf("NewBlender: %w", err)
@@ -92,7 +93,7 @@ func RunToolData(cmd, filePath string) (*Tool, error) {
 	return &b.Tool, nil
 }
 
-func RunCameras(cmd, filePath string) ([]CameraTool, error) {
+func RunCameras(cmd, filePath string) ([]*CameraTool, error) {
 	b, err := NewBlender(cmd)
 	if err != nil {
 		return nil, xerrors.Errorf("NewBlender: %w", err)
@@ -115,11 +116,15 @@ func RunEngines(cmd string) ([]string, error) {
 	b.Writer = &w
 	b.ErrorWriter = &w
 
-	err = b.Run("-E", "help", "-b")
-	// Blender 4.x (少なくとも 4.5) は -E help -b が成功しても非ゼロ終了コードを返す。
-	// 出力に期待するヘッダが含まれていればエラーを無視する。
-	if err != nil && !strings.Contains(w.String(), "Blender Engine Listing:") {
+	ctx := context.Background()
+	ch, err := b.RunAsync(ctx, "-E", "help", "-b")
+	if err != nil {
 		return nil, xerrors.Errorf("blender command error: %w", err)
+	}
+
+	err = <-ch
+	if err != nil && !strings.Contains(w.String(), "Blender Engine Listing:") {
+		return nil, xerrors.Errorf("blender running error: %w", err)
 	}
 
 	return parseEngines(&w)
@@ -145,7 +150,6 @@ func parseEngines(b *strings.Builder) ([]string, error) {
 	}
 	return engines, nil
 }
-
 
 func GetBlenderFile(p *model.Project) string {
 	f, err := model.FirstFile(p.ID)

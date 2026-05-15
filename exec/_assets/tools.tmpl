@@ -1,12 +1,79 @@
 import bpy
 from collections import defaultdict
+import addon_utils
+
+def printEngines():
+
+    engine_data = {} # {ID: Name}
+    # 1. RNA (型システム) から正式な表示名称を取得
+    # これが EEVEE や Workbench の名称取得のメインルートです
+    try:
+        # engineプロパティの定義を直接参照
+        prop = bpy.types.RenderSettings.bl_rna.properties['engine']
+        for item in prop.enum_items:
+            engine_data[item.identifier] = item.name
+    except Exception as e:
+        print(f"RNA Error: {e}")
+
+    # 2. RenderEngine サブクラスから取得 (アドオン系エンジン用)
+    def get_subs(c):
+        s = c.__subclasses__()
+        return s + [item for sub in s for item in get_subs(sub)]
+
+    for cls in get_subs(bpy.types.RenderEngine):
+        eid = getattr(cls, "bl_idname", None)
+        label = getattr(cls, "bl_label", None)
+        if eid and label:
+            engine_data[eid] = label
+
+    # 3. 候補IDの収集 (全UIクラスから)
+    candidate_ids = set()
+    for attr in dir(bpy.types):
+        cls = getattr(bpy.types, attr)
+        compat = getattr(cls, "COMPAT_ENGINES", None)
+        if compat and isinstance(compat, (set, list, tuple)):
+            candidate_ids.update(eid for eid in compat if isinstance(eid, str))
+
+    # RNAから得られたIDも候補に追加
+    candidate_ids.update(engine_data.keys())
+
+    # 4. 実機テストと結果出力
+    original_engine = bpy.context.scene.render.engine
+    
+    print("==== ENGINES START")
+    for eid in sorted(candidate_ids):
+        if not eid: continue
+
+        # 利用可否チェック
+        is_available = False
+        try:
+            bpy.context.scene.render.engine = eid
+            if bpy.context.scene.render.engine == eid:
+                is_available = True
+        except:
+            pass
+        
+        # 名称の決定
+        # name = engine_data.get(eid)
+
+        if is_available:
+            print(f"{eid}")
+
+    print("==== ENGINES END")
+
+    # 元に戻す
+    try:
+        bpy.context.scene.render.engine = original_engine
+    except:
+        pass
+
 
 def printScenes():
 
     current = bpy.context.scene
     scenes = bpy.data.scenes
 
-    print("{{ .SceneStartFlag }}")
+    print("==== SCENES START")
     for key, value in scenes.items():
         cur = 0
         if key == current.name:
@@ -34,7 +101,7 @@ def printScenes():
 
         print("\t".join(row))
 
-    print("{{ .SceneEndFlag }}")
+    print("==== SCENES END")
 
 def getSamples(obj,props):
 
@@ -53,7 +120,7 @@ def printSamples():
   
     propArray = [["display","render_aa"],["eevee","taa_render_samples"],["cycles","samples"]]
 
-    print("{{ .SamplesStartFlag }}")
+    print("==== SAMPLES START")
     for key, value in scenes.items():
 
         row = []
@@ -63,7 +130,7 @@ def printSamples():
 
         print("\t".join(row))
 
-    print("{{ .SamplesEndFlag }}")
+    print("==== SAMPLES END")
 
 def printCameras():
 
@@ -76,7 +143,7 @@ def printCameras():
             if obj.type == 'CAMERA':
                 camera_usage[obj.name].append(scene.name)
 
-    print("{{ .CameraStartFlag }}")
+    print("==== CAMERA START")
 
     for cam_name, scene_names in camera_usage.items():
 
@@ -86,11 +153,12 @@ def printCameras():
         row.append(scenes_str)
         print("\t".join(row))
 
-    print("{{ .CameraEndFlag }}")
+    print("==== CAMERA END")
 
 if __name__ == "__main__":
-    print("{{ .ToolStartFlag }}")
+    print("=BRENDER PYTHON TOOL START")
+    printEngines()
     printScenes()
     printSamples()
     printCameras()
-    print("{{ .ToolEndFlag }}")
+    print("=BRENDER PYTHON TOOL END")
