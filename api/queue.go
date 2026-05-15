@@ -919,7 +919,9 @@ func ZipJobData(id string, savePath string) error {
 	if err != nil {
 		return xerrors.Errorf("ZipJobData GetJob: %w", err)
 	}
-	if j.DataStatus == 0 || j.DataStatus == 1 || j.DataStatus == 4 || j.DataStatus == 5 {
+	// none(0/1) または deleted(4/5) はデータなし。modified(8/9) は一部残存のため許可。
+	if j.DataStatus == model.JobDataNone || j.DataStatus == model.JobDataNoneLocked ||
+		j.DataStatus == model.JobDataDeleted || j.DataStatus == model.JobDataDeletedLocked {
 		return xerrors.New("data is not available")
 	}
 	if j.OutputDir == "" {
@@ -993,11 +995,15 @@ func ZipJobSelectedFiles(id string, filePaths []string, savePath string) error {
 }
 
 // DeleteJobFiles は job の OutputDir 内の指定ファイルを削除する。
-// OutputDir 外のパスは無視する。
+// ロック中のジョブは削除不可。OutputDir 外のパスは無視する。
+// 削除後、ファイルが残っていれば JobDataModified、全削除なら JobDataDeleted にステータスを更新する。
 func DeleteJobFiles(id string, filePaths []string) error {
 	j, err := model.GetJob(id)
 	if err != nil {
 		return xerrors.Errorf("DeleteJobFiles GetJob: %w", err)
+	}
+	if j.DataStatus%2 == 1 {
+		return xerrors.New("ロック中のジョブのファイルは削除できません")
 	}
 	absOut, err := filepath.Abs(j.OutputDir)
 	if err != nil {
@@ -1014,5 +1020,17 @@ func DeleteJobFiles(id string, filePaths []string) error {
 		}
 		os.Remove(absP)
 	}
-	return nil
+	// 残存ファイルを確認してステータスを更新
+	hasFiles := false
+	_ = filepath.WalkDir(absOut, func(_ string, d fs.DirEntry, err error) error {
+		if err == nil && !d.IsDir() {
+			hasFiles = true
+		}
+		return nil
+	})
+	newStatus := model.JobDataModified
+	if !hasFiles {
+		newStatus = model.JobDataDeleted
+	}
+	return model.UpdateJobDataStatus(id, newStatus)
 }

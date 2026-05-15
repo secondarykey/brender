@@ -17,12 +17,19 @@ function dataStatusClass(s) {
   if (s === 2)     return 'data-status-available'
   if (s === 4)     return 'data-status-deleted'
   if (s === 6)     return 'data-status-corrupted'
+  if (s === 8)     return 'data-status-modified'
   return ''
 }
 
 function DataStatusBadge({ status }) {
   const { t } = useTranslation()
-  const labels = { 0: t('dataStatus.none'), 2: t('dataStatus.available'), 4: t('dataStatus.deleted'), 6: t('dataStatus.corrupted') }
+  const labels = {
+    0: t('dataStatus.none'),
+    2: t('dataStatus.available'),
+    4: t('dataStatus.deleted'),
+    6: t('dataStatus.corrupted'),
+    8: t('dataStatus.modified'),
+  }
   const label = status % 2 === 1 ? t('dataStatus.locked') : (labels[status] ?? String(status))
   return <span className={`data-status-badge ${dataStatusClass(status)}`}>{label}</span>
 }
@@ -474,7 +481,8 @@ function DataViewTab({ job }) {
   if (error)   return <div className="error-msg">{error}</div>
   if (files.length === 0) return <p className="empty-msg">{t('job.noFiles')}</p>
 
-  const canDownload = job && (job.data_status === 2 || job.data_status === 3 || job.data_status === 6 || job.data_status === 7)
+  const isLocked    = job && job.data_status % 2 === 1
+  const canDownload = job && [2, 3, 6, 7, 8, 9].includes(job.data_status)
 
   return (
     <div className="job-data-view">
@@ -491,7 +499,7 @@ function DataViewTab({ job }) {
           <button className="btn btn-sm btn-ghost" onClick={handleDownloadSelected} disabled={downloading}>
             {downloading ? t('common.downloading') : `${t('common.downloadZip')} (${selected.size})`}
           </button>
-          <button className="btn btn-sm btn-danger" onClick={handleDeleteSelected} disabled={deleting}>
+          <button className="btn btn-sm btn-danger" onClick={handleDeleteSelected} disabled={deleting || isLocked}>
             {deleting ? t('common.deleting') : `${t('common.deleteSelected')} (${selected.size})`}
           </button>
         </div>
@@ -549,7 +557,7 @@ function DataViewTab({ job }) {
 // ── ページ本体 ────────────────────────────────────────────
 function JobPage({ job: initialJob, navigate, backPage, backParams }) {
   const { t } = useTranslation()
-  const hasData = initialJob && (initialJob.data_status === 2 || initialJob.data_status === 3 || initialJob.data_status === 6 || initialJob.data_status === 7)
+  const hasData = initialJob && [2, 3, 6, 7, 8, 9].includes(initialJob.data_status)
   const [tab, setTab]       = useState(hasData ? 'render' : 'detail')
   const [job, setJob]       = useState(initialJob)
 

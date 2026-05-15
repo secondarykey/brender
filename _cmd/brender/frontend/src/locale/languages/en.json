@@ -61,7 +61,8 @@
     "locked": "Locked",
     "available": "Available",
     "deleted": "Deleted",
-    "corrupted": "Corrupted"
+    "corrupted": "Corrupted",
+    "modified": "Modified"
   },
   "sort": {
     "label": "Sort",

@@ -61,7 +61,8 @@
     "locked": "ロック",
     "available": "あり",
     "deleted": "データ削除",
-    "corrupted": "データ破損"
+    "corrupted": "データ破損",
+    "modified": "データ操作済"
   },
   "sort": {
     "label": "並び順",
