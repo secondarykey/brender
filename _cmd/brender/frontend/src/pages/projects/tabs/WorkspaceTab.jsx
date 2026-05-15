@@ -148,28 +148,36 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
     <div className="workspace-tab-root">
       {error && <div className="error-msg">{error}</div>}
 
-      {groups.length > 0 && (
-        <div className="file-view-toggle">
-          <button
-            className={`file-view-btn${viewMode === 'list' ? ' active' : ''}`}
-            onClick={() => { setViewMode('list'); localStorage.setItem('viewMode:files', 'list') }}
-            title={t('workspace.listView')}
-          >☰</button>
-          <button
-            className={`file-view-btn${viewMode === 'card' ? ' active' : ''}`}
-            onClick={() => { setViewMode('card'); localStorage.setItem('viewMode:files', 'card') }}
-            title={t('workspace.cardView')}
-          >⊞</button>
-          <SortSelect value={sort} onChange={handleSortChange} />
-          <button
-            className={`btn btn-sm${thumbnailMode ? ' btn-outline-active' : ' btn-outline'}`}
-            style={{ marginLeft: 'auto' }}
-            onClick={() => { setThumbnailMode(v => !v); setThumbMsg('') }}
-          >
-            {t('file.setAsProjectThumbnail')}
+      <div className="file-view-toggle">
+        {groups.length > 0 && (
+          <>
+            <button
+              className={`file-view-btn${viewMode === 'list' ? ' active' : ''}`}
+              onClick={() => { setViewMode('list'); localStorage.setItem('viewMode:files', 'list') }}
+              title={t('workspace.listView')}
+            >☰</button>
+            <button
+              className={`file-view-btn${viewMode === 'card' ? ' active' : ''}`}
+              onClick={() => { setViewMode('card'); localStorage.setItem('viewMode:files', 'card') }}
+              title={t('workspace.cardView')}
+            >⊞</button>
+            <SortSelect value={sort} onChange={handleSortChange} />
+          </>
+        )}
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+          {groups.length > 0 && (
+            <button
+              className={`btn btn-sm${thumbnailMode ? ' btn-outline-active' : ' btn-outline'}`}
+              onClick={() => { setThumbnailMode(v => !v); setThumbMsg('') }}
+            >
+              {t('file.setAsProjectThumbnail')}
+            </button>
+          )}
+          <button className="btn btn-sm btn-outline" onClick={handleAddFilesFromDir}>
+            {t('workspace.addFilesFromDir')}
           </button>
         </div>
-      )}
+      </div>
 
       {thumbnailMode && (
         <div className="thumbnail-mode-hint">{t('file.selectThumbnailHint')}</div>
@@ -239,7 +247,6 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
 
       <div className="list-spacer" />
       <div className="list-fab">
-        <button className="btn btn-outline btn-sm" style={{ pointerEvents: 'all' }} onClick={handleAddFilesFromDir}>{t('workspace.addFilesFromDir')}</button>
         <button className="btn btn-green" onClick={handleAddFile}>{t('workspace.addFile')}</button>
       </div>
     </div>
