@@ -366,13 +366,13 @@ function RenderResultTab({ job }) {
             className={`btn btn-sm ${loop ? '' : 'btn-ghost'} image-viewer-loop-btn`}
             onClick={toggleLoop} disabled={images.length <= 1} title={t('common.loop')}
           >⟳ {t('common.loop')}</button>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {moviePath && (
             <button className="btn btn-sm btn-primary" onClick={handlePlayMovie}>
               {t('viewer.playMovie')}
             </button>
           )}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button className="btn btn-sm btn-green" onClick={handleCreateMovie} disabled={creatingMovie || images.length === 0}>
             {creatingMovie ? t('viewer.movieCreating') : t('viewer.createMovie')}
           </button>
