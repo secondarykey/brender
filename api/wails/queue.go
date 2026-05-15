@@ -106,6 +106,10 @@ func (s *Queue) ZipJobSelectedFiles(id string, filePaths []string, savePath stri
 	return api.ZipJobSelectedFiles(id, filePaths, savePath)
 }
 
+func (s *Queue) DeleteJobFiles(id string, filePaths []string) error {
+	return api.DeleteJobFiles(id, filePaths)
+}
+
 func (s *Queue) OpenMovieWindow(videoPath string) error {
 	title := filepath.Base(videoPath)
 	winName := fmt.Sprintf("movie-%d", time.Now().UnixNano())

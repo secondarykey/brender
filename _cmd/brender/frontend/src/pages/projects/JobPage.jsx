@@ -391,6 +391,7 @@ function DataViewTab({ job }) {
   const [selected, setSelected]         = useState(new Set())
   const [downloading, setDownloading]   = useState(false)
   const [dlError, setDlError]           = useState('')
+  const [deleting, setDeleting]         = useState(false)
 
   useEffect(() => {
     if (!job) return
@@ -454,6 +455,21 @@ function DataViewTab({ job }) {
     }
   }
 
+  const handleDeleteSelected = async () => {
+    if (!window.confirm(t('common.confirmDeleteFiles'))) return
+    setDeleting(true); setDlError('')
+    try {
+      await QueueApi.deleteJobFiles({ id: job.id, filePaths: [...selected] })
+      setSelected(new Set())
+      const list = await QueueApi.listJobFiles({ id: job.id })
+      setFiles(list || [])
+    } catch (err) {
+      setDlError(String(err))
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   if (loading) return <p className="setting-desc">{t('common.loading')}</p>
   if (error)   return <div className="error-msg">{error}</div>
   if (files.length === 0) return <p className="empty-msg">{t('job.noFiles')}</p>
@@ -464,19 +480,22 @@ function DataViewTab({ job }) {
     <div className="job-data-view">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
         <p className="setting-desc job-data-path" style={{ margin: 0 }}>{job.output_dir}</p>
-        <div style={{ display: 'flex', gap: 8 }}>
-          {canDownload && someSelected && (
-            <button className="btn btn-sm btn-ghost" onClick={handleDownloadSelected} disabled={downloading}>
-              {downloading ? t('common.downloading') : `${t('common.downloadZip')} (${selected.size})`}
-            </button>
-          )}
-          {canDownload && (
-            <button className="btn btn-sm btn-ghost" onClick={handleDownloadAll} disabled={downloading}>
-              {downloading ? t('common.downloading') : t('common.downloadZip')}
-            </button>
-          )}
-        </div>
+        {canDownload && (
+          <button className="btn btn-sm btn-ghost" onClick={handleDownloadAll} disabled={downloading}>
+            {downloading ? t('common.downloading') : t('common.downloadZip')}
+          </button>
+        )}
       </div>
+      {someSelected && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+          <button className="btn btn-sm btn-ghost" onClick={handleDownloadSelected} disabled={downloading}>
+            {downloading ? t('common.downloading') : `${t('common.downloadZip')} (${selected.size})`}
+          </button>
+          <button className="btn btn-sm btn-danger" onClick={handleDeleteSelected} disabled={deleting}>
+            {deleting ? t('common.deleting') : `${t('common.deleteSelected')} (${selected.size})`}
+          </button>
+        </div>
+      )}
       {dlError && <div className="error-msg" style={{ marginBottom: 8 }}>{dlError}</div>}
       <table className="queue-table">
         <thead>

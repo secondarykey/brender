@@ -143,4 +143,11 @@ export const QueueApi = {
   zipJobSelectedFiles: ({ id, filePaths, savePath }) =>
     isWails() ? svc().then(s => s.ZipJobSelectedFiles(id, filePaths, savePath))
               : serverCall('queue', 'zip_job_selected_files', { id, file_paths: filePaths, save_path: savePath }),
+
+  /** 選択ファイルを削除
+   * @param {{ id: string, filePaths: string[] }} args
+   */
+  deleteJobFiles: ({ id, filePaths }) =>
+    isWails() ? svc().then(s => s.DeleteJobFiles(id, filePaths))
+              : serverCall('queue', 'delete_job_files', { id, file_paths: filePaths }),
 }

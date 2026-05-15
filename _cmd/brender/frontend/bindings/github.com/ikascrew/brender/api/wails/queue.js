@@ -38,6 +38,15 @@ export function DeleteJobData(id) {
 }
 
 /**
+ * @param {string} id
+ * @param {string[]} filePaths
+ * @returns {$CancellablePromise<void>}
+ */
+export function DeleteJobFiles(id, filePaths) {
+    return $Call.ByID(2677202332, id, filePaths);
+}
+
+/**
  * @param {string} projectID
  * @param {string} workspaceID
  * @returns {$CancellablePromise<model$0.Queue | null>}
