@@ -193,6 +193,8 @@ function SettingsTab({ detail, focusName, workDir, workDirs, onUpdated, onDelete
   const [error, setError]       = useState('')
   const [confirm, setConfirm]   = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [dirMsg, setDirMsg]     = useState('')
+  const [dirError, setDirError] = useState('')
   const nameRef = useRef(null)
   const hasFocused = useRef(false)
 
@@ -275,6 +277,34 @@ function SettingsTab({ detail, focusName, workDir, workDirs, onUpdated, onDelete
           workDirs={workDirs || []}
           onMigrated={onUpdated}
         />
+
+        <div style={{ marginTop: 16 }}>
+          <button
+            className="btn btn-sm btn-outline"
+            onClick={async () => {
+              setDirError('')
+              setDirMsg('')
+              try {
+                const dir = await Dialogs.OpenFile({ CanChooseDirectories: true, CanChooseFiles: false })
+                if (!dir) return
+                const result = await ProjectApi.addFilesFromDir({ projectID: detail.project.id, dir })
+                onUpdated()
+                if (result.errors?.length) {
+                  setDirError(result.errors.join('\n'))
+                } else {
+                  setDirMsg(t('workspace.addFilesFromDirResult', { added: result.added, skipped: result.skipped }))
+                  setTimeout(() => setDirMsg(''), 4000)
+                }
+              } catch (err) {
+                setDirError(String(err))
+              }
+            }}
+          >
+            {t('workspace.addFilesFromDir')}
+          </button>
+          {dirMsg && <div className="success-msg" style={{ marginTop: 6 }}>{dirMsg}</div>}
+          {dirError && <div className="error-msg" style={{ marginTop: 6 }}>{dirError}</div>}
+        </div>
 
         {confirm && (
           <div className="dialog-overlay" onClick={() => setConfirm(false)}>

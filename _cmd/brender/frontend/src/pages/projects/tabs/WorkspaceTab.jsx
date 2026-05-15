@@ -66,7 +66,6 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
   const [groups, setGroups]   = useState([])
   const [error, setError]     = useState('')
   const [fileError, setFileError] = useState('')
-  const [fileMsg, setFileMsg] = useState('')
   const [openingFileID, setOpeningFileID] = useState(null)
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('viewMode:files') || 'card')
   const [thumbnailMode, setThumbnailMode] = useState(false)
@@ -113,25 +112,6 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
     }
   }
 
-  const handleAddFilesFromDir = async () => {
-    setFileError('')
-    setFileMsg('')
-    try {
-      const dir = await Dialogs.OpenFile({ CanChooseDirectories: true, CanChooseFiles: false })
-      if (!dir) return
-      const result = await ProjectApi.addFilesFromDir({ projectID, dir })
-      load()
-      if (result.errors?.length) {
-        setFileError(result.errors.join('\n'))
-      } else {
-        setFileMsg(t('workspace.addFilesFromDirResult', { added: result.added, skipped: result.skipped }))
-        setTimeout(() => setFileMsg(''), 4000)
-      }
-    } catch (err) {
-      setFileError(String(err))
-    }
-  }
-
   const handleSetThumbnail = async (fileID) => {
     setThumbMsg('')
     try {
@@ -164,19 +144,16 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
             <SortSelect value={sort} onChange={handleSortChange} />
           </>
         )}
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-          {groups.length > 0 && (
+        {groups.length > 0 && (
+          <div style={{ marginLeft: 'auto' }}>
             <button
               className={`btn btn-sm${thumbnailMode ? ' btn-outline-active' : ' btn-outline'}`}
               onClick={() => { setThumbnailMode(v => !v); setThumbMsg('') }}
             >
               {t('file.setAsProjectThumbnail')}
             </button>
-          )}
-          <button className="btn btn-sm btn-outline" onClick={handleAddFilesFromDir}>
-            {t('workspace.addFilesFromDir')}
-          </button>
-        </div>
+          </div>
+        )}
       </div>
 
       {thumbnailMode && (
@@ -243,7 +220,6 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
       )}
 
       {fileError && <div className="error-msg" style={{ marginTop: 8 }}>{fileError}</div>}
-      {fileMsg && <div className="success-msg" style={{ marginTop: 8 }}>{fileMsg}</div>}
 
       <div className="list-spacer" />
       <div className="list-fab">
