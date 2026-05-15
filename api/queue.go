@@ -1,6 +1,7 @@
 package api
 
 import (
+	"archive/zip"
 	"context"
 	"encoding/base64"
 	"io"
@@ -910,4 +911,83 @@ func GetJobLog(id string) (string, error) {
 		return "", xerrors.Errorf("GetJobLog ReadFile: %w", err)
 	}
 	return string(data), nil
+}
+
+// ZipJobData は job の OutputDir 全体を ZIP 圧縮して savePath に書き出す。
+func ZipJobData(id string, savePath string) error {
+	j, err := model.GetJob(id)
+	if err != nil {
+		return xerrors.Errorf("ZipJobData GetJob: %w", err)
+	}
+	if j.DataStatus == 0 || j.DataStatus == 1 || j.DataStatus == 4 || j.DataStatus == 5 {
+		return xerrors.New("data is not available")
+	}
+	if j.OutputDir == "" {
+		return xerrors.New("output directory is not set")
+	}
+	if _, err := os.Stat(j.OutputDir); os.IsNotExist(err) {
+		return xerrors.New("output directory does not exist")
+	}
+	f, err := os.Create(savePath)
+	if err != nil {
+		return xerrors.Errorf("ZipJobData Create: %w", err)
+	}
+	defer f.Close()
+	zw := zip.NewWriter(f)
+	defer zw.Close()
+	return filepath.Walk(j.OutputDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil || info.IsDir() {
+			return err
+		}
+		rel, err := filepath.Rel(j.OutputDir, path)
+		if err != nil {
+			return err
+		}
+		w, err := zw.Create(filepath.ToSlash(rel))
+		if err != nil {
+			return err
+		}
+		src, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer src.Close()
+		_, err = io.Copy(w, src)
+		return err
+	})
+}
+
+// ZipJobSelectedFiles は job の OutputDir 内の指定ファイルのみを ZIP 圧縮して savePath に書き出す。
+func ZipJobSelectedFiles(id string, filePaths []string, savePath string) error {
+	j, err := model.GetJob(id)
+	if err != nil {
+		return xerrors.Errorf("ZipJobSelectedFiles GetJob: %w", err)
+	}
+	f, err := os.Create(savePath)
+	if err != nil {
+		return xerrors.Errorf("ZipJobSelectedFiles Create: %w", err)
+	}
+	defer f.Close()
+	zw := zip.NewWriter(f)
+	defer zw.Close()
+	for _, path := range filePaths {
+		rel, relErr := filepath.Rel(j.OutputDir, path)
+		if relErr != nil {
+			rel = filepath.Base(path)
+		}
+		w, err := zw.Create(filepath.ToSlash(rel))
+		if err != nil {
+			return err
+		}
+		src, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		_, copyErr := io.Copy(w, src)
+		src.Close()
+		if copyErr != nil {
+			return copyErr
+		}
+	}
+	return nil
 }

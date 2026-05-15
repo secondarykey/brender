@@ -221,6 +221,25 @@ export function UnlockJob(id) {
     return $Call.ByID(1952234080, id);
 }
 
+/**
+ * @param {string} id
+ * @param {string} savePath
+ * @returns {$CancellablePromise<void>}
+ */
+export function ZipJobData(id, savePath) {
+    return $Call.ByID(1421143595, id, savePath);
+}
+
+/**
+ * @param {string} id
+ * @param {string[]} filePaths
+ * @param {string} savePath
+ * @returns {$CancellablePromise<void>}
+ */
+export function ZipJobSelectedFiles(id, filePaths, savePath) {
+    return $Call.ByID(2285115237, id, filePaths, savePath);
+}
+
 // Private type creation functions
 const $$createType0 = model$0.Queue.createFrom;
 const $$createType1 = $Create.Nullable($$createType0);

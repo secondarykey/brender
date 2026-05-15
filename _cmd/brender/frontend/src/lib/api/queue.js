@@ -129,4 +129,18 @@ export const QueueApi = {
   openMovieWindow: ({ path }) =>
     isWails() ? svc().then(s => s.OpenMovieWindow(path))
               : serverCall('queue', 'open_movie_window', { path }),
+
+  /** 出力ディレクトリ全体を ZIP 圧縮して指定パスに保存
+   * @param {{ id: string, savePath: string }} args
+   */
+  zipJobData: ({ id, savePath }) =>
+    isWails() ? svc().then(s => s.ZipJobData(id, savePath))
+              : serverCall('queue', 'zip_job_data', { id, save_path: savePath }),
+
+  /** 選択ファイルを ZIP 圧縮して指定パスに保存
+   * @param {{ id: string, filePaths: string[], savePath: string }} args
+   */
+  zipJobSelectedFiles: ({ id, filePaths, savePath }) =>
+    isWails() ? svc().then(s => s.ZipJobSelectedFiles(id, filePaths, savePath))
+              : serverCall('queue', 'zip_job_selected_files', { id, file_paths: filePaths, save_path: savePath }),
 }
