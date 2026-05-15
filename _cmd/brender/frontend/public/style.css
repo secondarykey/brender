@@ -759,6 +759,10 @@ body {
 .file-tile-grid--sm .project-files {
   display: none;
 }
+.file-tile-grid--sm .file-tile-info,
+.file-tile-grid--sm .ws-tile-info {
+  display: none;
+}
 
 /* ワークスペースタイル */
 .ws-tile { cursor: pointer; }

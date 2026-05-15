@@ -29,6 +29,7 @@ function WorkspaceCard({ projectID, fileID, ws, navigate, projectName, fileName,
   return (
     <div
       className={`file-tile ws-tile${thumbnailMode ? ' file-tile-thumb-select' : ''}`}
+      title={ws.name}
       onClick={handleClick}
     >
       <div className="file-tile-thumb">

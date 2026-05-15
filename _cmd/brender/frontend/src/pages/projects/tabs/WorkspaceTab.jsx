@@ -46,6 +46,7 @@ function FileCard({ projectID, g, navigate, projectName, thumbnailMode, onSetThu
   return (
     <div
       className={`file-tile${thumbnailMode ? ' file-tile-thumb-select' : ''}`}
+      title={fileName}
       onClick={handleClick}
     >
       <div className="file-tile-thumb">

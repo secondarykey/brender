@@ -26,7 +26,7 @@ function ProjectTile({ d, workDirMap, navigate }) {
   }, [d.project.id])
 
   return (
-    <div className="file-tile" onClick={() => navigate('project', { id: d.project.id })}>
+    <div className="file-tile" title={d.project.name} onClick={() => navigate('project', { id: d.project.id })}>
       <div className="file-tile-thumb">
         {thumb
           ? <img src={thumb} alt={d.project.name} />
