@@ -33,9 +33,9 @@ export const BlenderApi = {
   /** レンダーエンジン一覧を取得
    * @param {{ installID: number }} args
    */
-  getEngines: ({ installID, fileID = '' }) =>
-    isWails() ? svc().then(s => s.GetEngines(installID, fileID))
-              : serverCall('blender', 'get_engines', { install_id: installID, file_id: fileID }),
+  getEngines: ({ installID }) =>
+    isWails() ? svc().then(s => s.GetEngines(installID))
+              : serverCall('blender', 'get_engines', { install_id: installID }),
 
   /** シーン一覧を取得
    * @param {{ installID: number, fileID: number }} args

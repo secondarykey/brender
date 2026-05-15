@@ -35,8 +35,8 @@ func (s *Blender) OpenFile(installID uint, filePath string) error {
 	return api.OpenBlenderFile(installID, filePath)
 }
 
-func (s *Blender) GetEngines(installID uint, fileID string) ([]string, error) {
-	return api.GetEngines(installID, fileID)
+func (s *Blender) GetEngines(installID uint) ([]string, error) {
+	return api.GetEngines(installID)
 }
 
 func (s *Blender) GetScenes(installID uint, fileID string) ([]string, error) {

@@ -160,28 +160,10 @@ func GetCameras(installID uint, fileID string) ([]*exec.CameraTool, error) {
 	return exec.RunCameras(blenderPath, file.Path)
 }
 
-func GetEngines(installID uint, fileID string) ([]string, error) {
+func GetEngines(installID uint) ([]string, error) {
 	blenderPath, err := resolveBlenderPath(installID, 0)
 	if err != nil {
 		return nil, err
 	}
-	var filePath string
-	if fileID != "" {
-		f, err := model.GetProjectFile(fileID)
-		if err != nil {
-			return nil, xerrors.Errorf("GetProjectFile: %w", err)
-		}
-		if f != nil {
-			filePath = f.Path
-		}
-	}
-	if filePath == "" {
-		// ファイル未指定時は DB の先頭ファイルを使用
-		f, err := model.FirstFileAny()
-		if err != nil || f == nil {
-			return []string{}, nil
-		}
-		filePath = f.Path
-	}
-	return exec.RunEnginesFromTool(blenderPath, filePath)
+	return exec.RunEnginesFromTool(blenderPath)
 }

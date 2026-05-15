@@ -56,12 +56,7 @@ func main() {
 
 	flag.Parse()
 	if engines {
-		args := flag.Args()
-		if len(args) == 0 {
-			fmt.Fprintln(os.Stderr, "--engines requires a .blend file argument")
-			os.Exit(1)
-		}
-		err := printEngineList(args[0])
+		err := printEngineList()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "printEngineList() error:\n%+v\n", err)
 			os.Exit(1)
@@ -103,10 +98,10 @@ func main() {
 	fmt.Println("Success!")
 }
 
-func printEngineList(filePath string) error {
+func printEngineList() error {
 
 	p := createCommandPATH()
-	names, err := exec.RunEnginesFromTool(p, filePath)
+	names, err := exec.RunEnginesFromTool(p)
 	if err != nil {
 		return xerrors.Errorf("RunEnginesFromTool() error: %w", err)
 	}

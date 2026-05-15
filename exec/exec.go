@@ -106,13 +106,12 @@ func RunCameras(cmd, filePath string) ([]*CameraTool, error) {
 }
 
 // RunEnginesFromTool は Python ツール経由でレンダリングエンジン一覧を取得する。
-// filePath には解析対象の .blend ファイルパスを渡す。
-func RunEnginesFromTool(cmd, filePath string) ([]string, error) {
+// .blend ファイルなしで実行可能（エンジン一覧取得にはファイル不要）。
+func RunEnginesFromTool(cmd string) ([]string, error) {
 	b, err := NewBlender(cmd)
 	if err != nil {
 		return nil, xerrors.Errorf("NewBlender: %w", err)
 	}
-	b.File = filePath
 	if err := b.RunTool(); err != nil {
 		return nil, xerrors.Errorf("RunTool: %w", err)
 	}
