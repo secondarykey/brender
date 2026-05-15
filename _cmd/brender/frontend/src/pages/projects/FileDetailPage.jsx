@@ -503,6 +503,7 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
   const scenes         = toolData?.Scenes?.map(s => s.Name) || []
   const allCameras     = toolData?.Cameras || []
 
+  const blenderDefault = !blenderFixed && blenderInstallID === 0 ? (blenders[0]?.name || null) : null
   const sceneDefault  = !scene ? (activeScene?.Name || null) : null
   const cameraDefault = !camera && sceneInfo?.Camera ? sceneInfo.Camera : null
   const engineDefault = !engine ? (sceneInfo?.Engine || null) : null
@@ -521,7 +522,10 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
               />
             </div>
             <div className="form-field" style={{ flex: 1 }}>
-              <label className="form-label">{t('file.defaultBlender')}</label>
+              <label className="form-label">
+                {t('file.defaultBlender')}
+                <DefaultTag value={blenderDefault} t={t} />
+              </label>
               {blenders.length === 0 ? (
                 <p className="setting-desc">{t('settings.noBlenderRegistered')}</p>
               ) : (

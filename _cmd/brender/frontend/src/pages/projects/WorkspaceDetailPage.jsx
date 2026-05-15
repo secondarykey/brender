@@ -295,7 +295,7 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
   if (!form) return null
 
   const blenderDefault = !fileBlenderFixed && form?.blenderInstallID === 0
-    ? (blenders.find(b => b.id === fileBlenderID) || blenders[0] || null)
+    ? (blenders.find(b => b.id === fileBlenderID)?.name || blenders[0]?.name || null)
     : null
   const sceneDefault  = !fileSceneFixed && !form.scene ? (fileScene || activeScene?.Name || null) : null
   const cameraDefault = !fileCameraFixed && !form.camera && sceneInfo?.Camera ? sceneInfo.Camera : null
