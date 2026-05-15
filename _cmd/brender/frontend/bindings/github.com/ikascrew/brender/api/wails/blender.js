@@ -31,11 +31,11 @@ export function GetCPUCount() {
 /**
  * @param {number} installID
  * @param {string} fileID
- * @returns {$CancellablePromise<exec$0.CameraTool[]>}
+ * @returns {$CancellablePromise<(exec$0.CameraTool | null)[]>}
  */
 export function GetCameras(installID, fileID) {
     return $Call.ByID(909400876, installID, fileID).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType1($result);
+        return $$createType2($result);
     }));
 }
 
@@ -45,7 +45,7 @@ export function GetCameras(installID, fileID) {
  */
 export function GetEngines(installID) {
     return $Call.ByID(2944509355, installID).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType2($result);
+        return $$createType3($result);
     }));
 }
 
@@ -56,7 +56,7 @@ export function GetEngines(installID) {
  */
 export function GetScenes(installID, fileID) {
     return $Call.ByID(1000048201, installID, fileID).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType2($result);
+        return $$createType3($result);
     }));
 }
 
@@ -67,7 +67,7 @@ export function GetScenes(installID, fileID) {
  */
 export function GetToolData(installID, fileID) {
     return $Call.ByID(282637138, installID, fileID).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType4($result);
+        return $$createType5($result);
     }));
 }
 
@@ -76,7 +76,7 @@ export function GetToolData(installID, fileID) {
  */
 export function List() {
     return $Call.ByID(2583559636).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType7($result);
+        return $$createType8($result);
     }));
 }
 
@@ -95,7 +95,7 @@ export function OpenFile(installID, filePath) {
  */
 export function Register(path) {
     return $Call.ByID(3243524325, path).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType6($result);
+        return $$createType7($result);
     }));
 }
 
@@ -109,10 +109,11 @@ export function Reorder(ids) {
 
 // Private type creation functions
 const $$createType0 = exec$0.CameraTool.createFrom;
-const $$createType1 = $Create.Array($$createType0);
-const $$createType2 = $Create.Array($Create.Any);
-const $$createType3 = exec$0.Tool.createFrom;
-const $$createType4 = $Create.Nullable($$createType3);
-const $$createType5 = model$0.BlenderInstall.createFrom;
-const $$createType6 = $Create.Nullable($$createType5);
-const $$createType7 = $Create.Array($$createType6);
+const $$createType1 = $Create.Nullable($$createType0);
+const $$createType2 = $Create.Array($$createType1);
+const $$createType3 = $Create.Array($Create.Any);
+const $$createType4 = exec$0.Tool.createFrom;
+const $$createType5 = $Create.Nullable($$createType4);
+const $$createType6 = model$0.BlenderInstall.createFrom;
+const $$createType7 = $Create.Nullable($$createType6);
+const $$createType8 = $Create.Array($$createType7);
