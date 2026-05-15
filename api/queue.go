@@ -153,6 +153,11 @@ func PreviewRender(projectID, workspaceID string) (*RenderPreview, error) {
 		camera = st.Camera
 	}
 
+	samples := w.Samples
+	if samples == 0 {
+		samples = st.SamplesForEngine(engine)
+	}
+
 	return &RenderPreview{
 		ProjectName:   p.Name,
 		WorkspaceName: w.Name,
@@ -165,7 +170,7 @@ func PreviewRender(projectID, workspaceID string) (*RenderPreview, error) {
 		EndFrame:      endFrame,
 		FrameStep:     w.FrameStep,
 		Thread:        w.Thread,
-		Samples:       w.Samples,
+		Samples:       samples,
 		Camera:        camera,
 	}, nil
 }

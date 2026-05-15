@@ -8,6 +8,16 @@ import Pagination from '../../components/Pagination'
 
 const isFrameDefault = (start, end) => start === 0 && end === -1
 
+// EngineFlags 相当: エンジン名の揺れを吸収して Samples マップから値を返す
+function samplesForEngine(engine, samplesMap) {
+  if (!engine || !samplesMap) return 0
+  const e = engine.toUpperCase()
+  if (e.includes('CYCLES'))    return samplesMap.CYCLES    ?? 0
+  if (e.includes('EEVEE'))     return samplesMap.EEVEE     ?? 0
+  if (e.includes('WORKBENCH')) return samplesMap.WORKBENCH ?? 0
+  return 0
+}
+
 const HISTORY_PAGE_SIZE = 5
 
 const IMAGE_FILTER = [{ DisplayName: 'Image', Pattern: '*.jpg;*.jpeg;*.png;*.bmp;*.webp' }]
@@ -298,6 +308,12 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
   const sceneDefault  = !fileSceneFixed && !form.scene ? (fileScene || activeScene?.Name || null) : null
   const cameraDefault = !fileCameraFixed && !form.camera && sceneInfo?.Camera ? sceneInfo.Camera : null
   const engineDefault = !form.engine ? (fileEngine || sceneInfo?.Engine || null) : null
+  const effectiveEngine = fileEngineFixed && fileEngine
+    ? fileEngine
+    : (form.engine || fileEngine || sceneInfo?.Engine || '')
+  const samplesDefault = form.samples === 0
+    ? samplesForEngine(effectiveEngine, sceneInfo?.Samples)
+    : 0
 
   const lockedBlenderName = fileBlenderFixed
     ? (fileBlenderID === 0
@@ -365,6 +381,9 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
         <div className="form-field" style={{ flex: '0 0 80px', minWidth: 0 }}>
           <label className="form-label">{t('workspace.samples')}</label>
           <input className="form-input" style={{ textAlign: 'right', width: '100%' }} type="number" min={0} value={form.samples} onChange={e => set('samples', Number(e.target.value))} />
+          {samplesDefault > 0 && (
+            <span className="form-hint" style={{ whiteSpace: 'nowrap' }}>{t('workspace.samplesDefaultValue', { count: samplesDefault })}</span>
+          )}
         </div>
         <div className="form-field" style={{ flex: '0 0 80px', minWidth: 0 }}>
           <label className="form-label">{t('workspace.threads')}</label>

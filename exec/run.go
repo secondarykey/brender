@@ -8,6 +8,13 @@ import (
 	"golang.org/x/xerrors"
 )
 
+// エンジン種別の内部キー。EngineFlags() の判定ロジックと対応。
+const (
+	EngineKeyCycles    = "CYCLES"
+	EngineKeyEevee     = "EEVEE"
+	EngineKeyWorkbench = "WORKBENCH"
+)
+
 // EngineFlags はエンジン名から IsXxx フラグを返す。
 func EngineFlags(engine string) (isCycles, isEevee, isWorkbench bool) {
 	e := strings.ToUpper(engine)

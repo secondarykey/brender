@@ -245,6 +245,21 @@ func NewSceneTool() *SceneTool {
 	return &s
 }
 
+// SamplesForEngine は engine 文字列（Blender の揺れを含む）から
+// 対応するエンジンのデフォルトサンプル数を返す。不明なエンジンは 0。
+func (s *SceneTool) SamplesForEngine(engine string) int {
+	isCycles, isEevee, isWorkbench := EngineFlags(engine)
+	switch {
+	case isCycles:
+		return s.Samples[EngineKeyCycles]
+	case isEevee:
+		return s.Samples[EngineKeyEevee]
+	case isWorkbench:
+		return s.Samples[EngineKeyWorkbench]
+	}
+	return 0
+}
+
 func parseScene(line string) *SceneTool {
 
 	s := NewSceneTool()
@@ -288,9 +303,9 @@ func setSamples(scenes []*SceneTool, vals []string) {
 		v, _ := strconv.Atoi(s)
 		return v
 	}
-	scene.Samples["WORKBENCH"] = toInt(vals[0])
-	scene.Samples["EEVEE"] = toInt(vals[1])
-	scene.Samples["CYCLES"] = toInt(vals[2])
+	scene.Samples[EngineKeyWorkbench] = toInt(vals[0])
+	scene.Samples[EngineKeyEevee] = toInt(vals[1])
+	scene.Samples[EngineKeyCycles] = toInt(vals[2])
 }
 
 func parseEngine(line string) string {
