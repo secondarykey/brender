@@ -47,19 +47,26 @@ func getToolPythonFile() (string, error) {
 const (
 	ToolFlag    = "=BRENDER PYTHON TOOL %s"
 	Flags       = "===="
+	EngineFlag  = "ENGINES"
 	SceneFlag   = "SCENES"
 	CameraFlag  = "CAMERA"
 	SamplesFlag = "SAMPLES"
 	StartFlag   = "START"
+	StartStart  = "START"
 	EndFlag     = "END"
 	FileName    = "brender-tool_*.py"
 )
 
+var (
+	ToolStart = fmt.Sprintf(ToolFlag, StartFlag)
+	ToolEnd   = fmt.Sprintf(ToolFlag, EndFlag)
+)
+
 var parsers = []*parser{
-	newParser(EngineFlag, parseEngine),
-	newParser(SceneFlag, parseScene),
-	newParser(CameraFlag, parseCamera),
-	newParser(SamplesFlag, parseSamples),
+	newParser(EngineFlag, func(line string) interface{} { return parseEngine(line) }),
+	newParser(SceneFlag, func(line string) interface{} { return parseScene(line) }),
+	newParser(CameraFlag, func(line string) interface{} { return parseCamera(line) }),
+	newParser(SamplesFlag, func(line string) interface{} { return parseSamples(line) }),
 }
 
 /**
@@ -141,7 +148,6 @@ func parseTool(stdout string) Tool {
 	scanner := bufio.NewScanner(strings.NewReader(stdout))
 
 	version := false
-	tool := false
 	ended := false
 
 	rtn := Tool{}
@@ -152,13 +158,10 @@ func parseTool(stdout string) Tool {
 
 		line := scanner.Text()
 
-		//slog.Info(line)
-		//ツール用に出力しているセパレータを判定
 		switch {
 		case strings.Index(line, ToolStart) == 0:
-			tool = true
+			// tool section start
 		case strings.Index(line, ToolEnd) == 0:
-			tool = false
 			ended = true
 		case p != nil:
 
@@ -181,17 +184,8 @@ func parseTool(stdout string) Tool {
 						rtn.Cameras = append(rtn.Cameras, v)
 					}
 				} else if p.Name == SamplesFlag {
-					//エンジンのサンプル数
 					if v, ok := obj.([]string); ok {
-						//シーン名の位置にサンプル数を設定
-						for _, scene := range scenes {
-							if v[0] == scene.Name {
-								scene.Samples["WORKBENTCH"] = samples[0]
-								scene.Samples["EEVEE"] = samples[1]
-								scene.Samples["CYCLES"] = samples[2]
-								break
-							}
-						}
+						setSamples(rtn.Scenes, v)
 					}
 				}
 			}
@@ -283,8 +277,24 @@ func parseScene(line string) *SceneTool {
 	return s
 }
 
-func setSamples(scenes []*SceneTool, line string) {
+func setSamples(scenes []*SceneTool, vals []string) {
+	// Python の printSamples() はシーンと同順で1行ずつ出力する
+	// vals: [workbench_aa, eevee_samples, cycles_samples]
+	if len(vals) < 3 || len(scenes) == 0 {
+		return
+	}
+	scene := scenes[len(scenes)-1] // 直近に追加されたシーンに対応
+	toInt := func(s string) int {
+		v, _ := strconv.Atoi(s)
+		return v
+	}
+	scene.Samples["WORKBENCH"] = toInt(vals[0])
+	scene.Samples["EEVEE"] = toInt(vals[1])
+	scene.Samples["CYCLES"] = toInt(vals[2])
+}
 
+func parseEngine(line string) string {
+	return strings.TrimSpace(line)
 }
 
 func parseSamples(line string) []string {

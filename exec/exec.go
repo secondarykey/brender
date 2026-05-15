@@ -105,6 +105,22 @@ func RunCameras(cmd, filePath string) ([]*CameraTool, error) {
 	return b.Tool.Cameras, nil
 }
 
+// RunEnginesFromTool は Python ツール経由でレンダリングエンジン一覧を取得する。
+// filePath には解析対象の .blend ファイルパスを渡す。
+func RunEnginesFromTool(cmd, filePath string) ([]string, error) {
+	b, err := NewBlender(cmd)
+	if err != nil {
+		return nil, xerrors.Errorf("NewBlender: %w", err)
+	}
+	b.File = filePath
+	if err := b.RunTool(); err != nil {
+		return nil, xerrors.Errorf("RunTool: %w", err)
+	}
+	return b.Tool.Engines, nil
+}
+
+// Deprecated: RunEngines は Blender 4.5 以降で -E help -b がクラッシュするため使用不可。
+// RunEnginesFromTool を使うこと。
 func RunEngines(cmd string) ([]string, error) {
 
 	b, err := NewBlender(cmd)

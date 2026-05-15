@@ -131,6 +131,19 @@ func FirstFile(projectID string) (*ProjectFile, error) {
 	return &f, nil
 }
 
+// FirstFileAny は DB 内の任意の ProjectFile を1件返す（エンジン取得のフォールバック用）
+func FirstFileAny() (*ProjectFile, error) {
+	var f ProjectFile
+	res := db.First(&f)
+	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if res.Error != nil {
+		return nil, xerrors.Errorf("FirstFileAny: %w", res.Error)
+	}
+	return &f, nil
+}
+
 func UpdateProject(id, name string) (*ProjectDetail, error) {
 	var p Project
 	if res := db.First(&p, "id = ?", id); res.Error != nil {

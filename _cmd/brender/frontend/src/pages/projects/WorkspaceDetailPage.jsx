@@ -183,7 +183,7 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
     const fid = detail?.workspace?.project_file_id
 
     setEnginesLoading(true)
-    BlenderApi.getEngines({ installID: form.blenderInstallID })
+    BlenderApi.getEngines({ installID: form.blenderInstallID, fileID: fid || '' })
       .then(list => setEngines(list || []))
       .catch(() => setEngines([]))
       .finally(() => setEnginesLoading(false))

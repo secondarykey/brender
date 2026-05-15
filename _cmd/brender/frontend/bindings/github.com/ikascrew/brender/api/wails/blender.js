@@ -41,10 +41,11 @@ export function GetCameras(installID, fileID) {
 
 /**
  * @param {number} installID
+ * @param {string} fileID
  * @returns {$CancellablePromise<string[]>}
  */
-export function GetEngines(installID) {
-    return $Call.ByID(2944509355, installID).then(/** @type {($result: any) => any} */(($result) => {
+export function GetEngines(installID, fileID) {
+    return $Call.ByID(2944509355, installID, fileID).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType2($result);
     }));
 }

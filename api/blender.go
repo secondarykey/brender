@@ -132,7 +132,7 @@ func GetToolData(installID uint, fileID string) (*exec.Tool, error) {
 	return exec.RunToolData(blenderPath, file.Path)
 }
 
-func GetCameras(installID uint, fileID string) ([]exec.CameraTool, error) {
+func GetCameras(installID uint, fileID string) ([]*exec.CameraTool, error) {
 	var blenderPath string
 	if installID != 0 {
 		install, err := model.GetBlenderInstall(installID)
@@ -160,23 +160,28 @@ func GetCameras(installID uint, fileID string) ([]exec.CameraTool, error) {
 	return exec.RunCameras(blenderPath, file.Path)
 }
 
-func GetEngines(installID uint) ([]string, error) {
-	var blenderPath string
-	if installID != 0 {
-		install, err := model.GetBlenderInstall(installID)
-		if err != nil {
-			return nil, xerrors.Errorf("GetBlenderInstall error: %w", err)
-		}
-		if install == nil {
-			return nil, xerrors.Errorf("blender install not found: %d", installID)
-		}
-		blenderPath = install.Path
-	} else {
-		b, err := model.FirstBlender()
-		if err != nil || b == nil {
-			return nil, xerrors.New("Blenderが登録されていません")
-		}
-		blenderPath = b.Path
+func GetEngines(installID uint, fileID string) ([]string, error) {
+	blenderPath, err := resolveBlenderPath(installID, 0)
+	if err != nil {
+		return nil, err
 	}
-	return exec.RunEngines(blenderPath)
+	var filePath string
+	if fileID != "" {
+		f, err := model.GetProjectFile(fileID)
+		if err != nil {
+			return nil, xerrors.Errorf("GetProjectFile: %w", err)
+		}
+		if f != nil {
+			filePath = f.Path
+		}
+	}
+	if filePath == "" {
+		// ファイル未指定時は DB の先頭ファイルを使用
+		f, err := model.FirstFileAny()
+		if err != nil || f == nil {
+			return []string{}, nil
+		}
+		filePath = f.Path
+	}
+	return exec.RunEnginesFromTool(blenderPath, filePath)
 }
