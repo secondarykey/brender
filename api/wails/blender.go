@@ -43,7 +43,7 @@ func (s *Blender) GetScenes(installID uint, fileID string) ([]string, error) {
 	return api.GetScenes(installID, fileID)
 }
 
-func (s *Blender) GetCameras(installID uint, fileID string) ([]exec.CameraTool, error) {
+func (s *Blender) GetCameras(installID uint, fileID string) ([]*exec.CameraTool, error) {
 	return api.GetCameras(installID, fileID)
 }
 
