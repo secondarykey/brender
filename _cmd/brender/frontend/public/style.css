@@ -1056,12 +1056,16 @@ body {
 .btn-green:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* 一覧右下の固定ボタン */
+.list-spacer { flex: 1; min-height: 0; }
+
 .list-fab {
+  position: sticky;
+  bottom: 16px;
   display: flex;
   justify-content: flex-end;
+  gap: 8px;
   pointer-events: none;
-  margin-top: auto;
-  padding-top: 16px;
+  padding-top: 8px;
 }
 .list-fab > * { pointer-events: all; }
 
