@@ -546,7 +546,7 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
               </button>
             </div>
             <div className="form-field" style={{ flex: 1 }}>
-              <label className="form-label">
+              <label className="form-label" style={{ whiteSpace: 'nowrap' }}>
                 {t('file.defaultBlender')}
                 <DefaultTag value={blenderDefault} t={t} />
               </label>
