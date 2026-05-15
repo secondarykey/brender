@@ -10,7 +10,7 @@ import (
 
 func TestEngines(t *testing.T) {
 
-	engines, err := exec.RunEngines("D:\\Blender Foundation\\Blender 3.6\\blender.exe")
+	engines, err := exec.RunEngines("D:\\Blender Foundation\\Blender 4.5\\blender.exe")
 	if err != nil {
 		t.Fatalf("exec.RunEngines() error not nil: %v", err)
 	}
