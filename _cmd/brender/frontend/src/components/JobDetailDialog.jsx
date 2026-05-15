@@ -162,7 +162,8 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
             <Row label={t('dialog.engine')}  value={job.engine  || t('common.default')} />
             <Row label={t('dialog.frames')}  value={`${job.start_frame} – ${job.end_frame}${job.frame_step > 1 ? ` (${t('dialog.step')}${job.frame_step})` : ''}`} />
             <Row label={t('dialog.threads')}  value={job.thread === 0 ? t('common.automatic') : String(job.thread)} />
-            <Row label={t('dialog.samples')}  value={job.samples === 0 ? t('common.default') : String(job.samples)} />
+            <Row label={t('dialog.samples')}     value={job.samples === 0 ? t('common.default') : String(job.samples)} />
+            <Row label={t('dialog.resolution')}  value={(job.resolution_x > 0 && job.resolution_y > 0) ? `${job.resolution_x}×${job.resolution_y}` : t('common.default')} />
           </div>
 
           <div className="job-detail-section">

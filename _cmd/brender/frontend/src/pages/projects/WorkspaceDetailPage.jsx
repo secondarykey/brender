@@ -121,6 +121,7 @@ function HistoryTab({ projectID, workspaceID, navigate, projectName, fileName, f
                 {j.scene   && <span>{j.scene}</span>}
                 {j.camera  && <span>{j.camera}</span>}
                 {j.samples > 0 && <span>{j.samples}smp</span>}
+                {(j.resolution_x > 0 && j.resolution_y > 0) && <span>{j.resolution_x}×{j.resolution_y}</span>}
                 {j.enqueued_at && (
                   <span>{new Date(j.enqueued_at).toLocaleString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
                 )}
