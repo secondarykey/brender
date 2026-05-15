@@ -372,7 +372,7 @@ function RenderResultTab({ job }) {
           )}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button className="btn btn-sm btn-green" onClick={handleCreateMovie} disabled={creatingMovie || images.length === 0}>
+          <button className="btn btn-sm btn-green" onClick={handleCreateMovie} disabled={creatingMovie || images.length <= 1}>
             {creatingMovie ? t('viewer.movieCreating') : t('viewer.createMovie')}
           </button>
         </div>
