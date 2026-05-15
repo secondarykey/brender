@@ -400,6 +400,7 @@ function DataViewTab({ job }) {
   const [selected, setSelected]         = useState(new Set())
   const [downloading, setDownloading]   = useState(false)
   const [deleting, setDeleting]         = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   useEffect(() => {
     if (!job) return
@@ -472,15 +473,16 @@ function DataViewTab({ job }) {
   }
 
   const handleDeleteSelected = async () => {
-    if (!window.confirm(t('common.confirmDeleteFiles'))) return
     setDeleting(true); showError('')
     try {
       await QueueApi.deleteJobFiles({ id: job.id, filePaths: [...selected] })
       setSelected(new Set())
       const list = await QueueApi.listJobFiles({ id: job.id })
       setFiles(list || [])
+      setConfirmDelete(false)
     } catch (err) {
       showError(String(err))
+      setConfirmDelete(false)
     } finally {
       setDeleting(false)
     }
@@ -506,7 +508,7 @@ function DataViewTab({ job }) {
           <button className="btn btn-sm btn-ghost" onClick={() => selectByExts(VIDEO_EXTS)}>{t('job.filterVideo')}</button>
           <button className="btn btn-sm btn-ghost" onClick={() => selectByExts(LOG_EXTS)}>{t('job.filterLog')}</button>
         </div>
-        <button className="btn btn-sm btn-danger" onClick={handleDeleteSelected} disabled={deleting || isLocked || !someSelected}>
+        <button className="btn btn-sm btn-danger" onClick={() => setConfirmDelete(true)} disabled={deleting || isLocked || !someSelected}>
           {deleting ? t('common.deleting') : `${t('common.deleteSelected')}${someSelected ? ` (${selected.size})` : ''}`}
         </button>
       </div>
@@ -555,6 +557,17 @@ function DataViewTab({ job }) {
           })}
         </tbody>
       </table>
+
+      <ConfirmDialog
+        open={confirmDelete}
+        title={t('common.deleteSelected')}
+        onCancel={() => setConfirmDelete(false)}
+        onConfirm={handleDeleteSelected}
+        confirmLabel={deleting ? t('common.deleting') : t('common.delete')}
+        busy={deleting}
+      >
+        <p>{t('common.confirmDeleteFiles')}</p>
+      </ConfirmDialog>
     </div>
   )
 }
