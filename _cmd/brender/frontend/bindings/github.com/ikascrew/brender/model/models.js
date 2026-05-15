@@ -327,6 +327,22 @@ export class Job {
              */
             this["samples"] = 0;
         }
+        if (!("resolution_x" in $$source)) {
+            /**
+             * 0 = Blender デフォルト
+             * @member
+             * @type {number}
+             */
+            this["resolution_x"] = 0;
+        }
+        if (!("resolution_y" in $$source)) {
+            /**
+             * 0 = Blender デフォルト
+             * @member
+             * @type {number}
+             */
+            this["resolution_y"] = 0;
+        }
         if (!("status" in $$source)) {
             /**
              * completed / error / cancelled
@@ -912,6 +928,22 @@ export class Workspace {
              * @type {number}
              */
             this["samples"] = 0;
+        }
+        if (!("resolution_x" in $$source)) {
+            /**
+             * 0 = Blender デフォルト
+             * @member
+             * @type {number}
+             */
+            this["resolution_x"] = 0;
+        }
+        if (!("resolution_y" in $$source)) {
+            /**
+             * 0 = Blender デフォルト
+             * @member
+             * @type {number}
+             */
+            this["resolution_y"] = 0;
         }
         if (!("is_system" in $$source)) {
             /**

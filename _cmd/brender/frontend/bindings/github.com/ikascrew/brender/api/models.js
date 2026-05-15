@@ -387,6 +387,20 @@ export class RenderPreview {
              */
             this["samples"] = 0;
         }
+        if (!("resolution_x" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["resolution_x"] = 0;
+        }
+        if (!("resolution_y" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["resolution_y"] = 0;
+        }
         if (!("camera" in $$source)) {
             /**
              * @member
@@ -466,6 +480,20 @@ export class TestRenderParams {
              * @type {number}
              */
             this["thread"] = 0;
+        }
+        if (!("resolution_x" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["resolution_x"] = 0;
+        }
+        if (!("resolution_y" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["resolution_y"] = 0;
         }
 
         Object.assign(this, $$source);
