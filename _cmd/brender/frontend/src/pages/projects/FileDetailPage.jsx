@@ -393,6 +393,12 @@ function ThumbnailPanel({ projectID, fileID }) {
   )
 }
 
+// ── デフォルト値ヒント ────────────────────────────────────
+function DefaultTag({ value, t }) {
+  if (!value) return null
+  return <span className="form-default-tag">（{t('workspace.defaultValueLabel', { value })}）</span>
+}
+
 // ── 設定タブ ─────────────────────────────────────────────
 function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
   const { t } = useTranslation()
@@ -485,8 +491,15 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
     }
   }
 
-  const scenes     = toolData?.Scenes?.map(s => s.Name) || []
-  const allCameras = toolData?.Cameras || []
+  const activeScene    = toolData?.Scenes?.find(s => s.Active) || null
+  const effectiveScene = scene || activeScene?.Name || ''
+  const sceneInfo      = toolData?.Scenes?.find(s => s.Name === effectiveScene) || activeScene
+  const scenes         = toolData?.Scenes?.map(s => s.Name) || []
+  const allCameras     = toolData?.Cameras || []
+
+  const sceneDefault  = !scene ? (activeScene?.Name || null) : null
+  const cameraDefault = !camera && sceneInfo?.Camera ? sceneInfo.Camera : null
+  const engineDefault = !engineFixed ? (!engine ? (sceneInfo?.Engine || null) : null) : null
 
   return (
     <div className="ws-detail-split">
@@ -500,7 +513,6 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
                 value={name}
                 onChange={e => setName(e.target.value)}
               />
-              <span className="form-hint">{t('file.displayNameHint')}</span>
             </div>
             <div className="form-field" style={{ flex: 1 }}>
               <label className="form-label">{t('file.defaultBlender')}</label>
@@ -518,13 +530,50 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
                   ))}
                 </select>
               )}
-              <span className="form-hint">{t('file.blenderHint')}</span>
+            </div>
+          </div>
+
+          <div className="form-row" style={{ alignItems: 'flex-start', marginTop: 12 }}>
+            <div className="form-field" style={{ flex: 2 }}>
+              <label className="form-label">
+                {t('file.defaultEngine')}
+                <DefaultTag value={engineDefault} t={t} />
+              </label>
+              {engines.length > 0 ? (
+                <select
+                  className="form-select"
+                  value={engine}
+                  onChange={e => setEngine(e.target.value)}
+                  disabled={enginesLoading}
+                >
+                  <option value="">{t('common.notSet')}</option>
+                  {engines.map(eng => <option key={eng} value={eng}>{eng}</option>)}
+                </select>
+              ) : (
+                <input
+                  className="form-input"
+                  value={engine}
+                  onChange={e => setEngine(e.target.value)}
+                  placeholder={t('workspace.enginePlaceholder')}
+                />
+              )}
+              <label className="form-checkbox-label" style={{ marginTop: 6 }}>
+                <input
+                  type="checkbox"
+                  checked={engineFixed}
+                  onChange={e => setEngineFixed(e.target.checked)}
+                />
+                <span style={{ marginLeft: 6 }}>{t('file.engineFixed')}</span>
+              </label>
             </div>
           </div>
 
           <div className="form-row" style={{ alignItems: 'flex-start' }}>
             <div className="form-field" style={{ flex: 1 }}>
-              <label className="form-label">{t('file.defaultScene')}</label>
+              <label className="form-label">
+                {t('file.defaultScene')}
+                <DefaultTag value={sceneDefault} t={t} />
+              </label>
               {scenes.length > 0 ? (
                 <select
                   className="form-select"
@@ -543,10 +592,12 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
                   placeholder={t('common.notSetPlaceholder')}
                 />
               )}
-              <span className="form-hint">{t('file.sceneHint')}</span>
             </div>
             <div className="form-field" style={{ flex: 1 }}>
-              <label className="form-label">{t('file.defaultCamera')}</label>
+              <label className="form-label">
+                {t('file.defaultCamera')}
+                <DefaultTag value={cameraDefault} t={t} />
+              </label>
               <select
                 className="form-select"
                 value={camera}
@@ -559,41 +610,6 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
                   .map(c => <option key={c.Name} value={c.Name}>{c.Name}</option>)
                 }
               </select>
-              <span className="form-hint">{t('file.cameraHint')}</span>
-            </div>
-          </div>
-
-          <div className="form-row" style={{ alignItems: 'flex-start', marginTop: 4 }}>
-            <div className="form-field" style={{ flex: 2 }}>
-              <label className="form-label">{t('file.defaultEngine')}</label>
-              {engines.length > 0 ? (
-                <select
-                  className="form-select"
-                  value={engine}
-                  onChange={e => setEngine(e.target.value)}
-                  disabled={enginesLoading}
-                >
-                  <option value="">{t('common.notSet')}</option>
-                  {engines.map(eng => <option key={eng} value={eng}>{eng}</option>)}
-                </select>
-              ) : (
-                <input
-                  className="form-input"
-                  value={engine}
-                  onChange={e => setEngine(e.target.value)}
-                  placeholder={t('common.notSetPlaceholder')}
-                />
-              )}
-              <span className="form-hint">{t('file.engineHint')}</span>
-              <label className="form-checkbox-label" style={{ marginTop: 6 }}>
-                <input
-                  type="checkbox"
-                  checked={engineFixed}
-                  onChange={e => setEngineFixed(e.target.checked)}
-                />
-                <span style={{ marginLeft: 6 }}>{t('file.engineFixed')}</span>
-                <span className="form-hint" style={{ marginLeft: 8 }}>{t('file.engineFixedHint')}</span>
-              </label>
             </div>
           </div>
 
