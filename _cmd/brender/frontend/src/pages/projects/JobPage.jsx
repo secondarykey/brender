@@ -327,13 +327,8 @@ function RenderResultTab({ job }) {
   return (
     <div className="job-page-viewer">
       <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-        {moviePath && (
-          <button className="btn btn-sm btn-run" onClick={handlePlayMovie}>
-            {t('viewer.playMovie')}
-          </button>
-        )}
-        <button className="btn btn-sm btn-secondary" onClick={handleCreateMovie} disabled={creatingMovie || images.length === 0}>
-          {creatingMovie ? t('viewer.movieCreating') : t('viewer.createMovie')}
+        <button className="btn btn-sm btn-secondary" onClick={handleSetThumbnail} disabled={settingThumb || images.length === 0}>
+          {settingThumb ? '...' : t('viewer.setAsThumbnail')}
         </button>
       </div>
 
@@ -373,8 +368,13 @@ function RenderResultTab({ job }) {
           >⟳ {t('common.loop')}</button>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button className="btn btn-sm btn-secondary" onClick={handleSetThumbnail} disabled={settingThumb || images.length === 0}>
-            {settingThumb ? '...' : t('viewer.setAsThumbnail')}
+          {moviePath && (
+            <button className="btn btn-sm btn-run" onClick={handlePlayMovie}>
+              {t('viewer.playMovie')}
+            </button>
+          )}
+          <button className="btn btn-sm btn-secondary" onClick={handleCreateMovie} disabled={creatingMovie || images.length === 0}>
+            {creatingMovie ? t('viewer.movieCreating') : t('viewer.createMovie')}
           </button>
         </div>
       </div>
