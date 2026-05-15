@@ -22,6 +22,16 @@ def setSamples():
 {{ end }}
     print("== samples set [{{.Samples.Value}}]")
 
+def setResolution():
+
+    print("== Call setResolution()")
+    scene = bpy.data.scenes["{{ .Resolution.Scene }}"]
+
+    scene.render.resolution_x = {{.Resolution.X}}
+    scene.render.resolution_y = {{.Resolution.Y}}
+
+    print("== set Resolution {{.Resolution.X}} {{.Resolution.Y}}")
+
 if __name__ == "__main__":
 
     print("= Brender Run Script start")
@@ -31,6 +41,9 @@ if __name__ == "__main__":
 {{ end }}
 {{ if .Samples.Set }}
     setSamples()
+{{ end }}
+{{ if .Resolution.Set }}
+    setResolution()
 {{ end }}
 
     print("= Brender Run Script end")
