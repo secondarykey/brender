@@ -302,7 +302,7 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
   const engineDefault = !form.engine ? (fileEngine || sceneInfo?.Engine || null) : null
 
   const lockedBlenderName = fileBlenderFixed
-    ? (blenders.find(b => b.id === fileBlenderID)?.name || String(fileBlenderID))
+    ? (fileBlenderID === 0 ? t('common.notSet') : (blenders.find(b => b.id === fileBlenderID)?.name || String(fileBlenderID)))
     : null
   const frameDefault  = !specifyFrames && sceneInfo
     ? t('workspace.frameRangeDefault', { start: sceneInfo.Start, end: sceneInfo.End })
@@ -344,12 +344,12 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
           <label className="form-label">
             {t('workspace.renderEngine')}
             {fileEngineFixed
-              ? <span className="form-lock-tag">🔒 {fileEngine}</span>
+              ? <span className="form-lock-tag">🔒 {fileEngine || t('common.notSet')}</span>
               : <DefaultTag value={engineDefault} t={t} />
             }
           </label>
           {fileEngineFixed ? (
-            <input className="form-input" value={fileEngine} disabled style={{ opacity: 0.5 }} />
+            <input className="form-input" value={fileEngine || t('common.notSet')} disabled style={{ opacity: 0.5 }} />
           ) : engines.length > 0 ? (
             <select className="form-select" value={form.engine} onChange={e => set('engine', e.target.value)} disabled={enginesLoading}>
               <option value="">{t('common.notSet')}</option>
@@ -378,12 +378,12 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
           <label className="form-label">
             {t('workspace.scene')}
             {fileSceneFixed
-              ? <span className="form-lock-tag">🔒 {fileScene}</span>
+              ? <span className="form-lock-tag">🔒 {fileScene || t('common.notSet')}</span>
               : <DefaultTag value={sceneDefault} t={t} />
             }
           </label>
           {fileSceneFixed ? (
-            <input className="form-input" value={fileScene} disabled style={{ opacity: 0.5 }} />
+            <input className="form-input" value={fileScene || t('common.notSet')} disabled style={{ opacity: 0.5 }} />
           ) : scenes.length > 0 ? (
             <select className="form-select" value={form.scene} onChange={e => { set('scene', e.target.value); set('camera', '') }} disabled={toolLoading}>
               <option value="">{t('common.notSet')}</option>
@@ -397,12 +397,12 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
           <label className="form-label">
             {t('workspace.camera')}
             {fileCameraFixed
-              ? <span className="form-lock-tag">🔒 {fileCamera}</span>
+              ? <span className="form-lock-tag">🔒 {fileCamera || t('common.notSet')}</span>
               : <DefaultTag value={cameraDefault} t={t} />
             }
           </label>
           {fileCameraFixed ? (
-            <input className="form-input" value={fileCamera} disabled style={{ opacity: 0.5 }} />
+            <input className="form-input" value={fileCamera || t('common.notSet')} disabled style={{ opacity: 0.5 }} />
           ) : (
             <select
               className="form-select"
