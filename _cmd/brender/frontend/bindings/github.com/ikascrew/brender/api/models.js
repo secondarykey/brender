@@ -10,6 +10,52 @@ import { Create as $Create } from "@wailsio/runtime";
 // @ts-ignore: Unused imports
 import * as time$0 from "../../../../time/models.js";
 
+export class AddDirResult {
+    /**
+     * Creates a new AddDirResult instance.
+     * @param {Partial<AddDirResult>} [$$source = {}] - The source object to create the AddDirResult.
+     */
+    constructor($$source = {}) {
+        if (!("added" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["added"] = 0;
+        }
+        if (!("skipped" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["skipped"] = 0;
+        }
+        if (/** @type {any} */(false)) {
+            /**
+             * @member
+             * @type {string[] | undefined}
+             */
+            this["errors"] = undefined;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new AddDirResult instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {AddDirResult}
+     */
+    static createFrom($$source = {}) {
+        const $$createField2_0 = $$createType0;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("errors" in $$parsedSource) {
+            $$parsedSource["errors"] = $$createField2_0($$parsedSource["errors"]);
+        }
+        return new AddDirResult(/** @type {Partial<AddDirResult>} */($$parsedSource));
+    }
+}
+
 /**
  * JobFileInfo はジョブ出力ディレクトリのファイル情報。
  */
@@ -435,3 +481,6 @@ export class TestRenderParams {
         return new TestRenderParams(/** @type {Partial<TestRenderParams>} */($$parsedSource));
     }
 }
+
+// Private type creation functions
+const $$createType0 = $Create.Array($Create.Any);

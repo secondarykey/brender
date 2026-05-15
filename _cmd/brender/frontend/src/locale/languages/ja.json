@@ -136,6 +136,8 @@
     "empty": "ワークスペースがありません",
     "createNew": "+ ワークスペースを作成",
     "addFile": "+ .blend ファイルを追加",
+    "addFilesFromDir": "+ ディレクトリから追加",
+    "addFilesFromDirResult": "{{added}}件追加、{{skipped}}件スキップ",
     "listView": "リスト表示",
     "cardView": "カード表示",
     "noFilesRegistered": ".blend ファイルが登録されていません",

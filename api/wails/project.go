@@ -44,6 +44,10 @@ func (s *Project) AddFile(projectID, path string) (*model.ProjectFile, error) {
 	return api.AddProjectFile(projectID, path)
 }
 
+func (s *Project) AddFilesFromDir(projectID, dir string) (*api.AddDirResult, error) {
+	return api.AddFilesFromDirectory(projectID, dir)
+}
+
 func (s *Project) RemoveFile(fileID string) error {
 	return api.RemoveProjectFile(fileID)
 }

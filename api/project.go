@@ -1,8 +1,11 @@
 package api
 
 import (
+	"io/fs"
 	"log/slog"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/ikascrew/brender/model"
@@ -54,6 +57,50 @@ func AddProjectFile(projectID, path string) (*model.ProjectFile, error) {
 		}
 	}()
 	return f, nil
+}
+
+type AddDirResult struct {
+	Added   int      `json:"added"`
+	Skipped int      `json:"skipped"`
+	Errors  []string `json:"errors,omitempty"`
+}
+
+func AddFilesFromDirectory(projectID, dir string) (*AddDirResult, error) {
+	if _, err := os.Stat(dir); err != nil {
+		return nil, xerrors.Errorf("directory not found: %s", dir)
+	}
+	detail, err := model.GetProject(projectID)
+	if err != nil {
+		return nil, err
+	}
+	existingPaths := make(map[string]struct{})
+	for _, f := range detail.Files {
+		existingPaths[filepath.Clean(f.Path)] = struct{}{}
+	}
+	result := &AddDirResult{}
+	_ = filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return nil
+		}
+		if d.IsDir() {
+			return nil
+		}
+		if !strings.HasSuffix(strings.ToLower(d.Name()), ".blend") {
+			return nil
+		}
+		absPath := filepath.Clean(path)
+		if _, ok := existingPaths[absPath]; ok {
+			result.Skipped++
+			return nil
+		}
+		if _, err := AddProjectFile(projectID, absPath); err != nil {
+			result.Errors = append(result.Errors, filepath.Base(path)+": "+err.Error())
+			return nil
+		}
+		result.Added++
+		return nil
+	})
+	return result, nil
 }
 
 func RemoveProjectFile(fileID string) error {
