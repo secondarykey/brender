@@ -130,7 +130,8 @@ function HistoryTab({ projectID, workspaceID, navigate, projectName, fileName, f
 // ── デフォルト値ヒント ────────────────────────────────────
 function DefaultTag({ value, t }) {
   if (!value) return null
-  return <span className="form-default-tag">（{t('workspace.defaultValueLabel', { value })}）</span>
+  const label = `（${t('workspace.defaultValueLabel', { value })}）`
+  return <span className="form-default-tag" title={label}>{label}</span>
 }
 
 // ── 設定タブ ──────────────────────────────────────────────
