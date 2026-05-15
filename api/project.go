@@ -98,6 +98,7 @@ func AddFilesFromDirectory(projectID, dir string) (*AddDirResult, error) {
 			return nil
 		}
 		result.Added++
+		time.Sleep(500 * time.Millisecond)
 		return nil
 	})
 	return result, nil
