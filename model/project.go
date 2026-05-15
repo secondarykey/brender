@@ -61,9 +61,9 @@ func newFileID() string {
 	return id.String()
 }
 
-func ListProjects(sort string) ([]*ProjectDetail, error) {
+func ListProjects(sort, dir string) ([]*ProjectDetail, error) {
 	var projects []*Project
-	if res := db.Order(resolveOrder(sort)).Find(&projects); res.Error != nil {
+	if res := db.Order(resolveOrder(sort, dir)).Find(&projects); res.Error != nil {
 		return nil, xerrors.Errorf("ListProjects: %w", res.Error)
 	}
 

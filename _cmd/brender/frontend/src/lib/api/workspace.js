@@ -4,11 +4,11 @@ const svc = () => import('../../../bindings/github.com/ikascrew/brender/api/wail
 
 export const WorkspaceApi = {
   /** プロジェクト内のワークスペース一覧をファイルごとに取得
-   * @param {{ projectID: string, sort?: string }} args  sort: "display_order" | "created_at" | "processed_at"
+   * @param {{ projectID: string, sort?: string, dir?: string }} args
    */
-  listByProject: ({ projectID, sort = '' }) =>
-    isWails() ? svc().then(s => s.ListByProject(projectID, sort))
-              : serverCall('workspace', 'list_by_project', { project_id: projectID, sort }),
+  listByProject: ({ projectID, sort = '', dir = '' }) =>
+    isWails() ? svc().then(s => s.ListByProject(projectID, sort, dir))
+              : serverCall('workspace', 'list_by_project', { project_id: projectID, sort, dir }),
 
   /** ワークスペースを取得
    * @param {{ projectID: string, workspaceID: string }} args

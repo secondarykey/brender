@@ -78,9 +78,10 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
   const [thumbnailMode, setThumbnailMode] = useState(false)
   const [thumbMsg, setThumbMsg]     = useState('')
   const [sort, setSort]             = useState(() => localStorage.getItem('sort:workspaces') || 'display_order')
+  const [dir, setDir]               = useState(() => localStorage.getItem('dir:workspaces') || '')
 
-  const load = (s) => {
-    WorkspaceApi.listByProject({ projectID, sort: s })
+  const load = (s, d) => {
+    WorkspaceApi.listByProject({ projectID, sort: s, dir: d })
       .then(list => {
         const group = (list || []).find(g => g.file.id === fileID)
         setWorkspaces(group ? group.workspaces : [])
@@ -91,10 +92,16 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
   const handleSortChange = (s) => {
     setSort(s)
     localStorage.setItem('sort:workspaces', s)
-    load(s)
+    load(s, dir)
   }
 
-  useEffect(() => { load(sort) }, [projectID, fileID])
+  const handleDirChange = (d) => {
+    setDir(d)
+    localStorage.setItem('dir:workspaces', d)
+    load(sort, d)
+  }
+
+  useEffect(() => { load(sort, dir) }, [projectID, fileID])
 
   const handleCreateWorkspace = async () => {
     if (creating) return
@@ -167,7 +174,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
             onClick={() => { setViewMode('card-sm'); localStorage.setItem('viewMode:workspaces', 'card-sm') }}
             title={t('workspace.smallCardView')}
           >▦</button>
-          <SortSelect value={sort} onChange={handleSortChange} />
+          <SortSelect value={sort} onChange={handleSortChange} dir={dir} onDirChange={handleDirChange} />
           <button
             className={`btn btn-sm${thumbnailMode ? ' btn-outline-active' : ' btn-outline'}`}
             style={{ marginLeft: 'auto' }}

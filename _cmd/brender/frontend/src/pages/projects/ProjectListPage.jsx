@@ -61,9 +61,10 @@ function ProjectListPage({ navigate }) {
   const [creating, setCreating] = useState(false)
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('viewMode:projects') || 'list')
   const [sort, setSort]         = useState(() => localStorage.getItem('sort:projects') || 'display_order')
+  const [dir, setDir]           = useState(() => localStorage.getItem('dir:projects') || '')
 
-  const load = (s) => {
-    ProjectApi.list({ sort: s })
+  const load = (s, d) => {
+    ProjectApi.list({ sort: s, dir: d })
       .then(list => setProjects(list || []))
       .catch(err => setError(String(err)))
   }
@@ -71,11 +72,17 @@ function ProjectListPage({ navigate }) {
   const handleSortChange = (s) => {
     setSort(s)
     localStorage.setItem('sort:projects', s)
-    load(s)
+    load(s, dir)
+  }
+
+  const handleDirChange = (d) => {
+    setDir(d)
+    localStorage.setItem('dir:projects', d)
+    load(sort, d)
   }
 
   useEffect(() => {
-    load(sort)
+    load(sort, dir)
     WorkDirApi.list()
       .then(list => {
         const dirs = list || []
@@ -146,7 +153,7 @@ function ProjectListPage({ navigate }) {
                 onClick={() => { setViewMode('card-sm'); localStorage.setItem('viewMode:projects', 'card-sm') }}
                 title={t('workspace.smallCardView')}
               >▦</button>
-              <SortSelect value={sort} onChange={handleSortChange} />
+              <SortSelect value={sort} onChange={handleSortChange} dir={dir} onDirChange={handleDirChange} />
             </div>
           )}
 

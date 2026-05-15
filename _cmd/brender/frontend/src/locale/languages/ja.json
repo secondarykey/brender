@@ -62,7 +62,10 @@
     "label": "並び順",
     "display_order": "表示順",
     "created_at": "作成日",
-    "processed_at": "処理日"
+    "processed_at": "処理日",
+    "name": "名称",
+    "asc": "昇順",
+    "desc": "降順"
   },
   "tabs": {
     "fileList": "ファイル一覧",

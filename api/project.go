@@ -12,8 +12,8 @@ import (
 	"golang.org/x/xerrors"
 )
 
-func ListProjects(sort string) ([]*model.ProjectDetail, error) {
-	return model.ListProjects(sort)
+func ListProjects(sort, dir string) ([]*model.ProjectDetail, error) {
+	return model.ListProjects(sort, dir)
 }
 
 func GetProject(id string) (*model.ProjectDetail, error) {

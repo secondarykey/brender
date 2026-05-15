@@ -62,7 +62,10 @@
     "label": "Sort",
     "display_order": "Display Order",
     "created_at": "Created",
-    "processed_at": "Processed"
+    "processed_at": "Processed",
+    "name": "Name",
+    "asc": "Ascending",
+    "desc": "Descending"
   },
   "tabs": {
     "fileList": "Files",

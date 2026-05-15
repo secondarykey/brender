@@ -51,8 +51,8 @@ func newWorkspaceID() (string, error) {
 	return id.String(), nil
 }
 
-func ListWorkspacesByProject(projectID string, sort string) ([]*WorkspacesByFile, error) {
-	order := resolveOrder(sort)
+func ListWorkspacesByProject(projectID string, sort, dir string) ([]*WorkspacesByFile, error) {
+	order := resolveOrder(sort, dir)
 	var files []*ProjectFile
 	if res := db.Where("project_id = ?", projectID).Order(order).Find(&files); res.Error != nil {
 		return nil, xerrors.Errorf("ListWorkspacesByProject files: %w", res.Error)

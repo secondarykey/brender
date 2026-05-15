@@ -11,18 +11,34 @@ import (
 
 var db *gorm.DB
 
-// resolveOrder はソートキーを ORDER BY 句に変換する。
-// "display_order" → display_order asc, created_at desc
-// "processed_at"  → processed_at desc, created_at desc
-// その他(デフォルト) → created_at desc
-func resolveOrder(sort string) string {
+// resolveOrder はソートキーと方向を ORDER BY 句に変換する。
+// dir が "asc" / "desc" 以外の場合はキーごとのデフォルト方向を使う。
+func resolveOrder(sort, dir string) string {
+	d := dir
+	if d != "asc" && d != "desc" {
+		d = ""
+	}
 	switch sort {
 	case "display_order":
-		return "display_order asc, created_at desc"
+		if d == "" {
+			d = "asc"
+		}
+		return "display_order " + d + ", created_at desc"
 	case "processed_at":
-		return "processed_at desc, created_at desc"
-	default:
-		return "created_at desc"
+		if d == "" {
+			d = "desc"
+		}
+		return "processed_at " + d + ", created_at desc"
+	case "name":
+		if d == "" {
+			d = "asc"
+		}
+		return "name " + d
+	default: // created_at
+		if d == "" {
+			d = "desc"
+		}
+		return "created_at " + d
 	}
 }
 
