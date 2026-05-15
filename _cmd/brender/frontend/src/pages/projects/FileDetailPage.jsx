@@ -8,7 +8,7 @@ import SortSelect from '../../components/SortSelect'
 
 
 // ── ワークスペースカード（サムネイル表示） ──────────────────
-function WorkspaceCard({ projectID, fileID, ws, navigate, projectName, fileName, onRunClick, resolvingWsId, thumbnailMode, onSetThumbnail, workDirLocked }) {
+function WorkspaceCard({ projectID, fileID, ws, navigate, projectName, fileName, onRunClick, resolvingWsId, thumbnailMode, onSetThumbnail, workDirLocked, small }) {
   const { t } = useTranslation()
   const [thumb, setThumb] = useState(null)
 
@@ -39,15 +39,17 @@ function WorkspaceCard({ projectID, fileID, ws, navigate, projectName, fileName,
       </div>
       <div className="ws-tile-info">
         <span className="file-tile-name" title={ws.name}>{ws.name}</span>
-        <div className="ws-item-meta" style={{ marginTop: 4 }}>
-          {ws.engine && <span className="ws-meta-chip">{ws.engine}</span>}
-          {(ws.start === 0 && ws.end === -1)
-            ? <span className="ws-meta-chip">{t('workspace.blendDefault')}</span>
-            : <span className="ws-meta-chip">{ws.start} – {ws.end} f</span>
-          }
-        </div>
+        {!small && (
+          <div className="ws-item-meta" style={{ marginTop: 4 }}>
+            {ws.engine && <span className="ws-meta-chip">{ws.engine}</span>}
+            {(ws.start === 0 && ws.end === -1)
+              ? <span className="ws-meta-chip">{t('workspace.blendDefault')}</span>
+              : <span className="ws-meta-chip">{ws.start} – {ws.end} f</span>
+            }
+          </div>
+        )}
       </div>
-      {!thumbnailMode && (
+      {!thumbnailMode && !small && (
         <div className="ws-tile-actions">
           <button
             className="btn btn-run btn-sm"
@@ -159,6 +161,11 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
             onClick={() => { setViewMode('card'); localStorage.setItem('viewMode:workspaces', 'card') }}
             title={t('workspace.cardView')}
           >⊞</button>
+          <button
+            className={`file-view-btn${viewMode === 'card-sm' ? ' active' : ''}`}
+            onClick={() => { setViewMode('card-sm'); localStorage.setItem('viewMode:workspaces', 'card-sm') }}
+            title={t('workspace.smallCardView')}
+          >⊟</button>
           <SortSelect value={sort} onChange={handleSortChange} />
           <button
             className={`btn btn-sm${thumbnailMode ? ' btn-outline-active' : ' btn-outline'}`}
@@ -217,7 +224,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
             ))}
           </div>
         ) : (
-          <div className="file-tile-grid">
+          <div className={`file-tile-grid${viewMode === 'card-sm' ? ' file-tile-grid--sm' : ''}`}>
             {workspaces.length === 0 && !creating && (
               <p className="ws-empty">{t('workspace.empty')}</p>
             )}
@@ -235,6 +242,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
                 thumbnailMode={thumbnailMode}
                 onSetThumbnail={handleSetThumbnail}
                 workDirLocked={workDirLocked}
+                small={viewMode === 'card-sm'}
               />
             ))}
           </div>

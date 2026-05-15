@@ -141,6 +141,11 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
               onClick={() => { setViewMode('card'); localStorage.setItem('viewMode:files', 'card') }}
               title={t('workspace.cardView')}
             >⊞</button>
+            <button
+              className={`file-view-btn${viewMode === 'card-sm' ? ' active' : ''}`}
+              onClick={() => { setViewMode('card-sm'); localStorage.setItem('viewMode:files', 'card-sm') }}
+              title={t('workspace.smallCardView')}
+            >⊟</button>
             <SortSelect value={sort} onChange={handleSortChange} />
           </>
         )}
@@ -204,7 +209,7 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
           ))}
         </div>
       ) : (
-        <div className="file-tile-grid">
+        <div className={`file-tile-grid${viewMode === 'card-sm' ? ' file-tile-grid--sm' : ''}`}>
           {groups.map(g => (
             <FileCard
               key={g.file.id}
