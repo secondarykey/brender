@@ -146,7 +146,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
   }
 
   return (
-    <div>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100%' }}>
       {workspaces.length > 0 && (
         <div className="file-view-toggle" style={{ marginBottom: 8 }}>
           <button

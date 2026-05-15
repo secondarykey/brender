@@ -106,7 +106,7 @@ function ProjectListPage({ navigate }) {
   }
 
   return (
-    <div className="page">
+    <div className="page" style={{ display: 'flex', flexDirection: 'column' }}>
       {!hasWorkDir && (
         <div className="notice-banner">
           {t('project.rootNotSet')}
