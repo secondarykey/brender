@@ -45,7 +45,9 @@ type Job struct {
 	FrameStep     int        `json:"frame_step"`
 	Thread        int        `json:"thread"`
 	Camera        string     `json:"camera"`
-	Samples       int        `json:"samples"`     // 0 = Blender デフォルト
+	Samples       int        `json:"samples"`      // 0 = Blender デフォルト
+	ResolutionX   int        `json:"resolution_x"` // 0 = Blender デフォルト
+	ResolutionY   int        `json:"resolution_y"` // 0 = Blender デフォルト
 	Status        string     `json:"status"`      // completed / error / cancelled
 	ErrorMsg      string     `json:"error_msg"`
 	DataStatus    int        `json:"data_status"` // 0=なし 1=なしロック 2=あり 3=ありロック 4=削除 5=削除ロック

@@ -54,6 +54,8 @@ type RenderPreview struct {
 	FrameStep     int    `json:"frame_step"`
 	Thread        int    `json:"thread"`
 	Samples       int    `json:"samples"`
+	ResolutionX   int    `json:"resolution_x"`
+	ResolutionY   int    `json:"resolution_y"`
 	Camera        string `json:"camera"`
 }
 
@@ -171,6 +173,8 @@ func PreviewRender(projectID, workspaceID string) (*RenderPreview, error) {
 		FrameStep:     w.FrameStep,
 		Thread:        w.Thread,
 		Samples:       samples,
+		ResolutionX:   w.ResolutionX,
+		ResolutionY:   w.ResolutionY,
 		Camera:        camera,
 	}, nil
 }
@@ -358,6 +362,8 @@ func EnqueueWithPreview(projectID, workspaceID string, preview *RenderPreview) (
 		FrameStep:     preview.FrameStep,
 		Thread:        preview.Thread,
 		Samples:       preview.Samples,
+		ResolutionX:   preview.ResolutionX,
+		ResolutionY:   preview.ResolutionY,
 		Camera:        preview.Camera,
 		EnqueuedAt:    &now,
 	}
@@ -470,6 +476,13 @@ func executeQueue(q *model.Queue, job *model.Job) {
 		run.Samples.Set = true
 		run.Samples.Value = job.Samples
 		run.Samples.IsCycles, run.Samples.IsEevee, run.Samples.IsWorkbench = exec.EngineFlags(job.Engine)
+	}
+
+	if job.ResolutionX > 0 && job.ResolutionY > 0 {
+		run.Resolution.Set = true
+		run.Resolution.Scene = b.Scene
+		run.Resolution.X = job.ResolutionX
+		run.Resolution.Y = job.ResolutionY
 	}
 
 	if job.Camera != "" {

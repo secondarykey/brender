@@ -32,8 +32,9 @@ var (
 */
 
 type Run struct {
-	Camera  *RunCamera
-	Samples *RunSamples
+	Camera     *RunCamera
+	Samples    *RunSamples
+	Resolution *RunResolution
 }
 
 type RunCamera struct {
@@ -51,13 +52,30 @@ type RunSamples struct {
 	IsWorkbench bool
 }
 
+type RunResolution struct {
+	Set   bool   // 設定をする
+	Scene string // 設定のシーン
+	X     int    // 解像度 X
+	Y     int    // 解像度 Y
+}
+
 func NewRunScript() *Run {
 	var run Run
 
 	run.Camera = newRunCamera()
 	run.Samples = newRunSamples()
+	run.Resolution = newRunResolution()
 
 	return &run
+}
+
+func newRunResolution() *RunResolution {
+	var r RunResolution
+	r.Set = false
+	r.Scene = ""
+	r.X = 0
+	r.Y = 0
+	return &r
 }
 
 func newRunCamera() *RunCamera {
