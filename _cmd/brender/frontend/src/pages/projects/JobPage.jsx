@@ -5,6 +5,8 @@ import { QueueApi, WorkspaceApi } from '../../lib/api'
 import { onAppEvent } from '../../lib/appEvents'
 
 const VIDEO_EXTS = new Set(['.mp4', '.mov', '.avi', '.mkv', '.webm', '.m4v'])
+const IMAGE_EXTS = new Set(['.png', '.jpg', '.jpeg', '.exr', '.tiff', '.tif', '.bmp', '.hdr', '.webp', '.tga'])
+const LOG_EXTS   = new Set(['.log'])
 function isVideoFile(name) {
   const ext = name.lastIndexOf('.')
   return ext !== -1 && VIDEO_EXTS.has(name.slice(ext).toLowerCase())
@@ -422,6 +424,14 @@ function DataViewTab({ job }) {
     }
   }
 
+  const selectByExts = (exts) => {
+    const paths = selectableFiles.filter(f => {
+      const dot = f.name.lastIndexOf('.')
+      return dot !== -1 && exts.has(f.name.slice(dot).toLowerCase())
+    }).map(f => f.path)
+    setSelected(prev => new Set([...prev, ...paths]))
+  }
+
   const toggleFile = (path) => {
     setSelected(prev => {
       const next = new Set(prev)
@@ -490,12 +500,19 @@ function DataViewTab({ job }) {
         <p className="setting-desc job-data-path" style={{ margin: 0 }}>{job.output_dir}</p>
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-        <button className="btn btn-sm btn-primary" onClick={handleDownloadSelected} disabled={downloading || !someSelected}>
-          {downloading ? t('common.downloading') : `${t('common.downloadZip')}${someSelected ? ` (${selected.size})` : ''}`}
-        </button>
-        <button className="btn btn-sm btn-danger" onClick={handleDeleteSelected} disabled={deleting || isLocked || !someSelected}>
-          {deleting ? t('common.deleting') : `${t('common.deleteSelected')}${someSelected ? ` (${selected.size})` : ''}`}
-        </button>
+        <div style={{ display: 'flex', gap: 4 }}>
+          <button className="btn btn-sm btn-ghost" onClick={() => selectByExts(IMAGE_EXTS)}>{t('job.filterImage')}</button>
+          <button className="btn btn-sm btn-ghost" onClick={() => selectByExts(VIDEO_EXTS)}>{t('job.filterVideo')}</button>
+          <button className="btn btn-sm btn-ghost" onClick={() => selectByExts(LOG_EXTS)}>{t('job.filterLog')}</button>
+        </div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button className="btn btn-sm btn-primary" onClick={handleDownloadSelected} disabled={downloading || !someSelected}>
+            {downloading ? t('common.downloading') : `${t('common.downloadZip')}${someSelected ? ` (${selected.size})` : ''}`}
+          </button>
+          <button className="btn btn-sm btn-danger" onClick={handleDeleteSelected} disabled={deleting || isLocked || !someSelected}>
+            {deleting ? t('common.deleting') : `${t('common.deleteSelected')}${someSelected ? ` (${selected.size})` : ''}`}
+          </button>
+        </div>
       </div>
       {dlError && <div className="error-msg" style={{ marginBottom: 8 }}>{dlError}</div>}
       <table className="queue-table">

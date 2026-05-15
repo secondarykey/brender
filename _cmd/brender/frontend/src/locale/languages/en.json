@@ -203,6 +203,9 @@
   },
   "job": {
     "noFiles": "No files found",
+    "filterImage": "Images",
+    "filterVideo": "Video",
+    "filterLog": "Log",
     "showLog": "Show Log",
     "noLog": "No log file",
     "tail": "Follow tail",
