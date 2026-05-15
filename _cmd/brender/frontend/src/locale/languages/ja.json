@@ -328,7 +328,7 @@
     "createMovie": "動画作成",
     "movieCreating": "作成中...",
     "movieCreated": "動画を作成しました",
-    "playMovie": "▶ 再生"
+    "playMovie": "動画を表示"
   },
   "render": {
     "confirmTitle": "レンダリングを実行しますか？",

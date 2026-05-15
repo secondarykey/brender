@@ -369,11 +369,11 @@ function RenderResultTab({ job }) {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {moviePath && (
-            <button className="btn btn-sm btn-run" onClick={handlePlayMovie}>
+            <button className="btn btn-sm btn-primary" onClick={handlePlayMovie}>
               {t('viewer.playMovie')}
             </button>
           )}
-          <button className="btn btn-sm btn-secondary" onClick={handleCreateMovie} disabled={creatingMovie || images.length === 0}>
+          <button className="btn btn-sm btn-green" onClick={handleCreateMovie} disabled={creatingMovie || images.length === 0}>
             {creatingMovie ? t('viewer.movieCreating') : t('viewer.createMovie')}
           </button>
         </div>
