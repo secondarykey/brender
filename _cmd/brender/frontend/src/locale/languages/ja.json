@@ -160,6 +160,7 @@
     "specifyResolution": "解像度を指定する",
     "resolutionX": "幅 (X)",
     "resolutionY": "高さ (Y)",
+    "swapResolution": "X と Y を入れ替え",
     "specifyFrames": "フレームを指定する",
     "specifyFrameRange": "フレーム範囲を指定する",
     "startFrame": "開始",

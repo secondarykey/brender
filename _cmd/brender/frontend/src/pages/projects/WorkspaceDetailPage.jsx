@@ -9,6 +9,15 @@ import Pagination from '../../components/Pagination'
 const isFrameDefault      = (start, end) => start === 0 && end === -1
 const isResolutionDefault = (x, y)       => x === 0 && y === 0
 
+const RESOLUTION_PRESETS = [
+  { label: 'Full HD',  x: 1920, y: 1080 },
+  { label: 'HD',       x: 1280, y: 720  },
+  { label: '4K UHD',   x: 3840, y: 2160 },
+  { label: 'DCI 4K',   x: 4096, y: 2160 },
+  { label: 'Square',   x: 1080, y: 1080 },
+  { label: 'Portrait', x: 1080, y: 1360 },
+]
+
 // EngineFlags 相当: エンジン名の揺れを吸収して Samples マップから値を返す
 function samplesForEngine(engine, samplesMap) {
   if (!engine || !samplesMap) return 0
@@ -476,14 +485,38 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
           <DefaultTag value={resolutionDefault} t={t} />
         </label>
         {specifyResolution && (
-          <div className="form-row" style={{ marginTop: 8 }}>
-            <div className="form-field">
-              <label className="form-label">{t('workspace.resolutionX')}</label>
-              <input className="form-input" style={{ width: 100, textAlign: 'right' }} type="number" min={1} value={form.resolutionX} onChange={e => set('resolutionX', Number(e.target.value))} />
+          <div style={{ marginTop: 8 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+              {RESOLUTION_PRESETS.map(p => (
+                <button
+                  key={p.label}
+                  type="button"
+                  className="btn btn-sm btn-ghost"
+                  onClick={() => setForm(prev => ({ ...prev, resolutionX: p.x, resolutionY: p.y }))}
+                >
+                  {p.label}
+                </button>
+              ))}
             </div>
-            <div className="form-field">
-              <label className="form-label">{t('workspace.resolutionY')}</label>
-              <input className="form-input" style={{ width: 100, textAlign: 'right' }} type="number" min={1} value={form.resolutionY} onChange={e => set('resolutionY', Number(e.target.value))} />
+            <div className="form-row">
+              <div className="form-field">
+                <label className="form-label">{t('workspace.resolutionX')}</label>
+                <input className="form-input" style={{ width: 100, textAlign: 'right' }} type="number" min={1} value={form.resolutionX} onChange={e => set('resolutionX', Number(e.target.value))} />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: 4 }}>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-ghost"
+                  title={t('workspace.swapResolution')}
+                  onClick={() => setForm(prev => ({ ...prev, resolutionX: prev.resolutionY, resolutionY: prev.resolutionX }))}
+                >
+                  ⇄
+                </button>
+              </div>
+              <div className="form-field">
+                <label className="form-label">{t('workspace.resolutionY')}</label>
+                <input className="form-input" style={{ width: 100, textAlign: 'right' }} type="number" min={1} value={form.resolutionY} onChange={e => set('resolutionY', Number(e.target.value))} />
+              </div>
             </div>
           </div>
         )}

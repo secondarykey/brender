@@ -160,6 +160,7 @@
     "specifyResolution": "Specify resolution",
     "resolutionX": "Width (X)",
     "resolutionY": "Height (Y)",
+    "swapResolution": "Swap X and Y",
     "specifyFrames": "Specify frames",
     "specifyFrameRange": "Specify frame range",
     "startFrame": "Start",
