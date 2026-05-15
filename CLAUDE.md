@@ -105,6 +105,7 @@ server/        (legacy HTTP server, still functional but handler/api/ is stale)
 | `api/wails/project.go` | `Project` | `api/project.go` + `api/thumbnail.go` |
 | `api/wails/workspace.go` | `Workspace` | `api/workspace.go` |
 | `api/wails/queue.go` | `Queue` | `api/queue.go` |
+| `api/wails/work_dir.go` | `WorkDir` | `api/work_dir.go` |
 
 Services are registered in `_cmd/brender/main.go`. After adding or changing a service, run `wails3 generate bindings` to update the frontend JS bindings.
 
@@ -113,11 +114,14 @@ Services are registered in `_cmd/brender/main.go`. After adding or changing a se
 ## Data Model
 
 ### Hierarchy
-`BlenderInstall` → `Environment` (project root dir) → `Project` + `ProjectFile` (`.blend` files) → `Workspace` (render settings) → `Job` (history) / `Queue` (active execution)
+`BlenderInstall` + `WorkDir` → `Project` + `ProjectFile` (`.blend` files) → `Workspace` (render settings) → `Job` (history) / `Queue` (active execution)
+
+`Environment` はシステム全体の設定（`ProjectRoot` はデフォルト参照用のみ）。出力先は `Project.WorkDirID` → `WorkDir.Path` で解決する。
 
 ### Key model notes
-- `Environment`: `ProjectRoot string`, `Server bool`. No `BlenderCmd`/`BlenderVersion`/`Hash` fields (removed).
-- `Project`: `ID string` (UUID v4), `Name`, `BlenderInstallID uint`, `Scene string`. No `Archive` or `ThumbnailFrame` fields (removed).
+- `Environment`: `ProjectRoot string`, `Server bool`, `MaxConcurrentJobs int` (デフォルト 1). No `BlenderCmd`/`BlenderVersion`/`Hash` fields (removed).
+- `WorkDir`: `ID uint`, `Path string`, `Priority int`, `Status string` (`active`/`inactive`/`lock`). `GetDefaultWorkDir()` は `active` かつ `Priority` 最小を返す。
+- `Project`: `ID string` (UUID v4), `Name`, `BlenderInstallID uint`, `Scene string`, `WorkDirID uint`. No `Archive` or `ThumbnailFrame` fields (removed).
 - `ProjectFile`: `ID string` (UUID v4), `ProjectID`, `Path`, `Name`, `BlenderInstallID uint`, `Scene string`, `FileModifiedAt *time.Time`. `FileModifiedAt` is set from `os.Stat().ModTime()` on add.
 - `Workspace`: `ID string` (UUID v4), `ProjectFileID string` (固定、Update では変更不可), `BlenderInstallID=0` means use project default, `IsSystem bool` (サムネイル自動生成ワークスペースは `true`)。
 - `Job`: permanent history record. Shares UUID v7 with its `Queue` record. Has `ProjectFileID string` for direct file-based query.
@@ -138,7 +142,7 @@ Services are registered in `_cmd/brender/main.go`. After adding or changing a se
 
 ### ディレクトリ構造
 ```
-{env.ProjectRoot}/
+{workDir.Path}/
   {projectID}/
     {fileID}/
       thumbnail.jpg          ← サムネイル画像（640×360 JPEG）
@@ -175,7 +179,7 @@ Services are registered in `_cmd/brender/main.go`. After adding or changing a se
 `Enqueue()` → `PreviewRender()` でパラメータ解決 → `EnqueueWithPreview()` でジョブ作成・キュー投入。
 
 **同時実行制御**:
-- `maxConcurrentJobs = 2`（定数）
+- `getMaxConcurrentJobs()` が `model.GetEnv().MaxConcurrentJobs` を読む（デフォルト 1、0 以下も 1 扱い）。設定画面の Blender タブで変更可能。
 - `scheduleMu sync.Mutex` でスケジューラのレース防止
 - 投入時: 実行中キュー数が上限未満なら `MarkQueueStarting()`（DB で status を running に変更）してから `go executeQueue()` を起動。上限以上なら `waiting` のまま保留。
 - 完了・キャンセル時: `startNextWaiting()` を呼び出し、最古の `waiting` ジョブを昇格して起動。
@@ -296,7 +300,8 @@ After `Enqueue()` succeeds, the app navigates to the queue page (`navigate('queu
 ### ファイル一覧タイル表示 (`WorkspaceTab.jsx`)
 - デフォルト表示: カード（タイル）表示
 - 表示切り替えボタン: 左寄せ
-- 「+ .blend ファイルを追加」ボタン: `position: sticky; top: 0; float: right` で右上固定（スクロールしても追従）
+- 「+ .blend ファイルを追加」ボタン: `.list-fab`（`position: sticky; bottom: 16px`）で画面下部に常時表示
+- 「ディレクトリからファイルを追加」機能: プロジェクト設定タブ（SettingsTab）の作業ディレクトリセクション下に配置
 - タイルサイズ: 幅 320px、縦レイアウト（サムネイル上 180px + 名称のみ下）
 - サムネイル: `ProjectApi.getFileThumbnail({ projectID, fileID })` で base64 data URI を取得して表示
 
@@ -388,6 +393,7 @@ src/lib/api/
   project.js      ProjectApi  ← getFileThumbnail({ projectID, fileID }) を含む
   workspace.js    WorkspaceApi
   queue.js        QueueApi
+  work_dir.js     WorkDirApi
   index.js        re-export
 ```
 
@@ -407,7 +413,9 @@ return off  // useEffect cleanup
 - **Wailsモード**: `@wailsio/runtime` の `Events.On` を動的インポートして使用
 - **サーバモード**: `EventSource('/events')` のシングルトンを維持し SSE で受信
   - 複数コンポーネントが `onAppEvent` を呼んでも接続は 1 本のみ
-- 現在使用しているイベント名: `queue:changed` (data: number — アクティブキュー件数)
+- 現在使用しているイベント名:
+  - `queue:changed` (data: number — アクティブキュー件数)
+  - `workdir:migrate` (data: `{ project_id, status, pct }` — 移行進捗。status: `running`/`done`/`error`)
 
 ## CSS Conventions (`frontend/public/style.css`)
 
