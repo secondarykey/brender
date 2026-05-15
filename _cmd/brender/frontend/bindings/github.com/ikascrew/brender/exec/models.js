@@ -121,6 +121,13 @@ export class SceneTool {
              */
             this["Output"] = "";
         }
+        if (!("Samples" in $$source)) {
+            /**
+             * @member
+             * @type {{ [_ in string]?: number }}
+             */
+            this["Samples"] = {};
+        }
 
         Object.assign(this, $$source);
     }
@@ -131,7 +138,11 @@ export class SceneTool {
      * @returns {SceneTool}
      */
     static createFrom($$source = {}) {
+        const $$createField9_0 = $$createType1;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("Samples" in $$parsedSource) {
+            $$parsedSource["Samples"] = $$createField9_0($$parsedSource["Samples"]);
+        }
         return new SceneTool(/** @type {Partial<SceneTool>} */($$parsedSource));
     }
 }
@@ -156,17 +167,24 @@ export class Tool {
              */
             this["Build"] = "";
         }
+        if (!("Engines" in $$source)) {
+            /**
+             * @member
+             * @type {string[]}
+             */
+            this["Engines"] = [];
+        }
         if (!("Scenes" in $$source)) {
             /**
              * @member
-             * @type {SceneTool[]}
+             * @type {(SceneTool | null)[]}
              */
             this["Scenes"] = [];
         }
         if (!("Cameras" in $$source)) {
             /**
              * @member
-             * @type {CameraTool[]}
+             * @type {(CameraTool | null)[]}
              */
             this["Cameras"] = [];
         }
@@ -180,14 +198,18 @@ export class Tool {
      * @returns {Tool}
      */
     static createFrom($$source = {}) {
-        const $$createField2_0 = $$createType2;
+        const $$createField2_0 = $$createType0;
         const $$createField3_0 = $$createType4;
+        const $$createField4_0 = $$createType7;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("Engines" in $$parsedSource) {
+            $$parsedSource["Engines"] = $$createField2_0($$parsedSource["Engines"]);
+        }
         if ("Scenes" in $$parsedSource) {
-            $$parsedSource["Scenes"] = $$createField2_0($$parsedSource["Scenes"]);
+            $$parsedSource["Scenes"] = $$createField3_0($$parsedSource["Scenes"]);
         }
         if ("Cameras" in $$parsedSource) {
-            $$parsedSource["Cameras"] = $$createField3_0($$parsedSource["Cameras"]);
+            $$parsedSource["Cameras"] = $$createField4_0($$parsedSource["Cameras"]);
         }
         return new Tool(/** @type {Partial<Tool>} */($$parsedSource));
     }
@@ -195,7 +217,10 @@ export class Tool {
 
 // Private type creation functions
 const $$createType0 = $Create.Array($Create.Any);
-const $$createType1 = SceneTool.createFrom;
-const $$createType2 = $Create.Array($$createType1);
-const $$createType3 = CameraTool.createFrom;
+const $$createType1 = $Create.Map($Create.Any, $Create.Any);
+const $$createType2 = SceneTool.createFrom;
+const $$createType3 = $Create.Nullable($$createType2);
 const $$createType4 = $Create.Array($$createType3);
+const $$createType5 = CameraTool.createFrom;
+const $$createType6 = $Create.Nullable($$createType5);
+const $$createType7 = $Create.Array($$createType6);

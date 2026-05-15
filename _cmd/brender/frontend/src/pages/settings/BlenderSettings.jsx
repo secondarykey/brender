@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
-import { BlenderApi } from '../../lib/api'
+import { BlenderApi, EnvironmentApi } from '../../lib/api'
 
 function BlenderSettings() {
   const { t } = useTranslation()
@@ -12,6 +12,8 @@ function BlenderSettings() {
   const [deleting, setDeleting] = useState(false)
   const dragIndex = useRef(null)
   const [dragOver, setDragOver] = useState(null)
+  const [maxJobs, setMaxJobs] = useState(1)
+  const [savingMaxJobs, setSavingMaxJobs] = useState(false)
 
   const load = () => {
     BlenderApi.list()
@@ -19,7 +21,23 @@ function BlenderSettings() {
       .catch(err => setError(String(err)))
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    load()
+    EnvironmentApi.get()
+      .then(env => { if (env?.max_concurrent_jobs > 0) setMaxJobs(env.max_concurrent_jobs) })
+      .catch(() => {})
+  }, [])
+
+  const handleMaxJobsSave = async () => {
+    setSavingMaxJobs(true)
+    try {
+      await EnvironmentApi.setMaxConcurrentJobs({ n: maxJobs })
+    } catch (err) {
+      setError(String(err))
+    } finally {
+      setSavingMaxJobs(false)
+    }
+  }
 
   const handleAdd = async () => {
     setError('')
@@ -99,6 +117,27 @@ function BlenderSettings() {
   return (
     <div>
       <h2 className="section-title">{t('tabs.blender')}</h2>
+
+      <div className="form" style={{ maxWidth: 360, marginBottom: 24 }}>
+        <div className="form-field">
+          <label className="form-label">{t('settings.maxConcurrentJobs')}</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <input
+              className="form-input"
+              type="number"
+              min={1}
+              max={16}
+              value={maxJobs}
+              onChange={e => setMaxJobs(Math.max(1, Number(e.target.value)))}
+              style={{ width: 80, textAlign: 'right' }}
+            />
+            <button className="btn btn-sm" onClick={handleMaxJobsSave} disabled={savingMaxJobs}>
+              {savingMaxJobs ? t('common.saving') : t('common.save')}
+            </button>
+          </div>
+          <span className="form-hint">{t('settings.maxConcurrentJobsHint')}</span>
+        </div>
+      </div>
 
       <div className="toolbar">
         <button className="btn" onClick={handleAdd} disabled={loading}>

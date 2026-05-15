@@ -145,6 +145,13 @@ export class Environment {
              */
             this["ffmpeg_args"] = "";
         }
+        if (!("max_concurrent_jobs" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["max_concurrent_jobs"] = 0;
+        }
         if (!("created_at" in $$source)) {
             /**
              * @member
@@ -552,12 +559,58 @@ export class ProjectFile {
              */
             this["blender_install_id"] = 0;
         }
+        if (!("blender_fixed" in $$source)) {
+            /**
+             * true = ワークスペースで変更不可
+             * @member
+             * @type {boolean}
+             */
+            this["blender_fixed"] = false;
+        }
         if (!("scene" in $$source)) {
             /**
              * @member
              * @type {string}
              */
             this["scene"] = "";
+        }
+        if (!("scene_fixed" in $$source)) {
+            /**
+             * true = ワークスペースで変更不可
+             * @member
+             * @type {boolean}
+             */
+            this["scene_fixed"] = false;
+        }
+        if (!("camera" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["camera"] = "";
+        }
+        if (!("camera_fixed" in $$source)) {
+            /**
+             * true = ワークスペースで変更不可
+             * @member
+             * @type {boolean}
+             */
+            this["camera_fixed"] = false;
+        }
+        if (!("engine" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["engine"] = "";
+        }
+        if (!("engine_fixed" in $$source)) {
+            /**
+             * true = ワークスペースで変更不可
+             * @member
+             * @type {boolean}
+             */
+            this["engine_fixed"] = false;
         }
         if (!("file_modified_at" in $$source)) {
             /**

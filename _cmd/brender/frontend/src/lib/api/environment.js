@@ -35,6 +35,11 @@ export const EnvironmentApi = {
     isWails() ? svc().then(s => s.SetLogLevel(level))
               : serverCall('environment', 'set_log_level', { level }),
 
+  /** 最大同時実行数を設定 */
+  setMaxConcurrentJobs: ({ n }) =>
+    isWails() ? svc().then(s => s.SetMaxConcurrentJobs(n))
+              : serverCall('environment', 'set_max_concurrent_jobs', { n }),
+
   /** システムログを別ウィンドウで開く */
   openSystemLogWindow: () =>
     isWails() ? svc().then(s => s.OpenSystemLogWindow())

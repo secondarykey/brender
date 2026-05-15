@@ -266,6 +266,8 @@
     "ffmpegOutExtHint": "出力する動画ファイルの拡張子（例: mp4、mov）",
     "ffmpegArgs": "追加引数",
     "ffmpegArgsHint": "ffmpeg に渡す追加の引数（省略可）",
+    "maxConcurrentJobs": "最大同時実行数",
+    "maxConcurrentJobsHint": "同時に実行するジョブの最大数",
     "systemLog": "システムログ",
     "openSystemLog": "システムログを開く",
     "logLevel": "ログレベル"

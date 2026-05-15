@@ -75,6 +75,14 @@ export function SetLogLevel(level) {
     return $Call.ByID(3317708141, level);
 }
 
+/**
+ * @param {number} n
+ * @returns {$CancellablePromise<void>}
+ */
+export function SetMaxConcurrentJobs(n) {
+    return $Call.ByID(4180283252, n);
+}
+
 // Private type creation functions
 const $$createType0 = model$0.Environment.createFrom;
 const $$createType1 = $Create.Nullable($$createType0);

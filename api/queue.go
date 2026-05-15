@@ -17,7 +17,13 @@ import (
 	"golang.org/x/xerrors"
 )
 
-const maxConcurrentJobs = 2
+func getMaxConcurrentJobs() int64 {
+	env, err := model.GetEnv()
+	if err != nil || env == nil || env.MaxConcurrentJobs <= 0 {
+		return 1
+	}
+	return int64(env.MaxConcurrentJobs)
+}
 
 // scheduleMu はキューの起動判定と DB 更新をアトミックに行うためのミューテックス。
 var scheduleMu sync.Mutex
@@ -378,7 +384,7 @@ func EnqueueWithPreview(projectID, workspaceID string, preview *RenderPreview) (
 	// 同時実行数が上限未満なら即時起動、超えていれば待機キューのまま
 	scheduleMu.Lock()
 	running, _ := model.CountRunningQueues()
-	shouldStart := running < maxConcurrentJobs
+	shouldStart := running < getMaxConcurrentJobs()
 	if shouldStart {
 		_ = model.MarkQueueStarting(id)
 	}
@@ -565,7 +571,7 @@ func finishJob(id string, success bool, errMsg string, diskSize int64) {
 func startNextWaiting() {
 	scheduleMu.Lock()
 	running, _ := model.CountRunningQueues()
-	if running >= maxConcurrentJobs {
+	if running >= getMaxConcurrentJobs() {
 		scheduleMu.Unlock()
 		return
 	}

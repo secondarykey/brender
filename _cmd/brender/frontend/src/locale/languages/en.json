@@ -266,6 +266,8 @@
     "ffmpegOutExtHint": "Extension for the output video file (e.g. mp4, mov)",
     "ffmpegArgs": "Extra arguments",
     "ffmpegArgsHint": "Additional arguments to pass to ffmpeg (optional)",
+    "maxConcurrentJobs": "Max Concurrent Jobs",
+    "maxConcurrentJobsHint": "Maximum number of jobs to run simultaneously",
     "systemLog": "System Log",
     "openSystemLog": "Open System Log",
     "logLevel": "Log Level"

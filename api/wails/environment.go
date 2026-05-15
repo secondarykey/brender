@@ -31,6 +31,10 @@ func (s *Environment) SetFfmpeg(cmd string, fps int, ext string, outExt string, 
 	})
 }
 
+func (s *Environment) SetMaxConcurrentJobs(n int) error {
+	return api.SetMaxConcurrentJobs(n)
+}
+
 // GetSystemLog returns the contents of today's system log file.
 func (s *Environment) GetSystemLog() (string, error) {
 	path := log.Path()
