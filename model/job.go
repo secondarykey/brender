@@ -23,6 +23,8 @@ const (
 	JobDataDeletedLocked    = 5 // データ削除（ロック）
 	JobDataCorrupted        = 6 // データ破損（エラー・キャンセル時の不完全出力）
 	JobDataCorruptedLocked  = 7 // データ破損（ロック）
+	JobDataModified         = 8 // データ操作済（一部削除など）
+	JobDataModifiedLocked   = 9 // データ操作済（ロック）
 )
 
 // Job はレンダリング実行の完了済み履歴レコード。
