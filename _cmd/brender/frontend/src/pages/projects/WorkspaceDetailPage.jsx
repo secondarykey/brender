@@ -10,12 +10,15 @@ const isFrameDefault      = (start, end) => start === 0 && end === -1
 const isResolutionDefault = (x, y)       => x === 0 && y === 0
 
 const RESOLUTION_PRESETS = [
+  { label: 'Half HD',  x:  960, y:  540 },
+  { label: 'HD',       x: 1280, y:  720 },
   { label: 'Full HD',  x: 1920, y: 1080 },
-  { label: 'HD',       x: 1280, y: 720  },
+  { label: '2K DCI',   x: 2048, y: 1080 },
   { label: '4K UHD',   x: 3840, y: 2160 },
   { label: 'DCI 4K',   x: 4096, y: 2160 },
+  { label: '8K UHD',   x: 7680, y: 4320 },
   { label: 'Square',   x: 1080, y: 1080 },
-  { label: 'Portrait', x: 1080, y: 1360 },
+  { label: 'Portrait', x: 1080, y: 1350 },
 ]
 
 // EngineFlags 相当: エンジン名の揺れを吸収して Samples マップから値を返す
