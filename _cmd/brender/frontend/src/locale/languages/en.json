@@ -322,7 +322,7 @@
     "createMovie": "Create Video",
     "movieCreating": "Creating...",
     "movieCreated": "Video created",
-    "playMovie": "▶ Play"
+    "playMovie": "Show Video"
   },
   "render": {
     "confirmTitle": "Start rendering?",
