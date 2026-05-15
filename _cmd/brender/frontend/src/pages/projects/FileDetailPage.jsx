@@ -404,8 +404,11 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
   const { t } = useTranslation()
   const [name, setName]                   = useState(fileName)
   const [blenderInstallID, setBlenderID]  = useState(0)
+  const [blenderFixed, setBlenderFixed]   = useState(false)
   const [scene, setScene]                 = useState('')
+  const [sceneFixed, setSceneFixed]       = useState(false)
   const [camera, setCamera]               = useState('')
+  const [cameraFixed, setCameraFixed]     = useState(false)
   const [engine, setEngine]               = useState('')
   const [engineFixed, setEngineFixed]     = useState(false)
   const [blenders, setBlenders]           = useState([])
@@ -443,8 +446,11 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
       const installID = f?.blender_install_id || 0
       setName(f?.name || fileName)
       setBlenderID(installID)
+      setBlenderFixed(f?.blender_fixed || false)
       setScene(f?.scene || '')
+      setSceneFixed(f?.scene_fixed || false)
       setCamera(f?.camera || '')
+      setCameraFixed(f?.camera_fixed || false)
       setEngine(f?.engine || '')
       setEngineFixed(f?.engine_fixed || false)
       fetchToolData(installID)
@@ -468,7 +474,7 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
     setSaving(true)
     setError(null)
     try {
-      const updated = await ProjectApi.updateFile({ fileID, name: name.trim(), blenderInstallID, scene, camera, engine, engineFixed })
+      const updated = await ProjectApi.updateFile({ fileID, name: name.trim(), blenderInstallID, blenderFixed, scene, sceneFixed, camera, cameraFixed, engine, engineFixed })
       if (onUpdated) onUpdated(updated)
     } catch (e) {
       setError(e?.message ?? String(e))
@@ -499,7 +505,7 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
 
   const sceneDefault  = !scene ? (activeScene?.Name || null) : null
   const cameraDefault = !camera && sceneInfo?.Camera ? sceneInfo.Camera : null
-  const engineDefault = !engineFixed ? (!engine ? (sceneInfo?.Engine || null) : null) : null
+  const engineDefault = !engine ? (sceneInfo?.Engine || null) : null
 
   return (
     <div className="ws-detail-split">
@@ -530,6 +536,10 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
                   ))}
                 </select>
               )}
+              <label className="form-checkbox-label" style={{ marginTop: 6 }}>
+                <input type="checkbox" checked={blenderFixed} onChange={e => setBlenderFixed(e.target.checked)} />
+                <span style={{ marginLeft: 6 }}>{t('file.fixed')}</span>
+              </label>
             </div>
           </div>
 
@@ -558,12 +568,8 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
                 />
               )}
               <label className="form-checkbox-label" style={{ marginTop: 6 }}>
-                <input
-                  type="checkbox"
-                  checked={engineFixed}
-                  onChange={e => setEngineFixed(e.target.checked)}
-                />
-                <span style={{ marginLeft: 6 }}>{t('file.engineFixed')}</span>
+                <input type="checkbox" checked={engineFixed} onChange={e => setEngineFixed(e.target.checked)} />
+                <span style={{ marginLeft: 6 }}>{t('file.fixed')}</span>
               </label>
             </div>
           </div>
@@ -592,6 +598,10 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
                   placeholder={t('common.notSetPlaceholder')}
                 />
               )}
+              <label className="form-checkbox-label" style={{ marginTop: 6 }}>
+                <input type="checkbox" checked={sceneFixed} onChange={e => setSceneFixed(e.target.checked)} />
+                <span style={{ marginLeft: 6 }}>{t('file.fixed')}</span>
+              </label>
             </div>
             <div className="form-field" style={{ flex: 1 }}>
               <label className="form-label">
@@ -610,6 +620,10 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
                   .map(c => <option key={c.Name} value={c.Name}>{c.Name}</option>)
                 }
               </select>
+              <label className="form-checkbox-label" style={{ marginTop: 6 }}>
+                <input type="checkbox" checked={cameraFixed} onChange={e => setCameraFixed(e.target.checked)} />
+                <span style={{ marginLeft: 6 }}>{t('file.fixed')}</span>
+              </label>
             </div>
           </div>
 

@@ -155,14 +155,17 @@ export function Update(id, name) {
  * @param {string} fileID
  * @param {string} name
  * @param {number} blenderInstallID
+ * @param {boolean} blenderFixed
  * @param {string} scene
+ * @param {boolean} sceneFixed
  * @param {string} camera
+ * @param {boolean} cameraFixed
  * @param {string} engine
  * @param {boolean} engineFixed
  * @returns {$CancellablePromise<model$0.ProjectFile | null>}
  */
-export function UpdateFile(fileID, name, blenderInstallID, scene, camera, engine, engineFixed) {
-    return $Call.ByID(2556186200, fileID, name, blenderInstallID, scene, camera, engine, engineFixed).then(/** @type {($result: any) => any} */(($result) => {
+export function UpdateFile(fileID, name, blenderInstallID, blenderFixed, scene, sceneFixed, camera, cameraFixed, engine, engineFixed) {
+    return $Call.ByID(2556186200, fileID, name, blenderInstallID, blenderFixed, scene, sceneFixed, camera, cameraFixed, engine, engineFixed).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType1($result);
     }));
 }

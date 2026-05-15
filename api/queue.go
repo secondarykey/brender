@@ -64,22 +64,33 @@ func PreviewRender(projectID, workspaceID string) (*RenderPreview, error) {
 	}
 
 	var fileBlenderID uint
+	var fileBlenderFixed bool
 	var fileScene string
+	var fileSceneFixed bool
 	var fileCamera string
+	var fileCameraFixed bool
 	var fileEngine string
 	var fileEngineFixed bool
 	if w.ProjectFileID != "" {
 		pf, pfErr := model.GetProjectFile(w.ProjectFileID)
 		if pfErr == nil && pf != nil {
 			fileBlenderID = pf.BlenderInstallID
+			fileBlenderFixed = pf.BlenderFixed
 			fileScene = pf.Scene
+			fileSceneFixed = pf.SceneFixed
 			fileCamera = pf.Camera
+			fileCameraFixed = pf.CameraFixed
 			fileEngine = pf.Engine
 			fileEngineFixed = pf.EngineFixed
 		}
 	}
 
-	blenderPath, err := resolveBlenderPath(w.BlenderInstallID, fileBlenderID)
+	// Blender: 固定フラグありファイル指定はワークスペース設定を無視
+	wsBlenderID := w.BlenderInstallID
+	if fileBlenderFixed && fileBlenderID != 0 {
+		wsBlenderID = fileBlenderID
+	}
+	blenderPath, err := resolveBlenderPath(wsBlenderID, fileBlenderID)
 	if err != nil {
 		return nil, xerrors.Errorf("resolveBlenderPath: %w", err)
 	}
@@ -88,8 +99,13 @@ func PreviewRender(projectID, workspaceID string) (*RenderPreview, error) {
 		return nil, xerrors.Errorf("resolveBlenderFile: %w", err)
 	}
 
-	scene := w.Scene
-	if scene == "" {
+	// シーン: 固定フラグありファイル指定 → ワークスペース指定 → ファイル指定
+	var scene string
+	if fileSceneFixed && fileScene != "" {
+		scene = fileScene
+	} else if w.Scene != "" {
+		scene = w.Scene
+	} else {
 		scene = fileScene
 	}
 
@@ -119,9 +135,11 @@ func PreviewRender(projectID, workspaceID string) (*RenderPreview, error) {
 		engine = st.Engine
 	}
 
-	// カメラ: ワークスペース指定 → ファイル指定 → シーンのデフォルト（ツール取得）
+	// カメラ: 固定フラグありファイル指定 → ワークスペース指定 → ファイル指定 → シーンのデフォルト
 	var camera string
-	if w.Camera != "" {
+	if fileCameraFixed && fileCamera != "" {
+		camera = fileCamera
+	} else if w.Camera != "" {
 		camera = w.Camera
 	} else if fileCamera != "" {
 		camera = fileCamera
@@ -170,22 +188,32 @@ func TestEnqueue(projectID, workspaceID string, params TestRenderParams) (*model
 	}
 
 	var fileBlenderID uint
+	var fileBlenderFixed bool
 	var fileScene string
+	var fileSceneFixed bool
 	var fileCamera string
+	var fileCameraFixed bool
 	var fileEngine string
 	var fileEngineFixed bool
 	if w.ProjectFileID != "" {
 		pf, pfErr := model.GetProjectFile(w.ProjectFileID)
 		if pfErr == nil && pf != nil {
 			fileBlenderID = pf.BlenderInstallID
+			fileBlenderFixed = pf.BlenderFixed
 			fileScene = pf.Scene
+			fileSceneFixed = pf.SceneFixed
 			fileCamera = pf.Camera
+			fileCameraFixed = pf.CameraFixed
 			fileEngine = pf.Engine
 			fileEngineFixed = pf.EngineFixed
 		}
 	}
 
-	blenderPath, err := resolveBlenderPath(params.BlenderInstallID, fileBlenderID)
+	wsBlenderID := params.BlenderInstallID
+	if fileBlenderFixed && fileBlenderID != 0 {
+		wsBlenderID = fileBlenderID
+	}
+	blenderPath, err := resolveBlenderPath(wsBlenderID, fileBlenderID)
 	if err != nil {
 		return nil, xerrors.Errorf("resolveBlenderPath: %w", err)
 	}
@@ -194,8 +222,12 @@ func TestEnqueue(projectID, workspaceID string, params TestRenderParams) (*model
 		return nil, xerrors.Errorf("resolveBlenderFile: %w", err)
 	}
 
-	scene := params.Scene
-	if scene == "" {
+	var scene string
+	if fileSceneFixed && fileScene != "" {
+		scene = fileScene
+	} else if params.Scene != "" {
+		scene = params.Scene
+	} else {
 		scene = fileScene
 	}
 
@@ -227,9 +259,11 @@ func TestEnqueue(projectID, workspaceID string, params TestRenderParams) (*model
 		engine = st.Engine
 	}
 
-	// カメラ: params指定 → ファイル指定 → シーンのデフォルト
+	// カメラ: 固定フラグありファイル指定 → params指定 → ファイル指定 → シーンのデフォルト
 	var camera string
-	if params.Camera != "" {
+	if fileCameraFixed && fileCamera != "" {
+		camera = fileCamera
+	} else if params.Camera != "" {
 		camera = params.Camera
 	} else if fileCamera != "" {
 		camera = fileCamera

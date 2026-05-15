@@ -200,10 +200,14 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
   }, [form?.blenderInstallID, detail?.workspace?.project_file_id])
 
   // ── デフォルト値の導出 ───────────────────────────────────
-  const fileRecord     = detail?.project_files?.find(f => f.id === detail?.workspace?.project_file_id)
-  const fileScene      = fileRecord?.scene || ''
-  const fileBlenderID  = fileRecord?.blender_install_id || 0
-  const fileEngine     = fileRecord?.engine || ''
+  const fileRecord      = detail?.project_files?.find(f => f.id === detail?.workspace?.project_file_id)
+  const fileBlenderID   = fileRecord?.blender_install_id || 0
+  const fileBlenderFixed = fileRecord?.blender_fixed || false
+  const fileScene       = fileRecord?.scene || ''
+  const fileSceneFixed  = fileRecord?.scene_fixed || false
+  const fileCamera      = fileRecord?.camera || ''
+  const fileCameraFixed = fileRecord?.camera_fixed || false
+  const fileEngine      = fileRecord?.engine || ''
   const fileEngineFixed = fileRecord?.engine_fixed || false
 
   const defaultBlender = form?.blenderInstallID === 0
@@ -290,13 +294,16 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
 
   if (!form) return null
 
-  const blenderDefault = defaultBlender?.name ?? null
-  const sceneDefault  = !form.scene ? (fileScene || activeScene?.Name || null) : null
-  const cameraDefault = !form.camera && sceneInfo?.Camera ? sceneInfo.Camera : null
-  // エンジンのデフォルト表示: 固定中はファイル設定値、未指定時はシーンデフォルト
-  const engineDefault = fileEngineFixed
-    ? null
-    : (!form.engine ? (fileEngine || sceneInfo?.Engine || null) : null)
+  const blenderDefault = !fileBlenderFixed && form?.blenderInstallID === 0
+    ? (blenders.find(b => b.id === fileBlenderID) || blenders[0] || null)
+    : null
+  const sceneDefault  = !fileSceneFixed && !form.scene ? (fileScene || activeScene?.Name || null) : null
+  const cameraDefault = !fileCameraFixed && !form.camera && sceneInfo?.Camera ? sceneInfo.Camera : null
+  const engineDefault = !form.engine ? (fileEngine || sceneInfo?.Engine || null) : null
+
+  const lockedBlenderName = fileBlenderFixed
+    ? (blenders.find(b => b.id === fileBlenderID)?.name || String(fileBlenderID))
+    : null
   const frameDefault  = !specifyFrames && sceneInfo
     ? t('workspace.frameRangeDefault', { start: sceneInfo.Start, end: sceneInfo.End })
     : null
@@ -314,14 +321,21 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
         <div className="form-field" style={{ flex: 1 }}>
           <label className="form-label">
             {t('workspace.blender')}
-            <DefaultTag value={blenderDefault} t={t} />
+            {fileBlenderFixed
+              ? <span className="form-lock-tag">🔒 {lockedBlenderName}</span>
+              : <DefaultTag value={blenderDefault} t={t} />
+            }
           </label>
-          <select className="form-select" value={form.blenderInstallID} onChange={e => set('blenderInstallID', Number(e.target.value))}>
-            <option value={0}>{t('common.notSet')}</option>
-            {blenders.map(b => (
-              <option key={b.id} value={b.id}>{b.name} ({b.version || t('common.versionUnknown')})</option>
-            ))}
-          </select>
+          {fileBlenderFixed ? (
+            <input className="form-input" value={lockedBlenderName} disabled style={{ opacity: 0.5 }} />
+          ) : (
+            <select className="form-select" value={form.blenderInstallID} onChange={e => set('blenderInstallID', Number(e.target.value))}>
+              <option value={0}>{t('common.notSet')}</option>
+              {blenders.map(b => (
+                <option key={b.id} value={b.id}>{b.name} ({b.version || t('common.versionUnknown')})</option>
+              ))}
+            </select>
+          )}
         </div>
       </div>
 
@@ -363,9 +377,14 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
         <div className="form-field" style={{ flex: 1 }}>
           <label className="form-label">
             {t('workspace.scene')}
-            <DefaultTag value={sceneDefault} t={t} />
+            {fileSceneFixed
+              ? <span className="form-lock-tag">🔒 {fileScene}</span>
+              : <DefaultTag value={sceneDefault} t={t} />
+            }
           </label>
-          {scenes.length > 0 ? (
+          {fileSceneFixed ? (
+            <input className="form-input" value={fileScene} disabled style={{ opacity: 0.5 }} />
+          ) : scenes.length > 0 ? (
             <select className="form-select" value={form.scene} onChange={e => { set('scene', e.target.value); set('camera', '') }} disabled={toolLoading}>
               <option value="">{t('common.notSet')}</option>
               {scenes.map(s => <option key={s} value={s}>{s}</option>)}
@@ -377,20 +396,27 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
         <div className="form-field" style={{ flex: 1 }}>
           <label className="form-label">
             {t('workspace.camera')}
-            <DefaultTag value={cameraDefault} t={t} />
-          </label>
-          <select
-            className="form-select"
-            value={form.camera}
-            onChange={e => set('camera', e.target.value)}
-            disabled={toolLoading}
-          >
-            <option value="">{t('common.notSet')}</option>
-            {allCameras
-              .filter(c => !form.scene || (c.Scenes && c.Scenes.includes(form.scene)))
-              .map(c => <option key={c.Name} value={c.Name}>{c.Name}</option>)
+            {fileCameraFixed
+              ? <span className="form-lock-tag">🔒 {fileCamera}</span>
+              : <DefaultTag value={cameraDefault} t={t} />
             }
-          </select>
+          </label>
+          {fileCameraFixed ? (
+            <input className="form-input" value={fileCamera} disabled style={{ opacity: 0.5 }} />
+          ) : (
+            <select
+              className="form-select"
+              value={form.camera}
+              onChange={e => set('camera', e.target.value)}
+              disabled={toolLoading}
+            >
+              <option value="">{t('common.notSet')}</option>
+              {allCameras
+                .filter(c => !form.scene || (c.Scenes && c.Scenes.includes(form.scene)))
+                .map(c => <option key={c.Name} value={c.Name}>{c.Name}</option>)
+              }
+            </select>
+          )}
         </div>
       </div>
 

@@ -125,6 +125,7 @@
     "cameraHint": "未設定の場合: ワークスペースの設定が使用されます",
     "defaultEngine": "デフォルトエンジン",
     "engineHint": "未設定の場合: ワークスペースの設定が使用されます",
+    "fixed": "固定",
     "engineFixed": "固定",
     "engineFixedHint": "有効にすると、ワークスペースでエンジンを変更できなくなります"
   },

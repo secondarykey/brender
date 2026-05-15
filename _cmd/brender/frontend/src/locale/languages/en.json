@@ -125,6 +125,7 @@
     "cameraHint": "If not set: the workspace setting will be used",
     "defaultEngine": "Default Engine",
     "engineHint": "If not set: the workspace setting will be used",
+    "fixed": "Fixed",
     "engineFixed": "Fixed",
     "engineFixedHint": "When enabled, the engine cannot be changed in workspaces"
   },
