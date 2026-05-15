@@ -486,16 +486,11 @@ function DataViewTab({ job }) {
 
   return (
     <div className="job-data-view">
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+      <div style={{ marginBottom: 8 }}>
         <p className="setting-desc job-data-path" style={{ margin: 0 }}>{job.output_dir}</p>
-        {canDownload && (
-          <button className="btn btn-sm btn-ghost" onClick={handleDownloadAll} disabled={downloading}>
-            {downloading ? t('common.downloading') : t('common.downloadZip')}
-          </button>
-        )}
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-        <button className="btn btn-sm btn-ghost" onClick={handleDownloadSelected} disabled={downloading || !someSelected}>
+        <button className="btn btn-sm btn-primary" onClick={handleDownloadSelected} disabled={downloading || !someSelected}>
           {downloading ? t('common.downloading') : `${t('common.downloadZip')}${someSelected ? ` (${selected.size})` : ''}`}
         </button>
         <button className="btn btn-sm btn-danger" onClick={handleDeleteSelected} disabled={deleting || isLocked || !someSelected}>
