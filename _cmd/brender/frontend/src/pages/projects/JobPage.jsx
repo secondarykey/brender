@@ -501,18 +501,16 @@ function DataViewTab({ job }) {
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
         <div style={{ display: 'flex', gap: 4 }}>
+          <button className="btn btn-sm btn-primary" onClick={handleDownloadSelected} disabled={downloading || !someSelected}>
+            {downloading ? t('common.downloading') : `${t('common.downloadZip')}${someSelected ? ` (${selected.size})` : ''}`}
+          </button>
           <button className="btn btn-sm btn-ghost" onClick={() => selectByExts(IMAGE_EXTS)}>{t('job.filterImage')}</button>
           <button className="btn btn-sm btn-ghost" onClick={() => selectByExts(VIDEO_EXTS)}>{t('job.filterVideo')}</button>
           <button className="btn btn-sm btn-ghost" onClick={() => selectByExts(LOG_EXTS)}>{t('job.filterLog')}</button>
         </div>
-        <div style={{ display: 'flex', gap: 6 }}>
-          <button className="btn btn-sm btn-primary" onClick={handleDownloadSelected} disabled={downloading || !someSelected}>
-            {downloading ? t('common.downloading') : `${t('common.downloadZip')}${someSelected ? ` (${selected.size})` : ''}`}
-          </button>
-          <button className="btn btn-sm btn-danger" onClick={handleDeleteSelected} disabled={deleting || isLocked || !someSelected}>
-            {deleting ? t('common.deleting') : `${t('common.deleteSelected')}${someSelected ? ` (${selected.size})` : ''}`}
-          </button>
-        </div>
+        <button className="btn btn-sm btn-danger" onClick={handleDeleteSelected} disabled={deleting || isLocked || !someSelected}>
+          {deleting ? t('common.deleting') : `${t('common.deleteSelected')}${someSelected ? ` (${selected.size})` : ''}`}
+        </button>
       </div>
       {dlError && <div className="error-msg" style={{ marginBottom: 8 }}>{dlError}</div>}
       <table className="queue-table">
