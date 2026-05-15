@@ -28,6 +28,7 @@ type ProjectFile struct {
 	Name             string     `json:"name"`
 	BlenderInstallID uint       `json:"blender_install_id"`
 	Scene            string     `json:"scene"`
+	Camera           string     `json:"camera"`       // "" = ワークスペース任せ
 	Engine           string     `json:"engine"`       // "" = ワークスペース任せ
 	EngineFixed      bool       `json:"engine_fixed"` // true = ワークスペースで変更不可
 	FileModifiedAt   *time.Time `json:"file_modified_at"`
@@ -146,7 +147,7 @@ func UpdateProject(id, name string) (*ProjectDetail, error) {
 	return loadProjectDetail(&p)
 }
 
-func UpdateProjectFile(fileID string, name string, blenderInstallID uint, scene, engine string, engineFixed bool) (*ProjectFile, error) {
+func UpdateProjectFile(fileID string, name string, blenderInstallID uint, scene, camera, engine string, engineFixed bool) (*ProjectFile, error) {
 	var f ProjectFile
 	if res := db.First(&f, "id = ?", fileID); res.Error != nil {
 		return nil, xerrors.Errorf("UpdateProjectFile find: %w", res.Error)
@@ -154,6 +155,7 @@ func UpdateProjectFile(fileID string, name string, blenderInstallID uint, scene,
 	f.Name = name
 	f.BlenderInstallID = blenderInstallID
 	f.Scene = scene
+	f.Camera = camera
 	f.Engine = engine
 	f.EngineFixed = engineFixed
 	if res := db.Save(&f); res.Error != nil {

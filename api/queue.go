@@ -65,6 +65,7 @@ func PreviewRender(projectID, workspaceID string) (*RenderPreview, error) {
 
 	var fileBlenderID uint
 	var fileScene string
+	var fileCamera string
 	var fileEngine string
 	var fileEngineFixed bool
 	if w.ProjectFileID != "" {
@@ -72,6 +73,7 @@ func PreviewRender(projectID, workspaceID string) (*RenderPreview, error) {
 		if pfErr == nil && pf != nil {
 			fileBlenderID = pf.BlenderInstallID
 			fileScene = pf.Scene
+			fileCamera = pf.Camera
 			fileEngine = pf.Engine
 			fileEngineFixed = pf.EngineFixed
 		}
@@ -117,9 +119,13 @@ func PreviewRender(projectID, workspaceID string) (*RenderPreview, error) {
 		engine = st.Engine
 	}
 
-	// カメラ: ワークスペース指定 → シーンのデフォルト（ツール取得）の順でフォールバック
-	camera := w.Camera
-	if camera == "" {
+	// カメラ: ワークスペース指定 → ファイル指定 → シーンのデフォルト（ツール取得）
+	var camera string
+	if w.Camera != "" {
+		camera = w.Camera
+	} else if fileCamera != "" {
+		camera = fileCamera
+	} else {
 		camera = st.Camera
 	}
 
@@ -165,6 +171,7 @@ func TestEnqueue(projectID, workspaceID string, params TestRenderParams) (*model
 
 	var fileBlenderID uint
 	var fileScene string
+	var fileCamera string
 	var fileEngine string
 	var fileEngineFixed bool
 	if w.ProjectFileID != "" {
@@ -172,6 +179,7 @@ func TestEnqueue(projectID, workspaceID string, params TestRenderParams) (*model
 		if pfErr == nil && pf != nil {
 			fileBlenderID = pf.BlenderInstallID
 			fileScene = pf.Scene
+			fileCamera = pf.Camera
 			fileEngine = pf.Engine
 			fileEngineFixed = pf.EngineFixed
 		}
@@ -218,8 +226,14 @@ func TestEnqueue(projectID, workspaceID string, params TestRenderParams) (*model
 	} else {
 		engine = st.Engine
 	}
-	camera := params.Camera
-	if camera == "" {
+
+	// カメラ: params指定 → ファイル指定 → シーンのデフォルト
+	var camera string
+	if params.Camera != "" {
+		camera = params.Camera
+	} else if fileCamera != "" {
+		camera = fileCamera
+	} else {
 		camera = st.Camera
 	}
 

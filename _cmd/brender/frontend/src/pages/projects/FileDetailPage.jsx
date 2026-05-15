@@ -399,24 +399,25 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
   const [name, setName]                   = useState(fileName)
   const [blenderInstallID, setBlenderID]  = useState(0)
   const [scene, setScene]                 = useState('')
+  const [camera, setCamera]               = useState('')
   const [engine, setEngine]               = useState('')
   const [engineFixed, setEngineFixed]     = useState(false)
   const [blenders, setBlenders]           = useState([])
-  const [scenes, setScenes]               = useState([])
+  const [toolData, setToolData]           = useState(null)
   const [engines, setEngines]             = useState([])
-  const [scenesLoading, setScenesLoading] = useState(false)
+  const [toolLoading, setToolLoading]     = useState(false)
   const [enginesLoading, setEnginesLoading] = useState(false)
   const [saving, setSaving]               = useState(false)
   const [deleting, setDeleting]           = useState(false)
   const [confirm, setConfirm]             = useState(false)
   const [error, setError]                 = useState(null)
 
-  const fetchScenes = (installID) => {
-    setScenesLoading(true)
-    BlenderApi.getScenes({ installID, fileID })
-      .then(list => setScenes(list || []))
-      .catch(() => setScenes([]))
-      .finally(() => setScenesLoading(false))
+  const fetchToolData = (installID) => {
+    setToolLoading(true)
+    BlenderApi.getToolData({ installID, fileID })
+      .then(data => setToolData(data || null))
+      .catch(() => setToolData(null))
+      .finally(() => setToolLoading(false))
   }
 
   const fetchEngines = (installID) => {
@@ -437,17 +438,23 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
       setName(f?.name || fileName)
       setBlenderID(installID)
       setScene(f?.scene || '')
+      setCamera(f?.camera || '')
       setEngine(f?.engine || '')
       setEngineFixed(f?.engine_fixed || false)
-      fetchScenes(installID)
+      fetchToolData(installID)
       fetchEngines(installID)
     })
   }, [fileID])
 
   const handleBlenderChange = (installID) => {
     setBlenderID(installID)
-    fetchScenes(installID)
+    fetchToolData(installID)
     fetchEngines(installID)
+  }
+
+  const handleSceneChange = (val) => {
+    setScene(val)
+    setCamera('')
   }
 
   const handleSave = async () => {
@@ -455,7 +462,7 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
     setSaving(true)
     setError(null)
     try {
-      const updated = await ProjectApi.updateFile({ fileID, name: name.trim(), blenderInstallID, scene, engine, engineFixed })
+      const updated = await ProjectApi.updateFile({ fileID, name: name.trim(), blenderInstallID, scene, camera, engine, engineFixed })
       if (onUpdated) onUpdated(updated)
     } catch (e) {
       setError(e?.message ?? String(e))
@@ -478,92 +485,116 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
     }
   }
 
+  const scenes     = toolData?.Scenes?.map(s => s.Name) || []
+  const allCameras = toolData?.Cameras || []
+
   return (
     <div className="ws-detail-split">
       <div className="ws-detail-left">
-        <div className="form" style={{ maxWidth: 480 }}>
-          <div className="form-field">
-            <label className="form-label">{t('file.displayName')}</label>
-            <input
-              className="form-input"
-              value={name}
-              onChange={e => setName(e.target.value)}
-            />
-            <span className="form-hint">{t('file.displayNameHint')}</span>
-          </div>
-
-          <div className="form-field">
-            <label className="form-label">{t('file.defaultBlender')}</label>
-            {blenders.length === 0 ? (
-              <p className="setting-desc">{t('settings.noBlenderRegistered')}</p>
-            ) : (
-              <select
-                className="form-select"
-                value={blenderInstallID}
-                onChange={e => handleBlenderChange(Number(e.target.value))}
-              >
-                <option value={0}>{t('common.notSet')}</option>
-                {blenders.map(b => (
-                  <option key={b.id} value={b.id}>{b.name} ({b.version || t('common.versionUnknown')})</option>
-                ))}
-              </select>
-            )}
-            <span className="form-hint">{t('file.blenderHint')}</span>
-          </div>
-
-          <div className="form-field">
-            <label className="form-label">{t('file.defaultScene')}</label>
-            {scenes.length > 0 ? (
-              <select
-                className="form-select"
-                value={scene}
-                onChange={e => setScene(e.target.value)}
-                disabled={scenesLoading}
-              >
-                <option value="">{t('common.notSet')}</option>
-                {scenes.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-            ) : (
+        <div className="form workspace" style={{ maxWidth: 640 }}>
+          <div className="form-row">
+            <div className="form-field" style={{ flex: 2 }}>
+              <label className="form-label">{t('file.displayName')}</label>
               <input
                 className="form-input"
-                value={scene}
-                onChange={e => setScene(e.target.value)}
-                placeholder={t('common.notSetPlaceholder')}
+                value={name}
+                onChange={e => setName(e.target.value)}
               />
-            )}
-            <span className="form-hint">{t('file.sceneHint')}</span>
+              <span className="form-hint">{t('file.displayNameHint')}</span>
+            </div>
+            <div className="form-field" style={{ flex: 1 }}>
+              <label className="form-label">{t('file.defaultBlender')}</label>
+              {blenders.length === 0 ? (
+                <p className="setting-desc">{t('settings.noBlenderRegistered')}</p>
+              ) : (
+                <select
+                  className="form-select"
+                  value={blenderInstallID}
+                  onChange={e => handleBlenderChange(Number(e.target.value))}
+                >
+                  <option value={0}>{t('common.notSet')}</option>
+                  {blenders.map(b => (
+                    <option key={b.id} value={b.id}>{b.name} ({b.version || t('common.versionUnknown')})</option>
+                  ))}
+                </select>
+              )}
+              <span className="form-hint">{t('file.blenderHint')}</span>
+            </div>
           </div>
 
-          <div className="form-field">
-            <label className="form-label">{t('file.defaultEngine')}</label>
-            {engines.length > 0 ? (
+          <div className="form-row" style={{ alignItems: 'flex-start' }}>
+            <div className="form-field" style={{ flex: 1 }}>
+              <label className="form-label">{t('file.defaultScene')}</label>
+              {scenes.length > 0 ? (
+                <select
+                  className="form-select"
+                  value={scene}
+                  onChange={e => handleSceneChange(e.target.value)}
+                  disabled={toolLoading}
+                >
+                  <option value="">{t('common.notSet')}</option>
+                  {scenes.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              ) : (
+                <input
+                  className="form-input"
+                  value={scene}
+                  onChange={e => handleSceneChange(e.target.value)}
+                  placeholder={t('common.notSetPlaceholder')}
+                />
+              )}
+              <span className="form-hint">{t('file.sceneHint')}</span>
+            </div>
+            <div className="form-field" style={{ flex: 1 }}>
+              <label className="form-label">{t('file.defaultCamera')}</label>
               <select
                 className="form-select"
-                value={engine}
-                onChange={e => setEngine(e.target.value)}
-                disabled={enginesLoading}
+                value={camera}
+                onChange={e => setCamera(e.target.value)}
+                disabled={toolLoading}
               >
                 <option value="">{t('common.notSet')}</option>
-                {engines.map(eng => <option key={eng} value={eng}>{eng}</option>)}
+                {allCameras
+                  .filter(c => !scene || (c.Scenes && c.Scenes.includes(scene)))
+                  .map(c => <option key={c.Name} value={c.Name}>{c.Name}</option>)
+                }
               </select>
-            ) : (
-              <input
-                className="form-input"
-                value={engine}
-                onChange={e => setEngine(e.target.value)}
-                placeholder={t('common.notSetPlaceholder')}
-              />
-            )}
-            <span className="form-hint">{t('file.engineHint')}</span>
-            <label className="form-checkbox-label" style={{ marginTop: 6 }}>
-              <input
-                type="checkbox"
-                checked={engineFixed}
-                onChange={e => setEngineFixed(e.target.checked)}
-              />
-              <span style={{ marginLeft: 6 }}>{t('file.engineFixed')}</span>
-              <span className="form-hint" style={{ marginLeft: 8 }}>{t('file.engineFixedHint')}</span>
-            </label>
+              <span className="form-hint">{t('file.cameraHint')}</span>
+            </div>
+          </div>
+
+          <div className="form-row" style={{ alignItems: 'flex-start', marginTop: 4 }}>
+            <div className="form-field" style={{ flex: 2 }}>
+              <label className="form-label">{t('file.defaultEngine')}</label>
+              {engines.length > 0 ? (
+                <select
+                  className="form-select"
+                  value={engine}
+                  onChange={e => setEngine(e.target.value)}
+                  disabled={enginesLoading}
+                >
+                  <option value="">{t('common.notSet')}</option>
+                  {engines.map(eng => <option key={eng} value={eng}>{eng}</option>)}
+                </select>
+              ) : (
+                <input
+                  className="form-input"
+                  value={engine}
+                  onChange={e => setEngine(e.target.value)}
+                  placeholder={t('common.notSetPlaceholder')}
+                />
+              )}
+              <span className="form-hint">{t('file.engineHint')}</span>
+              <label className="form-checkbox-label" style={{ marginTop: 6 }}>
+                <input
+                  type="checkbox"
+                  checked={engineFixed}
+                  onChange={e => setEngineFixed(e.target.checked)}
+                />
+                <span style={{ marginLeft: 6 }}>{t('file.engineFixed')}</span>
+                <span className="form-hint" style={{ marginLeft: 8 }}>{t('file.engineFixedHint')}</span>
+              </label>
+            </div>
           </div>
 
           {error && <p className="form-error">{error}</p>}
