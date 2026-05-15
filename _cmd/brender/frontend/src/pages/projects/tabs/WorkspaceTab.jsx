@@ -117,7 +117,7 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
     setFileError('')
     setFileMsg('')
     try {
-      const dir = await Dialogs.OpenDirectory({ Title: t('settings.selectDirectory') })
+      const dir = await Dialogs.OpenFile({ CanChooseDirectories: true, CanChooseFiles: false })
       if (!dir) return
       const result = await ProjectApi.addFilesFromDir({ projectID, dir })
       load()
