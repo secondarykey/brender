@@ -141,6 +141,11 @@ function ProjectListPage({ navigate }) {
                 onClick={() => { setViewMode('card'); localStorage.setItem('viewMode:projects', 'card') }}
                 title={t('workspace.cardView')}
               >⊞</button>
+              <button
+                className={`file-view-btn${viewMode === 'card-sm' ? ' active' : ''}`}
+                onClick={() => { setViewMode('card-sm'); localStorage.setItem('viewMode:projects', 'card-sm') }}
+                title={t('workspace.smallCardView')}
+              >⊟</button>
               <SortSelect value={sort} onChange={handleSortChange} />
             </div>
           )}
@@ -176,7 +181,7 @@ function ProjectListPage({ navigate }) {
               })}
             </div>
           ) : (
-            <div className="file-tile-grid">
+            <div className={`file-tile-grid${viewMode === 'card-sm' ? ' file-tile-grid--sm' : ''}`}>
               {projects.map(d => (
                 <ProjectTile key={d.project.id} d={d} workDirMap={workDirMap} navigate={navigate} />
               ))}

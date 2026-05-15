@@ -142,6 +142,7 @@
     "addFilesFromDirResult": "Added {{added}}, skipped {{skipped}}",
     "listView": "List view",
     "cardView": "Card view",
+    "smallCardView": "Small card view",
     "noFilesRegistered": "No .blend files registered",
     "noImage": "No Image",
     "openInBlender": "Open in Blender",

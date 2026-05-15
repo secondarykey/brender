@@ -740,6 +740,23 @@ body {
   text-overflow: ellipsis;
 }
 
+/* 小サムネイルタイル (190px) */
+.file-tile-grid--sm {
+  gap: 10px;
+}
+.file-tile-grid--sm .file-tile {
+  width: 190px;
+}
+.file-tile-grid--sm .file-tile-thumb {
+  height: 107px;
+}
+.file-tile-grid--sm .file-tile-info {
+  padding: 6px 8px;
+}
+.file-tile-grid--sm .file-tile-name {
+  font-size: 0.78rem;
+}
+
 /* ワークスペースタイル */
 .ws-tile { cursor: pointer; }
 .ws-tile-info {

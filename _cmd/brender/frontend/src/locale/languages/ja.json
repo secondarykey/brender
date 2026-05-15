@@ -142,6 +142,7 @@
     "addFilesFromDirResult": "{{added}}件追加、{{skipped}}件スキップ",
     "listView": "リスト表示",
     "cardView": "カード表示",
+    "smallCardView": "小カード表示",
     "noFilesRegistered": ".blend ファイルが登録されていません",
     "noImage": "No Image",
     "openInBlender": "Blender で開く",
