@@ -390,7 +390,7 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
         <div className="form-field" style={{ flex: '0 0 80px', minWidth: 0 }}>
           <label className="form-label">{t('workspace.threads')}</label>
           <input className="form-input" style={{ textAlign: 'right', width: '100%' }} type="number" min={0} value={form.thread} onChange={e => set('thread', Number(e.target.value))} />
-          <span className="form-hint" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{threadsHint}</span>
+          <span className="form-hint" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={threadsHint}>{threadsHint}</span>
         </div>
       </div>
 
