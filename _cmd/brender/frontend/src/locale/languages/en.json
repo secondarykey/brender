@@ -158,6 +158,7 @@
     "engineLockedByFile": "Engine is fixed by the file settings (cannot be changed here)",
     "frameRange": "Frame Range",
     "specifyResolution": "Specify resolution",
+    "resolutionPreset": "Preset",
     "resolutionX": "Width (X)",
     "resolutionY": "Height (Y)",
     "swapResolution": "Swap X and Y",

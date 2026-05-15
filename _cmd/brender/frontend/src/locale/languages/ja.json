@@ -158,6 +158,7 @@
     "engineLockedByFile": "ファイル設定でエンジンが固定されています（ここでは変更できません）",
     "frameRange": "フレーム範囲",
     "specifyResolution": "解像度を指定する",
+    "resolutionPreset": "プリセット",
     "resolutionX": "幅 (X)",
     "resolutionY": "高さ (Y)",
     "swapResolution": "X と Y を入れ替え",
