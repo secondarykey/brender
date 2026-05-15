@@ -745,10 +745,10 @@ body {
   gap: 10px;
 }
 .file-tile-grid--sm .file-tile {
-  width: 190px;
+  width: 215px;
 }
 .file-tile-grid--sm .file-tile-thumb {
-  height: 107px;
+  height: 121px;
 }
 .file-tile-grid--sm .file-tile-info {
   padding: 6px 8px;
