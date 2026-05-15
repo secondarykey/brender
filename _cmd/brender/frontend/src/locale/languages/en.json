@@ -308,7 +308,8 @@
     "duration": "Duration",
     "name": "Name",
     "version": "Version",
-    "path": "Path"
+    "path": "Path",
+    "updatedAt": "Updated"
   },
   "time": {
     "seconds": "s",

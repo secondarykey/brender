@@ -511,7 +511,7 @@ function DataViewTab({ job }) {
             </th>
             <th>{t('table.name')}</th>
             <th style={{ textAlign: 'right' }}>{t('dialog.dataSize')}</th>
-            <th>{t('dialog.completedAt')}</th>
+            <th>{t('table.updatedAt')}</th>
           </tr>
         </thead>
         <tbody>
