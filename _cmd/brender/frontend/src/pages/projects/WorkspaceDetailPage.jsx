@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
 import { WorkspaceApi, BlenderApi, QueueApi, ProjectApi, WorkDirApi } from '../../lib/api'
+import { useToast } from '../../lib/toast'
 import Pagination from '../../components/Pagination'
 
 
@@ -124,6 +125,7 @@ function DefaultTag({ value, t }) {
 // ── 設定タブ ──────────────────────────────────────────────
 function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onDeleted, onTestEnqueued, workDirLocked }) {
   const { t } = useTranslation()
+  const { showToast } = useToast()
   const [blenders, setBlenders]             = useState([])
   const [engines, setEngines]               = useState([])
   const [enginesLoading, setEnginesLoading] = useState(false)
@@ -134,7 +136,6 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
   const [specifyFrames, setSpecifyFrames]   = useState(false)
   const [saving, setSaving]                 = useState(false)
   const [error, setError]                   = useState('')
-  const [saved, setSaved]                   = useState(false)
   const [confirm, setConfirm]               = useState(false)
   const [deleting, setDeleting]             = useState(false)
   const [testEnqueueing, setTestEnqueueing] = useState(false)
@@ -161,7 +162,6 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
     })
     setSpecifyFrames(!isFrameDefault(start, end))
     lastFrameSpec.current = null
-    setSaved(false)
     setError('')
   }, [detail])
 
@@ -238,13 +238,11 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
   }
 
   const set = (key, val) => {
-    setSaved(false)
     setForm(prev => ({ ...prev, [key]: val }))
   }
 
   const handleSave = async () => {
     setError('')
-    setSaved(false)
     if (!form.name.trim()) { setError(t('workspace.nameRequired')); return }
     setSaving(true)
     try {
@@ -256,7 +254,7 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
         frameStep: form.frameStep, thread: form.thread,
         samples: form.samples,
       })
-      setSaved(true)
+      showToast(t('common.saved'))
       onUpdated()
     } catch (err) {
       setError(String(err))
@@ -448,7 +446,6 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
       </div>
 
       {error     && <div className="error-msg">{error}</div>}
-      {saved     && <div className="success-msg">{t('common.saved')}</div>}
       {testError && <div className="error-msg">{testError}</div>}
       {testEnqueued && <div className="warning-msg">{t('workspace.testEnqueued')}</div>}
 

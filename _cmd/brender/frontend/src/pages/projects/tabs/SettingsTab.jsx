@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
 import { ProjectApi, WorkDirApi } from '../../../lib/api'
 import { onAppEvent } from '../../../lib/appEvents'
+import { useToast } from '../../../lib/toast'
 
 const IMAGE_FILTER = [{ DisplayName: 'Image', Pattern: '*.jpg;*.jpeg;*.png;*.bmp;*.webp' }]
 
@@ -186,10 +187,10 @@ function WorkDirSection({ projectID, workDir, workDirs, onMigrated }) {
 
 function SettingsTab({ detail, focusName, workDir, workDirs, onUpdated, onDeleted }) {
   const { t } = useTranslation()
+  const { showToast } = useToast()
   const [form, setForm]         = useState(null)
   const [saving, setSaving]     = useState(false)
   const [error, setError]       = useState('')
-  const [saved, setSaved]       = useState(false)
   const [confirm, setConfirm]   = useState(false)
   const [deleting, setDeleting] = useState(false)
   const nameRef = useRef(null)
@@ -197,7 +198,6 @@ function SettingsTab({ detail, focusName, workDir, workDirs, onUpdated, onDelete
 
   useEffect(() => {
     setForm({ name: detail.project.name })
-    setSaved(false)
     setError('')
   }, [detail])
 
@@ -210,18 +210,16 @@ function SettingsTab({ detail, focusName, workDir, workDirs, onUpdated, onDelete
   }, [focusName, form])
 
   const set = (key, val) => {
-    setSaved(false)
     setForm(prev => ({ ...prev, [key]: val }))
   }
 
   const handleSave = async () => {
     setError('')
-    setSaved(false)
     if (!form.name.trim()) { setError(t('project.nameRequired')); return }
     setSaving(true)
     try {
       await ProjectApi.update({ id: detail.project.id, name: form.name.trim() })
-      setSaved(true)
+      showToast(t('common.saved'))
       onUpdated()
     } catch (err) {
       setError(String(err))
@@ -260,7 +258,6 @@ function SettingsTab({ detail, focusName, workDir, workDirs, onUpdated, onDelete
           </div>
 
           {error && <div className="error-msg">{error}</div>}
-          {saved && <div className="success-msg">{t('common.saved')}</div>}
 
           <div className="form-actions">
             <button className="btn btn-danger" onClick={() => setConfirm(true)}>

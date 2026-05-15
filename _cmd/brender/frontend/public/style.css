@@ -485,6 +485,27 @@ body {
   font-size: 0.85rem;
 }
 
+.toast {
+  position: fixed;
+  bottom: 28px;
+  right: 32px;
+  background: #2ecc71;
+  color: #111;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  pointer-events: none;
+  animation: toast-in 0.2s ease;
+  z-index: 9999;
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 .warning-msg {
   margin-top: 10px;
   color: #e8a010;
