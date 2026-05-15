@@ -991,3 +991,28 @@ func ZipJobSelectedFiles(id string, filePaths []string, savePath string) error {
 	}
 	return nil
 }
+
+// DeleteJobFiles は job の OutputDir 内の指定ファイルを削除する。
+// OutputDir 外のパスは無視する。
+func DeleteJobFiles(id string, filePaths []string) error {
+	j, err := model.GetJob(id)
+	if err != nil {
+		return xerrors.Errorf("DeleteJobFiles GetJob: %w", err)
+	}
+	absOut, err := filepath.Abs(j.OutputDir)
+	if err != nil {
+		return xerrors.Errorf("DeleteJobFiles Abs: %w", err)
+	}
+	for _, p := range filePaths {
+		absP, err := filepath.Abs(p)
+		if err != nil {
+			continue
+		}
+		rel, err := filepath.Rel(absOut, absP)
+		if err != nil || len(rel) >= 2 && rel[:2] == ".." {
+			continue // OutputDir 外は無視
+		}
+		os.Remove(absP)
+	}
+	return nil
+}
