@@ -428,7 +428,8 @@ function DataViewTab({ job }) {
 // ── ページ本体 ────────────────────────────────────────────
 function JobPage({ job: initialJob, navigate, backPage, backParams }) {
   const { t } = useTranslation()
-  const [tab, setTab]       = useState('detail')
+  const hasData = initialJob && (initialJob.data_status === 2 || initialJob.data_status === 3 || initialJob.data_status === 6 || initialJob.data_status === 7)
+  const [tab, setTab]       = useState(hasData ? 'render' : 'detail')
   const [job, setJob]       = useState(initialJob)
 
   const handleDataStatusChanged = (next) => {
@@ -440,9 +441,9 @@ function JobPage({ job: initialJob, navigate, backPage, backParams }) {
   }
 
   const tabs = [
-    { id: 'detail', label: t('tabs.jobResult') },
     { id: 'render', label: t('tabs.renderResults') },
     { id: 'data',   label: t('tabs.dataView') },
+    { id: 'detail', label: t('tabs.jobResult') },
   ]
 
   const bp = backParams || {}
