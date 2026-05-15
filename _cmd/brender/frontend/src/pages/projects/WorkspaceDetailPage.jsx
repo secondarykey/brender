@@ -311,9 +311,11 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
           scene:       form.scene,
           camera:      form.camera,
           engine:      form.engine,
-          start_frame: form.startFrame,
-          end_frame:   form.endFrame,
-          thread:      form.thread,
+          start_frame:  form.startFrame,
+          end_frame:    form.endFrame,
+          thread:       form.thread,
+          resolution_x: form.resolutionX,
+          resolution_y: form.resolutionY,
         },
       })
       setTestEnqueued(true)

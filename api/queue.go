@@ -188,6 +188,8 @@ type TestRenderParams struct {
 	StartFrame       int    `json:"start_frame"`
 	EndFrame         int    `json:"end_frame"`
 	Thread           int    `json:"thread"`
+	ResolutionX      int    `json:"resolution_x"`
+	ResolutionY      int    `json:"resolution_y"`
 }
 
 // TestEnqueue は現在のフォーム値でサンプル8・中間1フレームのテストレンダリングをキューに追加する。
@@ -299,6 +301,8 @@ func TestEnqueue(projectID, workspaceID string, params TestRenderParams) (*model
 		FrameStep:     1,
 		Thread:        params.Thread,
 		Samples:       8,
+		ResolutionX:   params.ResolutionX,
+		ResolutionY:   params.ResolutionY,
 		Camera:        camera,
 	}
 
