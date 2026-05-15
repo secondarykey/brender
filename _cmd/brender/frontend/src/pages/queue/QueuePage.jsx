@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { QueueApi } from '../../lib/api'
+import { useMessage } from '../../lib/toast'
 import JobDetailDialog from '../../components/JobDetailDialog'
+import ConfirmDialog from '../../components/ConfirmDialog'
 import Pagination from '../../components/Pagination'
 
 function StatusBadge({ status }) {
@@ -95,15 +97,15 @@ function ProgressCell({ q }) {
 // ── 実行中タブ ────────────────────────────────────────────
 function ActiveTab({ navigate }) {
   const { t } = useTranslation()
+  const { showError } = useMessage()
   const [items, setItems]           = useState([])
-  const [error, setError]           = useState('')
   const [confirmId, setConfirmId]   = useState(null)
   const [cancelling, setCancelling] = useState(false)
 
   const load = useCallback(() => {
     QueueApi.listItems()
       .then(list => setItems(list || []))
-      .catch(err => setError(String(err)))
+      .catch(err => showError(String(err)))
   }, [])
 
   useEffect(() => { load() }, [load])
@@ -120,7 +122,7 @@ function ActiveTab({ navigate }) {
       setConfirmId(null)
       load()
     } catch (err) {
-      setError(String(err))
+      showError(String(err))
     } finally {
       setCancelling(false)
     }
@@ -130,7 +132,6 @@ function ActiveTab({ navigate }) {
 
   return (
     <>
-      {error && <div className="error-msg" style={{ marginBottom: 12 }}>{error}</div>}
       {items.length === 0 ? (
         <p className="empty-msg">{t('queue.noJobs')}</p>
       ) : (
@@ -179,28 +180,23 @@ function ActiveTab({ navigate }) {
         </table>
       )}
 
-      {confirmId && (
-        <div className="dialog-overlay" onClick={() => setConfirmId(null)}>
-          <div className="dialog" onClick={e => e.stopPropagation()}>
-            <h3 className="dialog-title">{t('queue.confirmCancel')}</h3>
-            <div className="dialog-body">
-              {confirmItem && (
-                <>
-                  <p><span className="dialog-label">{t('dialog.project')}</span>{confirmItem.project_name}</p>
-                  <p><span className="dialog-label">{t('dialog.workspace')}</span>{confirmItem.workspace_name}</p>
-                  <p><span className="dialog-label">{t('dialog.status')}</span><StatusBadge status={confirmItem.status} /></p>
-                </>
-              )}
-            </div>
-            <div className="dialog-actions">
-              <button className="btn btn-ghost" onClick={() => setConfirmId(null)}>{t('common.back')}</button>
-              <button className="btn btn-danger" onClick={handleCancel} disabled={cancelling}>
-                {cancelling ? t('common.cancelling') : t('common.cancelAction')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        open={!!confirmId}
+        title={t('queue.confirmCancel')}
+        onCancel={() => setConfirmId(null)}
+        onConfirm={handleCancel}
+        cancelLabel={t('common.back')}
+        confirmLabel={cancelling ? t('common.cancelling') : t('common.cancelAction')}
+        busy={cancelling}
+      >
+        {confirmItem && (
+          <>
+            <p><span className="dialog-label">{t('dialog.project')}</span>{confirmItem.project_name}</p>
+            <p><span className="dialog-label">{t('dialog.workspace')}</span>{confirmItem.workspace_name}</p>
+            <p><span className="dialog-label">{t('dialog.status')}</span><StatusBadge status={confirmItem.status} /></p>
+          </>
+        )}
+      </ConfirmDialog>
     </>
   )
 }
@@ -210,8 +206,8 @@ const PAGE_SIZE = 10
 // ── 実行履歴タブ ──────────────────────────────────────────
 function HistoryTab({ navigate }) {
   const { t } = useTranslation()
+  const { showError } = useMessage()
   const [jobs, setJobs]         = useState([])
-  const [error, setError]       = useState('')
   const [selected, setSelected] = useState(null)
   const [page, setPage]         = useState(1)
   const [pageSize, setPageSize] = useState(PAGE_SIZE)
@@ -219,7 +215,7 @@ function HistoryTab({ navigate }) {
   const load = useCallback(() => {
     QueueApi.listJobs()
       .then(list => setJobs(list || []))
-      .catch(err => setError(String(err)))
+      .catch(err => showError(String(err)))
   }, [])
 
   useEffect(() => { load() }, [load])
@@ -232,7 +228,6 @@ function HistoryTab({ navigate }) {
 
   return (
     <>
-      {error && <div className="error-msg" style={{ marginBottom: 12 }}>{error}</div>}
       {jobs.length === 0 ? (
         <p className="empty-msg">{t('queue.noHistory')}</p>
       ) : (

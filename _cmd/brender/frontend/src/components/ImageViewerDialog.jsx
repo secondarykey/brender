@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { QueueApi, WorkspaceApi } from '../lib/api'
+import Dialog from './Dialog'
 
 function ImageViewerDialog({ job, onClose }) {
   const { t } = useTranslation()
@@ -115,78 +116,75 @@ function ImageViewerDialog({ job, onClose }) {
   const filename = images[index] ? images[index].replace(/\\/g, '/').split('/').pop() : ''
 
   return (
-    <div className="dialog-overlay" onClick={onClose}>
-      <div className="dialog image-viewer-dialog" onClick={e => e.stopPropagation()}>
-        <h3 className="dialog-title">
-          {t('dialog.renderResults')}{job.workspace_name}
-        </h3>
-
-        {thumbMsg && (
-          <div className="image-viewer-message">{thumbMsg}</div>
+    <Dialog
+      open
+      className="image-viewer-dialog"
+      title={`${t('dialog.renderResults')}${job.workspace_name}`}
+      onClose={onClose}
+      message={thumbMsg || undefined}
+      messageSeverity="info"
+    >
+      <div className="image-viewer-body">
+        {loadingList && <div className="image-viewer-loading">{t('common.loading')}</div>}
+        {imgSrc && (
+          <img src={imgSrc} alt={filename} className="image-viewer-img" />
         )}
+        {!loadingList && !imgSrc && !error && images.length === 0 && (
+          <div className="image-viewer-empty">{t('viewer.noImages')}</div>
+        )}
+        {error && <div className="error-msg">{error}</div>}
+      </div>
 
-        <div className="image-viewer-body">
-          {loadingList && <div className="image-viewer-loading">{t('common.loading')}</div>}
-          {imgSrc && (
-            <img src={imgSrc} alt={filename} className="image-viewer-img" />
-          )}
-          {!loadingList && !imgSrc && !error && images.length === 0 && (
-            <div className="image-viewer-empty">{t('viewer.noImages')}</div>
-          )}
-          {error && <div className="error-msg">{error}</div>}
-        </div>
-
-        <div className="image-viewer-controls" style={{ visibility: images.length > 0 ? 'visible' : 'hidden' }}>
-          <span className="image-viewer-filename" title={filename}>
-            {filename}{loadingImg && <span className="image-viewer-loading-inline"> {t('common.loading')}</span>}
-          </span>
-          <div className="image-viewer-slider-row">
-            <input
-              type="range"
-              min={0}
-              max={Math.max(0, images.length - 1)}
-              value={index}
-              onChange={e => { stopPlay(); setIndex(Number(e.target.value)) }}
-              className="image-viewer-slider"
-              disabled={images.length <= 1}
-            />
-            <span className="image-viewer-counter">{images.length > 0 ? `${index + 1} / ${images.length}` : '— / —'}</span>
-          </div>
-        </div>
-
-        <div className="dialog-actions" style={{ justifyContent: 'space-between', visibility: images.length > 0 ? 'visible' : 'hidden' }}>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button
-              className="btn btn-sm btn-ghost"
-              onClick={handleTogglePlay}
-              disabled={images.length <= 1}
-            >{playing ? t('viewer.stop') : t('viewer.play')}</button>
-            <button
-              className={`btn btn-sm ${loop ? '' : 'btn-ghost'} image-viewer-loop-btn`}
-              onClick={toggleLoop}
-              disabled={images.length <= 1}
-              title={t('common.loop')}
-            >⟳ {t('common.loop')}</button>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-
-            <button
-              className="btn btn-sm btn-secondary"
-              onClick={handleCreateMovie}
-              disabled={settingThumb || images.length === 0}
-            >{t('viewer.createMovie')}</button>
-
-            <button
-              className="btn btn-sm btn-secondary"
-              onClick={handleSetThumbnail}
-              disabled={settingThumb || images.length === 0}
-            >{settingThumb ? '...' : t('viewer.setAsThumbnail')}</button>
-
-            <button className="btn btn-ghost" onClick={onClose}>{t('common.close')}</button>
-          </div>
+      <div className="image-viewer-controls" style={{ visibility: images.length > 0 ? 'visible' : 'hidden' }}>
+        <span className="image-viewer-filename" title={filename}>
+          {filename}{loadingImg && <span className="image-viewer-loading-inline"> {t('common.loading')}</span>}
+        </span>
+        <div className="image-viewer-slider-row">
+          <input
+            type="range"
+            min={0}
+            max={Math.max(0, images.length - 1)}
+            value={index}
+            onChange={e => { stopPlay(); setIndex(Number(e.target.value)) }}
+            className="image-viewer-slider"
+            disabled={images.length <= 1}
+          />
+          <span className="image-viewer-counter">{images.length > 0 ? `${index + 1} / ${images.length}` : '— / —'}</span>
         </div>
       </div>
-    </div>
+
+      <div className="dialog-actions" style={{ justifyContent: 'space-between', visibility: images.length > 0 ? 'visible' : 'hidden' }}>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            className="btn btn-sm btn-ghost"
+            onClick={handleTogglePlay}
+            disabled={images.length <= 1}
+          >{playing ? t('viewer.stop') : t('viewer.play')}</button>
+          <button
+            className={`btn btn-sm ${loop ? '' : 'btn-ghost'} image-viewer-loop-btn`}
+            onClick={toggleLoop}
+            disabled={images.length <= 1}
+            title={t('common.loop')}
+          >⟳ {t('common.loop')}</button>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+
+          <button
+            className="btn btn-sm btn-green"
+            onClick={handleCreateMovie}
+            disabled={settingThumb || images.length === 0}
+          >{t('viewer.createMovie')}</button>
+
+          <button
+            className="btn btn-sm btn-outline"
+            onClick={handleSetThumbnail}
+            disabled={settingThumb || images.length === 0}
+          >{settingThumb ? '...' : t('viewer.setAsThumbnail')}</button>
+
+          <button className="btn btn-ghost" onClick={onClose}>{t('common.close')}</button>
+        </div>
+      </div>
+    </Dialog>
   )
 }
 

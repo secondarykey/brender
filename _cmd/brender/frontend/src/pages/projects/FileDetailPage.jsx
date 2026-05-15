@@ -2,9 +2,11 @@ import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
 import { WorkspaceApi, QueueApi, ProjectApi, BlenderApi, WorkDirApi } from '../../lib/api'
-import { useToast } from '../../lib/toast'
+import { useToast, useMessage } from '../../lib/toast'
 import Pagination from '../../components/Pagination'
 import SortSelect from '../../components/SortSelect'
+import Dialog from '../../components/Dialog'
+import ConfirmDialog from '../../components/ConfirmDialog'
 
 
 // ── ワークスペースカード（サムネイル表示） ──────────────────
@@ -68,12 +70,12 @@ function WorkspaceCard({ projectID, fileID, ws, navigate, projectName, fileName,
 // ── ワークスペースタブ ─────────────────────────────────────
 function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEnqueued, workDirLocked }) {
   const { t } = useTranslation()
+  const { showError } = useMessage()
   const [workspaces, setWorkspaces] = useState([])
   const [creating, setCreating]     = useState(false) // 作成中フラグ
   const [confirm, setConfirm]       = useState(null) // { ws, preview }
   const [resolvingWsId, setResolvingWsId] = useState(null)
   const [enqueuing, setEnqueuing]   = useState(false)
-  const [enqueueMsg, setEnqueueMsg] = useState('')
   const [viewMode, setViewMode]     = useState(() => localStorage.getItem('viewMode:workspaces') || 'list')
   const [thumbnailMode, setThumbnailMode] = useState(false)
   const [thumbMsg, setThumbMsg]     = useState('')
@@ -110,19 +112,19 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
       const ws = await WorkspaceApi.create({ projectID, projectFileID: fileID, name: 'New Workspace Name' })
       navigate('workspace', { projectID, projectName, fileID, fileName, workspaceID: ws.id, focusName: true })
     } catch (err) {
-      setEnqueueMsg(t('common.error') + String(err))
+      showError(String(err))
       setCreating(false)
     }
   }
 
   const handleRunClick = async (ws) => {
-    setEnqueueMsg('')
+    showError('')
     setResolvingWsId(ws.id)
     try {
       const preview = await QueueApi.previewRender({ projectID, workspaceID: ws.id })
       setConfirm({ ws, preview })
     } catch (err) {
-      setEnqueueMsg(`${t('common.error')}${String(err)}`)
+      showError(String(err))
     } finally {
       setResolvingWsId(null)
     }
@@ -131,12 +133,12 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
   const handleEnqueue = async () => {
     if (!confirm) return
     setEnqueuing(true)
-    setEnqueueMsg('')
+    showError('')
     try {
       await QueueApi.enqueueWithPreview({ projectID, workspaceID: confirm.ws.id, preview: confirm.preview })
       onEnqueued()
     } catch (err) {
-      setEnqueueMsg(`${t('common.error')}${String(err)}`)
+      showError(String(err))
       setConfirm(null)
     } finally {
       setEnqueuing(false)
@@ -269,35 +271,33 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
         </button>
       </div>
 
-      {enqueueMsg && (
-        <div className={`enqueue-msg${enqueueMsg.startsWith(t('common.error')) ? ' enqueue-error' : ''}`} style={{ marginTop: 12 }}>
-          {enqueueMsg}
-        </div>
-      )}
-
-      {confirm && (
-        <div className="dialog-overlay" onClick={() => setConfirm(null)}>
-          <div className="dialog" onClick={e => e.stopPropagation()}>
-            <h3 className="dialog-title">{t('render.confirmTitle')}</h3>
-            <div className="dialog-body">
-              <p><span className="dialog-label">{t('render.workspace')}</span>{confirm.ws.name}</p>
-              <p><span className="dialog-label">{t('render.scene')}</span>{confirm.preview.scene}</p>
-              {confirm.preview.engine
-                ? <p><span className="dialog-label">{t('render.engine')}</span>{confirm.preview.engine}</p>
-                : <p><span className="dialog-label">{t('render.engine')}</span><span style={{ opacity: 0.5 }}>{t('render.blendDefault')}</span></p>
-              }
-              <p><span className="dialog-label">{t('render.frames')}</span>{confirm.preview.start_frame} – {confirm.preview.end_frame}</p>
-              {confirm.preview.frame_step > 1 && <p><span className="dialog-label">{t('render.step')}</span>{confirm.preview.frame_step}</p>}
-            </div>
-            <div className="dialog-actions">
-              <button className="btn btn-ghost" onClick={() => setConfirm(null)}>{t('common.cancel')}</button>
-              <button className="btn btn-run" onClick={handleEnqueue} disabled={enqueuing}>
-                {enqueuing ? t('common.enqueueing') : t('common.run')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Dialog
+        open={!!confirm}
+        title={t('render.confirmTitle')}
+        onClose={() => setConfirm(null)}
+        closeOnBackdrop={!enqueuing}
+        actions={
+          <>
+            <button className="btn btn-ghost" onClick={() => setConfirm(null)}>{t('common.cancel')}</button>
+            <button className="btn btn-run" onClick={handleEnqueue} disabled={enqueuing}>
+              {enqueuing ? t('common.enqueueing') : t('common.run')}
+            </button>
+          </>
+        }
+      >
+        {confirm && (
+          <>
+            <p><span className="dialog-label">{t('render.workspace')}</span>{confirm.ws.name}</p>
+            <p><span className="dialog-label">{t('render.scene')}</span>{confirm.preview.scene}</p>
+            {confirm.preview.engine
+              ? <p><span className="dialog-label">{t('render.engine')}</span>{confirm.preview.engine}</p>
+              : <p><span className="dialog-label">{t('render.engine')}</span><span style={{ opacity: 0.5 }}>{t('render.blendDefault')}</span></p>
+            }
+            <p><span className="dialog-label">{t('render.frames')}</span>{confirm.preview.start_frame} – {confirm.preview.end_frame}</p>
+            {confirm.preview.frame_step > 1 && <p><span className="dialog-label">{t('render.step')}</span>{confirm.preview.frame_step}</p>}
+          </>
+        )}
+      </Dialog>
     </div>
   )
 }
@@ -421,6 +421,7 @@ function DefaultTag({ value, t }) {
 function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
   const { t } = useTranslation()
   const { showToast } = useToast()
+  const { showError } = useMessage()
   const [name, setName]                   = useState(fileName)
   const [blenderInstallID, setBlenderID]  = useState(0)
   const [blenderFixed, setBlenderFixed]   = useState(false)
@@ -440,7 +441,6 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
   const [saving, setSaving]               = useState(false)
   const [deleting, setDeleting]           = useState(false)
   const [confirm, setConfirm]             = useState(false)
-  const [error, setError]                 = useState(null)
 
   const fetchToolData = (installID) => {
     setToolLoading(true)
@@ -494,13 +494,13 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
   const handleSave = async () => {
     if (!name.trim()) return
     setSaving(true)
-    setError(null)
+    showError('')
     try {
       const updated = await ProjectApi.updateFile({ fileID, name: name.trim(), blenderInstallID, blenderFixed, scene, sceneFixed, camera, cameraFixed, engine, engineFixed })
       showToast(t('common.saved'))
       if (onUpdated) onUpdated(updated)
     } catch (e) {
-      setError(e?.message ?? String(e))
+      showError(e?.message ?? String(e))
     } finally {
       setSaving(false)
     }
@@ -508,12 +508,12 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
 
   const handleDelete = async () => {
     setDeleting(true)
-    setError(null)
+    showError('')
     try {
       await ProjectApi.deleteFile({ fileID })
       if (onDeleted) onDeleted()
     } catch (e) {
-      setError(e?.message ?? String(e))
+      showError(e?.message ?? String(e))
       setConfirm(false)
     } finally {
       setDeleting(false)
@@ -552,7 +552,7 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
                   try {
                     await BlenderApi.openFile({ installID: blenderInstallID || 0, filePath })
                   } catch (e) {
-                    setError(e?.message ?? String(e))
+                    showError(e?.message ?? String(e))
                   } finally {
                     setOpeningFile(false)
                   }
@@ -671,34 +671,27 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
             </div>
           </div>
 
-          {error && <p className="form-error">{error}</p>}
           <div className="form-actions">
             <button className="btn btn-danger" onClick={() => setConfirm(true)}>{t('common.delete')}</button>
-            <button className="btn" onClick={handleSave} disabled={saving}>
+            <button className="btn btn-green" onClick={handleSave} disabled={saving}>
               {saving ? t('common.saving') : t('common.save')}
             </button>
           </div>
         </div>
 
-        {confirm && (
-          <div className="dialog-overlay" onClick={() => setConfirm(false)}>
-            <div className="dialog" onClick={e => e.stopPropagation()}>
-              <h3 className="dialog-title">{t('file.confirmDelete')}</h3>
-              <div className="dialog-body">
-                <p><span className="dialog-label">{t('dialog.file')}</span>{fileName}</p>
-                <p style={{ marginTop: 10, color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>
-                  {t('file.deleteWarning')}
-                </p>
-              </div>
-              <div className="dialog-actions">
-                <button className="btn btn-ghost" onClick={() => setConfirm(false)}>{t('common.cancel')}</button>
-                <button className="btn btn-danger" onClick={handleDelete} disabled={deleting}>
-                  {deleting ? t('common.deleting') : t('common.delete')}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <ConfirmDialog
+          open={confirm}
+          title={t('file.confirmDelete')}
+          onCancel={() => setConfirm(false)}
+          onConfirm={handleDelete}
+          confirmLabel={deleting ? t('common.deleting') : t('common.delete')}
+          busy={deleting}
+        >
+          <p><span className="dialog-label">{t('dialog.file')}</span>{fileName}</p>
+          <p style={{ marginTop: 10, color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>
+            {t('file.deleteWarning')}
+          </p>
+        </ConfirmDialog>
       </div>
 
       <div className="ws-detail-right">

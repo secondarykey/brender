@@ -3,7 +3,7 @@ import { QueueApi } from '../lib/api'
 import { onAppEvent } from '../lib/appEvents'
 import TitleBar from '../components/TitleBar'
 import { useTranslation } from "react-i18next"
-import { useToast } from '../lib/toast'
+import { useToast, useMessage } from '../lib/toast'
 
 
 function NavItem({ label, icon, active, onClick, badge }) {
@@ -23,6 +23,7 @@ function MainLayout({ currentPage, onNavigate, children }) {
 
   const { t } = useTranslation()
   const { toast } = useToast()
+  const { error, clearError } = useMessage()
   const [queueCount, setQueueCount] = useState(0)
 
   useEffect(() => {
@@ -45,6 +46,12 @@ function MainLayout({ currentPage, onNavigate, children }) {
   return (
     <div className="app-frame">
       <TitleBar />
+      {error && (
+        <div className="app-message-bar">
+          <span className="app-message-text">{error}</span>
+          <button className="app-message-close" onClick={clearError} aria-label="close">×</button>
+        </div>
+      )}
       <div className="layout">
       <aside className="sidebar">
         <div className="sidebar-top">

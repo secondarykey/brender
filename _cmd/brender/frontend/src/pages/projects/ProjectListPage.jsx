@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ProjectApi, WorkDirApi, BlenderApi } from '../../lib/api'
+import { useMessage } from '../../lib/toast'
 import SortSelect from '../../components/SortSelect'
 
 function WorkDirBadge({ status, t }) {
@@ -53,9 +54,9 @@ function ProjectTile({ d, workDirMap, navigate }) {
 
 function ProjectListPage({ navigate }) {
   const { t } = useTranslation()
+  const { showError } = useMessage()
   const [projects, setProjects] = useState([])
   const [workDirMap, setWorkDirMap] = useState({})
-  const [error, setError]       = useState('')
   const [hasWorkDir, setHasWorkDir] = useState(true)
   const [hasBlender, setHasBlender] = useState(true)
   const [creating, setCreating] = useState(false)
@@ -66,7 +67,7 @@ function ProjectListPage({ navigate }) {
   const load = (s, d) => {
     ProjectApi.list({ sort: s, dir: d })
       .then(list => setProjects(list || []))
-      .catch(err => setError(String(err)))
+      .catch(err => showError(String(err)))
   }
 
   const handleSortChange = (s) => {
@@ -106,7 +107,7 @@ function ProjectListPage({ navigate }) {
       const d = await ProjectApi.create({ name: 'New Project Name' })
       navigate('project', { id: d.project.id, initialTab: 'settings', focusName: true })
     } catch (err) {
-      setError(String(err))
+      showError(String(err))
     } finally {
       setCreating(false)
     }
@@ -126,8 +127,6 @@ function ProjectListPage({ navigate }) {
           <button className="btn-link" onClick={() => navigate('settings', { tab: 'envSettings' })}>{t('project.configureInSettings')}</button>
         </div>
       )}
-
-      {error && <div className="error-msg">{error}</div>}
 
       {projects.length === 0 ? (
         <div className="empty-state">

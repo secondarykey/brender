@@ -49,6 +49,35 @@ body {
   min-height: 0;
 }
 
+/* ── グローバルメッセージ領域（画面上部のエラー表示） ── */
+.app-message-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  background: rgba(231,76,60,0.15);
+  border-bottom: 1px solid rgba(231,76,60,0.45);
+  color: #f0a39c;
+}
+.app-message-text {
+  flex: 1;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+.app-message-close {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+  opacity: 0.7;
+}
+.app-message-close:hover { opacity: 1; }
+
 /* ── Title Bar ── */
 .titlebar {
   height: 48px;
@@ -977,8 +1006,8 @@ body {
 
 .btn-sm {
   height: 28px;
-  padding: 0 12px;
-  font-size: 0.8rem;
+  padding: 3px 10px;
+  font-size: 0.78rem;
 }
 
 /* ── Form ── */
@@ -1064,13 +1093,6 @@ body {
 }
 
 .btn-icon:hover { color: #e74c3c; background: rgba(231,76,60,0.1); }
-
-.btn-secondary {
-  background: rgba(255,255,255,0.08);
-  color: rgba(255,255,255,0.75);
-}
-
-.btn-secondary:hover:not(:disabled) { background: rgba(255,255,255,0.13); }
 
 .btn-green {
   background: #27ae60;
@@ -1205,18 +1227,6 @@ body {
   padding: 0 20px;
 }
 .btn-run:hover:not(:disabled) { background: #e86a10; }
-
-.btn-primary {
-  background: #4a7cdc;
-  color: #fff;
-}
-.btn-primary:hover:not(:disabled) { background: #5a8de8; }
-
-.btn-sm {
-  font-size: 0.78rem;
-  padding: 3px 10px;
-  height: 28px;
-}
 
 .header-actions {
   display: flex;
@@ -1599,6 +1609,29 @@ body {
   margin: 0 0 16px;
   font-size: 1rem;
   font-weight: 600;
+}
+.dialog-message {
+  margin: 0 0 16px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  word-break: break-word;
+}
+.dialog-message-error {
+  background: rgba(231,76,60,0.12);
+  border: 1px solid rgba(231,76,60,0.4);
+  color: #e8857c;
+}
+.dialog-message-success {
+  background: rgba(46,204,113,0.12);
+  border: 1px solid rgba(46,204,113,0.4);
+  color: #6cd99a;
+}
+.dialog-message-info {
+  background: rgba(74,124,220,0.12);
+  border: 1px solid rgba(74,124,220,0.4);
+  color: #8fb4ee;
 }
 .dialog-body p {
   display: flex;

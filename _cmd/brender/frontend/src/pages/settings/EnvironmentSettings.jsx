@@ -3,6 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
 import { WorkDirApi } from '../../lib/api'
 import { onAppEvent } from '../../lib/appEvents'
+import Dialog from '../../components/Dialog'
+import ConfirmDialog from '../../components/ConfirmDialog'
+import { useMessage } from '../../lib/toast'
 
 function fmtGB(bytes) {
   if (!bytes) return null
@@ -124,11 +127,22 @@ function EditDialog({ wd, onClose, onSaved }) {
   const lbl = { display: 'block', fontSize: '0.82rem', color: 'rgba(255,255,255,0.5)', marginBottom: 6 }
 
   return (
-    <div className="dialog-overlay" onClick={busy ? undefined : onClose}>
-      <div className="dialog dialog-wide" onClick={e => e.stopPropagation()}>
-        <h3 className="dialog-title" style={{ marginBottom: 0 }}>{t('settings.workDirs.editTitle')}</h3>
-        <div className="dialog-body">
-
+    <Dialog
+      open
+      wide
+      title={t('settings.workDirs.editTitle')}
+      onClose={onClose}
+      closeOnBackdrop={!busy}
+      message={error || undefined}
+      actions={
+        <>
+          <button className="btn btn-ghost" onClick={onClose} disabled={busy}>{t('common.cancel')}</button>
+          <button className="btn btn-green" onClick={handleSave} disabled={saveBlocked}>
+            {changeDirProgress ? t('project.migrateRunning') : saving ? t('common.saving') : t('common.save')}
+          </button>
+        </>
+      }
+    >
           {/* Check space */}
           <div style={row}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: checkInfo ? 8 : 0 }}>
@@ -138,7 +152,7 @@ function EditDialog({ wd, onClose, onSaved }) {
                 </span>
               )}
               {checkInfo && <span />}
-              <button className="btn btn-sm" onClick={handleCheck} disabled={checking || busy} style={{ marginLeft: 'auto' }}>
+              <button className="btn btn-outline btn-sm" onClick={handleCheck} disabled={checking || busy} style={{ marginLeft: 'auto' }}>
                 {checking ? t('common.processing') : t('settings.workDirs.checkSpace')}
               </button>
             </div>
@@ -162,7 +176,7 @@ function EditDialog({ wd, onClose, onSaved }) {
               <span style={{ flex: 1, fontFamily: 'monospace', fontSize: '0.85rem', wordBreak: 'break-all', color: pathChanged ? '#fff' : 'rgba(255,255,255,0.7)' }}>
                 {path}
               </span>
-              <button className="btn btn-sm" onClick={handleBrowse} disabled={busy || !checkInfo} style={{ flexShrink: 0 }}>
+              <button className="btn btn-outline btn-sm" onClick={handleBrowse} disabled={busy || !checkInfo} style={{ flexShrink: 0 }}>
                 {t('settings.selectDirectory')}
               </button>
             </div>
@@ -205,31 +219,25 @@ function EditDialog({ wd, onClose, onSaved }) {
             </div>
           )}
 
-          {error && <div className="error-msg">{error}</div>}
-        </div>
-        <div className="dialog-actions">
-          <button className="btn btn-ghost" onClick={onClose} disabled={busy}>{t('common.cancel')}</button>
-          <button className="btn" onClick={handleSave} disabled={saveBlocked}>
-            {changeDirProgress ? t('project.migrateRunning') : saving ? t('common.saving') : t('common.save')}
-          </button>
-        </div>
-      </div>
-    </div>
+    </Dialog>
   )
 }
 
 function EnvironmentSettings() {
   const { t } = useTranslation()
+  const { showError } = useMessage()
   const [dirs, setDirs]       = useState([])
-  const [error, setError]     = useState('')
   const [editing, setEditing] = useState(null)
+  const [deleteTarget, setDeleteTarget]     = useState(null)
+  const [deletingDir, setDeletingDir]       = useState(false)
+  const [deleteDirError, setDeleteDirError] = useState('')
   const dragIndex = useRef(null)
   const [dragOver, setDragOver] = useState(null)
 
   const load = () => {
     WorkDirApi.list()
       .then(list => setDirs(list || []))
-      .catch(err => setError(String(err)))
+      .catch(err => showError(String(err)))
   }
 
   useEffect(() => { load() }, [])
@@ -262,32 +270,37 @@ function EnvironmentSettings() {
     try {
       await WorkDirApi.reorder({ ids: next.map(d => d.id) })
     } catch (err) {
-      setError(String(err))
+      showError(String(err))
       load()
     }
   }
 
   // ── 削除 ─────────────────────────────────────────────────
-  const handleDelete = async (wd) => {
-    setError('')
+  const confirmDelete = async () => {
+    if (!deleteTarget) return
+    setDeletingDir(true)
+    setDeleteDirError('')
     try {
-      await WorkDirApi.delete({ id: wd.id })
+      await WorkDirApi.delete({ id: deleteTarget.id })
+      setDeleteTarget(null)
       load()
     } catch (err) {
-      setError(String(err))
+      setDeleteDirError(String(err))
+    } finally {
+      setDeletingDir(false)
     }
   }
 
   // ── 追加 ─────────────────────────────────────────────────
   const handleAdd = async () => {
-    setError('')
+    showError('')
     try {
       const dir = await Dialogs.OpenFile({ CanChooseDirectories: true, CanChooseFiles: false })
       if (!dir) return
       await WorkDirApi.create({ path: dir, priority: dirs.length })
       load()
     } catch (err) {
-      setError(String(err))
+      showError(String(err))
     }
   }
 
@@ -296,12 +309,10 @@ function EnvironmentSettings() {
       <h2 className="section-title">{t('settings.workDirs.title')}</h2>
 
       <div className="toolbar">
-        <button className="btn" onClick={handleAdd}>
+        <button className="btn btn-green" onClick={handleAdd}>
           {t('settings.workDirs.add')}
         </button>
       </div>
-
-      {error && <div className="error-msg">{error}</div>}
 
       {dirs.length === 0 ? (
         <p className="empty-msg">{t('settings.workDirs.empty')}</p>
@@ -338,7 +349,7 @@ function EnvironmentSettings() {
                     <button className="btn btn-sm" onClick={() => setEditing(wd)} style={{ marginRight: 4 }}>
                       {t('common.edit')}
                     </button>
-                    <button className="btn btn-sm btn-danger" onClick={() => handleDelete(wd)}>
+                    <button className="btn btn-sm btn-danger" onClick={() => { setDeleteTarget(wd); setDeleteDirError('') }}>
                       {t('common.delete')}
                     </button>
                   </td>
@@ -356,6 +367,25 @@ function EnvironmentSettings() {
           onSaved={load}
         />
       )}
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title={t('settings.workDirs.confirmDelete')}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        confirmLabel={deletingDir ? t('common.deleting') : t('common.delete')}
+        busy={deletingDir}
+        message={deleteDirError || undefined}
+      >
+        {deleteTarget && (
+          <>
+            <p><span className="dialog-label">{t('settings.workDirs.path')}</span>{deleteTarget.path}</p>
+            <p style={{ marginTop: 10, color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>
+              {t('settings.workDirs.deleteWarning')}
+            </p>
+          </>
+        )}
+      </ConfirmDialog>
     </div>
   )
 }

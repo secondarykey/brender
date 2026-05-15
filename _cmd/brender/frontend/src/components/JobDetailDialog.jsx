@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { QueueApi } from '../lib/api'
+import Dialog from './Dialog'
+import ConfirmDialog from './ConfirmDialog'
 
 // data_status: 0=なし 1=なしロック 2=あり 3=ありロック 4=削除 5=削除ロック
 function dataStatusClass(s) {
@@ -137,96 +139,97 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
   }
 
   return (
-    <div className="dialog-overlay" onClick={() => { if (!confirm) onClose() }}>
-      <div className="dialog dialog-wide" onClick={e => e.stopPropagation()}>
-        <h3 className="dialog-title">{t('dialog.jobDetails')}</h3>
-
-        <div className="dialog-body job-detail-body">
-          <div className="job-detail-section">
-            <Row label={t('dialog.status')}    value={<span className={`status-badge status-${status}`}>{statusLabels[status] ?? status}</span>} />
-            <Row label={t('dialog.data')} value={
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <DataStatusBadge status={dataStatus} />
-                <button className="btn btn-sm btn-ghost" onClick={handleLock} disabled={locking}>
-                  {isLocked ? t('common.unlock') : t('common.lock')}
-                </button>
-              </div>
-            } />
-            <Row label={t('dialog.project')}  value={job.project_name} />
-            <Row label={t('dialog.workspace')} value={job.workspace_name} />
-          </div>
-
-          <div className="job-detail-section">
-            <Row label={t('dialog.scene')}    value={job.scene   || t('common.default')} />
-            <Row label={t('dialog.camera')}  value={job.camera} />
-            <Row label={t('dialog.engine')}  value={job.engine  || t('common.default')} />
-            <Row label={t('dialog.frames')}  value={`${job.start_frame} – ${job.end_frame}${job.frame_step > 1 ? ` (${t('dialog.step')}${job.frame_step})` : ''}`} />
-            <Row label={t('dialog.threads')}  value={job.thread === 0 ? t('common.automatic') : String(job.thread)} />
-            <Row label={t('dialog.samples')}     value={job.samples === 0 ? t('common.default') : String(job.samples)} />
-            <Row label={t('dialog.resolution')}  value={(job.resolution_x > 0 && job.resolution_y > 0) ? `${job.resolution_x}×${job.resolution_y}` : t('common.default')} />
-          </div>
-
-          <div className="job-detail-section">
-            <Row label={t('dialog.blender')}  value={job.blender_path} selectable />
-            <Row label={t('dialog.file')} value={job.blender_file} selectable />
-            <Row label={t('dialog.output')}   value={job.output_dir}   selectable />
-            <Row label={t('dialog.dataSize')} value={
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={dataStatus >= 4 ? { textDecoration: 'line-through', opacity: 0.5 } : undefined}>{formatBytes(job.disk_size)}</span>
-                {(dataStatus === 2 || dataStatus === 6) && (
-                  <button className="btn btn-sm btn-danger" onClick={() => setConfirmData(true)} disabled={isLocked}>
-                    {t('common.deleteData')}
-                  </button>
-                )}
-              </div>
-            } />
-          </div>
-
-          <div className="job-detail-section">
-            <Row label={t('dialog.enrolledAt')} value={fmt(job.enqueued_at)} />
-            <Row label={t('dialog.startedAt')} value={fmt(job.started_at)} />
-            <Row label={t('dialog.completedAt')} value={fmt(job.completed_at)} />
-            <Row label={t('dialog.duration')} value={duration(job.started_at, job.completed_at, t)} />
-          </div>
-
-          {status === 'error' && job.error_msg && (
-            <div className="job-detail-error">{job.error_msg}</div>
-          )}
-
-          {error && <div className="error-msg" style={{ marginTop: 8 }}>{error}</div>}
+    <>
+      <Dialog
+        open
+        wide
+        title={t('dialog.jobDetails')}
+        onClose={onClose}
+        closeOnBackdrop={!confirm && !confirmData}
+        message={error || undefined}
+        bodyClassName="job-detail-body"
+        actions={
+          <>
+            <button className="btn btn-danger" style={{ marginRight: 'auto' }} onClick={() => setConfirm(true)} disabled={isLocked}>{t('common.delete')}</button>
+            <button className="btn btn-ghost" onClick={() => QueueApi.openLogWindow({ id: job.id })}>{t('job.showLog')}</button>
+            <button className="btn btn-ghost" onClick={onClose}>{t('common.close')}</button>
+          </>
+        }
+      >
+        <div className="job-detail-section">
+          <Row label={t('dialog.status')}    value={<span className={`status-badge status-${status}`}>{statusLabels[status] ?? status}</span>} />
+          <Row label={t('dialog.data')} value={
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <DataStatusBadge status={dataStatus} />
+              <button className="btn btn-sm btn-ghost" onClick={handleLock} disabled={locking}>
+                {isLocked ? t('common.unlock') : t('common.lock')}
+              </button>
+            </div>
+          } />
+          <Row label={t('dialog.project')}  value={job.project_name} />
+          <Row label={t('dialog.workspace')} value={job.workspace_name} />
         </div>
 
-        {confirmData ? (
-          <div className="job-delete-confirm">
-            <span className="job-delete-confirm-msg">{t('job.deleteDataWarning')}</span>
-            <div className="dialog-actions" style={{ marginTop: 12 }}>
-              <button className="btn btn-ghost" onClick={() => setConfirmData(false)} disabled={deletingData}>{t('common.cancel')}</button>
-              <button className="btn btn-danger" onClick={handleDeleteData} disabled={deletingData}>
-                {deletingData ? t('common.deleting') : t('job.deleteDataAction')}
-              </button>
+        <div className="job-detail-section">
+          <Row label={t('dialog.scene')}    value={job.scene   || t('common.default')} />
+          <Row label={t('dialog.camera')}  value={job.camera} />
+          <Row label={t('dialog.engine')}  value={job.engine  || t('common.default')} />
+          <Row label={t('dialog.frames')}  value={`${job.start_frame} – ${job.end_frame}${job.frame_step > 1 ? ` (${t('dialog.step')}${job.frame_step})` : ''}`} />
+          <Row label={t('dialog.threads')}  value={job.thread === 0 ? t('common.automatic') : String(job.thread)} />
+          <Row label={t('dialog.samples')}     value={job.samples === 0 ? t('common.default') : String(job.samples)} />
+          <Row label={t('dialog.resolution')}  value={(job.resolution_x > 0 && job.resolution_y > 0) ? `${job.resolution_x}×${job.resolution_y}` : t('common.default')} />
+        </div>
+
+        <div className="job-detail-section">
+          <Row label={t('dialog.blender')}  value={job.blender_path} selectable />
+          <Row label={t('dialog.file')} value={job.blender_file} selectable />
+          <Row label={t('dialog.output')}   value={job.output_dir}   selectable />
+          <Row label={t('dialog.dataSize')} value={
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={dataStatus >= 4 ? { textDecoration: 'line-through', opacity: 0.5 } : undefined}>{formatBytes(job.disk_size)}</span>
+              {(dataStatus === 2 || dataStatus === 6) && (
+                <button className="btn btn-sm btn-danger" onClick={() => setConfirmData(true)} disabled={isLocked}>
+                  {t('common.deleteData')}
+                </button>
+              )}
             </div>
-          </div>
-        ) : confirm ? (
-          <div className="job-delete-confirm">
-            <span className="job-delete-confirm-msg">{t('job.deleteWarning')}</span>
-            <div className="dialog-actions" style={{ marginTop: 12 }}>
-              <button className="btn btn-ghost" onClick={() => setConfirm(false)} disabled={deleting}>{t('common.cancel')}</button>
-              <button className="btn btn-danger" onClick={handleDelete} disabled={deleting}>
-                {deleting ? t('common.deleting') : t('common.delete')}
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="dialog-actions" style={{ justifyContent: 'space-between' }}>
-            <button className="btn btn-danger" onClick={() => setConfirm(true)} disabled={isLocked}>{t('common.delete')}</button>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button className="btn btn-ghost" onClick={() => QueueApi.openLogWindow({ id: job.id })}>{t('job.showLog')}</button>
-              <button className="btn btn-ghost" onClick={onClose}>{t('common.close')}</button>
-            </div>
-          </div>
+          } />
+        </div>
+
+        <div className="job-detail-section">
+          <Row label={t('dialog.enrolledAt')} value={fmt(job.enqueued_at)} />
+          <Row label={t('dialog.startedAt')} value={fmt(job.started_at)} />
+          <Row label={t('dialog.completedAt')} value={fmt(job.completed_at)} />
+          <Row label={t('dialog.duration')} value={duration(job.started_at, job.completed_at, t)} />
+        </div>
+
+        {status === 'error' && job.error_msg && (
+          <div className="job-detail-error">{job.error_msg}</div>
         )}
-      </div>
-    </div>
+      </Dialog>
+
+      <ConfirmDialog
+        open={confirm}
+        title={t('common.delete')}
+        onCancel={() => setConfirm(false)}
+        onConfirm={handleDelete}
+        confirmLabel={deleting ? t('common.deleting') : t('common.delete')}
+        busy={deleting}
+      >
+        <p>{t('job.deleteWarning')}</p>
+      </ConfirmDialog>
+
+      <ConfirmDialog
+        open={confirmData}
+        title={t('common.deleteData')}
+        onCancel={() => setConfirmData(false)}
+        onConfirm={handleDeleteData}
+        confirmLabel={deletingData ? t('common.deleting') : t('job.deleteDataAction')}
+        busy={deletingData}
+      >
+        <p>{t('job.deleteDataWarning')}</p>
+      </ConfirmDialog>
+    </>
   )
 }
 

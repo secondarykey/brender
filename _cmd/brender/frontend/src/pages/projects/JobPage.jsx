@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
 import { QueueApi, WorkspaceApi } from '../../lib/api'
 import { onAppEvent } from '../../lib/appEvents'
+import { useMessage } from '../../lib/toast'
 
 const VIDEO_EXTS = new Set(['.mp4', '.mov', '.avi', '.mkv', '.webm', '.m4v'])
 const IMAGE_EXTS = new Set(['.png', '.jpg', '.jpeg', '.exr', '.tiff', '.tif', '.bmp', '.hdr', '.webp', '.tga'])
@@ -73,12 +74,12 @@ function Row({ label, value, selectable }) {
 // ── 詳細タブ ──────────────────────────────────────────────
 function DetailTab({ job, onDeleted, onDataStatusChanged }) {
   const { t } = useTranslation()
+  const { showError } = useMessage()
   const [confirm, setConfirm]           = useState(false)
   const [confirmData, setConfirmData]   = useState(false)
   const [deleting, setDeleting]         = useState(false)
   const [deletingData, setDeletingData] = useState(false)
   const [locking, setLocking]           = useState(false)
-  const [error, setError]               = useState('')
   const [dataStatus, setDataStatus]     = useState(job?.data_status ?? 0)
 
   useEffect(() => { if (job) setDataStatus(job.data_status ?? 0) }, [job])
@@ -100,7 +101,7 @@ function DetailTab({ job, onDeleted, onDataStatusChanged }) {
   }
 
   const handleLock = async () => {
-    setLocking(true); setError('')
+    setLocking(true); showError('')
     try {
       if (isLocked) {
         await QueueApi.unlockJob({ id: job.id })
@@ -109,27 +110,27 @@ function DetailTab({ job, onDeleted, onDataStatusChanged }) {
         await QueueApi.lockJob({ id: job.id })
         updateStatus(dataStatus + 1)
       }
-    } catch (err) { setError(String(err)) }
+    } catch (err) { showError(String(err)) }
     finally { setLocking(false) }
   }
 
   const handleDeleteData = async () => {
-    setDeletingData(true); setError('')
+    setDeletingData(true); showError('')
     try {
       await QueueApi.deleteJobData({ id: job.id })
       setConfirmData(false)
       updateStatus(4)
-    } catch (err) { setError(String(err)) }
+    } catch (err) { showError(String(err)) }
     finally { setDeletingData(false) }
   }
 
   const handleDelete = async () => {
-    setDeleting(true); setError('')
+    setDeleting(true); showError('')
     try {
       await QueueApi.deleteJob({ id: job.id })
       setConfirm(false)
       onDeleted()
-    } catch (err) { setError(String(err)) }
+    } catch (err) { showError(String(err)) }
     finally { setDeleting(false) }
   }
 
@@ -188,8 +189,6 @@ function DetailTab({ job, onDeleted, onDataStatusChanged }) {
         {status === 'error' && job.error_msg && (
           <div className="job-detail-error">{job.error_msg}</div>
         )}
-
-        {error && <div className="error-msg" style={{ marginTop: 8 }}>{error}</div>}
       </div>
 
       {confirmData ? (
@@ -336,7 +335,7 @@ function RenderResultTab({ job }) {
   return (
     <div className="job-page-viewer">
       <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-        <button className="btn btn-sm btn-secondary" onClick={handleSetThumbnail} disabled={settingThumb || images.length === 0}>
+        <button className="btn btn-sm btn-outline" onClick={handleSetThumbnail} disabled={settingThumb || images.length === 0}>
           {settingThumb ? '...' : t('viewer.setAsThumbnail')}
         </button>
       </div>
@@ -376,7 +375,7 @@ function RenderResultTab({ job }) {
             onClick={toggleLoop} disabled={images.length <= 1} title={t('common.loop')}
           >⟳ {t('common.loop')}</button>
           {moviePath && (
-            <button className="btn btn-sm btn-primary" onClick={handlePlayMovie}>
+            <button className="btn btn-sm" onClick={handlePlayMovie}>
               {t('viewer.playMovie')}
             </button>
           )}
@@ -394,22 +393,21 @@ function RenderResultTab({ job }) {
 // ── データ表示タブ ────────────────────────────────────────
 function DataViewTab({ job }) {
   const { t } = useTranslation()
+  const { showError } = useMessage()
   const [files, setFiles]               = useState([])
   const [loading, setLoading]           = useState(true)
-  const [error, setError]               = useState('')
   const [selected, setSelected]         = useState(new Set())
   const [downloading, setDownloading]   = useState(false)
-  const [dlError, setDlError]           = useState('')
   const [deleting, setDeleting]         = useState(false)
 
   useEffect(() => {
     if (!job) return
     setLoading(true)
-    setError('')
+    showError('')
     setSelected(new Set())
     QueueApi.listJobFiles({ id: job.id })
       .then(list => { setFiles(list || []); setLoading(false) })
-      .catch(err => { setError(String(err)); setLoading(false) })
+      .catch(err => { showError(String(err)); setLoading(false) })
   }, [job])
 
   const selectableFiles = files.filter(f => !f.is_dir)
@@ -446,11 +444,11 @@ function DataViewTab({ job }) {
       Filters: [{ DisplayName: 'ZIP Archive', Pattern: '*.zip' }],
     })
     if (!savePath) return
-    setDownloading(true); setDlError('')
+    setDownloading(true); showError('')
     try {
       await QueueApi.zipJobData({ id: job.id, savePath })
     } catch (err) {
-      setDlError(String(err))
+      showError(String(err))
     } finally {
       setDownloading(false)
     }
@@ -462,11 +460,11 @@ function DataViewTab({ job }) {
       Filters: [{ DisplayName: 'ZIP Archive', Pattern: '*.zip' }],
     })
     if (!savePath) return
-    setDownloading(true); setDlError('')
+    setDownloading(true); showError('')
     try {
       await QueueApi.zipJobSelectedFiles({ id: job.id, filePaths: [...selected], savePath })
     } catch (err) {
-      setDlError(String(err))
+      showError(String(err))
     } finally {
       setDownloading(false)
     }
@@ -474,21 +472,20 @@ function DataViewTab({ job }) {
 
   const handleDeleteSelected = async () => {
     if (!window.confirm(t('common.confirmDeleteFiles'))) return
-    setDeleting(true); setDlError('')
+    setDeleting(true); showError('')
     try {
       await QueueApi.deleteJobFiles({ id: job.id, filePaths: [...selected] })
       setSelected(new Set())
       const list = await QueueApi.listJobFiles({ id: job.id })
       setFiles(list || [])
     } catch (err) {
-      setDlError(String(err))
+      showError(String(err))
     } finally {
       setDeleting(false)
     }
   }
 
   if (loading) return <p className="setting-desc">{t('common.loading')}</p>
-  if (error)   return <div className="error-msg">{error}</div>
   if (files.length === 0) return <p className="empty-msg">{t('job.noFiles')}</p>
 
   const isLocked    = job && job.data_status % 2 === 1
@@ -501,7 +498,7 @@ function DataViewTab({ job }) {
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
         <div style={{ display: 'flex', gap: 4 }}>
-          <button className="btn btn-sm btn-primary" onClick={handleDownloadSelected} disabled={downloading || !someSelected}>
+          <button className="btn btn-sm" onClick={handleDownloadSelected} disabled={downloading || !someSelected}>
             {downloading ? t('common.downloading') : `${t('common.downloadZip')}${someSelected ? ` (${selected.size})` : ''}`}
           </button>
           <button className="btn btn-sm btn-ghost" onClick={() => selectByExts(IMAGE_EXTS)}>{t('job.filterImage')}</button>
@@ -512,7 +509,6 @@ function DataViewTab({ job }) {
           {deleting ? t('common.deleting') : `${t('common.deleteSelected')}${someSelected ? ` (${selected.size})` : ''}`}
         </button>
       </div>
-      {dlError && <div className="error-msg" style={{ marginBottom: 8 }}>{dlError}</div>}
       <table className="queue-table">
         <thead>
           <tr>

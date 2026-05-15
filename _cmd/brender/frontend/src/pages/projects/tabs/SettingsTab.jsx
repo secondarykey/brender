@@ -3,7 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
 import { ProjectApi, WorkDirApi } from '../../../lib/api'
 import { onAppEvent } from '../../../lib/appEvents'
-import { useToast } from '../../../lib/toast'
+import { useToast, useMessage } from '../../../lib/toast'
+import Dialog from '../../../components/Dialog'
+import ConfirmDialog from '../../../components/ConfirmDialog'
 
 const IMAGE_FILTER = [{ DisplayName: 'Image', Pattern: '*.jpg;*.jpeg;*.png;*.bmp;*.webp' }]
 
@@ -128,7 +130,7 @@ function WorkDirSection({ projectID, workDir, workDirs, onMigrated }) {
       </div>
       {workDir && (
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
-          <button className="btn btn-sm" onClick={() => setShowMigrate(true)}>
+          <button className="btn btn-outline btn-sm" onClick={() => setShowMigrate(true)}>
             {t('project.migrate')}
           </button>
         </div>
@@ -136,51 +138,51 @@ function WorkDirSection({ projectID, workDir, workDirs, onMigrated }) {
         </>
       )}
 
-      {showMigrate && (
-        <div className="dialog-overlay" onClick={() => !migrating && setShowMigrate(false)}>
-          <div className="dialog" onClick={e => e.stopPropagation()}>
-            <h3 className="dialog-title">{t('project.migrateTitle')}</h3>
-            <div className="dialog-body">
-              <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 13, marginBottom: 12 }}>
-                {t('project.migrateWarning')}
-              </p>
-              {activeTargets.length === 0 ? (
-                <p style={{ color: '#f17e72', fontSize: 13 }}>No active work directories available.</p>
-              ) : (
-                <select
-                  className="form-select"
-                  value={targetID}
-                  onChange={e => setTargetID(e.target.value)}
-                  disabled={migrating}
-                  style={{ width: '100%' }}
-                >
-                  {activeTargets.map(w => (
-                    <option key={w.id} value={String(w.id)}>{w.path}</option>
-                  ))}
-                </select>
-              )}
-              {migrateProgress && (
-                <div style={{ marginTop: 10, fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>
-                  {t('project.migrateRunning')} {Math.round((migrateProgress.pct || 0) * 100)}%
-                </div>
-              )}
-              {migrateError && <div className="error-msg" style={{ marginTop: 8 }}>{migrateError}</div>}
-            </div>
-            <div className="dialog-actions">
-              <button className="btn btn-ghost" onClick={() => setShowMigrate(false)} disabled={migrating}>
-                {t('common.cancel')}
-              </button>
-              <button
-                className="btn"
-                onClick={handleMigrate}
-                disabled={migrating || !targetID || activeTargets.length === 0}
-              >
-                {migrating ? t('project.migrateRunning') : t('project.migrateConfirm')}
-              </button>
-            </div>
+      <Dialog
+        open={showMigrate}
+        title={t('project.migrateTitle')}
+        onClose={() => setShowMigrate(false)}
+        closeOnBackdrop={!migrating}
+        message={migrateError || undefined}
+        actions={
+          <>
+            <button className="btn btn-ghost" onClick={() => setShowMigrate(false)} disabled={migrating}>
+              {t('common.cancel')}
+            </button>
+            <button
+              className="btn btn-outline"
+              onClick={handleMigrate}
+              disabled={migrating || !targetID || activeTargets.length === 0}
+            >
+              {migrating ? t('project.migrateRunning') : t('project.migrateConfirm')}
+            </button>
+          </>
+        }
+      >
+        <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 13, marginBottom: 12 }}>
+          {t('project.migrateWarning')}
+        </p>
+        {activeTargets.length === 0 ? (
+          <p style={{ color: '#f17e72', fontSize: 13 }}>No active work directories available.</p>
+        ) : (
+          <select
+            className="form-select"
+            value={targetID}
+            onChange={e => setTargetID(e.target.value)}
+            disabled={migrating}
+            style={{ width: '100%' }}
+          >
+            {activeTargets.map(w => (
+              <option key={w.id} value={String(w.id)}>{w.path}</option>
+            ))}
+          </select>
+        )}
+        {migrateProgress && (
+          <div style={{ marginTop: 10, fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>
+            {t('project.migrateRunning')} {Math.round((migrateProgress.pct || 0) * 100)}%
           </div>
-        </div>
-      )}
+        )}
+      </Dialog>
     </div>
   )
 }
@@ -188,13 +190,13 @@ function WorkDirSection({ projectID, workDir, workDirs, onMigrated }) {
 function SettingsTab({ detail, focusName, workDir, workDirs, onUpdated, onDeleted }) {
   const { t } = useTranslation()
   const { showToast } = useToast()
+  const { showError } = useMessage()
   const [form, setForm]         = useState(null)
   const [saving, setSaving]     = useState(false)
   const [error, setError]       = useState('')
   const [confirm, setConfirm]   = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [dirMsg, setDirMsg]       = useState('')
-  const [dirError, setDirError]   = useState('')
   const [dirLoading, setDirLoading] = useState(false)
   const nameRef = useRef(null)
   const hasFocused = useRef(false)
@@ -225,7 +227,7 @@ function SettingsTab({ detail, focusName, workDir, workDirs, onUpdated, onDelete
       showToast(t('common.saved'))
       onUpdated()
     } catch (err) {
-      setError(String(err))
+      showError(String(err))
     } finally {
       setSaving(false)
     }
@@ -237,7 +239,7 @@ function SettingsTab({ detail, focusName, workDir, workDirs, onUpdated, onDelete
       await ProjectApi.delete({ id: detail.project.id })
       onDeleted()
     } catch (err) {
-      setError(String(err))
+      showError(String(err))
       setConfirm(false)
     } finally {
       setDeleting(false)
@@ -271,7 +273,7 @@ function SettingsTab({ detail, focusName, workDir, workDirs, onUpdated, onDelete
             <button className="btn btn-danger" onClick={() => setConfirm(true)}>
               {t('common.delete')}
             </button>
-            <button className="btn" onClick={handleSave} disabled={saving}>
+            <button className="btn btn-green" onClick={handleSave} disabled={saving}>
               {saving ? t('common.saving') : t('common.save')}
             </button>
           </div>
@@ -288,7 +290,7 @@ function SettingsTab({ detail, focusName, workDir, workDirs, onUpdated, onDelete
           <button
             className="btn btn-sm btn-outline"
             onClick={async () => {
-              setDirError('')
+              showError('')
               setDirMsg('')
               try {
                 const dir = await Dialogs.OpenFile({ CanChooseDirectories: true, CanChooseFiles: false })
@@ -297,13 +299,13 @@ function SettingsTab({ detail, focusName, workDir, workDirs, onUpdated, onDelete
                 const result = await ProjectApi.addFilesFromDir({ projectID: detail.project.id, dir })
                 onUpdated()
                 if (result.errors?.length) {
-                  setDirError(result.errors.join('\n'))
+                  showError(result.errors.join('\n'))
                 } else {
                   setDirMsg(t('workspace.addFilesFromDirResult', { added: result.added, skipped: result.skipped }))
                   setTimeout(() => setDirMsg(''), 4000)
                 }
               } catch (err) {
-                setDirError(String(err))
+                showError(String(err))
               } finally {
                 setDirLoading(false)
               }
@@ -312,28 +314,21 @@ function SettingsTab({ detail, focusName, workDir, workDirs, onUpdated, onDelete
             {t('workspace.addFilesFromDir')}
           </button>
           {dirMsg && <div className="success-msg" style={{ marginTop: 6 }}>{dirMsg}</div>}
-          {dirError && <div className="error-msg" style={{ marginTop: 6 }}>{dirError}</div>}
         </div>
 
-        {confirm && (
-          <div className="dialog-overlay" onClick={() => setConfirm(false)}>
-            <div className="dialog" onClick={e => e.stopPropagation()}>
-              <h3 className="dialog-title">{t('project.confirmDelete')}</h3>
-              <div className="dialog-body">
-                <p><span className="dialog-label">{t('dialog.project')}</span>{detail.project.name}</p>
-                <p style={{ marginTop: 10, color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>
-                  {t('project.deleteWarning')}
-                </p>
-              </div>
-              <div className="dialog-actions">
-                <button className="btn btn-ghost" onClick={() => setConfirm(false)}>{t('common.cancel')}</button>
-                <button className="btn btn-danger" onClick={handleDelete} disabled={deleting}>
-                  {deleting ? t('common.deleting') : t('common.delete')}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <ConfirmDialog
+          open={confirm}
+          title={t('project.confirmDelete')}
+          onCancel={() => setConfirm(false)}
+          onConfirm={handleDelete}
+          confirmLabel={deleting ? t('common.deleting') : t('common.delete')}
+          busy={deleting}
+        >
+          <p><span className="dialog-label">{t('dialog.project')}</span>{detail.project.name}</p>
+          <p style={{ marginTop: 10, color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>
+            {t('project.deleteWarning')}
+          </p>
+        </ConfirmDialog>
       </div>
 
       <div className="ws-detail-right">

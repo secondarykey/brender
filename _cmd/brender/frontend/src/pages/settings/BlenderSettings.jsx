@@ -2,13 +2,16 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
 import { BlenderApi, EnvironmentApi } from '../../lib/api'
+import ConfirmDialog from '../../components/ConfirmDialog'
+import { useMessage } from '../../lib/toast'
 
 function BlenderSettings() {
   const { t } = useTranslation()
   const [blenders, setBlenders] = useState([])
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const { showError } = useMessage()
   const [confirm, setConfirm] = useState(null)
+  const [confirmError, setConfirmError] = useState('')
   const [deleting, setDeleting] = useState(false)
   const dragIndex = useRef(null)
   const [dragOver, setDragOver] = useState(null)
@@ -18,7 +21,7 @@ function BlenderSettings() {
   const load = () => {
     BlenderApi.list()
       .then(list => setBlenders(list || []))
-      .catch(err => setError(String(err)))
+      .catch(err => showError(String(err)))
   }
 
   useEffect(() => {
@@ -33,14 +36,14 @@ function BlenderSettings() {
     try {
       await EnvironmentApi.setMaxConcurrentJobs({ n: maxJobs })
     } catch (err) {
-      setError(String(err))
+      showError(String(err))
     } finally {
       setSavingMaxJobs(false)
     }
   }
 
   const handleAdd = async () => {
-    setError('')
+    showError('')
     const filters = window.navigator.platform.startsWith('Win')
       ? [{ DisplayName: 'Blender Executable', Pattern: '*.exe' }]
       : []
@@ -51,7 +54,7 @@ function BlenderSettings() {
       await BlenderApi.register({ path: result })
       load()
     } catch (err) {
-      setError(String(err))
+      showError(String(err))
     } finally {
       setLoading(false)
     }
@@ -60,14 +63,13 @@ function BlenderSettings() {
   const handleDelete = async () => {
     if (!confirm) return
     setDeleting(true)
-    setError('')
+    setConfirmError('')
     try {
       await BlenderApi.delete({ id: confirm.id })
       setConfirm(null)
       load()
     } catch (err) {
-      setError(String(err))
-      setConfirm(null)
+      setConfirmError(String(err))
     } finally {
       setDeleting(false)
     }
@@ -104,7 +106,7 @@ function BlenderSettings() {
     try {
       await BlenderApi.reorder({ ids: newList.map(b => b.id) })
     } catch (err) {
-      setError(String(err))
+      showError(String(err))
       load()
     }
   }
@@ -131,7 +133,7 @@ function BlenderSettings() {
               onChange={e => setMaxJobs(Math.max(1, Number(e.target.value)))}
               style={{ width: 80, textAlign: 'right' }}
             />
-            <button className="btn btn-sm" onClick={handleMaxJobsSave} disabled={savingMaxJobs}>
+            <button className="btn btn-green btn-sm" onClick={handleMaxJobsSave} disabled={savingMaxJobs}>
               {savingMaxJobs ? t('common.saving') : t('common.save')}
             </button>
           </div>
@@ -140,12 +142,11 @@ function BlenderSettings() {
       </div>
 
       <div className="toolbar">
-        <button className="btn" onClick={handleAdd} disabled={loading}>
+        <button className="btn btn-green" onClick={handleAdd} disabled={loading}>
           {loading ? t('common.registering') : t('settings.addBlender')}
         </button>
       </div>
 
-      {error && <div className="error-msg">{error}</div>}
 
       {blenders.length === 0 ? (
         <p className="empty-msg">{t('settings.noBlenders')}</p>
@@ -184,7 +185,7 @@ function BlenderSettings() {
                   <td>{b.version || '—'}</td>
                   <td className="path-cell">{b.path}</td>
                   <td>
-                    <button className="btn btn-danger" onClick={() => setConfirm(b)}>
+                    <button className="btn btn-danger" onClick={() => { setConfirm(b); setConfirmError('') }}>
                       {t('common.delete')}
                     </button>
                   </td>
@@ -195,24 +196,23 @@ function BlenderSettings() {
         </>
       )}
 
-      {confirm && (
-        <div className="dialog-overlay" onClick={() => setConfirm(null)}>
-          <div className="dialog" onClick={e => e.stopPropagation()}>
-            <h3 className="dialog-title">{t('settings.confirmDeleteBlender')}</h3>
-            <div className="dialog-body">
-              <p><span className="dialog-label">{t('dialog.name')}</span>{confirm.name}</p>
-              <p><span className="dialog-label">{t('dialog.version')}</span>{confirm.version || '—'}</p>
-              <p><span className="dialog-label">{t('dialog.path')}</span>{confirm.path}</p>
-            </div>
-            <div className="dialog-actions">
-              <button className="btn btn-ghost" onClick={() => setConfirm(null)}>{t('common.cancel')}</button>
-              <button className="btn btn-danger" onClick={handleDelete} disabled={deleting}>
-                {deleting ? t('common.deleting') : t('common.delete')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        open={!!confirm}
+        title={t('settings.confirmDeleteBlender')}
+        onCancel={() => setConfirm(null)}
+        onConfirm={handleDelete}
+        confirmLabel={deleting ? t('common.deleting') : t('common.delete')}
+        busy={deleting}
+        message={confirmError || undefined}
+      >
+        {confirm && (
+          <>
+            <p><span className="dialog-label">{t('dialog.name')}</span>{confirm.name}</p>
+            <p><span className="dialog-label">{t('dialog.version')}</span>{confirm.version || '—'}</p>
+            <p><span className="dialog-label">{t('dialog.path')}</span>{confirm.path}</p>
+          </>
+        )}
+      </ConfirmDialog>
     </div>
   )
 }

@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { EnvironmentApi } from '../../lib/api'
+import { useMessage } from '../../lib/toast'
 
 function VideoSettings() {
   const { t } = useTranslation()
+  const { showError } = useMessage()
   const [cmd,    setCmd]    = useState('')
   const [fps,    setFps]    = useState('')
   const [ext,    setExt]    = useState('')
   const [outExt, setOutExt] = useState('')
   const [args,   setArgs]   = useState('')
   const [saving, setSaving] = useState(false)
-  const [error,  setError]  = useState('')
   const [saved,  setSaved]  = useState(false)
 
   useEffect(() => {
@@ -23,11 +24,11 @@ function VideoSettings() {
         setOutExt(env.ffmpeg_out_ext || '')
         setArgs(env.ffmpeg_args   || '')
       })
-      .catch(err => setError(String(err)))
+      .catch(err => showError(String(err)))
   }, [])
 
   const handleSave = async () => {
-    setError('')
+    showError('')
     setSaved(false)
     setSaving(true)
     try {
@@ -40,7 +41,7 @@ function VideoSettings() {
       })
       setSaved(true)
     } catch (err) {
-      setError(String(err))
+      showError(String(err))
     } finally {
       setSaving(false)
     }
@@ -114,12 +115,11 @@ function VideoSettings() {
 
       <div className="form-actions" style={{ marginTop: 24 }}>
         <div />
-        <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
+        <button className="btn btn-green" onClick={handleSave} disabled={saving}>
           {saving ? t('common.saving') : t('common.save')}
         </button>
       </div>
 
-      {error && <div className="error-msg">{error}</div>}
       {saved && <div className="success-msg">{t('common.saved')}</div>}
     </div>
   )

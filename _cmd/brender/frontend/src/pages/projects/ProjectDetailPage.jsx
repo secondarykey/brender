@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ProjectApi, WorkDirApi } from '../../lib/api'
+import { useMessage } from '../../lib/toast'
 import WorkspaceTab from './tabs/WorkspaceTab'
 import SettingsTab from './tabs/SettingsTab'
 
 function ProjectDetailPage({ id, initialTab, focusName, navigate }) {
   const { t } = useTranslation()
+  const { showError } = useMessage()
   const [detail, setDetail]   = useState(null)
   const [workDir, setWorkDir] = useState(null)
   const [workDirs, setWorkDirs] = useState([])
   const [tab, setTab]         = useState(initialTab || 'workspace')
-  const [error, setError]     = useState('')
+  const [loadError, setLoadError] = useState(false)
 
   const tabs = [
     { id: 'workspace', label: t('tabs.fileList') },
@@ -25,13 +27,13 @@ function ProjectDetailPage({ id, initialTab, focusName, navigate }) {
         setWorkDirs(dirs)
         setWorkDir(dirs.find(w => w.id === d.project.work_dir_id) || null)
       })
-      .catch(err => setError(String(err)))
+      .catch(err => { showError(String(err)); setLoadError(true) })
   }
 
   useEffect(() => { load() }, [id])
 
-  if (error) {
-    return <div className="page"><div className="error-msg">{error}</div></div>
+  if (loadError) {
+    return <div className="page" />
   }
 
   if (!detail) {

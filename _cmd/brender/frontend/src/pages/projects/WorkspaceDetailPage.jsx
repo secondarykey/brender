@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
 import { WorkspaceApi, BlenderApi, QueueApi, ProjectApi, WorkDirApi } from '../../lib/api'
-import { useToast } from '../../lib/toast'
+import { useToast, useMessage } from '../../lib/toast'
 import Pagination from '../../components/Pagination'
+import ConfirmDialog from '../../components/ConfirmDialog'
 
 
 const isFrameDefault      = (start, end) => start === 0 && end === -1
@@ -152,6 +153,7 @@ function DefaultTag({ value, t }) {
 function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onDeleted, onTestEnqueued, workDirLocked }) {
   const { t } = useTranslation()
   const { showToast } = useToast()
+  const { showError } = useMessage()
   const [blenders, setBlenders]             = useState([])
   const [engines, setEngines]               = useState([])
   const [enginesLoading, setEnginesLoading] = useState(false)
@@ -167,7 +169,6 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
   const [deleting, setDeleting]             = useState(false)
   const [testEnqueueing, setTestEnqueueing] = useState(false)
   const [testEnqueued, setTestEnqueued]     = useState(false)
-  const [testError, setTestError]           = useState('')
   const nameRef      = useRef(null)
   const hasFocused   = useRef(false)
   const lastFrameSpec      = useRef(null) // OFF 直前のフレーム値を退避
@@ -305,14 +306,14 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
       showToast(t('common.saved'))
       onUpdated()
     } catch (err) {
-      setError(String(err))
+      showError(String(err))
     } finally {
       setSaving(false)
     }
   }
 
   const handleTestEncode = async () => {
-    setTestError('')
+    showError('')
     setTestEnqueued(false)
     setTestEnqueueing(true)
     try {
@@ -334,7 +335,7 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
       setTestEnqueued(true)
       if (onTestEnqueued) onTestEnqueued()
     } catch (err) {
-      setTestError(String(err))
+      showError(String(err))
     } finally {
       setTestEnqueueing(false)
     }
@@ -553,8 +554,7 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
         )}
       </div>
 
-      {error     && <div className="error-msg">{error}</div>}
-      {testError && <div className="error-msg">{testError}</div>}
+      {error && <div className="error-msg">{error}</div>}
       {testEnqueued && <div className="warning-msg">{t('workspace.testEnqueued')}</div>}
 
       <div className="form-actions">
@@ -563,42 +563,36 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
           <button className="btn btn-run" onClick={handleTestEncode} disabled={testEnqueueing || workDirLocked}>
             {testEnqueueing ? t('common.enqueueing') : t('workspace.testRender')}
           </button>
-          <button className="btn" onClick={handleSave} disabled={saving}>
+          <button className="btn btn-green" onClick={handleSave} disabled={saving}>
             {saving ? t('common.saving') : t('common.save')}
           </button>
         </div>
       </div>
 
-      {confirm && (
-        <div className="dialog-overlay" onClick={() => setConfirm(false)}>
-          <div className="dialog" onClick={e => e.stopPropagation()}>
-            <h3 className="dialog-title">{t('workspace.confirmDelete')}</h3>
-            <div className="dialog-body">
-              <p><span className="dialog-label">{t('dialog.workspace')}</span>{detail.workspace.name}</p>
-              <p style={{ marginTop: 10, color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>
-                {t('workspace.deleteWarning')}
-              </p>
-            </div>
-            <div className="dialog-actions">
-              <button className="btn btn-ghost" onClick={() => setConfirm(false)}>{t('common.cancel')}</button>
-              <button className="btn btn-danger" onClick={async () => {
-                setDeleting(true)
-                try {
-                  await WorkspaceApi.delete({ projectID, workspaceID })
-                  onDeleted()
-                } catch (err) {
-                  setError(String(err))
-                  setConfirm(false)
-                } finally {
-                  setDeleting(false)
-                }
-              }} disabled={deleting}>
-                {deleting ? t('common.deleting') : t('common.delete')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        open={confirm}
+        title={t('workspace.confirmDelete')}
+        onCancel={() => setConfirm(false)}
+        onConfirm={async () => {
+          setDeleting(true)
+          try {
+            await WorkspaceApi.delete({ projectID, workspaceID })
+            onDeleted()
+          } catch (err) {
+            showError(String(err))
+            setConfirm(false)
+          } finally {
+            setDeleting(false)
+          }
+        }}
+        confirmLabel={deleting ? t('common.deleting') : t('common.delete')}
+        busy={deleting}
+      >
+        <p><span className="dialog-label">{t('dialog.workspace')}</span>{detail.workspace.name}</p>
+        <p style={{ marginTop: 10, color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>
+          {t('workspace.deleteWarning')}
+        </p>
+      </ConfirmDialog>
     </div>
   )
 }
@@ -608,16 +602,17 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
 // ── ページ本体 ────────────────────────────────────────────
 function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspaceID, focusName, navigate }) {
   const { t } = useTranslation()
+  const { showError } = useMessage()
   const [detail, setDetail]           = useState(null)
-  const [error, setError]             = useState('')
+  const [loadFailed, setLoadFailed]   = useState(false)
   const [historyReload, setHistoryReload] = useState(0)
   const [workDirStatus, setWorkDirStatus] = useState(null)
 
   const load = useCallback(() => {
     WorkspaceApi.get({ projectID, workspaceID })
       .then(d => setDetail(d))
-      .catch(err => setError(String(err)))
-  }, [projectID, workspaceID])
+      .catch(err => { showError(String(err)); setLoadFailed(true) })
+  }, [projectID, workspaceID, showError])
 
   useEffect(() => { load() }, [load])
 
@@ -630,8 +625,8 @@ function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspa
       .catch(() => {})
   }, [projectID])
 
-  if (error && !detail) {
-    return <div className="page"><div className="error-msg">{error}</div></div>
+  if (loadFailed && !detail) {
+    return <div className="page" />
   }
   if (!detail) {
     return <div className="page"><p className="setting-desc">{t('common.loading')}</p></div>

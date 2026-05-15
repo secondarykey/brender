@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
 import { WorkspaceApi, ProjectApi, BlenderApi } from '../../../lib/api'
 import { onAppEvent } from '../../../lib/appEvents'
+import { useMessage } from '../../../lib/toast'
 import SortSelect from '../../../components/SortSelect'
 
 // ── サムネイルタイル ──────────────────────────────────────
@@ -64,9 +65,8 @@ function FileCard({ projectID, g, navigate, projectName, thumbnailMode, onSetThu
 
 function WorkspaceTab({ projectID, navigate, projectName }) {
   const { t } = useTranslation()
+  const { showError } = useMessage()
   const [groups, setGroups]   = useState([])
-  const [error, setError]     = useState('')
-  const [fileError, setFileError] = useState('')
   const [openingFileID, setOpeningFileID] = useState(null)
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('viewMode:files') || 'card')
   const [thumbnailMode, setThumbnailMode] = useState(false)
@@ -77,7 +77,7 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
   const load = (s, d) => {
     WorkspaceApi.listByProject({ projectID, sort: s, dir: d })
       .then(list => setGroups(list || []))
-      .catch(err => setError(String(err)))
+      .catch(err => showError(String(err)))
   }
 
   const handleSortChange = (s) => {
@@ -100,14 +100,14 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
     try {
       await BlenderApi.openFile({ installID: file.blender_install_id || 0, filePath: file.path })
     } catch (err) {
-      setFileError(String(err))
+      showError(String(err))
     } finally {
       setOpeningFileID(null)
     }
   }
 
   const handleAddFile = async () => {
-    setFileError('')
+    showError('')
     try {
       const path = await Dialogs.OpenFile({
         Filters: [{ DisplayName: 'Blender File', Pattern: '*.blend' }],
@@ -116,7 +116,7 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
       await ProjectApi.addFile({ projectID, path })
       load()
     } catch (err) {
-      setFileError(String(err))
+      showError(String(err))
     }
   }
 
@@ -134,7 +134,6 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
 
   return (
     <div className="workspace-tab-root">
-      {error && <div className="error-msg">{error}</div>}
 
       <div className="file-view-toggle">
         {groups.length > 0 && (
@@ -232,7 +231,6 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
         </div>
       )}
 
-      {fileError && <div className="error-msg" style={{ marginTop: 8 }}>{fileError}</div>}
 
       <div className="list-spacer" />
       <div className="list-fab">
