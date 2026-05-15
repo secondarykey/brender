@@ -417,6 +417,8 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
   const [blenders, setBlenders]           = useState([])
   const [toolData, setToolData]           = useState(null)
   const [engines, setEngines]             = useState([])
+  const [filePath, setFilePath]           = useState('')
+  const [openingFile, setOpeningFile]     = useState(false)
   const [toolLoading, setToolLoading]     = useState(false)
   const [enginesLoading, setEnginesLoading] = useState(false)
   const [saving, setSaving]               = useState(false)
@@ -448,6 +450,7 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
       setBlenders(list || [])
       const installID = f?.blender_install_id || 0
       setName(f?.name || fileName)
+      setFilePath(f?.path || '')
       setBlenderID(installID)
       setBlenderFixed(f?.blender_fixed || false)
       setScene(f?.scene || '')
@@ -524,9 +527,26 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
                 value={name}
                 onChange={e => setName(e.target.value)}
               />
+              <button
+                className="btn btn-run btn-sm"
+                style={{ marginTop: 6, alignSelf: 'flex-start' }}
+                disabled={openingFile || !filePath}
+                onClick={async () => {
+                  setOpeningFile(true)
+                  try {
+                    await BlenderApi.openFile({ installID: blenderInstallID || 0, filePath })
+                  } catch (e) {
+                    setError(e?.message ?? String(e))
+                  } finally {
+                    setOpeningFile(false)
+                  }
+                }}
+              >
+                {openingFile ? '...' : t('common.open')}
+              </button>
             </div>
             <div className="form-field" style={{ flex: 1 }}>
-              <label className="form-label">
+              <label className="form-label" style={{ whiteSpace: 'nowrap' }}>
                 {t('file.defaultBlender')}
                 <DefaultTag value={blenderDefault} t={t} />
               </label>

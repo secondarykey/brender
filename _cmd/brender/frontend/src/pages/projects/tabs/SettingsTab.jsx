@@ -193,8 +193,9 @@ function SettingsTab({ detail, focusName, workDir, workDirs, onUpdated, onDelete
   const [error, setError]       = useState('')
   const [confirm, setConfirm]   = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const [dirMsg, setDirMsg]     = useState('')
-  const [dirError, setDirError] = useState('')
+  const [dirMsg, setDirMsg]       = useState('')
+  const [dirError, setDirError]   = useState('')
+  const [dirLoading, setDirLoading] = useState(false)
   const nameRef = useRef(null)
   const hasFocused = useRef(false)
 
@@ -247,7 +248,12 @@ function SettingsTab({ detail, focusName, workDir, workDirs, onUpdated, onDelete
 
   return (
     <div className="ws-detail-split">
-      <div className="ws-detail-left">
+      <div className="ws-detail-left" style={{ position: 'relative' }}>
+        {dirLoading && (
+          <div className="ws-list-overlay">
+            <span className="ws-list-overlay-label">{t('common.processing')}</span>
+          </div>
+        )}
         <div className="form" style={{ maxWidth: 480 }}>
           <div className="form-field">
             <label className="form-label">{t('project.name')} <span className="required">*</span></label>
@@ -287,6 +293,7 @@ function SettingsTab({ detail, focusName, workDir, workDirs, onUpdated, onDelete
               try {
                 const dir = await Dialogs.OpenFile({ CanChooseDirectories: true, CanChooseFiles: false })
                 if (!dir) return
+                setDirLoading(true)
                 const result = await ProjectApi.addFilesFromDir({ projectID: detail.project.id, dir })
                 onUpdated()
                 if (result.errors?.length) {
@@ -297,6 +304,8 @@ function SettingsTab({ detail, focusName, workDir, workDirs, onUpdated, onDelete
                 }
               } catch (err) {
                 setDirError(String(err))
+              } finally {
+                setDirLoading(false)
               }
             }}
           >
