@@ -247,6 +247,7 @@ function HistoryTab({ navigate }) {
                 <th>{t('table.camera')}</th>
                 <th>{t('table.frames')}</th>
                 <th>{t('table.samples')}</th>
+                <th>{t('table.resolution')}</th>
                 <th>{t('table.startedAt')}</th>
                 <th>{t('table.completedAt')}</th>
                 <th>{t('table.duration')}</th>
@@ -277,6 +278,7 @@ function HistoryTab({ navigate }) {
                   <td>{j.camera || '—'}</td>
                   <td className="frames-cell">{j.start_frame}–{j.end_frame}</td>
                   <td className="num-cell">{j.samples > 0 ? j.samples : '—'}</td>
+                  <td className="num-cell">{(j.resolution_x > 0 && j.resolution_y > 0) ? `${j.resolution_x}×${j.resolution_y}` : '—'}</td>
                   <td className="date-cell">{formatDate(j.started_at)}</td>
                   <td className="date-cell">{formatDate(j.completed_at)}</td>
                   <td className="duration-cell">{duration(j.started_at, j.completed_at, t)}</td>
