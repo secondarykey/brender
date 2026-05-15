@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { QueueApi } from '../lib/api'
 import { onAppEvent } from '../lib/appEvents'
 import TitleBar from '../components/TitleBar'
-import { useTranslation } from "react-i18next";
+import { useTranslation } from "react-i18next"
+import { useToast } from '../lib/toast'
 
 
 function NavItem({ label, icon, active, onClick, badge }) {
@@ -20,7 +21,8 @@ function NavItem({ label, icon, active, onClick, badge }) {
 
 function MainLayout({ currentPage, onNavigate, children }) {
 
-  const { t } = useTranslation();
+  const { t } = useTranslation()
+  const { toast } = useToast()
   const [queueCount, setQueueCount] = useState(0)
 
   useEffect(() => {
@@ -73,6 +75,7 @@ function MainLayout({ currentPage, onNavigate, children }) {
         {children}
       </main>
       </div>
+      {toast && <div className="toast">{toast}</div>}
     </div>
   )
 }

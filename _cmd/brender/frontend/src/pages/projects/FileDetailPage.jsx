@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
 import { WorkspaceApi, QueueApi, ProjectApi, BlenderApi, WorkDirApi } from '../../lib/api'
+import { useToast } from '../../lib/toast'
 import Pagination from '../../components/Pagination'
 import SortSelect from '../../components/SortSelect'
 
@@ -402,6 +403,7 @@ function DefaultTag({ value, t }) {
 // ── 設定タブ ─────────────────────────────────────────────
 function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
   const { t } = useTranslation()
+  const { showToast } = useToast()
   const [name, setName]                   = useState(fileName)
   const [blenderInstallID, setBlenderID]  = useState(0)
   const [blenderFixed, setBlenderFixed]   = useState(false)
@@ -475,6 +477,7 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
     setError(null)
     try {
       const updated = await ProjectApi.updateFile({ fileID, name: name.trim(), blenderInstallID, blenderFixed, scene, sceneFixed, camera, cameraFixed, engine, engineFixed })
+      showToast(t('common.saved'))
       if (onUpdated) onUpdated(updated)
     } catch (e) {
       setError(e?.message ?? String(e))

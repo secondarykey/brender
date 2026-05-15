@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { ToastProvider } from './lib/toast'
 import MainLayout from './layouts/MainLayout'
 import ProjectListPage from './pages/projects/ProjectListPage'
 import ProjectDetailPage from './pages/projects/ProjectDetailPage'
@@ -120,9 +121,11 @@ function App() {
   const section = ['project', 'file', 'workspace', 'job'].includes(nav.page) ? 'projects' : nav.page
 
   return (
-    <MainLayout currentPage={section} onNavigate={(p) => navigate(p)}>
-      {renderPage()}
-    </MainLayout>
+    <ToastProvider>
+      <MainLayout currentPage={section} onNavigate={(p) => navigate(p)}>
+        {renderPage()}
+      </MainLayout>
+    </ToastProvider>
   )
 }
 
