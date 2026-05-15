@@ -207,6 +207,9 @@
   },
   "job": {
     "noFiles": "ファイルが見つかりません",
+    "filterImage": "画像",
+    "filterVideo": "動画",
+    "filterLog": "ログ",
     "showLog": "ログを表示",
     "noLog": "ログファイルがありません",
     "tail": "末尾を追従",
