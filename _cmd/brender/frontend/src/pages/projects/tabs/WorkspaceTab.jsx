@@ -237,6 +237,7 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
       {fileError && <div className="error-msg" style={{ marginTop: 8 }}>{fileError}</div>}
       {fileMsg && <div className="success-msg" style={{ marginTop: 8 }}>{fileMsg}</div>}
 
+      <div className="list-spacer" />
       <div className="list-fab">
         <button className="btn btn-outline btn-sm" style={{ pointerEvents: 'all' }} onClick={handleAddFilesFromDir}>{t('workspace.addFilesFromDir')}</button>
         <button className="btn btn-green" onClick={handleAddFile}>{t('workspace.addFile')}</button>

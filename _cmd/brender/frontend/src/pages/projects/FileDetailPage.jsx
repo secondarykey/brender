@@ -246,6 +246,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
         )}
       </div>
 
+      <div className="list-spacer" />
       <div className="list-fab">
         <button className="btn btn-green" onClick={handleCreateWorkspace} disabled={creating}>
           {creating ? t('common.registering') : t('workspace.createNew')}

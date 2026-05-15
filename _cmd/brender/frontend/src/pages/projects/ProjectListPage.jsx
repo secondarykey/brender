@@ -185,6 +185,7 @@ function ProjectListPage({ navigate }) {
         </>
       )}
 
+      <div className="list-spacer" />
       <div className="list-fab">
         <button className="btn btn-green" onClick={handleCreate} disabled={!canCreate || creating}>
           {creating ? t('common.registering') : t('project.register.transition')}
