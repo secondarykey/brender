@@ -240,6 +240,12 @@ function RenderResultTab({ job }) {
     QueueApi.listJobImages({ id: job.id })
       .then(list => { setImages(list || []); setLoadingList(false) })
       .catch(err => { setError(String(err)); setLoadingList(false) })
+    QueueApi.listJobFiles({ id: job.id })
+      .then(files => {
+        const movie = (files || []).find(f => !f.is_dir && /^movie\./i.test(f.name) && isVideoFile(f.name))
+        if (movie) setMoviePath(movie.path)
+      })
+      .catch(() => {})
   }, [job])
 
   useEffect(() => {
@@ -319,6 +325,17 @@ function RenderResultTab({ job }) {
 
   return (
     <div className="job-page-viewer">
+      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+        {moviePath && (
+          <button className="btn btn-sm btn-run" onClick={handlePlayMovie}>
+            {t('viewer.playMovie')}
+          </button>
+        )}
+        <button className="btn btn-sm btn-secondary" onClick={handleCreateMovie} disabled={creatingMovie || images.length === 0}>
+          {creatingMovie ? t('viewer.movieCreating') : t('viewer.createMovie')}
+        </button>
+      </div>
+
       {msg && <div className="image-viewer-message">{msg}</div>}
 
       <div className="image-viewer-body">
@@ -355,14 +372,6 @@ function RenderResultTab({ job }) {
           >⟳ {t('common.loop')}</button>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button className="btn btn-sm btn-secondary" onClick={handleCreateMovie} disabled={creatingMovie || settingThumb || images.length === 0}>
-            {creatingMovie ? t('viewer.movieCreating') : t('viewer.createMovie')}
-          </button>
-          {moviePath && (
-            <button className="btn btn-sm btn-run" onClick={handlePlayMovie}>
-              {t('viewer.playMovie')}
-            </button>
-          )}
           <button className="btn btn-sm btn-secondary" onClick={handleSetThumbnail} disabled={settingThumb || images.length === 0}>
             {settingThumb ? '...' : t('viewer.setAsThumbnail')}
           </button>
