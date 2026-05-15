@@ -29,6 +29,8 @@
     "deleteData": "Delete Data",
     "downloadZip": "Download ZIP",
     "downloading": "Downloading...",
+    "selectAll": "Select all",
+    "deselectAll": "Deselect all",
     "dragToReorder": "Drag to reorder",
     "error": "Error: ",
     "reload": "Reload",

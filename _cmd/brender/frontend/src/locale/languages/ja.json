@@ -29,6 +29,8 @@
     "deleteData": "データ削除",
     "downloadZip": "ZIPダウンロード",
     "downloading": "ダウンロード中...",
+    "selectAll": "すべて選択",
+    "deselectAll": "選択解除",
     "dragToReorder": "ドラッグで並び替え",
     "error": "エラー: ",
     "reload": "再読み込み",

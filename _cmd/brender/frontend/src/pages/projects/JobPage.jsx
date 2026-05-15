@@ -388,6 +388,7 @@ function DataViewTab({ job }) {
   const [files, setFiles]               = useState([])
   const [loading, setLoading]           = useState(true)
   const [error, setError]               = useState('')
+  const [selected, setSelected]         = useState(new Set())
   const [downloading, setDownloading]   = useState(false)
   const [dlError, setDlError]           = useState('')
 
@@ -395,21 +396,57 @@ function DataViewTab({ job }) {
     if (!job) return
     setLoading(true)
     setError('')
+    setSelected(new Set())
     QueueApi.listJobFiles({ id: job.id })
       .then(list => { setFiles(list || []); setLoading(false) })
       .catch(err => { setError(String(err)); setLoading(false) })
   }, [job])
 
-  const handleDownload = async () => {
+  const selectableFiles = files.filter(f => !f.is_dir)
+  const allSelected     = selectableFiles.length > 0 && selectableFiles.every(f => selected.has(f.path))
+  const someSelected    = selectableFiles.some(f => selected.has(f.path))
+
+  const toggleAll = () => {
+    if (allSelected) {
+      setSelected(new Set())
+    } else {
+      setSelected(new Set(selectableFiles.map(f => f.path)))
+    }
+  }
+
+  const toggleFile = (path) => {
+    setSelected(prev => {
+      const next = new Set(prev)
+      next.has(path) ? next.delete(path) : next.add(path)
+      return next
+    })
+  }
+
+  const handleDownloadAll = async () => {
     const savePath = await Dialogs.SaveFile({
       DefaultFilename: job.id + '.zip',
       Filters: [{ DisplayName: 'ZIP Archive', Pattern: '*.zip' }],
     })
     if (!savePath) return
-    setDownloading(true)
-    setDlError('')
+    setDownloading(true); setDlError('')
     try {
       await QueueApi.zipJobData({ id: job.id, savePath })
+    } catch (err) {
+      setDlError(String(err))
+    } finally {
+      setDownloading(false)
+    }
+  }
+
+  const handleDownloadSelected = async () => {
+    const savePath = await Dialogs.SaveFile({
+      DefaultFilename: job.id + '_selected.zip',
+      Filters: [{ DisplayName: 'ZIP Archive', Pattern: '*.zip' }],
+    })
+    if (!savePath) return
+    setDownloading(true); setDlError('')
+    try {
+      await QueueApi.zipJobSelectedFiles({ id: job.id, filePaths: [...selected], savePath })
     } catch (err) {
       setDlError(String(err))
     } finally {
@@ -427,16 +464,32 @@ function DataViewTab({ job }) {
     <div className="job-data-view">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
         <p className="setting-desc job-data-path" style={{ margin: 0 }}>{job.output_dir}</p>
-        {canDownload && (
-          <button className="btn btn-sm btn-ghost" onClick={handleDownload} disabled={downloading}>
-            {downloading ? t('common.downloading') : t('common.downloadZip')}
-          </button>
-        )}
+        <div style={{ display: 'flex', gap: 8 }}>
+          {canDownload && someSelected && (
+            <button className="btn btn-sm btn-ghost" onClick={handleDownloadSelected} disabled={downloading}>
+              {downloading ? t('common.downloading') : `${t('common.downloadZip')} (${selected.size})`}
+            </button>
+          )}
+          {canDownload && (
+            <button className="btn btn-sm btn-ghost" onClick={handleDownloadAll} disabled={downloading}>
+              {downloading ? t('common.downloading') : t('common.downloadZip')}
+            </button>
+          )}
+        </div>
       </div>
       {dlError && <div className="error-msg" style={{ marginBottom: 8 }}>{dlError}</div>}
       <table className="queue-table">
         <thead>
           <tr>
+            <th style={{ width: 32, textAlign: 'center' }}>
+              <input
+                type="checkbox"
+                checked={allSelected}
+                ref={el => { if (el) el.indeterminate = someSelected && !allSelected }}
+                onChange={toggleAll}
+                title={allSelected ? t('common.deselectAll') : t('common.selectAll')}
+              />
+            </th>
             <th>{t('table.name')}</th>
             <th style={{ textAlign: 'right' }}>{t('dialog.dataSize')}</th>
             <th>{t('dialog.completedAt')}</th>
@@ -445,13 +498,23 @@ function DataViewTab({ job }) {
         <tbody>
           {files.map(f => {
             const canPlay = !f.is_dir && isVideoFile(f.name)
+            const isSelected = !f.is_dir && selected.has(f.path)
             return (
               <tr
                 key={f.name}
-                className={`${f.is_dir ? 'job-data-row-dir' : ''} ${canPlay ? 'job-data-row-video' : ''}`.trim()}
+                className={`${f.is_dir ? 'job-data-row-dir' : ''} ${canPlay ? 'job-data-row-video' : ''} ${isSelected ? 'job-data-row-selected' : ''}`.trim()}
                 onClick={canPlay ? () => QueueApi.openMovieWindow({ path: f.path }) : undefined}
                 title={canPlay ? t('viewer.playMovie') : undefined}
               >
+                <td style={{ textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+                  {!f.is_dir && (
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => toggleFile(f.path)}
+                    />
+                  )}
+                </td>
                 <td>{f.is_dir ? '📁 ' : canPlay ? '▶ ' : ''}{f.name}</td>
                 <td style={{ textAlign: 'right' }}>{f.is_dir ? '—' : formatBytes(f.size)}</td>
                 <td className="date-cell">{new Date(f.mod_time).toLocaleString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })}</td>
