@@ -136,6 +136,8 @@
     "empty": "No workspaces",
     "createNew": "+ Create Workspace",
     "addFile": "+ Add .blend file",
+    "addFilesFromDir": "+ Add from directory",
+    "addFilesFromDirResult": "Added {{added}}, skipped {{skipped}}",
     "listView": "List view",
     "cardView": "Card view",
     "noFilesRegistered": "No .blend files registered",

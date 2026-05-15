@@ -8,6 +8,9 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
+import * as api$0 from "../models.js";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
 import * as model$0 from "../../model/models.js";
 
 /**
@@ -22,12 +25,23 @@ export function AddFile(projectID, path) {
 }
 
 /**
+ * @param {string} projectID
+ * @param {string} dir
+ * @returns {$CancellablePromise<api$0.AddDirResult | null>}
+ */
+export function AddFilesFromDir(projectID, dir) {
+    return $Call.ByID(1202928748, projectID, dir).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType3($result);
+    }));
+}
+
+/**
  * @param {string} name
  * @returns {$CancellablePromise<model$0.ProjectDetail | null>}
  */
 export function Create(name) {
     return $Call.ByID(1643296919, name).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType3($result);
+        return $$createType5($result);
     }));
 }
 
@@ -53,7 +67,7 @@ export function DeleteFile(fileID) {
  */
 export function Get(id) {
     return $Call.ByID(1926978505, id).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType3($result);
+        return $$createType5($result);
     }));
 }
 
@@ -90,7 +104,7 @@ export function GetProjectThumbnail(projectID) {
  */
 export function List(sort) {
     return $Call.ByID(3125621303, sort).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType4($result);
+        return $$createType6($result);
     }));
 }
 
@@ -147,7 +161,7 @@ export function SetProjectThumbnailFromFile(projectID, fileID) {
  */
 export function Update(id, name) {
     return $Call.ByID(2080245374, id, name).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType3($result);
+        return $$createType5($result);
     }));
 }
 
@@ -173,6 +187,8 @@ export function UpdateFile(fileID, name, blenderInstallID, blenderFixed, scene, 
 // Private type creation functions
 const $$createType0 = model$0.ProjectFile.createFrom;
 const $$createType1 = $Create.Nullable($$createType0);
-const $$createType2 = model$0.ProjectDetail.createFrom;
+const $$createType2 = api$0.AddDirResult.createFrom;
 const $$createType3 = $Create.Nullable($$createType2);
-const $$createType4 = $Create.Array($$createType3);
+const $$createType4 = model$0.ProjectDetail.createFrom;
+const $$createType5 = $Create.Nullable($$createType4);
+const $$createType6 = $Create.Array($$createType5);

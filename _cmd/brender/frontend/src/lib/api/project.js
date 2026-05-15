@@ -59,6 +59,13 @@ export const ProjectApi = {
     isWails() ? svc().then(s => s.UpdateFile(fileID, name, blenderInstallID, blenderFixed, scene, sceneFixed, camera, cameraFixed, engine, engineFixed))
               : serverCall('project', 'update_file', { file_id: fileID, name, blender_install_id: blenderInstallID, blender_fixed: blenderFixed, scene, scene_fixed: sceneFixed, camera, camera_fixed: cameraFixed, engine, engine_fixed: engineFixed }),
 
+  /** ディレクトリ内の .blend ファイルを一括追加
+   * @param {{ projectID: string, dir: string }} args
+   */
+  addFilesFromDir: ({ projectID, dir }) =>
+    isWails() ? svc().then(s => s.AddFilesFromDir(projectID, dir))
+              : serverCall('project', 'add_files_from_dir', { project_id: projectID, dir }),
+
   /** ファイルをプロジェクトから除外（履歴は残す）
    * @param {{ fileID: number }} args
    */

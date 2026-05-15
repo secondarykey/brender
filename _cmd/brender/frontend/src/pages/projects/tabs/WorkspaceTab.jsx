@@ -66,6 +66,7 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
   const [groups, setGroups]   = useState([])
   const [error, setError]     = useState('')
   const [fileError, setFileError] = useState('')
+  const [fileMsg, setFileMsg] = useState('')
   const [openingFileID, setOpeningFileID] = useState(null)
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('viewMode:files') || 'card')
   const [thumbnailMode, setThumbnailMode] = useState(false)
@@ -107,6 +108,25 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
       if (!path) return
       await ProjectApi.addFile({ projectID, path })
       load()
+    } catch (err) {
+      setFileError(String(err))
+    }
+  }
+
+  const handleAddFilesFromDir = async () => {
+    setFileError('')
+    setFileMsg('')
+    try {
+      const dir = await Dialogs.OpenDirectory({ Title: t('settings.selectDirectory') })
+      if (!dir) return
+      const result = await ProjectApi.addFilesFromDir({ projectID, dir })
+      load()
+      if (result.errors?.length) {
+        setFileError(result.errors.join('\n'))
+      } else {
+        setFileMsg(t('workspace.addFilesFromDirResult', { added: result.added, skipped: result.skipped }))
+        setTimeout(() => setFileMsg(''), 4000)
+      }
     } catch (err) {
       setFileError(String(err))
     }
@@ -215,8 +235,10 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
       )}
 
       {fileError && <div className="error-msg" style={{ marginTop: 8 }}>{fileError}</div>}
+      {fileMsg && <div className="success-msg" style={{ marginTop: 8 }}>{fileMsg}</div>}
 
       <div className="list-fab">
+        <button className="btn btn-outline btn-sm" style={{ pointerEvents: 'all' }} onClick={handleAddFilesFromDir}>{t('workspace.addFilesFromDir')}</button>
         <button className="btn btn-green" onClick={handleAddFile}>{t('workspace.addFile')}</button>
       </div>
     </div>
