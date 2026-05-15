@@ -312,7 +312,8 @@
     "duration": "所要時間",
     "name": "名前",
     "version": "バージョン",
-    "path": "パス"
+    "path": "パス",
+    "updatedAt": "更新日時"
   },
   "time": {
     "seconds": "秒",
