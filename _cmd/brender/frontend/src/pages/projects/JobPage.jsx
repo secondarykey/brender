@@ -494,16 +494,14 @@ function DataViewTab({ job }) {
           </button>
         )}
       </div>
-      {someSelected && (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-          <button className="btn btn-sm btn-ghost" onClick={handleDownloadSelected} disabled={downloading}>
-            {downloading ? t('common.downloading') : `${t('common.downloadZip')} (${selected.size})`}
-          </button>
-          <button className="btn btn-sm btn-danger" onClick={handleDeleteSelected} disabled={deleting || isLocked}>
-            {deleting ? t('common.deleting') : `${t('common.deleteSelected')} (${selected.size})`}
-          </button>
-        </div>
-      )}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+        <button className="btn btn-sm btn-ghost" onClick={handleDownloadSelected} disabled={downloading || !someSelected}>
+          {downloading ? t('common.downloading') : `${t('common.downloadZip')}${someSelected ? ` (${selected.size})` : ''}`}
+        </button>
+        <button className="btn btn-sm btn-danger" onClick={handleDeleteSelected} disabled={deleting || isLocked || !someSelected}>
+          {deleting ? t('common.deleting') : `${t('common.deleteSelected')}${someSelected ? ` (${selected.size})` : ''}`}
+        </button>
+      </div>
       {dlError && <div className="error-msg" style={{ marginBottom: 8 }}>{dlError}</div>}
       <table className="queue-table">
         <thead>
