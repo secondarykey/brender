@@ -120,7 +120,11 @@
     "confirmDelete": "Delete this file?",
     "deleteWarning": "Associated workspaces and job history will also be deleted. The physical file will not be deleted. This action cannot be undone.",
     "setAsProjectThumbnail": "Set Thumbnail",
-    "selectThumbnailHint": "Click the image to use as thumbnail"
+    "selectThumbnailHint": "Click the image to use as thumbnail",
+    "defaultEngine": "Default Engine",
+    "engineHint": "If not set: the workspace setting will be used",
+    "engineFixed": "Fixed",
+    "engineFixedHint": "When enabled, the engine cannot be changed in workspaces"
   },
   "workspace": {
     "name": "Workspace Name",
@@ -146,6 +150,7 @@
     "renderEngine": "Render Engine",
     "enginePlaceholder": "Not set (e.g. CYCLES)",
     "engineHint": "If not set: the default engine in the .blend file will be used",
+    "engineLockedByFile": "Engine is fixed by the file settings (cannot be changed here)",
     "frameRange": "Frame Range",
     "specifyFrames": "Specify frames",
     "specifyFrameRange": "Specify frame range",

@@ -156,10 +156,12 @@ export function Update(id, name) {
  * @param {string} name
  * @param {number} blenderInstallID
  * @param {string} scene
+ * @param {string} engine
+ * @param {boolean} engineFixed
  * @returns {$CancellablePromise<model$0.ProjectFile | null>}
  */
-export function UpdateFile(fileID, name, blenderInstallID, scene) {
-    return $Call.ByID(2556186200, fileID, name, blenderInstallID, scene).then(/** @type {($result: any) => any} */(($result) => {
+export function UpdateFile(fileID, name, blenderInstallID, scene, engine, engineFixed) {
+    return $Call.ByID(2556186200, fileID, name, blenderInstallID, scene, engine, engineFixed).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType1($result);
     }));
 }

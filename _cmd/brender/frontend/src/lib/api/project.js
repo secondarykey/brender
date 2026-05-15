@@ -53,11 +53,11 @@ export const ProjectApi = {
               : serverCall('project', 'get_file', { file_id: fileID }),
 
   /** ファイル情報を更新
-   * @param {{ fileID: number, name: string, blenderInstallID: number, scene: string }} args
+   * @param {{ fileID: number, name: string, blenderInstallID: number, scene: string, engine: string, engineFixed: boolean }} args
    */
-  updateFile: ({ fileID, name, blenderInstallID, scene }) =>
-    isWails() ? svc().then(s => s.UpdateFile(fileID, name, blenderInstallID, scene))
-              : serverCall('project', 'update_file', { file_id: fileID, name, blender_install_id: blenderInstallID, scene }),
+  updateFile: ({ fileID, name, blenderInstallID, scene, engine = '', engineFixed = false }) =>
+    isWails() ? svc().then(s => s.UpdateFile(fileID, name, blenderInstallID, scene, engine, engineFixed))
+              : serverCall('project', 'update_file', { file_id: fileID, name, blender_install_id: blenderInstallID, scene, engine, engine_fixed: engineFixed }),
 
   /** ファイルをプロジェクトから除外（履歴は残す）
    * @param {{ fileID: number }} args

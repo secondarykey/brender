@@ -65,11 +65,15 @@ func PreviewRender(projectID, workspaceID string) (*RenderPreview, error) {
 
 	var fileBlenderID uint
 	var fileScene string
+	var fileEngine string
+	var fileEngineFixed bool
 	if w.ProjectFileID != "" {
 		pf, pfErr := model.GetProjectFile(w.ProjectFileID)
 		if pfErr == nil && pf != nil {
 			fileBlenderID = pf.BlenderInstallID
 			fileScene = pf.Scene
+			fileEngine = pf.Engine
+			fileEngineFixed = pf.EngineFixed
 		}
 	}
 
@@ -101,9 +105,15 @@ func PreviewRender(projectID, workspaceID string) (*RenderPreview, error) {
 		endFrame = st.End
 	}
 
-	// エンジン: ワークスペース指定 → シーンのデフォルト（ツール取得）の順でフォールバック
-	engine := w.Engine
-	if engine == "" {
+	// エンジン: 固定フラグありファイル指定 → ワークスペース指定 → ファイル指定 → シーンのデフォルト
+	var engine string
+	if fileEngineFixed && fileEngine != "" {
+		engine = fileEngine
+	} else if w.Engine != "" {
+		engine = w.Engine
+	} else if fileEngine != "" {
+		engine = fileEngine
+	} else {
 		engine = st.Engine
 	}
 
@@ -155,11 +165,15 @@ func TestEnqueue(projectID, workspaceID string, params TestRenderParams) (*model
 
 	var fileBlenderID uint
 	var fileScene string
+	var fileEngine string
+	var fileEngineFixed bool
 	if w.ProjectFileID != "" {
 		pf, pfErr := model.GetProjectFile(w.ProjectFileID)
 		if pfErr == nil && pf != nil {
 			fileBlenderID = pf.BlenderInstallID
 			fileScene = pf.Scene
+			fileEngine = pf.Engine
+			fileEngineFixed = pf.EngineFixed
 		}
 	}
 
@@ -193,8 +207,15 @@ func TestEnqueue(projectID, workspaceID string, params TestRenderParams) (*model
 	// 中間フレーム1枚のみレンダリング
 	testFrame := (startFrame + endFrame) / 2
 
-	engine := params.Engine
-	if engine == "" {
+	// エンジン: 固定フラグありファイル指定 → params指定 → ファイル指定 → シーンのデフォルト
+	var engine string
+	if fileEngineFixed && fileEngine != "" {
+		engine = fileEngine
+	} else if params.Engine != "" {
+		engine = params.Engine
+	} else if fileEngine != "" {
+		engine = fileEngine
+	} else {
 		engine = st.Engine
 	}
 	camera := params.Camera

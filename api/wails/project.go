@@ -32,8 +32,8 @@ func (s *Project) Update(id, name string) (*model.ProjectDetail, error) {
 	return api.UpdateProject(id, name)
 }
 
-func (s *Project) UpdateFile(fileID string, name string, blenderInstallID uint, scene string) (*model.ProjectFile, error) {
-	return api.UpdateProjectFile(fileID, name, blenderInstallID, scene)
+func (s *Project) UpdateFile(fileID string, name string, blenderInstallID uint, scene, engine string, engineFixed bool) (*model.ProjectFile, error) {
+	return api.UpdateProjectFile(fileID, name, blenderInstallID, scene, engine, engineFixed)
 }
 
 func (s *Project) GetFile(fileID string) (*model.ProjectFile, error) {

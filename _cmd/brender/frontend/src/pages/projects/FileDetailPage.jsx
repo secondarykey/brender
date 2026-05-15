@@ -399,9 +399,13 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
   const [name, setName]                   = useState(fileName)
   const [blenderInstallID, setBlenderID]  = useState(0)
   const [scene, setScene]                 = useState('')
+  const [engine, setEngine]               = useState('')
+  const [engineFixed, setEngineFixed]     = useState(false)
   const [blenders, setBlenders]           = useState([])
   const [scenes, setScenes]               = useState([])
+  const [engines, setEngines]             = useState([])
   const [scenesLoading, setScenesLoading] = useState(false)
+  const [enginesLoading, setEnginesLoading] = useState(false)
   const [saving, setSaving]               = useState(false)
   const [deleting, setDeleting]           = useState(false)
   const [confirm, setConfirm]             = useState(false)
@@ -415,6 +419,14 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
       .finally(() => setScenesLoading(false))
   }
 
+  const fetchEngines = (installID) => {
+    setEnginesLoading(true)
+    BlenderApi.getEngines({ installID })
+      .then(list => setEngines(list || []))
+      .catch(() => setEngines([]))
+      .finally(() => setEnginesLoading(false))
+  }
+
   useEffect(() => {
     Promise.all([
       ProjectApi.getFile({ fileID }).catch(() => null),
@@ -425,13 +437,17 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
       setName(f?.name || fileName)
       setBlenderID(installID)
       setScene(f?.scene || '')
+      setEngine(f?.engine || '')
+      setEngineFixed(f?.engine_fixed || false)
       fetchScenes(installID)
+      fetchEngines(installID)
     })
   }, [fileID])
 
   const handleBlenderChange = (installID) => {
     setBlenderID(installID)
     fetchScenes(installID)
+    fetchEngines(installID)
   }
 
   const handleSave = async () => {
@@ -439,7 +455,7 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
     setSaving(true)
     setError(null)
     try {
-      const updated = await ProjectApi.updateFile({ fileID, name: name.trim(), blenderInstallID, scene })
+      const updated = await ProjectApi.updateFile({ fileID, name: name.trim(), blenderInstallID, scene, engine, engineFixed })
       if (onUpdated) onUpdated(updated)
     } catch (e) {
       setError(e?.message ?? String(e))
@@ -516,6 +532,38 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
               />
             )}
             <span className="form-hint">{t('file.sceneHint')}</span>
+          </div>
+
+          <div className="form-field">
+            <label className="form-label">{t('file.defaultEngine')}</label>
+            {engines.length > 0 ? (
+              <select
+                className="form-select"
+                value={engine}
+                onChange={e => setEngine(e.target.value)}
+                disabled={enginesLoading}
+              >
+                <option value="">{t('common.notSet')}</option>
+                {engines.map(eng => <option key={eng} value={eng}>{eng}</option>)}
+              </select>
+            ) : (
+              <input
+                className="form-input"
+                value={engine}
+                onChange={e => setEngine(e.target.value)}
+                placeholder={t('common.notSetPlaceholder')}
+              />
+            )}
+            <span className="form-hint">{t('file.engineHint')}</span>
+            <label className="form-checkbox-label" style={{ marginTop: 6 }}>
+              <input
+                type="checkbox"
+                checked={engineFixed}
+                onChange={e => setEngineFixed(e.target.checked)}
+              />
+              <span style={{ marginLeft: 6 }}>{t('file.engineFixed')}</span>
+              <span className="form-hint" style={{ marginLeft: 8 }}>{t('file.engineFixedHint')}</span>
+            </label>
           </div>
 
           {error && <p className="form-error">{error}</p>}

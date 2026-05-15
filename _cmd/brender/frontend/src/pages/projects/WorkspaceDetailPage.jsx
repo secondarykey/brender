@@ -200,9 +200,11 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
   }, [form?.blenderInstallID, detail?.workspace?.project_file_id])
 
   // ── デフォルト値の導出 ───────────────────────────────────
-  const fileRecord    = detail?.project_files?.find(f => f.id === detail?.workspace?.project_file_id)
-  const fileScene     = fileRecord?.scene || ''
-  const fileBlenderID = fileRecord?.blender_install_id || 0
+  const fileRecord     = detail?.project_files?.find(f => f.id === detail?.workspace?.project_file_id)
+  const fileScene      = fileRecord?.scene || ''
+  const fileBlenderID  = fileRecord?.blender_install_id || 0
+  const fileEngine     = fileRecord?.engine || ''
+  const fileEngineFixed = fileRecord?.engine_fixed || false
 
   const defaultBlender = form?.blenderInstallID === 0
     ? (blenders.find(b => b.id === fileBlenderID) || blenders[0] || null)
@@ -291,7 +293,10 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
   const blenderDefault = defaultBlender?.name ?? null
   const sceneDefault  = !form.scene ? (fileScene || activeScene?.Name || null) : null
   const cameraDefault = !form.camera && sceneInfo?.Camera ? sceneInfo.Camera : null
-  const engineDefault = !form.engine && sceneInfo?.Engine ? sceneInfo.Engine : null
+  // エンジンのデフォルト表示: 固定中はファイル設定値、未指定時はシーンデフォルト
+  const engineDefault = fileEngineFixed
+    ? null
+    : (!form.engine ? (fileEngine || sceneInfo?.Engine || null) : null)
   const frameDefault  = !specifyFrames && sceneInfo
     ? t('workspace.frameRangeDefault', { start: sceneInfo.Start, end: sceneInfo.End })
     : null
@@ -324,15 +329,23 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
         <div className="form-field" style={{ flex: 2 }}>
           <label className="form-label">
             {t('workspace.renderEngine')}
-            <DefaultTag value={engineDefault} t={t} />
+            {fileEngineFixed
+              ? <span className="form-lock-tag">🔒 {fileEngine}</span>
+              : <DefaultTag value={engineDefault} t={t} />
+            }
           </label>
-          {engines.length > 0 ? (
+          {fileEngineFixed ? (
+            <input className="form-input" value={fileEngine} disabled style={{ opacity: 0.5 }} />
+          ) : engines.length > 0 ? (
             <select className="form-select" value={form.engine} onChange={e => set('engine', e.target.value)} disabled={enginesLoading}>
               <option value="">{t('common.notSet')}</option>
               {engines.map(eng => <option key={eng} value={eng}>{eng}</option>)}
             </select>
           ) : (
             <input className="form-input" value={form.engine} onChange={e => set('engine', e.target.value)} placeholder={t('workspace.enginePlaceholder')} />
+          )}
+          {fileEngineFixed && (
+            <span className="form-hint">{t('workspace.engineLockedByFile')}</span>
           )}
         </div>
         <div className="form-field" style={{ flex: '0 0 80px', minWidth: 0 }}>

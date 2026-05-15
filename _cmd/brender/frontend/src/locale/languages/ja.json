@@ -120,7 +120,11 @@
     "confirmDelete": "ファイルを削除しますか？",
     "deleteWarning": "関連するワークスペースおよびジョブ履歴も削除されます。物理ファイルは削除されません。この操作は取り消せません。",
     "setAsProjectThumbnail": "サムネイルを設定",
-    "selectThumbnailHint": "サムネイルにする画像をクリックしてください"
+    "selectThumbnailHint": "サムネイルにする画像をクリックしてください",
+    "defaultEngine": "デフォルトエンジン",
+    "engineHint": "未設定の場合: ワークスペースの設定が使用されます",
+    "engineFixed": "固定",
+    "engineFixedHint": "有効にすると、ワークスペースでエンジンを変更できなくなります"
   },
   "workspace": {
     "name": "ワークスペース名",
@@ -146,6 +150,7 @@
     "renderEngine": "レンダーエンジン",
     "enginePlaceholder": "未設定（例: CYCLES）",
     "engineHint": "未設定の場合: .blend ファイルのデフォルトエンジンが使用されます",
+    "engineLockedByFile": "ファイル設定でエンジンが固定されています（ここでは変更できません）",
     "frameRange": "フレーム範囲",
     "specifyFrames": "フレームを指定する",
     "specifyFrameRange": "フレーム範囲を指定する",
