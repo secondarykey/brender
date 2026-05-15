@@ -165,7 +165,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
             className={`file-view-btn${viewMode === 'card-sm' ? ' active' : ''}`}
             onClick={() => { setViewMode('card-sm'); localStorage.setItem('viewMode:workspaces', 'card-sm') }}
             title={t('workspace.smallCardView')}
-          >⊟</button>
+          >▦</button>
           <SortSelect value={sort} onChange={handleSortChange} />
           <button
             className={`btn btn-sm${thumbnailMode ? ' btn-outline-active' : ' btn-outline'}`}

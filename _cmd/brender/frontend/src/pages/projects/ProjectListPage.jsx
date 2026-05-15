@@ -145,7 +145,7 @@ function ProjectListPage({ navigate }) {
                 className={`file-view-btn${viewMode === 'card-sm' ? ' active' : ''}`}
                 onClick={() => { setViewMode('card-sm'); localStorage.setItem('viewMode:projects', 'card-sm') }}
                 title={t('workspace.smallCardView')}
-              >⊟</button>
+              >▦</button>
               <SortSelect value={sort} onChange={handleSortChange} />
             </div>
           )}
