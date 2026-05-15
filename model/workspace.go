@@ -23,6 +23,8 @@ type Workspace struct {
 	FrameStep        int        `json:"frame_step"`          // 0,1 = 毎フレーム
 	Thread           int        `json:"thread"`              // 0 = 全コア自動
 	Samples          int        `json:"samples"`             // 0 = Blender デフォルト
+	ResolutionX      int        `json:"resolution_x"`        // 0 = Blender デフォルト
+	ResolutionY      int        `json:"resolution_y"`        // 0 = Blender デフォルト
 	IsSystem         bool       `gorm:"default:false" json:"is_system"`
 	DisplayOrder     int        `gorm:"default:99999" json:"display_order"`
 	ProcessedAt      *time.Time `json:"processed_at"`
@@ -127,7 +129,7 @@ func CreateSystemWorkspace(projectID string, projectFileID string, name string, 
 	return w, nil
 }
 
-func UpdateWorkspace(projectID string, workspaceID string, name string, blenderInstallID uint, scene, camera, engine string, startFrame, endFrame, frameStep, thread, samples int) (*WorkspaceDetail, error) {
+func UpdateWorkspace(projectID string, workspaceID string, name string, blenderInstallID uint, scene, camera, engine string, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY int) (*WorkspaceDetail, error) {
 	var w Workspace
 	if res := db.First(&w, "id = ? AND project_id = ?", workspaceID, projectID); res.Error != nil {
 		return nil, xerrors.Errorf("UpdateWorkspace find: %w", res.Error)
@@ -142,6 +144,8 @@ func UpdateWorkspace(projectID string, workspaceID string, name string, blenderI
 	w.FrameStep = frameStep
 	w.Thread = thread
 	w.Samples = samples
+	w.ResolutionX = resolutionX
+	w.ResolutionY = resolutionY
 	if res := db.Save(&w); res.Error != nil {
 		return nil, xerrors.Errorf("UpdateWorkspace save: %w", res.Error)
 	}

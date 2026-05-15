@@ -6,7 +6,8 @@ import { useToast } from '../../lib/toast'
 import Pagination from '../../components/Pagination'
 
 
-const isFrameDefault = (start, end) => start === 0 && end === -1
+const isFrameDefault      = (start, end) => start === 0 && end === -1
+const isResolutionDefault = (x, y)       => x === 0 && y === 0
 
 // EngineFlags 相当: エンジン名の揺れを吸収して Samples マップから値を返す
 function samplesForEngine(engine, samplesMap) {
@@ -145,7 +146,8 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
   const [toolLoading, setToolLoading]       = useState(false)
   const [cpuCount, setCpuCount]             = useState(null)
   const [form, setForm]                     = useState(null)
-  const [specifyFrames, setSpecifyFrames]   = useState(false)
+  const [specifyResolution, setSpecifyResolution] = useState(false)
+  const [specifyFrames, setSpecifyFrames]         = useState(false)
   const [saving, setSaving]                 = useState(false)
   const [error, setError]                   = useState('')
   const [confirm, setConfirm]               = useState(false)
@@ -155,7 +157,8 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
   const [testError, setTestError]           = useState('')
   const nameRef      = useRef(null)
   const hasFocused   = useRef(false)
-  const lastFrameSpec = useRef(null) // OFF 直前のフレーム値を退避
+  const lastFrameSpec      = useRef(null) // OFF 直前のフレーム値を退避
+  const lastResolutionSpec = useRef(null) // OFF 直前の解像度を退避
 
   useEffect(() => {
     const start = detail.workspace.start ?? 0
@@ -171,8 +174,12 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
       frameStep:        detail.workspace.frame_step || 1,
       thread:           detail.workspace.thread || 0,
       samples:          detail.workspace.samples || 0,
+      resolutionX:      detail.workspace.resolution_x || 0,
+      resolutionY:      detail.workspace.resolution_y || 0,
     })
+    setSpecifyResolution(!isResolutionDefault(detail.workspace.resolution_x || 0, detail.workspace.resolution_y || 0))
     setSpecifyFrames(!isFrameDefault(start, end))
+    lastResolutionSpec.current = null
     lastFrameSpec.current = null
     setError('')
   }, [detail])
@@ -233,6 +240,21 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
   const allCameras = toolData?.Cameras || []
   const scenes     = toolData?.Scenes?.map(s => s.Name) || []
 
+  const handleSpecifyResolution = (checked) => {
+    setSpecifyResolution(checked)
+    if (!checked) {
+      lastResolutionSpec.current = { resolutionX: form.resolutionX, resolutionY: form.resolutionY }
+      setForm(prev => ({ ...prev, resolutionX: 0, resolutionY: 0 }))
+    } else if (lastResolutionSpec.current) {
+      setForm(prev => ({ ...prev, ...lastResolutionSpec.current }))
+    } else {
+      setForm(prev => ({ ...prev,
+        resolutionX: sceneInfo?.X ?? 1920,
+        resolutionY: sceneInfo?.Y ?? 1080,
+      }))
+    }
+  }
+
   const handleSpecifyFrames = (checked) => {
     setSpecifyFrames(checked)
     if (!checked) {
@@ -265,6 +287,7 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
         startFrame: form.startFrame, endFrame: form.endFrame,
         frameStep: form.frameStep, thread: form.thread,
         samples: form.samples,
+        resolutionX: form.resolutionX, resolutionY: form.resolutionY,
       })
       showToast(t('common.saved'))
       onUpdated()
@@ -321,6 +344,9 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
     ? (fileBlenderID === 0
         ? (blenders[0]?.name || t('common.notSet'))
         : (blenders.find(b => b.id === fileBlenderID)?.name || t('common.notSet')))
+    : null
+  const resolutionDefault = !specifyResolution && sceneInfo?.X && sceneInfo?.Y
+    ? `${sceneInfo.X} × ${sceneInfo.Y}`
     : null
   const frameDefault  = !specifyFrames && sceneInfo
     ? t('workspace.frameRangeDefault', { start: sceneInfo.Start, end: sceneInfo.End })
@@ -439,6 +465,26 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
             </select>
           )}
         </div>
+      </div>
+
+      <div className="form-field">
+        <label className="form-checkbox-label">
+          <input type="checkbox" checked={specifyResolution} onChange={e => handleSpecifyResolution(e.target.checked)} />
+          {t('workspace.specifyResolution')}
+          <DefaultTag value={resolutionDefault} t={t} />
+        </label>
+        {specifyResolution && (
+          <div className="form-row" style={{ marginTop: 8 }}>
+            <div className="form-field">
+              <label className="form-label">{t('workspace.resolutionX')}</label>
+              <input className="form-input" style={{ width: 100, textAlign: 'right' }} type="number" min={1} value={form.resolutionX} onChange={e => set('resolutionX', Number(e.target.value))} />
+            </div>
+            <div className="form-field">
+              <label className="form-label">{t('workspace.resolutionY')}</label>
+              <input className="form-input" style={{ width: 100, textAlign: 'right' }} type="number" min={1} value={form.resolutionY} onChange={e => set('resolutionY', Number(e.target.value))} />
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="form-field">
