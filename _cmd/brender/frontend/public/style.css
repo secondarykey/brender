@@ -1084,7 +1084,7 @@ body {
 }
 
 .form-checkbox-label {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 6px;
   font-size: 13px;
@@ -1092,6 +1092,7 @@ body {
   cursor: pointer;
   user-select: none;
   margin-top: 4px;
+  align-self: flex-start;
 }
 
 .form-error {
