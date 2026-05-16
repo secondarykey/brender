@@ -466,10 +466,13 @@ function DataViewTab({ job }) {
   const isLocked    = job && job.data_status % 2 === 1
   const canDownload = job && [2, 3, 6, 7, 8, 9].includes(job.data_status)
 
+  const totalSize = files.filter(f => !f.is_dir).reduce((sum, f) => sum + (f.size || 0), 0)
+
   return (
     <div className="job-data-view">
-      <div style={{ marginBottom: 8 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
         <p className="setting-desc job-data-path" style={{ margin: 0 }}>{job.output_dir}</p>
+        <span className="setting-desc" style={{ margin: 0, whiteSpace: 'nowrap', marginLeft: 12 }}>{formatBytes(totalSize)}</span>
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
         <div style={{ display: 'flex', gap: 4 }}>
