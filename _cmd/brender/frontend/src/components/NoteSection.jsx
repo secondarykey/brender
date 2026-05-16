@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-function NoteSection({ value, onChange }) {
+function NoteSection({ value, onChange, style }) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(!!value)
 
   return (
-    <div className="note-section">
+    <div className="note-section" style={style}>
       <button className="note-toggle" onClick={() => setOpen(v => !v)} type="button">
         <span className={`note-toggle-arrow${open ? ' open' : ''}`}>▶</span>
         {t('common.note')}

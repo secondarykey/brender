@@ -699,7 +699,10 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
             </div>
           </div>
         )}
-        <button className="btn btn-outline btn-sm" onClick={handleCopy} disabled={copying} style={{ marginTop: 8, alignSelf: 'flex-start' }}>
+      </div>
+
+      <div>
+        <button className="btn btn-outline btn-sm" onClick={handleCopy} disabled={copying}>
           {copying ? t('workspace.copying') : t('workspace.copy')}
         </button>
       </div>
@@ -707,7 +710,7 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
       {error && <div className="error-msg">{error}</div>}
       {testEnqueued && <div className="warning-msg">{t('workspace.testEnqueued')}</div>}
 
-      <NoteSection value={note} onChange={setNote} />
+      <NoteSection value={note} onChange={setNote} style={{ marginTop: 0 }} />
 
       <div className="form-actions">
         <button className="btn btn-danger" onClick={() => { setForceDel(false); setConfirm(true) }}>{t('common.delete')}</button>
