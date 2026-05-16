@@ -90,11 +90,13 @@ function LogViewerApp() {
     const minIdx = filterLevels.indexOf(filterLevel)
     if (minIdx === -1) return null
     const set = new Set()
+    let currentIdx = -1
     logLines.forEach((line, i) => {
       const level = detectLevel(line)
-      if (!level) return
-      const idx = filterLevels.indexOf(level)
-      if (idx >= minIdx) set.add(i)
+      if (level !== null) {
+        currentIdx = filterLevels.indexOf(level)
+      }
+      if (currentIdx >= minIdx) set.add(i)
     })
     return set
   }, [logLines, filterLevel, filterLevels])
