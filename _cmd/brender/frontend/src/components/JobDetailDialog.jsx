@@ -127,7 +127,14 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged, navigate })
       job,
       initialTab: 'render',
       backPage: 'queue',
-      backParams: {},
+      backParams: {
+        projectID:     job.project_id,
+        projectName:   job.project_name,
+        fileID:        job.project_file_id,
+        fileName:      job.file_name,
+        workspaceID:   job.workspace_id,
+        workspaceName: job.workspace_name,
+      },
     })
   }
 
