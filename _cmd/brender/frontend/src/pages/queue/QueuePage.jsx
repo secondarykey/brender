@@ -217,7 +217,11 @@ function HistoryTab({ navigate }) {
 
   const load = useCallback(() => {
     QueueApi.listJobs()
-      .then(list => setJobs(list || []))
+      .then(list => {
+        const items = list || []
+        setJobs(items)
+        setSelected(prev => prev ? (items.find(j => j.id === prev.id) ?? prev) : null)
+      })
       .catch(err => showError(String(err)))
   }, [])
 
