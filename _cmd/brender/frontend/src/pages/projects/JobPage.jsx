@@ -609,16 +609,14 @@ function JobPage({ job: initialJob, navigate, backPage, backParams, initialTab }
     { id: 'detail', label: t('tabs.jobResult') },
   ]
 
-  const bp = backParams || {}
-
   return (
     <div className="page">
       <div className="page-header">
         <Breadcrumb items={[
           { label: t('breadcrumb.projects'), onClick: () => navigate('projects') },
-          bp.projectName && { label: bp.projectName, onClick: () => navigate('project', { id: bp.projectID }) },
-          bp.fileName   && { label: bp.fileName,    onClick: () => navigate('file', { projectID: bp.projectID, projectName: bp.projectName, fileID: bp.fileID, fileName: bp.fileName }) },
-          bp.workspaceName && { label: bp.workspaceName, onClick: bp.workspaceID ? () => navigate(backPage, backParams) : undefined },
+          { label: job.project_name, onClick: () => navigate('project', { id: job.project_id }) },
+          { label: job.file_name,    onClick: () => navigate('file', { projectID: job.project_id, projectName: job.project_name, fileID: job.project_file_id, fileName: job.file_name }) },
+          { label: job.workspace_name, onClick: () => navigate('workspace', { projectID: job.project_id, projectName: job.project_name, fileID: job.project_file_id, fileName: job.file_name, workspaceID: job.workspace_id }) },
           { label: t('breadcrumb.jobResult') },
         ].filter(Boolean)} />
       </div>
