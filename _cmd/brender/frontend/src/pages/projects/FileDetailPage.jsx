@@ -690,9 +690,9 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
 }
 
 // ── ページ本体 ────────────────────────────────────────────
-function FileDetailPage({ projectID, projectName, fileID, fileName, navigate }) {
+function FileDetailPage({ projectID, projectName, fileID, fileName, initialTab, navigate }) {
   const { t } = useTranslation()
-  const [tab, setTab] = useState('workspace')
+  const [tab, setTab] = useState(initialTab || 'workspace')
   const [currentFileName, setCurrentFileName] = useState(fileName)
   const [workDirStatus, setWorkDirStatus] = useState(null)
 
@@ -716,7 +716,7 @@ function FileDetailPage({ projectID, projectName, fileID, fileName, navigate }) 
         <div className="breadcrumb">
           <button className="breadcrumb-link" onClick={() => navigate('projects')}>{t('breadcrumb.projects')}</button>
           <span className="breadcrumb-sep">›</span>
-          <button className="breadcrumb-link" onClick={() => navigate('project', { id: projectID })}>{projectName}</button>
+          <button className="breadcrumb-link" onClick={() => navigate('project', { id: projectID, initialTab: 'settings' })}>{projectName}</button>
           <span className="breadcrumb-sep">›</span>
           <span>{currentFileName}</span>
         </div>

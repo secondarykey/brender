@@ -644,11 +644,11 @@ function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspa
         <div className="breadcrumb">
           <button className="breadcrumb-link" onClick={() => navigate('projects')}>{t('breadcrumb.projects')}</button>
           <span className="breadcrumb-sep">›</span>
-          <button className="breadcrumb-link" onClick={() => navigate('project', { id: projectID })}>{projectName}</button>
+          <button className="breadcrumb-link" onClick={() => navigate('project', { id: projectID, initialTab: 'settings' })}>{projectName}</button>
           <span className="breadcrumb-sep">›</span>
           {effectiveFileName && (
             <>
-              <button className="breadcrumb-link" onClick={() => navigate('file', { projectID, projectName, fileID: effectiveFileID, fileName: effectiveFileName })}>{effectiveFileName}</button>
+              <button className="breadcrumb-link" onClick={() => navigate('file', { projectID, projectName, fileID: effectiveFileID, fileName: effectiveFileName, initialTab: 'settings' })}>{effectiveFileName}</button>
               <span className="breadcrumb-sep">›</span>
             </>
           )}

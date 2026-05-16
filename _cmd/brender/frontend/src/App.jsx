@@ -85,6 +85,7 @@ function App() {
             projectName={p.projectName}
             fileID={p.fileID}
             fileName={p.fileName}
+            initialTab={p.initialTab}
             navigate={navigate}
           />
         )
