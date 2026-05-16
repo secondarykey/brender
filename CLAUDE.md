@@ -461,6 +461,30 @@ return off  // useEffect cleanup
 - `.form-actions` → `justify-content: space-between` (削除ボタン左・保存ボタン右)
 - `#app, #root` must both have `width/height: 100%` for the height chain to work
 
+### フォームレイアウト
+設定フォームは以下のクラスを使う（`WorkspaceDetailPage` 等が基準）：
+
+```jsx
+<div className="form" style={{ maxWidth: 640 }}>
+  <div className="form-row">                    {/* 横並び行: display:flex; gap:16px */}
+    <div className="form-field" style={{ flex: 2 }}>   {/* 縦並びフィールド: flex-direction:column; gap:6px */}
+      <label className="form-label">ラベル</label>     {/* 0.85rem, 60%白 */}
+      <input className="form-input" style={{ width: '100%' }} />  {/* height:36px, 角丸 */}
+    </div>
+    <div className="form-field" style={{ flex: 1 }}>
+      <label className="form-label">ラベル</label>
+      <select className="form-select" />
+    </div>
+  </div>
+</div>
+```
+
+- `form-field` を単独で使う場合も同じ（`form-row` は省略可）
+- `textarea` には `textarea.form-input { height: auto; padding: 8px 10px }` が適用される。`minHeight` と `resize: vertical` をインラインで指定する
+- `input` / `textarea` は `width: 100%` を付けてカラム幅いっぱいに広げる（デフォルトは `width` 未指定）
+- `.form-hint` — 補足テキスト（11px, #888）
+- `.form-actions` — `justify-content: space-between`（削除ボタン左・保存ボタン右）
+
 ### 左右分割レイアウト (`.ws-detail-split`)
 ファイル詳細・ワークスペース詳細で使用：
 ```css
@@ -470,6 +494,7 @@ return off  // useEffect cleanup
 ```
 - `.page:has(.ws-detail-split)` → `display: flex; flex-direction: column; overflow: hidden`
 - `.tab-content:has(.ws-detail-split)` → `overflow: hidden; display: flex`
+- デフォルト比率は左 3 / 右 2。左が狭くていい場合はインラインで `style={{ flex: 2 }}` / `style={{ flex: 3 }}` で上書きする
 
 ### ボタンスタイル（色は役割で統一）
 | 役割 | クラス | 色 |
