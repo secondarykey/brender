@@ -137,7 +137,7 @@ function HistoryTab({ projectID, workspaceID, navigate, projectName, fileName, f
 
   return (
     <>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8, marginTop: -30 }}>
         <button className="btn btn-outline btn-sm" onClick={() => { setBulkError(''); setBulkOpen(true) }}>
           {t('job.bulkDelete')}
         </button>
