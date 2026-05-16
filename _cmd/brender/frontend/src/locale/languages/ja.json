@@ -113,6 +113,8 @@
     "createFirst": "最初のプロジェクトを作成",
     "confirmDelete": "プロジェクトを削除しますか？",
     "deleteWarning": "関連するワークスペースおよびジョブも削除されます。この操作は取り消せません。",
+    "forceDeleteLabel": "ロックされた実行結果を含めて削除する",
+    "lockedJobsExist": "ロックされたジョブが存在します。上のチェックをONにして再度削除してください。",
     "rootNotSet": "作業ディレクトリが設定されていません。",
     "configureInSettings": "設定画面で設定してください",
     "workDir": "作業ディレクトリ",

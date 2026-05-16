@@ -147,9 +147,33 @@ func DeleteProjectFile(fileID string, force bool) error {
 	return model.RemoveProjectFile(fileID)
 }
 
-func DeleteProject(id string) error {
+func DeleteProject(id string, force bool) error {
+	if !force {
+		locked, err := model.HasLockedJobsByProject(id)
+		if err != nil {
+			return xerrors.Errorf("DeleteProject: %w", err)
+		}
+		if locked {
+			return xerrors.New("locked_jobs_exist")
+		}
+	}
 	dirs, _ := model.ListOutputDirsByProject(id)
 	removeOutputDirs(dirs)
+	// ジョブディレクトリ削除後、{projectID}/ ディレクトリごと削除する
+	// （プロジェクト/ファイル/ワークスペースのサムネイルや空ディレクトリを含む）
+	if len(dirs) > 0 {
+		projectDir := filepath.Dir(filepath.Dir(filepath.Dir(dirs[0])))
+		if err := os.RemoveAll(projectDir); err != nil {
+			slog.Warn("DeleteProject: remove project dir", "error", err)
+		}
+	} else {
+		if baseDir, err := GetProjectBaseDir(id); err == nil {
+			projectDir := filepath.Join(baseDir, id)
+			if err := os.RemoveAll(projectDir); err != nil {
+				slog.Warn("DeleteProject: remove project dir (no jobs)", "error", err)
+			}
+		}
+	}
 	if err := model.DeleteJobsByProject(id); err != nil {
 		return xerrors.Errorf("DeleteProject jobs: %w", err)
 	}

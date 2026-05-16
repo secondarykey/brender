@@ -47,10 +47,11 @@ export function Create(name) {
 
 /**
  * @param {string} id
+ * @param {boolean} force
  * @returns {$CancellablePromise<void>}
  */
-export function Delete(id) {
-    return $Call.ByID(4167210284, id);
+export function Delete(id, force) {
+    return $Call.ByID(4167210284, id, force);
 }
 
 /**

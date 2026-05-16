@@ -113,6 +113,8 @@
     "createFirst": "Create your first project",
     "confirmDelete": "Delete this project?",
     "deleteWarning": "All associated workspaces and jobs will also be deleted. This action cannot be undone.",
+    "forceDeleteLabel": "Include locked results and delete",
+    "lockedJobsExist": "Locked jobs exist. Check the option above and try again.",
     "rootNotSet": "Working directory is not set.",
     "configureInSettings": "Please configure in Settings",
     "workDir": "Work Directory",

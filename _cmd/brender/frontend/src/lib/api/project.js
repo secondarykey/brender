@@ -32,11 +32,11 @@ export const ProjectApi = {
               : serverCall('project', 'update', { id, name, note }),
 
   /** プロジェクトを削除
-   * @param {{ id: string }} args
+   * @param {{ id: string, force?: boolean }} args
    */
-  delete: ({ id }) =>
-    isWails() ? svc().then(s => s.Delete(id))
-              : serverCall('project', 'delete', { id }),
+  delete: ({ id, force = false }) =>
+    isWails() ? svc().then(s => s.Delete(id, force))
+              : serverCall('project', 'delete', { id, force }),
 
   /** ファイルを追加
    * @param {{ projectID: string, path: string }} args

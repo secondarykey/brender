@@ -24,8 +24,8 @@ func (s *Project) Create(name string) (*model.ProjectDetail, error) {
 	return api.CreateProject(name)
 }
 
-func (s *Project) Delete(id string) error {
-	return api.DeleteProject(id)
+func (s *Project) Delete(id string, force bool) error {
+	return api.DeleteProject(id, force)
 }
 
 func (s *Project) Update(id, name, note string) (*model.ProjectDetail, error) {
