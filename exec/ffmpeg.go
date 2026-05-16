@@ -114,21 +114,15 @@ func (ff *FFmpeg) CreateMovie(ctx context.Context, out string, fps int, p string
 	args = append(args, out)
 
 	ch, err := ff.run(ctx, args...)
-
 	if err != nil {
 		return err
 	}
 
-	go func() {
-		//TODO 相手にchanを返していいかも
-		err := <-ch
-		if err != nil {
-			log.Warn("ffmpeg error: %v", err)
-		} else {
-			log.Notice("create movie : %s", out)
-		}
-	}()
-
+	err = <-ch
+	if err != nil {
+		return xerrors.Errorf("ffmpeg execution error: %w", err)
+	}
+	log.Notice("create movie : %s", out)
 	return nil
 }
 
