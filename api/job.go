@@ -37,7 +37,7 @@ func CreateMovie(projectID string, fileID string, workspaceID string, jobID stri
 	if outext == "" {
 		outext = "mp4"
 	}
-	out := "movie." + outext
+	out := jobID + "." + outext
 
 	jobDir := filepath.Join(baseDir, projectID, fileID, workspaceID, jobID)
 	mvFile := filepath.Join(jobDir, out)
