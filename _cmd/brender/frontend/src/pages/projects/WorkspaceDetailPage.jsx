@@ -237,7 +237,7 @@ function DefaultTag({ value, t }) {
 }
 
 // ── 設定タブ ──────────────────────────────────────────────
-function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onDeleted, onTestEnqueued, onRenderEnqueued, workDirLocked }) {
+function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, detail, focusName, onUpdated, onDeleted, onTestEnqueued, onRenderEnqueued, workDirLocked, navigate }) {
   const { t } = useTranslation()
   const { showToast } = useToast()
   const { showError } = useMessage()
@@ -869,6 +869,9 @@ function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspa
         <div className="ws-detail-left">
           <SettingsTab
             projectID={projectID}
+            projectName={projectName}
+            fileID={effectiveFileID}
+            fileName={effectiveFileName}
             workspaceID={workspaceID}
             detail={detail}
             focusName={focusName}
@@ -877,6 +880,7 @@ function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspa
             onTestEnqueued={() => setHistoryReload(n => n + 1)}
             onRenderEnqueued={() => navigate('queue')}
             workDirLocked={workDirStatus === 'lock'}
+            navigate={navigate}
           />
         </div>
         <div className="ws-detail-right">
