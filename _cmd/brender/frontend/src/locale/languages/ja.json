@@ -48,7 +48,8 @@
     "minimum": "最小化",
     "maximum": "最大化",
     "close": "閉じる",
-    "alwaysOnTop": "最前面に表示"
+    "alwaysOnTop": "最前面に表示",
+    "download": "ログをダウンロード"
   },
   "status": {
     "waiting": "実行待ち",

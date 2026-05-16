@@ -50,6 +50,24 @@ function LogViewerApp() {
       .catch(() => {})
   }
 
+  const handleDownload = () => {
+    if (!log) return
+    const now = new Date()
+    const ts = now.getFullYear().toString()
+      + String(now.getMonth() + 1).padStart(2, '0')
+      + String(now.getDate()).padStart(2, '0') + '-'
+      + String(now.getHours()).padStart(2, '0')
+      + String(now.getMinutes()).padStart(2, '0')
+      + String(now.getSeconds()).padStart(2, '0')
+    const filename = isSysLog ? `brender-${ts}.log` : `brender-rendering-${ts}.log`
+    const url = URL.createObjectURL(new Blob([log], { type: 'text/plain' }))
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   // tail モード: 1秒ごとに再読み込み
   useEffect(() => {
     if (!tail) return
@@ -71,6 +89,7 @@ function LogViewerApp() {
         logLevel={logLevel}
         logLevels={logLevels}
         onLogLevelChange={handleLogLevelChange}
+        onDownload={log ? handleDownload : null}
       />
       {error && <div className="error-msg" style={{ margin: 12 }}>{error}</div>}
       {log === null && !error && (

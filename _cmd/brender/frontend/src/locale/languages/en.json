@@ -48,7 +48,8 @@
     "minimum": "Minimize",
     "maximum": "Maximize",
     "close": "Close",
-    "alwaysOnTop": "Always on top"
+    "alwaysOnTop": "Always on top",
+    "download": "Download log"
   },
   "status": {
     "waiting": "Waiting",

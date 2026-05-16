@@ -2,7 +2,7 @@ import { Window } from '@wailsio/runtime'
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 
-function LogTitleBar({ title, logLevel, logLevels, onLogLevelChange }) {
+function LogTitleBar({ title, logLevel, logLevels, onLogLevelChange, onDownload }) {
   const { t } = useTranslation()
   const [isMac, setIsMac] = useState(false)
   const [alwaysOnTop, setAlwaysOnTop] = useState(false)
@@ -22,6 +22,15 @@ function LogTitleBar({ title, logLevel, logLevels, onLogLevelChange }) {
   return (
     <div className={`titlebar log-titlebar${isMac ? ' mac' : ''}`}>
       <span className="log-titlebar-title">{title}</span>
+      {onDownload && (
+        <button
+          className="log-download-btn"
+          onClick={onDownload}
+          title={t('title.download')}
+        >
+          &#8681;
+        </button>
+      )}
       {logLevels && logLevel && (
         <select
           className="log-level-select"
