@@ -1468,6 +1468,88 @@ body {
   word-break: normal;
   overflow-x: auto;
 }
+.log-line-match {
+  display: block;
+  background: rgba(255,214,0,0.07);
+}
+.log-line-current {
+  display: block;
+  background: rgba(255,214,0,0.18);
+}
+.log-viewer-pre mark {
+  background: rgba(255,214,0,0.45);
+  color: inherit;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+.log-line-current mark {
+  background: rgba(255,214,0,0.75);
+}
+/* ── ログ検索ボックス ─────────────────────────── */
+.log-search-box {
+  position: fixed;
+  top: 52px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #2a2a2a;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 6px;
+  padding: 4px 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  z-index: 100;
+}
+.log-search-input {
+  width: 200px;
+  height: 26px;
+  background: #1e1e1e;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 4px;
+  color: rgba(255,255,255,0.85);
+  font-size: 0.82rem;
+  padding: 0 8px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.log-search-input:focus {
+  border-color: #4a7cdc;
+}
+.log-search-input.no-match {
+  border-color: #c0392b;
+}
+.log-search-counter {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.45);
+  white-space: nowrap;
+  min-width: 36px;
+  text-align: center;
+}
+.log-search-nav,
+.log-search-close {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: rgba(255,255,255,0.55);
+  cursor: pointer;
+  border-radius: 3px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background 0.1s, color 0.1s;
+}
+.log-search-nav:hover,
+.log-search-close:hover {
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.9);
+}
+.log-search-nav:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
 .log-viewer-status {
   padding: 24px;
   color: rgba(255,255,255,0.4);

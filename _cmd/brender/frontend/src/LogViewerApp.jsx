@@ -1,9 +1,24 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { QueueApi, EnvironmentApi } from './lib/api'
 import LogTitleBar from './components/LogTitleBar'
 
 const TAIL_INTERVAL = 1000
+
+function highlightLine(line, query) {
+  const q = query.toLowerCase()
+  const result = []
+  let remaining = line
+  let key = 0
+  while (remaining) {
+    const idx = remaining.toLowerCase().indexOf(q)
+    if (idx === -1) { result.push(remaining); break }
+    if (idx > 0) result.push(remaining.slice(0, idx))
+    result.push(<mark key={key++}>{remaining.slice(idx, idx + q.length)}</mark>)
+    remaining = remaining.slice(idx + q.length)
+  }
+  return result
+}
 
 function LogViewerApp() {
   const { t } = useTranslation()
@@ -18,7 +33,13 @@ function LogViewerApp() {
   const [wrap, setWrap]       = useState(false)
   const [logLevel, setLogLevel]   = useState(null)
   const [logLevels, setLogLevels] = useState(null)
-  const preRef                = useRef(null)
+  const [searchOpen, setSearchOpen]   = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [matchIndex, setMatchIndex]   = useState(0)
+
+  const preRef         = useRef(null)
+  const searchInputRef = useRef(null)
+  const lineRefs       = useRef([])
 
   const fetchLog = useCallback(() => {
     const req = isSysLog
@@ -29,10 +50,8 @@ function LogViewerApp() {
       .catch(err => setError(String(err)))
   }, [isSysLog, jobID])
 
-  // 初回読み込み
   useEffect(() => { fetchLog() }, [fetchLog])
 
-  // システムログ時のみログレベルを取得
   useEffect(() => {
     if (!isSysLog) return
     Promise.all([
@@ -68,19 +87,91 @@ function LogViewerApp() {
     URL.revokeObjectURL(url)
   }
 
-  // tail モード: 1秒ごとに再読み込み
   useEffect(() => {
     if (!tail) return
     const id = setInterval(fetchLog, TAIL_INTERVAL)
     return () => clearInterval(id)
   }, [tail, fetchLog])
 
-  // tail ON のとき、ログ更新のたびに末尾へスクロール
   useEffect(() => {
     if (tail && preRef.current) {
       preRef.current.scrollTop = preRef.current.scrollHeight
     }
   }, [log, tail])
+
+  // Ctrl+F でサーチを開く
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.ctrlKey && e.key === 'f') {
+        e.preventDefault()
+        setSearchOpen(true)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
+  // サーチを開いたらインプットにフォーカス
+  useEffect(() => {
+    if (searchOpen) {
+      requestAnimationFrame(() => searchInputRef.current?.focus())
+    }
+  }, [searchOpen])
+
+  // Escape でサーチを閉じる
+  useEffect(() => {
+    if (!searchOpen) return
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        setSearchOpen(false)
+        setSearchQuery('')
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [searchOpen])
+
+  const logLines = useMemo(() => (log ? log.split('\n') : []), [log])
+
+  const matchLines = useMemo(() => {
+    if (!searchQuery) return []
+    const q = searchQuery.toLowerCase()
+    return logLines.reduce((acc, line, i) => {
+      if (line.toLowerCase().includes(q)) acc.push(i)
+      return acc
+    }, [])
+  }, [logLines, searchQuery])
+
+  const matchSet = useMemo(() => new Set(matchLines), [matchLines])
+
+  useEffect(() => { setMatchIndex(0) }, [searchQuery])
+
+  useEffect(() => {
+    if (!matchLines.length) return
+    const el = lineRefs.current[matchLines[matchIndex]]
+    el?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  }, [matchIndex, matchLines])
+
+  const goNext = () => {
+    if (!matchLines.length) return
+    setMatchIndex(i => (i + 1) % matchLines.length)
+  }
+  const goPrev = () => {
+    if (!matchLines.length) return
+    setMatchIndex(i => (i - 1 + matchLines.length) % matchLines.length)
+  }
+
+  const handleSearchKey = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      if (e.shiftKey) goPrev(); else goNext()
+    }
+  }
+
+  const closeSearch = () => {
+    setSearchOpen(false)
+    setSearchQuery('')
+  }
 
   return (
     <div className="log-viewer-root">
@@ -99,7 +190,42 @@ function LogViewerApp() {
         <p className="log-viewer-status">{t('job.noLog')}</p>
       )}
       {log && (
-        <pre ref={preRef} className={`log-viewer-pre${wrap ? '' : ' no-wrap'}`}>{log}</pre>
+        <pre ref={preRef} className={`log-viewer-pre${wrap ? '' : ' no-wrap'}`}>
+          {logLines.map((line, i) => {
+            const isMatch = searchQuery !== '' && matchSet.has(i)
+            const isCurrent = isMatch && matchLines[matchIndex] === i
+            return (
+              <span
+                key={i}
+                ref={el => { lineRefs.current[i] = el }}
+                className={isCurrent ? 'log-line-current' : isMatch ? 'log-line-match' : undefined}
+              >
+                {isMatch ? highlightLine(line, searchQuery) : line}
+                {'\n'}
+              </span>
+            )
+          })}
+        </pre>
+      )}
+      {searchOpen && (
+        <div className="log-search-box">
+          <input
+            ref={searchInputRef}
+            className={`log-search-input${searchQuery && !matchLines.length ? ' no-match' : ''}`}
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            onKeyDown={handleSearchKey}
+            placeholder={t('job.searchPlaceholder')}
+          />
+          {searchQuery && (
+            <span className="log-search-counter">
+              {matchLines.length > 0 ? `${matchIndex + 1}/${matchLines.length}` : '0/0'}
+            </span>
+          )}
+          <button className="log-search-nav" onClick={goPrev} disabled={!matchLines.length} title={t('job.searchPrev')}>&#8593;</button>
+          <button className="log-search-nav" onClick={goNext} disabled={!matchLines.length} title={t('job.searchNext')}>&#8595;</button>
+          <button className="log-search-close" onClick={closeSearch}>&#10005;</button>
+        </div>
       )}
       <button
         className={`log-wrap-btn${wrap ? ' active' : ''}`}
