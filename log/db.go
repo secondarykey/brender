@@ -2,9 +2,11 @@ package log
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"time"
 
+	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
 
@@ -51,10 +53,12 @@ func (db *DBLogger) Trace(ctx context.Context, begin time.Time, fc func() (sql s
 
 	if err != nil {
 		//Record NotFound
-		if true {
-			Error("Error: %v", err)
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			Error("Error: %+v", err)
 			put(ctx, slog.LevelError, "SQL:%s", sql)
 			put(ctx, slog.LevelError, "Rows:%d,[%.3fms]", rows, ms)
+		} else {
+			put(ctx, slog.LevelInfo, "NotFound SQL:%s", sql)
 		}
 	} else {
 		put(ctx, slog.LevelDebug, "SQL:%s", sql)
