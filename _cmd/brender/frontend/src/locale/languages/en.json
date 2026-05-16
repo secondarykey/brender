@@ -204,7 +204,18 @@
     "setAsFileThumbnail": "Set as file thumbnail",
     "testRender": "Test",
     "testHint": "Renders 1 frame at Sample 8 with the current values",
-    "testEnqueued": "Added a test encode with the current values (sample 8, 1 frame) to the queue. Settings have not been saved — please save if needed."
+    "testEnqueued": "Added a test encode with the current values (sample 8, 1 frame) to the queue. Settings have not been saved — please save if needed.",
+    "createDialog": {
+      "title": "Create Workspace",
+      "byEngine": "Create by engine",
+      "byScene": "Create by scene",
+      "byCamera": "Create by camera",
+      "loading": "Fetching info from blend file...",
+      "createCount": "Create {{count}}",
+      "noEngines": "No engine info available",
+      "noScenes": "No scene info available",
+      "noCameras": "No camera info available"
+    }
   },
   "queue": {
     "noJobs": "No running or waiting jobs",
@@ -239,18 +250,7 @@
     "bulkDeleteDesc": "Keeps the latest N unlocked jobs and deletes the rest. Locked jobs are always preserved.",
     "keepCount": "Keep count",
     "bulkDeleteDataOnly": "Keep history, delete data only",
-    "bulkDeleteResult": "Deleted {{count}} jobs",
-    "createDialog": {
-      "title": "Create Workspace",
-      "byEngine": "Create by engine",
-      "byScene": "Create by scene",
-      "byCamera": "Create by camera",
-      "loading": "Fetching info from blend file...",
-      "createCount": "Create {{count}}",
-      "noEngines": "No engine info available",
-      "noScenes": "No scene info available",
-      "noCameras": "No camera info available"
-    }
+    "bulkDeleteResult": "Deleted {{count}} jobs"
   },
   "dialog": {
     "jobDetails": "Job Details",
