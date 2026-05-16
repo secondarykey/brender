@@ -74,11 +74,11 @@ export const ProjectApi = {
               : serverCall('project', 'remove_file', { file_id: fileID }),
 
   /** ファイルを完全削除
-   * @param {{ fileID: number }} args
+   * @param {{ fileID: string, force?: boolean }} args
    */
-  deleteFile: ({ fileID }) =>
-    isWails() ? svc().then(s => s.DeleteFile(fileID))
-              : serverCall('project', 'delete_file', { file_id: fileID }),
+  deleteFile: ({ fileID, force = false }) =>
+    isWails() ? svc().then(s => s.DeleteFile(fileID, force))
+              : serverCall('project', 'delete_file', { file_id: fileID, force }),
 
   /** ファイルのサムネイル画像を base64 データURIで取得
    * @param {{ projectID: string, fileID: number }} args

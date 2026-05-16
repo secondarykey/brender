@@ -134,6 +134,8 @@
     "blenderHint": "未設定の場合: Blender一覧の先頭が使用されます",
     "confirmDelete": "ファイルを削除しますか？",
     "deleteWarning": "関連するワークスペースおよびジョブ履歴も削除されます。物理ファイルは削除されません。この操作は取り消せません。",
+    "forceDeleteLabel": "ロックされた実行結果を含めて削除する",
+    "lockedJobsExist": "ロックされたジョブが存在します。上のチェックをONにして再度削除してください。",
     "setAsProjectThumbnail": "サムネイルを設定",
     "selectThumbnailHint": "サムネイルにする画像をクリックしてください",
     "defaultScene": "デフォルトシーン",

@@ -134,6 +134,8 @@
     "blenderHint": "If not set: the first Blender in the list will be used",
     "confirmDelete": "Delete this file?",
     "deleteWarning": "Associated workspaces and job history will also be deleted. The physical file will not be deleted. This action cannot be undone.",
+    "forceDeleteLabel": "Include locked results and delete",
+    "lockedJobsExist": "Locked jobs exist. Check the option above and try again.",
     "setAsProjectThumbnail": "Set Thumbnail",
     "selectThumbnailHint": "Click the image to use as thumbnail",
     "defaultScene": "Default Scene",

@@ -52,8 +52,8 @@ func (s *Project) RemoveFile(fileID string) error {
 	return api.RemoveProjectFile(fileID)
 }
 
-func (s *Project) DeleteFile(fileID string) error {
-	return api.DeleteProjectFile(fileID)
+func (s *Project) DeleteFile(fileID string, force bool) error {
+	return api.DeleteProjectFile(fileID, force)
 }
 
 func (s *Project) GetFileThumbnail(projectID string, fileID string) (string, error) {

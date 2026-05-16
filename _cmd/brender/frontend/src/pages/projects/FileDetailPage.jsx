@@ -443,6 +443,7 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
   const [saving, setSaving]               = useState(false)
   const [deleting, setDeleting]           = useState(false)
   const [confirm, setConfirm]             = useState(false)
+  const [forceDel, setForceDel]           = useState(false)
 
   const fetchToolData = (installID) => {
     setToolLoading(true)
@@ -501,12 +502,16 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
 
   const handleDelete = async () => {
     setDeleting(true)
-    showError('')
     try {
-      await ProjectApi.deleteFile({ fileID })
+      await ProjectApi.deleteFile({ fileID, force: forceDel })
       if (onDeleted) onDeleted()
     } catch (e) {
-      showError(e?.message ?? String(e))
+      const msg = String(e?.message ?? e)
+      if (msg.includes('locked_jobs_exist')) {
+        showError(t('file.lockedJobsExist'))
+      } else {
+        showError(msg)
+      }
       setConfirm(false)
     } finally {
       setDeleting(false)
@@ -667,7 +672,7 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
           <NoteSection value={note} onChange={setNote} />
 
           <div className="form-actions">
-            <button className="btn btn-danger" onClick={() => setConfirm(true)}>{t('common.delete')}</button>
+            <button className="btn btn-danger" onClick={() => { setForceDel(false); setConfirm(true) }}>{t('common.delete')}</button>
             <button className="btn btn-green" onClick={handleSave} disabled={saving}>
               {saving ? t('common.saving') : t('common.save')}
             </button>
@@ -676,6 +681,7 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
 
         <ConfirmDialog
           open={confirm}
+          hold
           title={t('file.confirmDelete')}
           onCancel={() => setConfirm(false)}
           onConfirm={handleDelete}
@@ -686,6 +692,10 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
           <p style={{ marginTop: 10, color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>
             {t('file.deleteWarning')}
           </p>
+          <label className="form-checkbox-label" style={{ marginTop: 12, fontSize: '0.85rem' }}>
+            <input type="checkbox" checked={forceDel} onChange={e => setForceDel(e.target.checked)} />
+            {t('file.forceDeleteLabel')}
+          </label>
         </ConfirmDialog>
       </div>
 

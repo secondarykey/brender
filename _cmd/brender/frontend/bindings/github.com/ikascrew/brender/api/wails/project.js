@@ -55,10 +55,11 @@ export function Delete(id) {
 
 /**
  * @param {string} fileID
+ * @param {boolean} force
  * @returns {$CancellablePromise<void>}
  */
-export function DeleteFile(fileID) {
-    return $Call.ByID(1985671226, fileID);
+export function DeleteFile(fileID, force) {
+    return $Call.ByID(1985671226, fileID, force);
 }
 
 /**
