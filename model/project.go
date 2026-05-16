@@ -14,6 +14,7 @@ import (
 type Project struct {
 	ID           string     `gorm:"primaryKey" json:"id"`
 	Name         string     `json:"name"`
+	Note         string     `json:"note"`
 	WorkDirID    uint       `json:"work_dir_id"`
 	DisplayOrder int        `gorm:"default:99999" json:"display_order"`
 	ProcessedAt  *time.Time `json:"processed_at"`
@@ -26,6 +27,7 @@ type ProjectFile struct {
 	ProjectID        string     `json:"project_id"`
 	Path             string     `json:"path"`
 	Name             string     `json:"name"`
+	Note             string     `json:"note"`
 	BlenderInstallID uint       `json:"blender_install_id"`
 	BlenderFixed     bool       `json:"blender_fixed"`  // true = ワークスペースで変更不可
 	Scene            string     `json:"scene"`

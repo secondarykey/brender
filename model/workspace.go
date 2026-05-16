@@ -15,6 +15,7 @@ type Workspace struct {
 	ProjectFileID    string     `json:"project_file_id"`
 	BlenderInstallID uint       `json:"blender_install_id"` // 0 = プロジェクトのデフォルト使用
 	Name             string     `json:"name"`
+	Note             string     `json:"note"`
 	Scene            string     `json:"scene"`
 	Camera           string     `json:"camera"`
 	Engine           string     `json:"engine"`              // "" = Blender デフォルト

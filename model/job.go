@@ -31,6 +31,8 @@ const (
 // Queue と同じ UUID v7 の ID を持つ。
 type Job struct {
 	ID            string     `gorm:"primaryKey" json:"id"` // UUID v7, Queue と共通
+	Name          string     `json:"name"`
+	Note          string     `json:"note"`
 	ProjectID     string     `json:"project_id"`
 	ProjectName   string     `json:"project_name"`
 	WorkspaceID   string     `json:"workspace_id"`
