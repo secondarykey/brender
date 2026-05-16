@@ -27,7 +27,7 @@ function buildName(combo, useEngines, useScenes, useCameras, fileName) {
   return fileName ? `${fileName}${suffix}` : (suffix ? suffix.slice(1, -1) : 'New Workspace')
 }
 
-function CheckboxGroup({ label, enabled, onToggle, items, selected, onToggleItem, emptyKey }) {
+function CheckboxGroup({ label, enabled, onToggle, items, selected, onToggleItem, loading }) {
   const { t } = useTranslation()
   return (
     <div className="ws-create-section">
@@ -37,18 +37,20 @@ function CheckboxGroup({ label, enabled, onToggle, items, selected, onToggleItem
       </label>
       {enabled && (
         <div className="ws-create-items">
-          {items.length === 0
-            ? <span className="form-hint">{t(emptyKey)}</span>
-            : items.map(item => (
-              <label key={item} className="ws-create-item-label">
-                <input
-                  type="checkbox"
-                  checked={selected.includes(item)}
-                  onChange={e => onToggleItem(item, e.target.checked)}
-                />
-                <span className="ws-meta-chip">{item}</span>
-              </label>
-            ))
+          {loading
+            ? <span className="form-hint">{t('common.loading')}</span>
+            : items.length === 0
+              ? <span className="form-hint">—</span>
+              : items.map(item => (
+                  <label key={item} className="ws-create-item-label">
+                    <input
+                      type="checkbox"
+                      checked={selected.includes(item)}
+                      onChange={e => onToggleItem(item, e.target.checked)}
+                    />
+                    <span className="ws-meta-chip">{item}</span>
+                  </label>
+                ))
           }
         </div>
       )}
@@ -59,27 +61,25 @@ function CheckboxGroup({ label, enabled, onToggle, items, selected, onToggleItem
 export default function WorkspaceCreateDialog({ open, onClose, projectID, fileID, fileName, onCreated }) {
   const { t } = useTranslation()
 
-  const [loading, setLoading]               = useState(false)
-  const [creating, setCreating]             = useState(false)
-  const [error, setError]                   = useState('')
-  const [availEngines, setAvailEngines]     = useState([])
-  const [availScenes, setAvailScenes]       = useState([])
-  const [availCameras, setAvailCameras]     = useState([])
+  const [fetching, setFetching]               = useState(false)
+  const [creating, setCreating]               = useState(false)
+  const [error, setError]                     = useState('')
+  const [availEngines, setAvailEngines]       = useState([])
+  const [availScenes, setAvailScenes]         = useState([])
+  const [availCameras, setAvailCameras]       = useState([])
 
-  const [useEngines, setUseEngines]         = useState(false)
+  const [useMultiple, setUseMultiple]         = useState(false)
+  const [useEngines, setUseEngines]           = useState(false)
   const [selectedEngines, setSelectedEngines] = useState([])
-  const [useScenes, setUseScenes]           = useState(false)
-  const [selectedScenes, setSelectedScenes] = useState([])
-  const [useCameras, setUseCameras]         = useState(false)
+  const [useScenes, setUseScenes]             = useState(false)
+  const [selectedScenes, setSelectedScenes]   = useState([])
+  const [useCameras, setUseCameras]           = useState(false)
   const [selectedCameras, setSelectedCameras] = useState([])
 
   useEffect(() => {
     if (!open) return
-    setLoading(true)
     setError('')
-    setAvailEngines([])
-    setAvailScenes([])
-    setAvailCameras([])
+    setUseMultiple(false)
     setUseEngines(false)
     setUseScenes(false)
     setUseCameras(false)
@@ -87,6 +87,8 @@ export default function WorkspaceCreateDialog({ open, onClose, projectID, fileID
     setSelectedScenes([])
     setSelectedCameras([])
 
+    // ダイアログ開放と同時にバックグラウンドで取得開始
+    setFetching(true)
     Promise.all([
       BlenderApi.getToolData({ installID: 0, fileID }),
       BlenderApi.getEngines({ installID: 0 }),
@@ -103,7 +105,7 @@ export default function WorkspaceCreateDialog({ open, onClose, projectID, fileID
     }).catch(err => {
       setError(String(err))
     }).finally(() => {
-      setLoading(false)
+      setFetching(false)
     })
   }, [open, fileID])
 
@@ -111,11 +113,15 @@ export default function WorkspaceCreateDialog({ open, onClose, projectID, fileID
     setter(prev => checked ? [...prev, item] : prev.filter(x => x !== item))
   }
 
-  const combinations = generateCombinations(
-    useEngines ? selectedEngines : [],
-    useScenes  ? selectedScenes  : [],
-    useCameras ? selectedCameras : [],
-  )
+  const combinations = useMultiple
+    ? generateCombinations(
+        useEngines ? selectedEngines : [],
+        useScenes  ? selectedScenes  : [],
+        useCameras ? selectedCameras : [],
+      )
+    : []
+
+  const count = combinations.length > 0 ? combinations.length : 1
 
   const handleCreate = async () => {
     setCreating(true)
@@ -140,8 +146,6 @@ export default function WorkspaceCreateDialog({ open, onClose, projectID, fileID
     }
   }
 
-  const count = Math.max(1, combinations.length)
-
   return (
     <Dialog
       open={open}
@@ -155,7 +159,7 @@ export default function WorkspaceCreateDialog({ open, onClose, projectID, fileID
           <button className="btn btn-ghost" onClick={onClose} disabled={creating}>
             {t('common.cancel')}
           </button>
-          <button className="btn btn-green" onClick={handleCreate} disabled={loading || creating}>
+          <button className="btn btn-green" onClick={handleCreate} disabled={creating}>
             {creating
               ? t('common.registering')
               : t('workspace.createDialog.createCount', { count })}
@@ -163,39 +167,48 @@ export default function WorkspaceCreateDialog({ open, onClose, projectID, fileID
         </>
       }
     >
-      {loading ? (
-        <p className="form-hint">{t('workspace.createDialog.loading')}</p>
-      ) : (
-        <div className="ws-create-form">
-          <CheckboxGroup
-            label={t('workspace.createDialog.byEngine')}
-            enabled={useEngines}
-            onToggle={setUseEngines}
-            items={availEngines}
-            selected={selectedEngines}
-            onToggleItem={(item, checked) => toggleItem(setSelectedEngines, item, checked)}
-            emptyKey="workspace.createDialog.noEngines"
+      <div className="ws-create-form">
+        <label className="ws-create-master-toggle">
+          <input
+            type="checkbox"
+            checked={useMultiple}
+            onChange={e => setUseMultiple(e.target.checked)}
           />
-          <CheckboxGroup
-            label={t('workspace.createDialog.byScene')}
-            enabled={useScenes}
-            onToggle={setUseScenes}
-            items={availScenes}
-            selected={selectedScenes}
-            onToggleItem={(item, checked) => toggleItem(setSelectedScenes, item, checked)}
-            emptyKey="workspace.createDialog.noScenes"
-          />
-          <CheckboxGroup
-            label={t('workspace.createDialog.byCamera')}
-            enabled={useCameras}
-            onToggle={setUseCameras}
-            items={availCameras}
-            selected={selectedCameras}
-            onToggleItem={(item, checked) => toggleItem(setSelectedCameras, item, checked)}
-            emptyKey="workspace.createDialog.noCameras"
-          />
-        </div>
-      )}
+          <span>{t('workspace.createDialog.multipleFromFile')}</span>
+        </label>
+
+        {useMultiple && (
+          <div className="ws-create-sections">
+            <CheckboxGroup
+              label={t('workspace.createDialog.engines')}
+              enabled={useEngines}
+              onToggle={setUseEngines}
+              items={availEngines}
+              selected={selectedEngines}
+              onToggleItem={(item, checked) => toggleItem(setSelectedEngines, item, checked)}
+              loading={fetching}
+            />
+            <CheckboxGroup
+              label={t('workspace.createDialog.scenes')}
+              enabled={useScenes}
+              onToggle={setUseScenes}
+              items={availScenes}
+              selected={selectedScenes}
+              onToggleItem={(item, checked) => toggleItem(setSelectedScenes, item, checked)}
+              loading={fetching}
+            />
+            <CheckboxGroup
+              label={t('workspace.createDialog.cameras')}
+              enabled={useCameras}
+              onToggle={setUseCameras}
+              items={availCameras}
+              selected={selectedCameras}
+              onToggleItem={(item, checked) => toggleItem(setSelectedCameras, item, checked)}
+              loading={fetching}
+            />
+          </div>
+        )}
+      </div>
     </Dialog>
   )
 }

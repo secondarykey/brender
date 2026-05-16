@@ -207,14 +207,12 @@
     "testEnqueued": "Added a test encode with the current values (sample 8, 1 frame) to the queue. Settings have not been saved — please save if needed.",
     "createDialog": {
       "title": "Create Workspace",
-      "byEngine": "Create by engine",
-      "byScene": "Create by scene",
-      "byCamera": "Create by camera",
+      "multipleFromFile": "Create multiple from file values",
+      "engines": "Engine",
+      "scenes": "Scene",
+      "cameras": "Camera",
       "loading": "Fetching info from blend file...",
-      "createCount": "Create {{count}}",
-      "noEngines": "No engine info available",
-      "noScenes": "No scene info available",
-      "noCameras": "No camera info available"
+      "createCount": "Create {{count}}"
     }
   },
   "queue": {

@@ -207,14 +207,12 @@
     "testEnqueued": "現在表示されている値でサンプル8・1フレームのテスト用エンコードをキューに追加しました。設定値の保存は行っていません。必要な場合は保存してください。",
     "createDialog": {
       "title": "ワークスペース作成",
-      "byEngine": "エンジンにより作成",
-      "byScene": "シーンにより作成",
-      "byCamera": "カメラにより作成",
+      "multipleFromFile": "ファイルの値から複数作成する",
+      "engines": "エンジン",
+      "scenes": "シーン",
+      "cameras": "カメラ",
       "loading": "ブレンドファイルから情報を取得中...",
-      "createCount": "{{count}}個作成",
-      "noEngines": "エンジン情報がありません",
-      "noScenes": "シーン情報がありません",
-      "noCameras": "カメラ情報がありません"
+      "createCount": "{{count}}個作成"
     }
   },
   "queue": {
