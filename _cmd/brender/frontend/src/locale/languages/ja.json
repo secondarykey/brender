@@ -253,6 +253,7 @@
     "bulkDeleteDesc": "ロックされていないジョブのうち、最新N件を残して残りを削除します。ロック済みジョブは保持されます。",
     "keepCount": "残す件数",
     "bulkDeleteDataOnly": "履歴は残し、データのみ削除する",
+    "bulkDeleteErrorOnly": "エラーのみ削除",
     "bulkDeleteResult": "{{count}}件削除しました"
   },
   "dialog": {

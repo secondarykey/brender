@@ -74,8 +74,8 @@ func (s *Queue) DeleteJob(id string) error {
 	return api.DeleteJob(id)
 }
 
-func (s *Queue) BulkDeleteJobsByWorkspace(projectID string, workspaceID string, keepCount int, dataOnly bool) (int, error) {
-	return api.BulkDeleteJobsByWorkspace(projectID, workspaceID, keepCount, dataOnly)
+func (s *Queue) BulkDeleteJobsByWorkspace(projectID string, workspaceID string, keepCount int, dataOnly bool, errorOnly bool) (int, error) {
+	return api.BulkDeleteJobsByWorkspace(projectID, workspaceID, keepCount, dataOnly, errorOnly)
 }
 
 func (s *Queue) DeleteJobData(id string) error {
