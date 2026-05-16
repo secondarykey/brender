@@ -109,6 +109,7 @@ function HistoryTab({ projectID, workspaceID, navigate, projectName, fileName, f
   const openJob = (j) => {
     navigate('job', {
       job: j,
+      initialTab: 'render',
       backPage: 'workspace',
       backParams: { projectID, projectName, fileID, fileName, workspaceID, workspaceName },
     })
