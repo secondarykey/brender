@@ -1266,11 +1266,17 @@ body {
   color: rgba(255,255,255,0.45);
   font-weight: 500;
   white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: #1a1a1a;
 }
 .queue-table th.col-status,
 .queue-table th.col-datetime,
 .queue-table th.col-duration,
 .queue-table th.col-action   { text-align: center; }
+.queue-table th.col-r,
+.queue-table td.col-r        { text-align: right; }
 .queue-table th.col-status,
 .queue-table td.col-status   { width: 90px;  min-width: 90px;  max-width: 90px; }
 .queue-table th.col-datetime,
@@ -1290,11 +1296,12 @@ body {
 .queue-table td.col-action   { text-align: center; }
 .queue-table tr.row-running td { background: rgba(74,124,220,0.05); }
 .queue-table tr.row-error td   { background: rgba(220,74,74,0.05); }
-.queue-id    { color: rgba(255,255,255,0.35); font-size: 0.8rem; }
-.frames-cell { font-family: monospace; font-size: 0.82rem; white-space: nowrap; }
-.date-cell   { font-size: 0.8rem; color: rgba(255,255,255,0.55); white-space: nowrap; }
-.duration-cell { font-size: 0.8rem; white-space: nowrap; }
-.error-hint  { font-size: 0.78rem; color: #f17e72; cursor: pointer; text-decoration: underline dotted; }
+.queue-id      { color: rgba(255,255,255,0.35); font-size: 0.8rem; }
+.num-cell      { text-align: right; font-size: 0.82rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.frames-cell   { font-family: monospace; font-size: 0.82rem; white-space: nowrap; text-align: right; }
+.date-cell     { font-size: 0.8rem; color: rgba(255,255,255,0.55); white-space: nowrap; text-align: right; }
+.duration-cell { font-size: 0.8rem; white-space: nowrap; text-align: right; }
+.error-hint    { font-size: 0.78rem; color: #f17e72; cursor: pointer; text-decoration: underline dotted; }
 
 /* Filter tabs */
 .filter-tabs {
