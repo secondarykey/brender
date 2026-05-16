@@ -657,6 +657,7 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
 
       <ConfirmDialog
         open={confirm}
+        hold
         title={t('workspace.confirmDelete')}
         onCancel={() => setConfirm(false)}
         onConfirm={async () => {
