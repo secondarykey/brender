@@ -60,15 +60,13 @@ function Row({ label, value, selectable }) {
   )
 }
 
-function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
+function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged, navigate }) {
   const { t } = useTranslation()
-  const [confirm, setConfirm]           = useState(false)
-  const [confirmData, setConfirmData]   = useState(false)
-  const [deleting, setDeleting]         = useState(false)
-  const [deletingData, setDeletingData] = useState(false)
-  const [locking, setLocking]           = useState(false)
-  const [error, setError]               = useState('')
-  const [dataStatus, setDataStatus]     = useState(job?.data_status ?? 0)
+  const [confirm, setConfirm]   = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [locking, setLocking]   = useState(false)
+  const [error, setError]       = useState('')
+  const [dataStatus, setDataStatus] = useState(job?.data_status ?? 0)
   useEffect(() => {
     if (job) setDataStatus(job.data_status ?? 0)
   }, [job])
@@ -108,21 +106,6 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
     }
   }
 
-  const handleDeleteData = async () => {
-    setDeletingData(true)
-    setError('')
-    try {
-      await QueueApi.deleteJobData({ id: job.id })
-      setDataStatus(4)
-      setConfirmData(false)
-      if (onStatusChanged) onStatusChanged(job.id, 4)
-    } catch (err) {
-      setError(String(err))
-    } finally {
-      setDeletingData(false)
-    }
-  }
-
   const handleDelete = async () => {
     setDeleting(true)
     setError('')
@@ -138,6 +121,16 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
     }
   }
 
+  const handleNavigate = () => {
+    onClose()
+    navigate('job', {
+      job,
+      initialTab: 'render',
+      backPage: 'queue',
+      backParams: {},
+    })
+  }
+
   return (
     <>
       <Dialog
@@ -145,19 +138,20 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
         wide
         title={t('dialog.jobDetails')}
         onClose={onClose}
-        closeOnBackdrop={!confirm && !confirmData}
+        closeOnBackdrop={!confirm}
         message={error || undefined}
         bodyClassName="job-detail-body"
         actions={
           <>
             <button className="btn btn-danger" style={{ marginRight: 'auto' }} onClick={() => setConfirm(true)} disabled={isLocked}>{t('common.delete')}</button>
+            {navigate && <button className="btn btn-ghost" onClick={handleNavigate}>{t('tabs.renderResults')}</button>}
             <button className="btn btn-ghost" onClick={() => QueueApi.openLogWindow({ id: job.id })}>{t('job.showLog')}</button>
             <button className="btn btn-ghost" onClick={onClose}>{t('common.close')}</button>
           </>
         }
       >
         <div className="job-detail-section">
-          <Row label={t('dialog.status')}    value={<span className={`status-badge status-${status}`}>{statusLabels[status] ?? status}</span>} />
+          <Row label={t('dialog.status')} value={<span className={`status-badge status-${status}`}>{statusLabels[status] ?? status}</span>} />
           <Row label={t('dialog.data')} value={
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <DataStatusBadge status={dataStatus} />
@@ -166,41 +160,27 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
               </button>
             </div>
           } />
-          <Row label={t('dialog.project')}  value={job.project_name} />
+          <Row label={t('dialog.project')}   value={job.project_name} />
           <Row label={t('dialog.workspace')} value={job.workspace_name} />
         </div>
 
         <div className="job-detail-section">
-          <Row label={t('dialog.scene')}    value={job.scene   || t('common.default')} />
-          <Row label={t('dialog.camera')}  value={job.camera} />
-          <Row label={t('dialog.engine')}  value={job.engine  || t('common.default')} />
-          <Row label={t('dialog.frames')}  value={`${job.start_frame} – ${job.end_frame}${job.frame_step > 1 ? ` (${t('dialog.step')}${job.frame_step})` : ''}`} />
-          <Row label={t('dialog.threads')}  value={job.thread === 0 ? t('common.automatic') : String(job.thread)} />
-          <Row label={t('dialog.samples')}     value={job.samples === 0 ? t('common.default') : String(job.samples)} />
-          <Row label={t('dialog.resolution')}  value={(job.resolution_x > 0 && job.resolution_y > 0) ? `${job.resolution_x}×${job.resolution_y}` : t('common.default')} />
+          <Row label={t('dialog.blender')}    value={job.blender_path} selectable />
+          <Row label={t('dialog.file')}       value={job.blender_file} selectable />
+          <Row label={t('dialog.scene')}      value={job.scene   || t('common.default')} />
+          <Row label={t('dialog.camera')}     value={job.camera} />
+          <Row label={t('dialog.engine')}     value={job.engine  || t('common.default')} />
+          <Row label={t('dialog.frames')}     value={`${job.start_frame} – ${job.end_frame}${job.frame_step > 1 ? ` (${t('dialog.step')}${job.frame_step})` : ''}`} />
+          <Row label={t('dialog.threads')}    value={job.thread === 0 ? t('common.automatic') : String(job.thread)} />
+          <Row label={t('dialog.samples')}    value={job.samples === 0 ? t('common.default') : String(job.samples)} />
+          <Row label={t('dialog.resolution')} value={(job.resolution_x > 0 && job.resolution_y > 0) ? `${job.resolution_x}×${job.resolution_y}` : t('common.default')} />
         </div>
 
         <div className="job-detail-section">
-          <Row label={t('dialog.blender')}  value={job.blender_path} selectable />
-          <Row label={t('dialog.file')} value={job.blender_file} selectable />
-          <Row label={t('dialog.output')}   value={job.output_dir}   selectable />
-          <Row label={t('dialog.dataSize')} value={
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={dataStatus >= 4 ? { textDecoration: 'line-through', opacity: 0.5 } : undefined}>{formatBytes(job.disk_size)}</span>
-              {(dataStatus === 2 || dataStatus === 6) && (
-                <button className="btn btn-sm btn-danger" onClick={() => setConfirmData(true)} disabled={isLocked}>
-                  {t('common.deleteData')}
-                </button>
-              )}
-            </div>
-          } />
-        </div>
-
-        <div className="job-detail-section">
-          <Row label={t('dialog.enrolledAt')} value={fmt(job.enqueued_at)} />
-          <Row label={t('dialog.startedAt')} value={fmt(job.started_at)} />
+          <Row label={t('dialog.enrolledAt')}  value={fmt(job.enqueued_at)} />
+          <Row label={t('dialog.startedAt')}   value={fmt(job.started_at)} />
           <Row label={t('dialog.completedAt')} value={fmt(job.completed_at)} />
-          <Row label={t('dialog.duration')} value={duration(job.started_at, job.completed_at, t)} />
+          <Row label={t('dialog.duration')}    value={duration(job.started_at, job.completed_at, t)} />
         </div>
 
         {status === 'error' && job.error_msg && (
@@ -217,17 +197,6 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
         busy={deleting}
       >
         <p>{t('job.deleteWarning')}</p>
-      </ConfirmDialog>
-
-      <ConfirmDialog
-        open={confirmData}
-        title={t('common.deleteData')}
-        onCancel={() => setConfirmData(false)}
-        onConfirm={handleDeleteData}
-        confirmLabel={deletingData ? t('common.deleting') : t('job.deleteDataAction')}
-        busy={deletingData}
-      >
-        <p>{t('job.deleteDataWarning')}</p>
       </ConfirmDialog>
     </>
   )
