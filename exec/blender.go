@@ -29,6 +29,7 @@ type Blender struct {
 
 	Scene     string
 	Engine    string
+	Format    string // Blender 出力フォーマット名（"PNG" / "JPEG"）。空なら "PNG"
 	Skip      int
 	RunScript string // レンダリング実行時に渡す Python スクリプト（-P）
 
@@ -86,6 +87,13 @@ func (b *Blender) Version() string {
 func (b *Blender) SetFrame(f int) {
 	b.Start = f
 	b.End = f
+}
+
+func (b *Blender) formatOrDefault() string {
+	if b.Format == "" {
+		return "PNG"
+	}
+	return strings.ToUpper(b.Format)
 }
 
 // 同期実行
@@ -165,7 +173,7 @@ func (b *Blender) createArguments() []string {
 
 	//フォーマット指定
 	args = append(args, "-F")
-	args = append(args, "PNG")
+	args = append(args, b.formatOrDefault())
 
 	//スレッド数
 	args = append(args, "-t")

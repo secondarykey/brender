@@ -59,6 +59,7 @@ type RenderPreview struct {
 	ResolutionX   int    `json:"resolution_x"`
 	ResolutionY   int    `json:"resolution_y"`
 	Camera        string `json:"camera"`
+	OutputFormat  string `json:"output_format"` // 解決済みフォーマット名（"PNG" / "JPEG"）
 }
 
 // PreviewRender はToolを実行してレンダリングパラメータを解決・検証する。
@@ -162,6 +163,16 @@ func PreviewRender(projectID, workspaceID string) (*RenderPreview, error) {
 		samples = st.SamplesForEngine(engine)
 	}
 
+	// フォーマット: ワークスペース指定 → システムデフォルト → "PNG"
+	outputFormat := w.OutputFormat
+	if outputFormat == "" {
+		if env, envErr := model.GetEnv(); envErr == nil && env != nil && env.OutputFormat != "" {
+			outputFormat = env.OutputFormat
+		} else {
+			outputFormat = "PNG"
+		}
+	}
+
 	return &RenderPreview{
 		ProjectName:   p.Name,
 		WorkspaceName: w.Name,
@@ -178,6 +189,7 @@ func PreviewRender(projectID, workspaceID string) (*RenderPreview, error) {
 		ResolutionX:   w.ResolutionX,
 		ResolutionY:   w.ResolutionY,
 		Camera:        camera,
+		OutputFormat:  outputFormat,
 	}, nil
 }
 
@@ -372,6 +384,7 @@ func EnqueueWithPreview(projectID, workspaceID string, preview *RenderPreview) (
 		ResolutionX:   preview.ResolutionX,
 		ResolutionY:   preview.ResolutionY,
 		Camera:        preview.Camera,
+		OutputExt:     exec.FormatToExt(preview.OutputFormat),
 		EnqueuedAt:    &now,
 	}
 	if err := model.CreateJob(job); err != nil {
@@ -470,6 +483,7 @@ func executeQueue(q *model.Queue, job *model.Job) {
 	b.File = job.BlenderFile
 	b.Scene = job.Scene
 	b.Engine = job.Engine
+	b.Format = exec.ExtToFormat(job.OutputExt)
 	b.Start = job.StartFrame
 	b.End = job.EndFrame
 	b.Skip = job.FrameStep

@@ -261,7 +261,6 @@ function RenderResultTab({ job }) {
   const [creatingMovie, setCreatingMovie]   = useState(false)
   const [movieDialogOpen, setMovieDialogOpen] = useState(false)
   const [movieFps, setMovieFps]             = useState('30')
-  const [movieInext, setMovieInext]         = useState('png')
   const [movieOutext, setMovieOutext]       = useState('mp4')
   const [movieExtraArgs, setMovieExtraArgs] = useState('')
   const playingRef = useRef(false)
@@ -279,7 +278,7 @@ function RenderResultTab({ job }) {
       .catch(err => { setError(String(err)); setLoadingList(false) })
     QueueApi.listJobFiles({ id: job.id })
       .then(files => {
-        const movie = (files || []).find(f => !f.is_dir && /^movie\./i.test(f.name) && isVideoFile(f.name))
+        const movie = (files || []).find(f => !f.is_dir && isVideoFile(f.name))
         if (movie) setMoviePath(movie.path)
       })
       .catch(() => {})
@@ -343,7 +342,6 @@ function RenderResultTab({ job }) {
       const env = await EnvironmentApi.get()
       if (env) {
         setMovieFps(String(env.ffmpeg_fps > 0 ? env.ffmpeg_fps : 30))
-        setMovieInext(env.ffmpeg_ext || 'png')
         setMovieOutext(env.ffmpeg_out_ext || 'mp4')
         setMovieExtraArgs(env.ffmpeg_args || '')
       }
@@ -362,7 +360,6 @@ function RenderResultTab({ job }) {
         workspaceID: job.workspace_id,
         jobID:       job.id,
         fps:         parseInt(movieFps, 10) || 30,
-        inext:       movieInext || 'png',
         outext:      movieOutext || 'mp4',
         extraArgs:   movieExtraArgs,
       })
@@ -452,17 +449,6 @@ function RenderResultTab({ job }) {
               style={{ width: 80 }}
               value={movieFps}
               onChange={e => setMovieFps(e.target.value)}
-            />
-          </div>
-
-          <span className="form-label" style={{ textAlign: 'right' }}>{t('viewer.movieDialogInputExt')}</span>
-          <div>
-            <input
-              type="text" className="form-input"
-              style={{ width: 100 }}
-              value={movieInext}
-              onChange={e => setMovieInext(e.target.value)}
-              placeholder="png"
             />
           </div>
 

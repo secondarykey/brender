@@ -35,6 +35,11 @@ export const EnvironmentApi = {
     isWails() ? svc().then(s => s.SetLogLevel(level))
               : serverCall('environment', 'set_log_level', { level }),
 
+  /** レンダリング出力フォーマットを設定（"PNG" / "JPEG"） */
+  setOutputFormat: ({ format }) =>
+    isWails() ? svc().then(s => s.SetOutputFormat(format))
+              : serverCall('environment', 'set_output_format', { format }),
+
   /** 最大同時実行数を設定 */
   setMaxConcurrentJobs: ({ n }) =>
     isWails() ? svc().then(s => s.SetMaxConcurrentJobs(n))

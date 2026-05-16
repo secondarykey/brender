@@ -408,6 +408,14 @@ export class RenderPreview {
              */
             this["camera"] = "";
         }
+        if (!("output_format" in $$source)) {
+            /**
+             * 解決済みフォーマット名（"PNG" / "JPEG"）
+             * @member
+             * @type {string}
+             */
+            this["output_format"] = "";
+        }
 
         Object.assign(this, $$source);
     }

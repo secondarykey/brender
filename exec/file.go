@@ -16,9 +16,15 @@ const (
 	RenderingJobName     = "%s_%s"
 	RenderingJobNameGlob = "*_%s.lock"
 
-	RenderResultFile     = "########.png"
-	RenderResultFileGlob = "*.png"
+	RenderResultFile     = "########.png" // deprecated: use RenderResultPattern(ext)
+	RenderResultFileGlob = "*.png"        // deprecated: use RenderResultGlob(ext)
 
 	ThumbnailWidth  = 288
 	ThumbnailHeight = 162
 )
+
+// RenderResultGlob returns a glob pattern for rendered frame files with the given extension.
+func RenderResultGlob(ext string) string { return "*." + ext }
+
+// RenderResultPattern returns the Blender output file pattern for the given extension.
+func RenderResultPattern(ext string) string { return "########." + ext }

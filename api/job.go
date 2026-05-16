@@ -9,7 +9,7 @@ import (
 	"golang.org/x/xerrors"
 )
 
-func CreateMovie(projectID string, fileID string, workspaceID string, jobID string, fps int, inext string, outext string, extraArgs string) (string, chan error, error) {
+func CreateMovie(projectID string, fileID string, workspaceID string, jobID string, fps int, outext string, extraArgs string) (string, chan error, error) {
 
 	baseDir, err := GetProjectBaseDir(projectID)
 	if err != nil {
@@ -31,9 +31,17 @@ func CreateMovie(projectID string, fileID string, workspaceID string, jobID stri
 	if fps <= 0 {
 		fps = 30
 	}
+
+	// 入力拡張子はジョブの OutputExt から取得
+	j, err := model.GetJob(jobID)
+	if err != nil {
+		return "", nil, xerrors.Errorf("model.GetJob() error: %w", err)
+	}
+	inext := j.OutputExt
 	if inext == "" {
 		inext = "png"
 	}
+
 	if outext == "" {
 		outext = "mp4"
 	}

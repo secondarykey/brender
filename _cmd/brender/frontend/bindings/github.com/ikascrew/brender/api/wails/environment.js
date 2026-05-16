@@ -83,6 +83,14 @@ export function SetMaxConcurrentJobs(n) {
     return $Call.ByID(4180283252, n);
 }
 
+/**
+ * @param {string} format
+ * @returns {$CancellablePromise<void>}
+ */
+export function SetOutputFormat(format) {
+    return $Call.ByID(1766674691, format);
+}
+
 // Private type creation functions
 const $$createType0 = model$0.Environment.createFrom;
 const $$createType1 = $Create.Nullable($$createType0);
