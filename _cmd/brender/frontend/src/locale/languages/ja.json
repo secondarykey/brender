@@ -12,7 +12,7 @@
     "back": "戻る",
     "view": "表示",
     "open": "開く",
-    "run": "実行",
+    "run": "レンダー",
     "default": "デフォルト",
     "notSet": "— 未設定 —",
     "notSetPlaceholder": "未設定",

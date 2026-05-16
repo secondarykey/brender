@@ -5,6 +5,7 @@ import { WorkspaceApi, BlenderApi, QueueApi, ProjectApi, WorkDirApi } from '../.
 import { useToast, useMessage } from '../../lib/toast'
 import { onAppEvent } from '../../lib/appEvents'
 import Pagination from '../../components/Pagination'
+import Dialog from '../../components/Dialog'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import Breadcrumb from '../../components/Breadcrumb'
 
@@ -155,7 +156,7 @@ function DefaultTag({ value, t }) {
 }
 
 // ── 設定タブ ──────────────────────────────────────────────
-function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onDeleted, onTestEnqueued, workDirLocked }) {
+function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onDeleted, onTestEnqueued, onRenderEnqueued, workDirLocked }) {
   const { t } = useTranslation()
   const { showToast } = useToast()
   const { showError } = useMessage()
@@ -174,6 +175,9 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
   const [deleting, setDeleting]             = useState(false)
   const [testEnqueueing, setTestEnqueueing] = useState(false)
   const [testEnqueued, setTestEnqueued]     = useState(false)
+  const [renderConfirm, setRenderConfirm]   = useState(null)
+  const [renderEnqueuing, setRenderEnqueuing] = useState(false)
+  const [resolvingRender, setResolvingRender] = useState(false)
   const nameRef      = useRef(null)
   const hasFocused   = useRef(false)
   const lastFrameSpec      = useRef(null) // OFF 直前のフレーム値を退避
@@ -346,6 +350,35 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
       showError(String(err))
     } finally {
       setTestEnqueueing(false)
+    }
+  }
+
+  const handleRenderClick = async () => {
+    showError('')
+    setResolvingRender(true)
+    try {
+      const preview = await QueueApi.previewRender({ projectID, workspaceID })
+      setRenderConfirm(preview)
+    } catch (err) {
+      showError(String(err))
+    } finally {
+      setResolvingRender(false)
+    }
+  }
+
+  const handleRenderEnqueue = async () => {
+    if (!renderConfirm) return
+    setRenderEnqueuing(true)
+    showError('')
+    try {
+      await QueueApi.enqueueWithPreview({ projectID, workspaceID, preview: renderConfirm })
+      setRenderConfirm(null)
+      if (onRenderEnqueued) onRenderEnqueued()
+    } catch (err) {
+      showError(String(err))
+      setRenderConfirm(null)
+    } finally {
+      setRenderEnqueuing(false)
     }
   }
 
@@ -571,11 +604,41 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
           <button className="btn btn-run" onClick={handleTestEncode} disabled={testEnqueueing || workDirLocked}>
             {testEnqueueing ? t('common.enqueueing') : t('workspace.testRender')}
           </button>
+          <button className="btn btn-run" onClick={handleRenderClick} disabled={resolvingRender || workDirLocked}>
+            {resolvingRender ? t('common.processing') : `▶ ${t('common.run')}`}
+          </button>
           <button className="btn btn-green" onClick={handleSave} disabled={saving}>
             {saving ? t('common.saving') : t('common.save')}
           </button>
         </div>
       </div>
+
+      <Dialog
+        open={!!renderConfirm}
+        title={t('render.confirmTitle')}
+        onClose={() => setRenderConfirm(null)}
+        closeOnBackdrop={!renderEnqueuing}
+        actions={
+          <>
+            <button className="btn btn-ghost" onClick={() => setRenderConfirm(null)}>{t('common.cancel')}</button>
+            <button className="btn btn-run" onClick={handleRenderEnqueue} disabled={renderEnqueuing}>
+              {renderEnqueuing ? t('common.enqueueing') : `▶ ${t('common.run')}`}
+            </button>
+          </>
+        }
+      >
+        {renderConfirm && (
+          <>
+            <p><span className="dialog-label">{t('render.scene')}</span>{renderConfirm.scene}</p>
+            {renderConfirm.engine
+              ? <p><span className="dialog-label">{t('render.engine')}</span>{renderConfirm.engine}</p>
+              : <p><span className="dialog-label">{t('render.engine')}</span><span style={{ opacity: 0.5 }}>{t('render.blendDefault')}</span></p>
+            }
+            <p><span className="dialog-label">{t('render.frames')}</span>{renderConfirm.start_frame} – {renderConfirm.end_frame}</p>
+            {renderConfirm.frame_step > 1 && <p><span className="dialog-label">{t('render.step')}</span>{renderConfirm.frame_step}</p>}
+          </>
+        )}
+      </Dialog>
 
       <ConfirmDialog
         open={confirm}
@@ -671,6 +734,7 @@ function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspa
             onUpdated={() => {}}
             onDeleted={() => navigate('file', { projectID, projectName, fileID: effectiveFileID, fileName: effectiveFileName })}
             onTestEnqueued={() => setHistoryReload(n => n + 1)}
+            onRenderEnqueued={() => navigate('queue')}
             workDirLocked={workDirStatus === 'lock'}
           />
         </div>
