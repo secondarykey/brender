@@ -4,7 +4,7 @@ import { QueueApi, EnvironmentApi } from './lib/api'
 import LogTitleBar from './components/LogTitleBar'
 
 const TAIL_INTERVAL = 1000
-const LEVEL_RE = /\[([A-Z]+)\s*\]/
+const LEVEL_RE = /^\d{4}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2} \[([A-Z]+)\s*\]/
 
 function detectLevel(line) {
   const m = line.match(LEVEL_RE)
