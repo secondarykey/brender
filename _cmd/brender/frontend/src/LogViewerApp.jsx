@@ -15,6 +15,7 @@ function LogViewerApp() {
   const [log, setLog]         = useState(null)
   const [error, setError]     = useState('')
   const [tail, setTail]       = useState(false)
+  const [wrap, setWrap]       = useState(true)
   const [logLevel, setLogLevel]   = useState(null)
   const [logLevels, setLogLevels] = useState(null)
   const preRef                = useRef(null)
@@ -79,8 +80,15 @@ function LogViewerApp() {
         <p className="log-viewer-status">{t('job.noLog')}</p>
       )}
       {log && (
-        <pre ref={preRef} className="log-viewer-pre">{log}</pre>
+        <pre ref={preRef} className={`log-viewer-pre${wrap ? '' : ' no-wrap'}`}>{log}</pre>
       )}
+      <button
+        className={`log-wrap-btn${wrap ? ' active' : ''}`}
+        onClick={() => setWrap(v => !v)}
+        title={t('job.wrap')}
+      >
+        ⇌
+      </button>
       <button
         className={`log-tail-btn${tail ? ' active' : ''}`}
         onClick={() => setTail(v => !v)}
