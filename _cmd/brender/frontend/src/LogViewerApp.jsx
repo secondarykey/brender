@@ -94,7 +94,7 @@ function LogViewerApp() {
       const level = detectLevel(line)
       if (!level) return
       const idx = filterLevels.indexOf(level)
-      if (idx !== -1 && idx >= minIdx) set.add(i)
+      if (idx >= minIdx) set.add(i)
     })
     return set
   }, [logLines, filterLevel, filterLevels])
