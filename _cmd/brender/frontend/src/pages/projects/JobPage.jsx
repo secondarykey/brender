@@ -144,26 +144,28 @@ function DetailTab({ job, onDeleted, onDataStatusChanged }) {
 
   return (
     <div className="ws-detail-split">
-      <div className="ws-detail-left">
-        <div className="form-group">
-          <label className="form-label">{t('job.name')}</label>
-          <input
-            type="text" className="form-input"
-            value={metaName}
-            onChange={e => setMetaName(e.target.value)}
-          />
+      <div className="ws-detail-left" style={{ flex: 2 }}>
+        <div className="form form-field" style={{ gap: 16 }}>
+          <div className="form-field">
+            <label className="form-label">{t('job.name')}</label>
+            <input
+              type="text" className="form-input" style={{ width: '100%' }}
+              value={metaName}
+              onChange={e => setMetaName(e.target.value)}
+            />
+          </div>
+          <div className="form-field">
+            <label className="form-label">{t('job.note')}</label>
+            <textarea
+              className="form-input"
+              style={{ width: '100%', minHeight: 140, resize: 'vertical' }}
+              value={metaNote}
+              onChange={e => setMetaNote(e.target.value)}
+              placeholder={t('job.notePlaceholder')}
+            />
+          </div>
         </div>
-        <div className="form-group">
-          <label className="form-label">{t('job.note')}</label>
-          <textarea
-            className="form-input"
-            style={{ minHeight: 120, resize: 'vertical' }}
-            value={metaNote}
-            onChange={e => setMetaNote(e.target.value)}
-            placeholder={t('job.notePlaceholder')}
-          />
-        </div>
-        <div className="form-actions">
+        <div className="form-actions" style={{ marginTop: 16 }}>
           <button className="btn btn-danger" onClick={() => setConfirm(true)} disabled={isLocked}>{t('common.delete')}</button>
           <button className="btn btn-green" onClick={handleSaveMeta} disabled={savingMeta || !isMetaDirty}>
             {savingMeta ? t('common.saving') : t('common.save')}
@@ -171,7 +173,7 @@ function DetailTab({ job, onDeleted, onDataStatusChanged }) {
         </div>
       </div>
 
-      <div className="ws-detail-right">
+      <div className="ws-detail-right" style={{ flex: 3 }}>
         <div className="job-page-detail">
           <div className="job-detail-body">
             <div className="job-detail-section">
