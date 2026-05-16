@@ -92,6 +92,7 @@ function HistoryTab({ projectID, workspaceID, navigate, projectName, fileName, f
   const [bulkOpen, setBulkOpen]     = useState(false)
   const [keepCount, setKeepCount]   = useState(5)
   const [dataOnly, setDataOnly]     = useState(false)
+  const [errorOnly, setErrorOnly]   = useState(false)
   const [bulkBusy, setBulkBusy]     = useState(false)
   const [bulkError, setBulkError]   = useState('')
 
@@ -124,7 +125,7 @@ function HistoryTab({ projectID, workspaceID, navigate, projectName, fileName, f
     setBulkBusy(true)
     setBulkError('')
     try {
-      const count = await QueueApi.bulkDeleteJobsByWorkspace({ projectID, workspaceID, keepCount: keepCount >= 0 ? keepCount : 0, dataOnly })
+      const count = await QueueApi.bulkDeleteJobsByWorkspace({ projectID, workspaceID, keepCount: keepCount >= 0 ? keepCount : 0, dataOnly, errorOnly })
       setBulkOpen(false)
       load()
       showToast(t('job.bulkDeleteResult', { count }))
@@ -211,18 +212,27 @@ function HistoryTab({ projectID, workspaceID, navigate, projectName, fileName, f
             value={keepCount}
             onChange={e => setKeepCount(Math.max(0, parseInt(e.target.value, 10) || 0))}
             className="form-input"
-            style={{ width: 100 }}
-            disabled={bulkBusy}
+            style={{ width: 100, opacity: errorOnly ? 0.4 : 1 }}
+            disabled={bulkBusy || errorOnly}
           />
         </div>
-        <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: bulkBusy ? 'not-allowed' : 'pointer', fontSize: '0.9rem' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: (bulkBusy || errorOnly) ? 'not-allowed' : 'pointer', fontSize: '0.9rem', marginBottom: 8, opacity: errorOnly ? 0.4 : 1 }}>
           <input
             type="checkbox"
             checked={dataOnly}
             onChange={e => setDataOnly(e.target.checked)}
-            disabled={bulkBusy}
+            disabled={bulkBusy || errorOnly}
           />
           {t('job.bulkDeleteDataOnly')}
+        </label>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: bulkBusy ? 'not-allowed' : 'pointer', fontSize: '0.9rem' }}>
+          <input
+            type="checkbox"
+            checked={errorOnly}
+            onChange={e => { setErrorOnly(e.target.checked); if (e.target.checked) setDataOnly(false) }}
+            disabled={bulkBusy}
+          />
+          {t('job.bulkDeleteErrorOnly')}
         </label>
       </Dialog>
     </>

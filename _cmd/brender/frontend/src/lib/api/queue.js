@@ -161,7 +161,7 @@ export const QueueApi = {
   /** ワークスペースのジョブを一括削除（ロック済み除く最新 keepCount 件を残す）
    * @param {{ projectID: string, workspaceID: string, keepCount: number }} args
    */
-  bulkDeleteJobsByWorkspace: ({ projectID, workspaceID, keepCount, dataOnly }) =>
-    isWails() ? svc().then(s => s.BulkDeleteJobsByWorkspace(projectID, workspaceID, keepCount, dataOnly))
-              : serverCall('queue', 'bulk_delete_jobs_by_workspace', { project_id: projectID, workspace_id: workspaceID, keep_count: keepCount, data_only: dataOnly }),
+  bulkDeleteJobsByWorkspace: ({ projectID, workspaceID, keepCount, dataOnly, errorOnly }) =>
+    isWails() ? svc().then(s => s.BulkDeleteJobsByWorkspace(projectID, workspaceID, keepCount, dataOnly, errorOnly))
+              : serverCall('queue', 'bulk_delete_jobs_by_workspace', { project_id: projectID, workspace_id: workspaceID, keep_count: keepCount, data_only: dataOnly, error_only: errorOnly }),
 }

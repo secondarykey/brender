@@ -778,28 +778,39 @@ func DeleteJob(id string) error {
 }
 
 // BulkDeleteJobsByWorkspace はワークスペースのジョブ履歴を一括削除する。
-// ロックされていないジョブのうち最新 keepCount 件を残し、残りを削除する。
+// errorOnly=true のとき: ロックされていないエラージョブをすべて物理削除する（keepCount/dataOnly は無視）。
+// errorOnly=false のとき: ロックされていないジョブのうち最新 keepCount 件を残し残りを削除する。
 // dataOnly=true の場合は出力データのみ削除してジョブ履歴を残す（DataStatus を削除済みに更新）。
 // ロック済みジョブは常に保持される。削除件数を返す。
-func BulkDeleteJobsByWorkspace(projectID, workspaceID string, keepCount int, dataOnly bool) (int, error) {
+func BulkDeleteJobsByWorkspace(projectID, workspaceID string, keepCount int, dataOnly bool, errorOnly bool) (int, error) {
 	jobs, err := model.ListJobsByWorkspace(projectID, workspaceID)
 	if err != nil {
 		return 0, xerrors.Errorf("BulkDeleteJobsByWorkspace: %w", err)
 	}
-	if keepCount < 0 {
-		keepCount = 0
-	}
-	// jobs は enqueued_at DESC 順（最新が先頭）
-	var nonLocked []*model.Job
-	for _, j := range jobs {
-		if j.DataStatus%2 == 0 {
-			nonLocked = append(nonLocked, j)
+
+	var toDelete []*model.Job
+	if errorOnly {
+		for _, j := range jobs {
+			if j.DataStatus%2 == 0 && j.Status == model.JobError {
+				toDelete = append(toDelete, j)
+			}
+		}
+	} else {
+		if keepCount < 0 {
+			keepCount = 0
+		}
+		// jobs は enqueued_at DESC 順（最新が先頭）
+		var nonLocked []*model.Job
+		for _, j := range jobs {
+			if j.DataStatus%2 == 0 {
+				nonLocked = append(nonLocked, j)
+			}
+		}
+		if keepCount < len(nonLocked) {
+			toDelete = nonLocked[keepCount:]
 		}
 	}
-	if keepCount >= len(nonLocked) {
-		return 0, nil
-	}
-	toDelete := nonLocked[keepCount:]
+
 	deleted := 0
 	for _, j := range toDelete {
 		var opErr error

@@ -239,6 +239,7 @@
     "bulkDeleteDesc": "Keeps the latest N unlocked jobs and deletes the rest. Locked jobs are always preserved.",
     "keepCount": "Keep count",
     "bulkDeleteDataOnly": "Keep history, delete data only",
+    "bulkDeleteErrorOnly": "Delete errors only",
     "bulkDeleteResult": "Deleted {{count}} jobs"
   },
   "dialog": {
