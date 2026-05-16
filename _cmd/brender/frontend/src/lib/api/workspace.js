@@ -39,11 +39,11 @@ export const WorkspaceApi = {
                 }),
 
   /** ワークスペースを削除
-   * @param {{ projectID: string, workspaceID: string }} args
+   * @param {{ projectID: string, workspaceID: string, force?: boolean }} args
    */
-  delete: ({ projectID, workspaceID }) =>
-    isWails() ? svc().then(s => s.Delete(projectID, workspaceID))
-              : serverCall('workspace', 'delete', { project_id: projectID, workspace_id: workspaceID }),
+  delete: ({ projectID, workspaceID, force = false }) =>
+    isWails() ? svc().then(s => s.Delete(projectID, workspaceID, force))
+              : serverCall('workspace', 'delete', { project_id: projectID, workspace_id: workspaceID, force }),
 
   /** ワークスペースのサムネイル画像を base64 データURIで取得
    * @param {{ projectID: string, fileID: string, workspaceID: string }} args

@@ -196,6 +196,8 @@
     "samplesDefaultValue": "未指定時 = {{count}}",
     "confirmDelete": "ワークスペースを削除しますか？",
     "deleteWarning": "関連するジョブ履歴も削除されます。この操作は取り消せません。",
+    "forceDeleteLabel": "ロックされた実行結果を含めて削除する",
+    "lockedJobsExist": "ロックされたジョブが存在します。上のチェックをONにして再度削除してください。",
     "confirmRender": "レンダリングを実行しますか？",
     "blendDefault": ".blend のデフォルト",
     "setAsFileThumbnail": "ファイルサムネイルに設定",

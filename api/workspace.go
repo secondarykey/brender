@@ -44,7 +44,16 @@ func UpdateWorkspace(projectID string, workspaceID string, name string, note str
 	return model.UpdateWorkspace(projectID, workspaceID, name, note, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY)
 }
 
-func DeleteWorkspace(projectID, workspaceID string) error {
+func DeleteWorkspace(projectID, workspaceID string, force bool) error {
+	if !force {
+		locked, err := model.HasLockedJobsByWorkspace(workspaceID)
+		if err != nil {
+			return xerrors.Errorf("DeleteWorkspace: %w", err)
+		}
+		if locked {
+			return xerrors.New("locked_jobs_exist")
+		}
+	}
 	dirs, _ := model.ListOutputDirsByWorkspace(workspaceID)
 	removeOutputDirs(dirs)
 	if err := model.DeleteJobsByWorkspace(workspaceID); err != nil {

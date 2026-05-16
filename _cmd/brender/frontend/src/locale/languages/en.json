@@ -196,6 +196,8 @@
     "samplesDefaultValue": "default = {{count}}",
     "confirmDelete": "Delete this workspace?",
     "deleteWarning": "Associated job history will also be deleted. This action cannot be undone.",
+    "forceDeleteLabel": "Include locked results and delete",
+    "lockedJobsExist": "Locked jobs exist. Check the option above and try again.",
     "confirmRender": "Start rendering?",
     "blendDefault": ".blend default",
     "setAsFileThumbnail": "Set as file thumbnail",

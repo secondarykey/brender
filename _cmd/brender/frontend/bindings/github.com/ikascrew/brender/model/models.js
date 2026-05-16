@@ -206,6 +206,20 @@ export class Job {
              */
             this["id"] = "";
         }
+        if (!("name" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["name"] = "";
+        }
+        if (!("note" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["note"] = "";
+        }
         if (!("project_id" in $$source)) {
             /**
              * @member
@@ -431,6 +445,13 @@ export class Project {
              */
             this["name"] = "";
         }
+        if (!("note" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["note"] = "";
+        }
         if (!("work_dir_id" in $$source)) {
             /**
              * @member
@@ -567,6 +588,13 @@ export class ProjectFile {
              * @type {string}
              */
             this["name"] = "";
+        }
+        if (!("note" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["note"] = "";
         }
         if (!("blender_install_id" in $$source)) {
             /**
@@ -868,6 +896,13 @@ export class Workspace {
              * @type {string}
              */
             this["name"] = "";
+        }
+        if (!("note" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["note"] = "";
         }
         if (!("scene" in $$source)) {
             /**

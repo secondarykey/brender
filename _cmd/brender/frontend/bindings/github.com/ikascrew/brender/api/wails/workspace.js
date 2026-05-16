@@ -24,7 +24,7 @@ export function Create(projectID, projectFileID, name) {
 
 /**
  * CreateMovie は ffmpeg による動画作成を goroutine で開始し即返す。
- * 完了時（成功・失敗とも）に "movie:created" イベントを emit する。
+ * ffmpeg プロセス完了後（成功・失敗とも）に "movie:created" イベントを emit する。
  * @param {string} projectID
  * @param {string} fileID
  * @param {string} workspaceID
@@ -42,10 +42,11 @@ export function CreateMovie(projectID, fileID, workspaceID, jobID, fps, inext, o
 /**
  * @param {string} projectID
  * @param {string} workspaceID
+ * @param {boolean} force
  * @returns {$CancellablePromise<void>}
  */
-export function Delete(projectID, workspaceID) {
-    return $Call.ByID(4225591020, projectID, workspaceID);
+export function Delete(projectID, workspaceID, force) {
+    return $Call.ByID(4225591020, projectID, workspaceID, force);
 }
 
 /**
@@ -96,6 +97,7 @@ export function SetThumbnail(projectID, fileID, workspaceID, imagePath) {
  * @param {string} projectID
  * @param {string} workspaceID
  * @param {string} name
+ * @param {string} note
  * @param {number} blenderInstallID
  * @param {string} scene
  * @param {string} camera
