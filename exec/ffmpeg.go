@@ -41,7 +41,7 @@ func (ff *FFmpeg) RunVersion(ctx context.Context) error {
 	return nil
 }
 
-func (ff *FFmpeg) CreateMovie(ctx context.Context, out string, fps int, p string, inext string) error {
+func (ff *FFmpeg) CreateMovie(ctx context.Context, out string, fps int, p string, inext string) (chan error, error) {
 
 	//TODO 削除してないとエラーになる
 	//os.Remove(out)
@@ -51,17 +51,17 @@ func (ff *FFmpeg) CreateMovie(ctx context.Context, out string, fps int, p string
 
 	plist, err := filepath.Glob(gp)
 	if err != nil {
-		return xerrors.Errorf("filepath.Glob() error: %w", err)
+		return nil, xerrors.Errorf("filepath.Glob() error: %w", err)
 	}
 	if len(plist) <= 0 {
-		return xerrors.Errorf("filepath not found error: %s", gp)
+		return nil, xerrors.Errorf("filepath not found error: %s", gp)
 	}
 
 	//取得できたファイルパスからリストを作成
 	listf := filepath.Join(p, "ffmpeg.list")
 	lfp, err := os.Create(listf)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	b := []byte(fmt.Sprintf("ffconcat version 1.0\n"))
@@ -72,12 +72,12 @@ func (ff *FFmpeg) CreateMovie(ctx context.Context, out string, fps int, p string
 		b = []byte(fmt.Sprintf("file '%s'\n", line))
 		_, err = lfp.Write(b)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		b = []byte(fmt.Sprintf("duration %f\n", frame))
 		_, err = lfp.Write(b)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 	lfp.Close()
@@ -86,9 +86,8 @@ func (ff *FFmpeg) CreateMovie(ctx context.Context, out string, fps int, p string
 	lf := filepath.Join(p, "ffmpeg.log")
 	fp, err := os.Create(lf)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	defer fp.Close()
 
 	ff.writer = fp
 
@@ -115,15 +114,11 @@ func (ff *FFmpeg) CreateMovie(ctx context.Context, out string, fps int, p string
 
 	ch, err := ff.run(ctx, args...)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	err = <-ch
-	if err != nil {
-		return xerrors.Errorf("ffmpeg execution error: %w", err)
-	}
-	log.Notice("create movie : %s", out)
-	return nil
+	log.Info("ffmpeg started: %s", out)
+	return ch, nil
 }
 
 func (ff *FFmpeg) run(ctx context.Context, args ...string) (chan error, error) {
