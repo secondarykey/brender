@@ -2,6 +2,8 @@ package api
 
 import (
 	"log"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/ikascrew/brender/model"
@@ -56,6 +58,13 @@ func DeleteWorkspace(projectID, workspaceID string, force bool) error {
 	}
 	dirs, _ := model.ListOutputDirsByWorkspace(workspaceID)
 	removeOutputDirs(dirs)
+	// ジョブディレクトリを削除後、空になった {workspaceID}/ ディレクトリ自体も削除する
+	if len(dirs) > 0 {
+		wsDir := filepath.Dir(dirs[0])
+		if err := os.RemoveAll(wsDir); err != nil {
+			log.Printf("DeleteWorkspace: remove workspace dir: %v", err)
+		}
+	}
 	if err := model.DeleteJobsByWorkspace(workspaceID); err != nil {
 		return xerrors.Errorf("DeleteWorkspace jobs: %w", err)
 	}
