@@ -196,7 +196,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
       <div style={{ position: 'relative' }}>
         {viewMode === 'list' ? (
           <div className="ws-list">
-            {workspaces.length === 0 && !creating && (
+            {workspaces.length === 0 && (
               <p className="ws-empty">{t('workspace.empty')}</p>
             )}
             {workspaces.map(ws => (
@@ -235,7 +235,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
           </div>
         ) : (
           <div className={`file-tile-grid${viewMode === 'card-sm' ? ' file-tile-grid--sm' : ''}`}>
-            {workspaces.length === 0 && !creating && (
+            {workspaces.length === 0 && (
               <p className="ws-empty">{t('workspace.empty')}</p>
             )}
             {workspaces.map(ws => (
