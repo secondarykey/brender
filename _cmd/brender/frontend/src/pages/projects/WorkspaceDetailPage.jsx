@@ -668,7 +668,7 @@ function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspa
             workspaceID={workspaceID}
             detail={detail}
             focusName={focusName}
-            onUpdated={() => navigate('file', { projectID, projectName, fileID: effectiveFileID, fileName: effectiveFileName })}
+            onUpdated={() => {}}
             onDeleted={() => navigate('file', { projectID, projectName, fileID: effectiveFileID, fileName: effectiveFileName })}
             onTestEnqueued={() => setHistoryReload(n => n + 1)}
             workDirLocked={workDirStatus === 'lock'}
