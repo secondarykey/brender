@@ -66,6 +66,10 @@ func (s *Queue) ListJobsByProjectFile(projectID string, fileID string) ([]*model
 	return api.ListJobsByProjectFile(projectID, fileID)
 }
 
+func (s *Queue) UpdateJobMeta(id, name, note string) error {
+	return api.UpdateJobMeta(id, name, note)
+}
+
 func (s *Queue) DeleteJob(id string) error {
 	return api.DeleteJob(id)
 }

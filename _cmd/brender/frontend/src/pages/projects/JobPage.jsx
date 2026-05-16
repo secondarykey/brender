@@ -216,8 +216,24 @@ function RenderResultTab({ job }) {
   const [movieInext, setMovieInext]         = useState('png')
   const [movieOutext, setMovieOutext]       = useState('mp4')
   const [movieExtraArgs, setMovieExtraArgs] = useState('')
+  const [metaName, setMetaName]         = useState(job?.name || '')
+  const [metaNote, setMetaNote]         = useState(job?.note || '')
+  const [savingMeta, setSavingMeta]     = useState(false)
+  const savedMeta = useRef({ name: job?.name || '', note: job?.note || '' })
   const playingRef = useRef(false)
   const loopRef    = useRef(false)
+
+  const isMetaDirty = metaName !== savedMeta.current.name || metaNote !== savedMeta.current.note
+
+  const handleSaveMeta = async () => {
+    setSavingMeta(true)
+    try {
+      await QueueApi.updateJobMeta({ id: job.id, name: metaName, note: metaNote })
+      savedMeta.current = { name: metaName, note: metaNote }
+      showToast(t('common.saved'))
+    } catch (e) { showError(String(e)) }
+    finally { setSavingMeta(false) }
+  }
 
   const stopPlay = () => { playingRef.current = false; setPlaying(false) }
   const toggleLoop = () => { const v = !loopRef.current; loopRef.current = v; setLoop(v) }
@@ -331,55 +347,86 @@ function RenderResultTab({ job }) {
   const filename = images[index] ? images[index].replace(/\\/g, '/').split('/').pop() : ''
 
   return (
-    <div className="job-page-viewer">
-      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-        <button className="btn btn-sm btn-outline" onClick={handleSetThumbnail} disabled={settingThumb || images.length === 0}>
-          {settingThumb ? '...' : t('viewer.setAsThumbnail')}
-        </button>
-      </div>
-
-      <div className="image-viewer-body">
-        {loadingList && <div className="image-viewer-loading">{t('common.loading')}</div>}
-        {imgSrc && <img src={imgSrc} alt={filename} className="image-viewer-img" />}
-        {!loadingList && !imgSrc && !error && images.length === 0 && (
-          <div className="image-viewer-empty">{t('viewer.noImages')}</div>
-        )}
-        {error && <div className="error-msg">{error}</div>}
-      </div>
-
-      <div className="image-viewer-controls" style={{ visibility: images.length > 0 ? 'visible' : 'hidden' }}>
-        <span className="image-viewer-filename" title={filename}>
-          {filename}{loadingImg && <span className="image-viewer-loading-inline"> {t('common.loading')}</span>}
-        </span>
-        <div className="image-viewer-slider-row">
+    <div className="ws-detail-split">
+      <div className="ws-detail-left">
+        <div className="form-group">
+          <label className="form-label">{t('job.name')}</label>
           <input
-            type="range" min={0} max={Math.max(0, images.length - 1)} value={index}
-            onChange={e => { stopPlay(); setIndex(Number(e.target.value)) }}
-            className="image-viewer-slider" disabled={images.length <= 1}
+            type="text" className="form-input"
+            value={metaName}
+            onChange={e => setMetaName(e.target.value)}
           />
-          <span className="image-viewer-counter">{images.length > 0 ? `${index + 1} / ${images.length}` : '— / —'}</span>
+        </div>
+        <div className="form-group">
+          <label className="form-label">{t('job.note')}</label>
+          <textarea
+            className="form-input"
+            style={{ minHeight: 120, resize: 'vertical' }}
+            value={metaNote}
+            onChange={e => setMetaNote(e.target.value)}
+            placeholder={t('job.notePlaceholder')}
+          />
+        </div>
+        <div className="form-actions">
+          <span />
+          <button className="btn btn-green" onClick={handleSaveMeta} disabled={savingMeta || !isMetaDirty}>
+            {savingMeta ? t('common.saving') : t('common.save')}
+          </button>
         </div>
       </div>
 
-      <div className="dialog-actions" style={{ justifyContent: 'space-between', visibility: images.length > 0 ? 'visible' : 'hidden', marginTop: 8 }}>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn btn-sm btn-ghost" onClick={handleTogglePlay} disabled={images.length <= 1}>
-            {playing ? t('viewer.stop') : t('viewer.play')}
-          </button>
-          <button
-            className={`btn btn-sm ${loop ? '' : 'btn-ghost'} image-viewer-loop-btn`}
-            onClick={toggleLoop} disabled={images.length <= 1} title={t('common.loop')}
-          >⟳ {t('common.loop')}</button>
-          {moviePath && (
-            <button className="btn btn-sm" onClick={handlePlayMovie}>
-              {t('viewer.playMovie')}
+      <div className="ws-detail-right">
+        <div className="job-page-viewer">
+          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <button className="btn btn-sm btn-outline" onClick={handleSetThumbnail} disabled={settingThumb || images.length === 0}>
+              {settingThumb ? '...' : t('viewer.setAsThumbnail')}
             </button>
-          )}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button className="btn btn-sm btn-green" onClick={handleOpenMovieDialog} disabled={creatingMovie || images.length <= 1}>
-            {creatingMovie ? t('viewer.movieCreating') : t('viewer.createMovie')}
-          </button>
+          </div>
+
+          <div className="image-viewer-body">
+            {loadingList && <div className="image-viewer-loading">{t('common.loading')}</div>}
+            {imgSrc && <img src={imgSrc} alt={filename} className="image-viewer-img" />}
+            {!loadingList && !imgSrc && !error && images.length === 0 && (
+              <div className="image-viewer-empty">{t('viewer.noImages')}</div>
+            )}
+            {error && <div className="error-msg">{error}</div>}
+          </div>
+
+          <div className="image-viewer-controls" style={{ visibility: images.length > 0 ? 'visible' : 'hidden' }}>
+            <span className="image-viewer-filename" title={filename}>
+              {filename}{loadingImg && <span className="image-viewer-loading-inline"> {t('common.loading')}</span>}
+            </span>
+            <div className="image-viewer-slider-row">
+              <input
+                type="range" min={0} max={Math.max(0, images.length - 1)} value={index}
+                onChange={e => { stopPlay(); setIndex(Number(e.target.value)) }}
+                className="image-viewer-slider" disabled={images.length <= 1}
+              />
+              <span className="image-viewer-counter">{images.length > 0 ? `${index + 1} / ${images.length}` : '— / —'}</span>
+            </div>
+          </div>
+
+          <div className="dialog-actions" style={{ justifyContent: 'space-between', visibility: images.length > 0 ? 'visible' : 'hidden', marginTop: 8 }}>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="btn btn-sm btn-ghost" onClick={handleTogglePlay} disabled={images.length <= 1}>
+                {playing ? t('viewer.stop') : t('viewer.play')}
+              </button>
+              <button
+                className={`btn btn-sm ${loop ? '' : 'btn-ghost'} image-viewer-loop-btn`}
+                onClick={toggleLoop} disabled={images.length <= 1} title={t('common.loop')}
+              >⟳ {t('common.loop')}</button>
+              {moviePath && (
+                <button className="btn btn-sm" onClick={handlePlayMovie}>
+                  {t('viewer.playMovie')}
+                </button>
+              )}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <button className="btn btn-sm btn-green" onClick={handleOpenMovieDialog} disabled={creatingMovie || images.length <= 1}>
+                {creatingMovie ? t('viewer.movieCreating') : t('viewer.createMovie')}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 

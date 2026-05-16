@@ -60,6 +60,13 @@ export const QueueApi = {
     isWails() ? svc().then(s => s.ListJobsByProjectFile(projectID, fileID))
               : serverCall('queue', 'list_jobs_by_project_file', { project_id: projectID, file_id: fileID }),
 
+  /** ジョブの名称とノートを更新
+   * @param {{ id: string, name: string, note: string }} args
+   */
+  updateJobMeta: ({ id, name, note }) =>
+    isWails() ? svc().then(s => s.UpdateJobMeta(id, name, note))
+              : serverCall('queue', 'update_job_meta', { id, name, note }),
+
   /** ジョブを削除
    * @param {{ id: string }} args
    */

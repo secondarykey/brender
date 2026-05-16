@@ -232,6 +232,16 @@ export function UnlockJob(id) {
 
 /**
  * @param {string} id
+ * @param {string} name
+ * @param {string} note
+ * @returns {$CancellablePromise<void>}
+ */
+export function UpdateJobMeta(id, name, note) {
+    return $Call.ByID(3201027894, id, name, note);
+}
+
+/**
+ * @param {string} id
  * @param {string} savePath
  * @returns {$CancellablePromise<void>}
  */

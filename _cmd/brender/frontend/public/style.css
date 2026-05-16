@@ -1047,6 +1047,11 @@ body {
   border-color: #4a7cdc;
 }
 
+textarea.form-input {
+  height: auto;
+  padding: 8px 10px;
+}
+
 .form-select option { background: #1a1a1a; }
 
 .file-list {

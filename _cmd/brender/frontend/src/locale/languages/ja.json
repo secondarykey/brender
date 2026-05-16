@@ -225,7 +225,10 @@
     "searchNext": "次の一致",
     "deleteDataWarning": "出力フォルダを削除します。ジョブ履歴は残ります。この操作は取り消せません。",
     "deleteDataAction": "データ削除する",
-    "deleteWarning": "出力フォルダも含めて削除します。この操作は取り消せません。"
+    "deleteWarning": "出力フォルダも含めて削除します。この操作は取り消せません。",
+    "name": "名称",
+    "note": "ノート",
+    "notePlaceholder": "メモを入力..."
   },
   "dialog": {
     "jobDetails": "ジョブ詳細",

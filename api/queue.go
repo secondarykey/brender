@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"context"
 	"encoding/base64"
+	"fmt"
 	"io"
 	"io/fs"
 	"log"
@@ -352,6 +353,7 @@ func EnqueueWithPreview(projectID, workspaceID string, preview *RenderPreview) (
 
 	job := &model.Job{
 		ID:            id,
+		Name:          fmt.Sprintf("%s(%d-%d)", preview.WorkspaceName, preview.StartFrame, preview.EndFrame),
 		ProjectID:     projectID,
 		ProjectName:   preview.ProjectName,
 		WorkspaceID:   workspaceID,
@@ -751,6 +753,10 @@ func CancelQueue(id string) error {
 
 func ListJobs() ([]*model.Job, error) {
 	return model.ListJobs()
+}
+
+func UpdateJobMeta(id, name, note string) error {
+	return model.UpdateJobMeta(id, name, note)
 }
 
 func DeleteJob(id string) error {

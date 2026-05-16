@@ -225,7 +225,10 @@
     "searchNext": "Next match",
     "deleteDataWarning": "The output folder will be deleted. Job history will be preserved. This action cannot be undone.",
     "deleteDataAction": "Delete Data",
-    "deleteWarning": "The output folder will also be deleted. This action cannot be undone."
+    "deleteWarning": "The output folder will also be deleted. This action cannot be undone.",
+    "name": "Name",
+    "note": "Note",
+    "notePlaceholder": "Enter notes..."
   },
   "dialog": {
     "jobDetails": "Job Details",

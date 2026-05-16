@@ -69,6 +69,16 @@ func CreateJob(j *Job) error {
 	return nil
 }
 
+func UpdateJobMeta(id, name, note string) error {
+	if res := db.Model(&Job{}).Where("id = ?", id).Updates(map[string]interface{}{
+		"name": name,
+		"note": note,
+	}); res.Error != nil {
+		return xerrors.Errorf("UpdateJobMeta: %w", res.Error)
+	}
+	return nil
+}
+
 func GetJob(id string) (*Job, error) {
 	var j Job
 	if res := db.First(&j, "id = ?", id); res.Error != nil {
