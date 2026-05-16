@@ -216,6 +216,7 @@
     "noLog": "No log file",
     "tail": "Follow tail",
     "wrap": "Word wrap",
+    "colorize": "Level colors",
     "searchPlaceholder": "Search...",
     "allLevels": "All levels",
     "searchPrev": "Previous match",

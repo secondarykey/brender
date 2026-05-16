@@ -216,6 +216,7 @@
     "noLog": "ログファイルがありません",
     "tail": "末尾を追従",
     "wrap": "折り返し",
+    "colorize": "レベルカラー",
     "searchPlaceholder": "検索...",
     "allLevels": "全レベル",
     "searchPrev": "前の一致",

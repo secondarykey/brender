@@ -31,6 +31,28 @@ function highlightLine(line, query) {
   return result
 }
 
+function renderLine(line, colorize, isMatch, searchQuery) {
+  const hl = isMatch ? t => highlightLine(t, searchQuery) : t => t
+
+  if (!colorize || line.length < 28 || line[26] !== '[') return hl(line)
+
+  const end = line.indexOf(']', 27)
+  if (end === -1) return hl(line)
+
+  const levelName = line.slice(27, end).trim()
+  const cls = (levelName === 'ERROR' || levelName === 'EMERGENCY')
+    ? 'log-level-error'
+    : levelName === 'WARN' ? 'log-level-warn' : null
+
+  return (
+    <>
+      {hl(line.slice(0, 26))}
+      <span className={cls || undefined}>{hl(line.slice(26, end + 1))}</span>
+      {hl(line.slice(end + 1))}
+    </>
+  )
+}
+
 function LogViewerApp() {
   const { t } = useTranslation()
   const params   = new URLSearchParams(window.location.search)
@@ -48,6 +70,7 @@ function LogViewerApp() {
   const [searchQuery, setSearchQuery] = useState('')
   const [matchIndex, setMatchIndex]   = useState(0)
   const [filterLevel, setFilterLevel] = useState(null)
+  const [colorize, setColorize]       = useState(false)
 
   const preRef         = useRef(null)
   const searchInputRef = useRef(null)
@@ -243,7 +266,7 @@ function LogViewerApp() {
                 ref={el => { lineRefs.current[i] = el }}
                 className={isCurrent ? 'log-line-current' : isMatch ? 'log-line-match' : undefined}
               >
-                {isMatch ? highlightLine(line, searchQuery) : line}
+                {renderLine(line, colorize, isMatch, searchQuery)}
                 {'\n'}
               </span>
             )
@@ -280,6 +303,13 @@ function LogViewerApp() {
           <button className="log-search-close" onClick={closeSearch}>&#10005;</button>
         </div>
       )}
+      <button
+        className={`log-colorize-btn${colorize ? ' active' : ''}`}
+        onClick={() => setColorize(v => !v)}
+        title={t('job.colorize')}
+      >
+        ◑
+      </button>
       <button
         className={`log-wrap-btn${wrap ? ' active' : ''}`}
         onClick={() => setWrap(v => !v)}
