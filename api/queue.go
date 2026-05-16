@@ -778,9 +778,10 @@ func DeleteJob(id string) error {
 }
 
 // BulkDeleteJobsByWorkspace はワークスペースのジョブ履歴を一括削除する。
-// ロックされていないジョブのうち最新 keepCount 件を残し、残りを物理削除する。
+// ロックされていないジョブのうち最新 keepCount 件を残し、残りを削除する。
+// dataOnly=true の場合は出力データのみ削除してジョブ履歴を残す（DataStatus を削除済みに更新）。
 // ロック済みジョブは常に保持される。削除件数を返す。
-func BulkDeleteJobsByWorkspace(projectID, workspaceID string, keepCount int) (int, error) {
+func BulkDeleteJobsByWorkspace(projectID, workspaceID string, keepCount int, dataOnly bool) (int, error) {
 	jobs, err := model.ListJobsByWorkspace(projectID, workspaceID)
 	if err != nil {
 		return 0, xerrors.Errorf("BulkDeleteJobsByWorkspace: %w", err)
@@ -801,8 +802,14 @@ func BulkDeleteJobsByWorkspace(projectID, workspaceID string, keepCount int) (in
 	toDelete := nonLocked[keepCount:]
 	deleted := 0
 	for _, j := range toDelete {
-		if err := DeleteJob(j.ID); err != nil {
-			log.Println("BulkDeleteJobsByWorkspace DeleteJob:", err)
+		var opErr error
+		if dataOnly {
+			opErr = DeleteJobData(j.ID)
+		} else {
+			opErr = DeleteJob(j.ID)
+		}
+		if opErr != nil {
+			log.Println("BulkDeleteJobsByWorkspace:", opErr)
 			continue
 		}
 		deleted++

@@ -17,10 +17,11 @@ import * as model$0 from "../../model/models.js";
  * @param {string} projectID
  * @param {string} workspaceID
  * @param {number} keepCount
+ * @param {boolean} dataOnly
  * @returns {$CancellablePromise<number>}
  */
-export function BulkDeleteJobsByWorkspace(projectID, workspaceID, keepCount) {
-    return $Call.ByID(2537010940, projectID, workspaceID, keepCount);
+export function BulkDeleteJobsByWorkspace(projectID, workspaceID, keepCount, dataOnly) {
+    return $Call.ByID(2537010940, projectID, workspaceID, keepCount, dataOnly);
 }
 
 /**

@@ -236,8 +236,9 @@
     "notePlaceholder": "メモを入力...",
     "bulkDelete": "一括削除",
     "bulkDeleteTitle": "履歴の一括削除",
-    "bulkDeleteDesc": "ロックされていないジョブのうち、最新N件を残して残りを物理削除します。ロック済みジョブは保持されます。",
+    "bulkDeleteDesc": "ロックされていないジョブのうち、最新N件を残して残りを削除します。ロック済みジョブは保持されます。",
     "keepCount": "残す件数",
+    "bulkDeleteDataOnly": "履歴は残し、データのみ削除する",
     "bulkDeleteResult": "{{count}}件削除しました"
   },
   "dialog": {

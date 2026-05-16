@@ -91,6 +91,7 @@ function HistoryTab({ projectID, workspaceID, navigate, projectName, fileName, f
   const [pageSize, setPageSize] = useState(HISTORY_PAGE_SIZE)
   const [bulkOpen, setBulkOpen]     = useState(false)
   const [keepCount, setKeepCount]   = useState(5)
+  const [dataOnly, setDataOnly]     = useState(false)
   const [bulkBusy, setBulkBusy]     = useState(false)
   const [bulkError, setBulkError]   = useState('')
 
@@ -123,7 +124,7 @@ function HistoryTab({ projectID, workspaceID, navigate, projectName, fileName, f
     setBulkBusy(true)
     setBulkError('')
     try {
-      const count = await QueueApi.bulkDeleteJobsByWorkspace({ projectID, workspaceID, keepCount: keepCount >= 0 ? keepCount : 0 })
+      const count = await QueueApi.bulkDeleteJobsByWorkspace({ projectID, workspaceID, keepCount: keepCount >= 0 ? keepCount : 0, dataOnly })
       setBulkOpen(false)
       load()
       showToast(t('job.bulkDeleteResult', { count }))
@@ -202,7 +203,7 @@ function HistoryTab({ projectID, workspaceID, navigate, projectName, fileName, f
         <p style={{ marginBottom: 16, fontSize: '0.9rem', color: 'rgba(255,255,255,0.7)' }}>
           {t('job.bulkDeleteDesc')}
         </p>
-        <div className="form-field">
+        <div className="form-field" style={{ marginBottom: 12 }}>
           <label className="form-label">{t('job.keepCount')}</label>
           <input
             type="number"
@@ -214,6 +215,15 @@ function HistoryTab({ projectID, workspaceID, navigate, projectName, fileName, f
             disabled={bulkBusy}
           />
         </div>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: bulkBusy ? 'not-allowed' : 'pointer', fontSize: '0.9rem' }}>
+          <input
+            type="checkbox"
+            checked={dataOnly}
+            onChange={e => setDataOnly(e.target.checked)}
+            disabled={bulkBusy}
+          />
+          {t('job.bulkDeleteDataOnly')}
+        </label>
       </Dialog>
     </>
   )

@@ -236,8 +236,9 @@
     "notePlaceholder": "Enter notes...",
     "bulkDelete": "Bulk Delete",
     "bulkDeleteTitle": "Bulk Delete History",
-    "bulkDeleteDesc": "Keeps the latest N unlocked jobs and permanently deletes the rest. Locked jobs are always preserved.",
+    "bulkDeleteDesc": "Keeps the latest N unlocked jobs and deletes the rest. Locked jobs are always preserved.",
     "keepCount": "Keep count",
+    "bulkDeleteDataOnly": "Keep history, delete data only",
     "bulkDeleteResult": "Deleted {{count}} jobs"
   },
   "dialog": {
