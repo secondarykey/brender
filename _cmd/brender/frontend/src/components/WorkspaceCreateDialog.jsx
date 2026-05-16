@@ -35,7 +35,7 @@ function CheckboxGroup({ label, enabled, onToggle, items, selected, onToggleItem
         <input type="checkbox" checked={enabled} onChange={e => onToggle(e.target.checked)} />
         <span>{label}</span>
         {!loading && items.length > 0 && (
-          <span className="ws-create-section-count">{items.length}</span>
+          <span className="ws-create-section-count">({items.length})</span>
         )}
       </label>
       {enabled && (
