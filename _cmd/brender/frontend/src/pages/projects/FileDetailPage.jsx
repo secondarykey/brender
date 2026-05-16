@@ -433,11 +433,9 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
   const [engineFixed, setEngineFixed]     = useState(false)
   const [blenders, setBlenders]           = useState([])
   const [toolData, setToolData]           = useState(null)
-  const [engines, setEngines]             = useState([])
   const [filePath, setFilePath]           = useState('')
   const [openingFile, setOpeningFile]     = useState(false)
   const [toolLoading, setToolLoading]     = useState(false)
-  const [enginesLoading, setEnginesLoading] = useState(false)
   const [saving, setSaving]               = useState(false)
   const [deleting, setDeleting]           = useState(false)
   const [confirm, setConfirm]             = useState(false)
@@ -448,14 +446,6 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
       .then(data => setToolData(data || null))
       .catch(() => setToolData(null))
       .finally(() => setToolLoading(false))
-  }
-
-  const fetchEngines = (installID) => {
-    setEnginesLoading(true)
-    BlenderApi.getEngines({ installID })
-      .then(list => setEngines(list || []))
-      .catch(() => setEngines([]))
-      .finally(() => setEnginesLoading(false))
   }
 
   useEffect(() => {
@@ -476,14 +466,12 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
       setEngine(f?.engine || '')
       setEngineFixed(f?.engine_fixed || false)
       fetchToolData(installID)
-      fetchEngines(installID)
     })
   }, [fileID])
 
   const handleBlenderChange = (installID) => {
     setBlenderID(installID)
     fetchToolData(installID)
-    fetchEngines(installID)
   }
 
   const handleSceneChange = (val) => {
@@ -593,15 +581,15 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
                 {t('file.defaultEngine')}
                 <DefaultTag value={engineDefault} t={t} />
               </label>
-              {engines.length > 0 ? (
+              {(toolData?.Engines?.length ?? 0) > 0 ? (
                 <select
                   className="form-select"
                   value={engine}
                   onChange={e => setEngine(e.target.value)}
-                  disabled={enginesLoading}
+                  disabled={toolLoading}
                 >
                   <option value="">{t('common.notSet')}</option>
-                  {engines.map(eng => <option key={eng} value={eng}>{eng}</option>)}
+                  {toolData.Engines.map(eng => <option key={eng} value={eng}>{eng}</option>)}
                 </select>
               ) : (
                 <input
