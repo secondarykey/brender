@@ -540,11 +540,21 @@ func executeQueue(q *model.Queue, job *model.Job) {
 	}
 }
 
-// calcDirSize はディレクトリ以下の全ファイルサイズ合計をバイトで返す。
+// calcDirSize はディレクトリ以下の画像・動画ファイルのサイズ合計をバイトで返す。
 func calcDirSize(dir string) int64 {
+	imageExts := map[string]bool{
+		".png": true, ".jpg": true, ".jpeg": true, ".exr": true,
+		".tiff": true, ".tif": true, ".bmp": true, ".hdr": true,
+		".webp": true, ".tga": true,
+		".mp4": true, ".mov": true, ".avi": true, ".mkv": true, ".webm": true, ".m4v": true,
+	}
 	var total int64
-	filepath.WalkDir(dir, func(_ string, d fs.DirEntry, err error) error {
+	filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() {
+			return nil
+		}
+		ext := strings.ToLower(filepath.Ext(path))
+		if !imageExts[ext] {
 			return nil
 		}
 		info, err := d.Info()

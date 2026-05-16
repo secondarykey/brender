@@ -78,9 +78,7 @@ function DetailTab({ job, onDeleted, onDataStatusChanged }) {
   const { t } = useTranslation()
   const { showError } = useMessage()
   const [confirm, setConfirm]           = useState(false)
-  const [confirmData, setConfirmData]   = useState(false)
   const [deleting, setDeleting]         = useState(false)
-  const [deletingData, setDeletingData] = useState(false)
   const [locking, setLocking]           = useState(false)
   const [dataStatus, setDataStatus]     = useState(job?.data_status ?? 0)
 
@@ -114,16 +112,6 @@ function DetailTab({ job, onDeleted, onDataStatusChanged }) {
       }
     } catch (err) { showError(String(err)) }
     finally { setLocking(false) }
-  }
-
-  const handleDeleteData = async () => {
-    setDeletingData(true); showError('')
-    try {
-      await QueueApi.deleteJobData({ id: job.id })
-      setConfirmData(false)
-      updateStatus(4)
-    } catch (err) { showError(String(err)) }
-    finally { setDeletingData(false) }
   }
 
   const handleDelete = async () => {
@@ -170,14 +158,7 @@ function DetailTab({ job, onDeleted, onDataStatusChanged }) {
           <Row label={t('dialog.file')}     value={job.blender_file} selectable />
           <Row label={t('dialog.output')}   value={job.output_dir}   selectable />
           <Row label={t('dialog.dataSize')} value={
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={dataStatus >= 4 ? { textDecoration: 'line-through', opacity: 0.5 } : undefined}>{formatBytes(job.disk_size)}</span>
-              {(dataStatus === 2 || dataStatus === 6) && (
-                <button className="btn btn-sm btn-danger" onClick={() => setConfirmData(true)} disabled={isLocked}>
-                  {t('common.deleteData')}
-                </button>
-              )}
-            </div>
+            <span style={dataStatus >= 4 ? { textDecoration: 'line-through', opacity: 0.5 } : undefined}>{formatBytes(job.disk_size)}</span>
           } />
         </div>
 
@@ -209,16 +190,6 @@ function DetailTab({ job, onDeleted, onDataStatusChanged }) {
         <p>{t('job.deleteWarning')}</p>
       </ConfirmDialog>
 
-      <ConfirmDialog
-        open={confirmData}
-        title={t('common.deleteData')}
-        onCancel={() => setConfirmData(false)}
-        onConfirm={handleDeleteData}
-        confirmLabel={deletingData ? t('common.deleting') : t('job.deleteDataAction')}
-        busy={deletingData}
-      >
-        <p>{t('job.deleteDataWarning')}</p>
-      </ConfirmDialog>
     </div>
   )
 }
