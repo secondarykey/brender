@@ -395,37 +395,48 @@ function RenderResultTab({ job }) {
           </>
         }
       >
-        <div className="form-group">
-          <label className="form-label">{t('viewer.movieDialogFps')}</label>
-          <input
-            type="number" min={1} className="form-input"
-            value={movieFps}
-            onChange={e => setMovieFps(e.target.value)}
-          />
-        </div>
-        <div className="form-group">
-          <label className="form-label">{t('viewer.movieDialogInputExt')}</label>
+        <div style={{ display: 'grid', gridTemplateColumns: '130px 1fr', rowGap: 12, columnGap: 16, alignItems: 'center' }}>
+
+          <span className="form-label" style={{ textAlign: 'right' }}>{t('viewer.movieDialogFps')}</span>
+          <div>
+            <input
+              type="number" min={1} className="form-input"
+              style={{ width: 80 }}
+              value={movieFps}
+              onChange={e => setMovieFps(e.target.value)}
+            />
+          </div>
+
+          <span className="form-label" style={{ textAlign: 'right' }}>{t('viewer.movieDialogInputExt')}</span>
+          <div>
+            <input
+              type="text" className="form-input"
+              style={{ width: 100 }}
+              value={movieInext}
+              onChange={e => setMovieInext(e.target.value)}
+              placeholder="png"
+            />
+          </div>
+
+          <span className="form-label" style={{ textAlign: 'right' }}>{t('viewer.movieDialogOutputExt')}</span>
+          <div>
+            <input
+              type="text" className="form-input"
+              style={{ width: 100 }}
+              value={movieOutext}
+              onChange={e => setMovieOutext(e.target.value)}
+              placeholder="mp4"
+            />
+          </div>
+
+          <span className="form-label" style={{ textAlign: 'right' }}>{t('viewer.movieDialogExtraArgs')}</span>
           <input
             type="text" className="form-input"
-            value={movieInext}
-            onChange={e => setMovieInext(e.target.value)}
-          />
-        </div>
-        <div className="form-group">
-          <label className="form-label">{t('viewer.movieDialogOutputExt')}</label>
-          <input
-            type="text" className="form-input"
-            value={movieOutext}
-            onChange={e => setMovieOutext(e.target.value)}
-          />
-        </div>
-        <div className="form-group">
-          <label className="form-label">{t('viewer.movieDialogExtraArgs')}</label>
-          <input
-            type="text" className="form-input"
+            style={{ width: '100%', boxSizing: 'border-box' }}
             value={movieExtraArgs}
             onChange={e => setMovieExtraArgs(e.target.value)}
           />
+
         </div>
       </Dialog>
     </div>
