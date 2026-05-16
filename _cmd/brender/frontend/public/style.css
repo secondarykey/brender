@@ -1051,6 +1051,12 @@ body {
   accent-color: #4a7cdc;
 }
 
+.ws-create-section-count {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.35);
+  margin-left: 2px;
+}
+
 .ws-create-items {
   display: flex;
   flex-wrap: wrap;
