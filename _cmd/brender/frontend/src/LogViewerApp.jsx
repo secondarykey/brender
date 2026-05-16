@@ -78,20 +78,26 @@ function LogViewerApp() {
 
   const logLines = useMemo(() => (log ? log.split('\n') : []), [log])
 
+  // フィルタ用レベルリスト: タイトルバーのレベル設定とは独立（EMERGENCY を末尾に追加）
+  const filterLevels = useMemo(
+    () => logLevels ? [...logLevels, 'EMERGENCY'] : null,
+    [logLevels]
+  )
+
   // フィルタ: filterLevel 以上のレベルを持つ行のインデックス集合 (null = 全表示)
   const filteredSet = useMemo(() => {
-    if (!filterLevel || !logLevels) return null
-    const minIdx = logLevels.indexOf(filterLevel)
+    if (!filterLevel || !filterLevels) return null
+    const minIdx = filterLevels.indexOf(filterLevel)
     if (minIdx === -1) return null
     const set = new Set()
     logLines.forEach((line, i) => {
       const level = detectLevel(line)
       if (!level) return
-      const idx = logLevels.indexOf(level)
+      const idx = filterLevels.indexOf(level)
       if (idx !== -1 && idx >= minIdx) set.add(i)
     })
     return set
-  }, [logLines, filterLevel, logLevels])
+  }, [logLines, filterLevel, filterLevels])
 
   const handleDownload = () => {
     if (!log) return
@@ -241,14 +247,14 @@ function LogViewerApp() {
       )}
       {searchOpen && (
         <div className="log-search-box">
-          {logLevels && (
+          {filterLevels && (
             <select
               className="log-search-level"
               value={filterLevel ?? ''}
               onChange={e => setFilterLevel(e.target.value || null)}
             >
               <option value="">{t('job.allLevels')}</option>
-              {logLevels.map(lv => <option key={lv} value={lv}>{lv}</option>)}
+              {filterLevels.map(lv => <option key={lv} value={lv}>{lv}</option>)}
             </select>
           )}
           <input
