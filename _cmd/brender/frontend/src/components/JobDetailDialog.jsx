@@ -146,11 +146,11 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
               <button className="btn btn-sm btn-ghost" onClick={handleLock} disabled={locking}>
                 {isLocked ? t('common.unlock') : t('common.lock')}
               </button>
-              <button className="btn btn-sm" onClick={() => QueueApi.openLogWindow({ id: job.id })}>{t('job.showLog')}</button>
             </div>
           } />
           <Row label={t('dialog.project')}   value={job.project_name} />
           <Row label={t('dialog.workspace')} value={job.workspace_name} />
+          <button className="btn btn-sm" style={{ marginTop: 8 }} onClick={() => QueueApi.openLogWindow({ id: job.id })}>{t('job.showLog')}</button>
         </div>
 
         <div className="job-detail-section">
