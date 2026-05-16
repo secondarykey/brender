@@ -4,11 +4,16 @@ import { QueueApi, EnvironmentApi } from './lib/api'
 import LogTitleBar from './components/LogTitleBar'
 
 const TAIL_INTERVAL = 1000
-const LEVEL_RE = /^\d{4}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2} \[([A-Z]+)\s*\]/
-
-function detectLevel(line) {
-  const m = line.match(LEVEL_RE)
-  return m ? m[1] : null
+function detectLevelIdx(line, levels) {
+  if (line.length < 22 || line[20] !== '[') return -1
+  for (let i = 0; i < levels.length; i++) {
+    const lv = levels[i]
+    if (line.startsWith(lv, 21)) {
+      const next = line[21 + lv.length]
+      if (next === ']' || next === ' ') return i
+    }
+  }
+  return -1
 }
 
 function highlightLine(line, query) {
@@ -92,10 +97,8 @@ function LogViewerApp() {
     const set = new Set()
     let currentIdx = -1
     logLines.forEach((line, i) => {
-      const level = detectLevel(line)
-      if (level !== null) {
-        currentIdx = filterLevels.indexOf(level)
-      }
+      const idx = detectLevelIdx(line, filterLevels)
+      if (idx !== -1) currentIdx = idx
       if (currentIdx >= minIdx) set.add(i)
     })
     return set
