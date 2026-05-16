@@ -701,7 +701,7 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
         )}
       </div>
 
-      <div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -30 }}>
         <button className="btn btn-outline btn-sm" onClick={handleCopy} disabled={copying}>
           {copying ? t('workspace.copying') : t('workspace.copy')}
         </button>
