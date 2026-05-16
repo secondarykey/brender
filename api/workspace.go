@@ -71,6 +71,38 @@ func CreateWorkspaceBatch(projectID, projectFileID string, specs []WorkspaceBatc
 	return results, nil
 }
 
+func CopyWorkspace(projectID, workspaceID, newName string) (*model.Workspace, error) {
+	detail, err := model.GetWorkspace(projectID, workspaceID)
+	if err != nil {
+		return nil, xerrors.Errorf("CopyWorkspace GetWorkspace: %w", err)
+	}
+	if detail == nil {
+		return nil, xerrors.New("workspace not found")
+	}
+	src := detail.Workspace
+	newWS, err := model.CreateWorkspace(projectID, src.ProjectFileID, newName, false)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := model.UpdateWorkspace(projectID, newWS.ID, newName, src.Note, src.BlenderInstallID,
+		src.Scene, src.Camera, src.Engine,
+		src.StartFrame, src.EndFrame, src.FrameStep,
+		src.Thread, src.Samples, src.ResolutionX, src.ResolutionY); err != nil {
+		return nil, err
+	}
+	now := time.Now()
+	if err := model.UpdateWorkspaceProcessedAt(newWS.ID, &now); err != nil {
+		log.Printf("CopyWorkspace: UpdateWorkspaceProcessedAt: %v", err)
+	}
+	if err := model.UpdateProjectFileProcessedAt(src.ProjectFileID, &now); err != nil {
+		log.Printf("CopyWorkspace: UpdateProjectFileProcessedAt: %v", err)
+	}
+	if err := model.UpdateProjectProcessedAt(projectID, &now); err != nil {
+		log.Printf("CopyWorkspace: UpdateProjectProcessedAt: %v", err)
+	}
+	return newWS, nil
+}
+
 func UpdateWorkspace(projectID string, workspaceID string, name string, note string, blenderInstallID uint, scene, camera, engine string, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY int) (*model.WorkspaceDetail, error) {
 	if name == "" {
 		return nil, xerrors.New("workspace name is required")

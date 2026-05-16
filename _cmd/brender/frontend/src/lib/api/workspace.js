@@ -38,6 +38,13 @@ export const WorkspaceApi = {
                   resolution_x: resolutionX, resolution_y: resolutionY,
                 }),
 
+  /** ワークスペースをコピーして新規作成
+   * @param {{ projectID: string, workspaceID: string, newName: string }} args
+   */
+  copy: ({ projectID, workspaceID, newName }) =>
+    isWails() ? svc().then(s => s.Copy(projectID, workspaceID, newName))
+              : serverCall('workspace', 'copy', { project_id: projectID, workspace_id: workspaceID, new_name: newName }),
+
   /** ワークスペースを削除
    * @param {{ projectID: string, workspaceID: string, force?: boolean }} args
    */

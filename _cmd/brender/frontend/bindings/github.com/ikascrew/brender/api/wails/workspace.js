@@ -15,6 +15,18 @@ import * as model$0 from "../../model/models.js";
 
 /**
  * @param {string} projectID
+ * @param {string} workspaceID
+ * @param {string} newName
+ * @returns {$CancellablePromise<model$0.Workspace | null>}
+ */
+export function Copy(projectID, workspaceID, newName) {
+    return $Call.ByID(4115345662, projectID, workspaceID, newName).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType1($result);
+    }));
+}
+
+/**
+ * @param {string} projectID
  * @param {string} projectFileID
  * @param {string} name
  * @returns {$CancellablePromise<model$0.Workspace | null>}

@@ -29,6 +29,10 @@ func (s *Workspace) CreateBatch(projectID string, projectFileID string, specs []
 	return api.CreateWorkspaceBatch(projectID, projectFileID, specs)
 }
 
+func (s *Workspace) Copy(projectID string, workspaceID string, newName string) (*model.Workspace, error) {
+	return api.CopyWorkspace(projectID, workspaceID, newName)
+}
+
 func (s *Workspace) Update(projectID string, workspaceID string, name string, note string, blenderInstallID uint, scene, camera, engine string, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY int) (*model.WorkspaceDetail, error) {
 	return api.UpdateWorkspace(projectID, workspaceID, name, note, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY)
 }

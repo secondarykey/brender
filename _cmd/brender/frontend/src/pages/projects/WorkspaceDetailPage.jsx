@@ -252,6 +252,7 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
   const [specifyResolution, setSpecifyResolution] = useState(false)
   const [specifyFrames, setSpecifyFrames]         = useState(false)
   const [saving, setSaving]                 = useState(false)
+  const [copying, setCopying]               = useState(false)
   const [error, setError]                   = useState('')
   const [confirm, setConfirm]               = useState(false)
   const [deleting, setDeleting]             = useState(false)
@@ -386,6 +387,21 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
 
   const set = (key, val) => {
     setForm(prev => ({ ...prev, [key]: val }))
+  }
+
+  const handleCopy = async () => {
+    setCopying(true)
+    showError('')
+    try {
+      const newName = form.name.trim() + t('workspace.copySuffix')
+      const newWS = await WorkspaceApi.copy({ projectID, workspaceID, newName })
+      showToast(t('workspace.copied'))
+      navigate('workspace', { projectID, projectName, fileID, fileName, workspaceID: newWS.id })
+    } catch (err) {
+      showError(String(err))
+    } finally {
+      setCopying(false)
+    }
   }
 
   const handleSave = async () => {
@@ -694,6 +710,9 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
         <button className="btn btn-danger" onClick={() => { setForceDel(false); setConfirm(true) }}>{t('common.delete')}</button>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
           <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-outline" onClick={handleCopy} disabled={copying}>
+            {copying ? t('workspace.copying') : t('workspace.copy')}
+          </button>
           <button className="btn btn-run" onClick={handleTestEncode} disabled={testEnqueueing || workDirLocked}>
             {testEnqueueing ? t('common.enqueueing') : t('workspace.testRender')}
           </button>
