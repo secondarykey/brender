@@ -481,7 +481,16 @@ function DataViewTab({ job }) {
       const dot = f.name.lastIndexOf('.')
       return dot !== -1 && exts.has(f.name.slice(dot).toLowerCase())
     }).map(f => f.path)
-    setSelected(prev => new Set([...prev, ...paths]))
+    const allAlreadySelected = paths.length > 0 && paths.every(p => selected.has(p))
+    setSelected(prev => {
+      const next = new Set(prev)
+      if (allAlreadySelected) {
+        paths.forEach(p => next.delete(p))
+      } else {
+        paths.forEach(p => next.add(p))
+      }
+      return next
+    })
   }
 
   const toggleFile = (path) => {
