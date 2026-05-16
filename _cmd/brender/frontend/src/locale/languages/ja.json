@@ -242,7 +242,7 @@
     "blender": "Blender",
     "file": "ファイル",
     "output": "出力先",
-    "dataSize": "データ容量",
+    "dataSize": "画像データ容量",
     "enrolledAt": "登録日時",
     "startedAt": "開始日時",
     "completedAt": "完了日時",

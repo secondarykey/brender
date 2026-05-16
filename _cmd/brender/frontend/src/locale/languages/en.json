@@ -242,7 +242,7 @@
     "blender": "Blender",
     "file": "File",
     "output": "Output",
-    "dataSize": "Data Size",
+    "dataSize": "Image Data Size",
     "enrolledAt": "Enqueued",
     "startedAt": "Started",
     "completedAt": "Completed",
