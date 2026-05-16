@@ -7,6 +7,7 @@ import Pagination from '../../components/Pagination'
 import SortSelect from '../../components/SortSelect'
 import Dialog from '../../components/Dialog'
 import ConfirmDialog from '../../components/ConfirmDialog'
+import Breadcrumb from '../../components/Breadcrumb'
 
 
 // ── ワークスペースカード（サムネイル表示） ──────────────────
@@ -713,13 +714,11 @@ function FileDetailPage({ projectID, projectName, fileID, fileName, initialTab, 
   return (
     <div className="page">
       <div className="page-header">
-        <div className="breadcrumb">
-          <button className="breadcrumb-link" onClick={() => navigate('projects')}>{t('breadcrumb.projects')}</button>
-          <span className="breadcrumb-sep">›</span>
-          <button className="breadcrumb-link" onClick={() => navigate('project', { id: projectID, initialTab: 'settings' })}>{projectName}</button>
-          <span className="breadcrumb-sep">›</span>
-          <span>{currentFileName}</span>
-        </div>
+        <Breadcrumb items={[
+          { label: t('breadcrumb.projects'), onClick: () => navigate('projects') },
+          { label: projectName, onClick: () => navigate('project', { id: projectID, initialTab: 'settings' }) },
+          { label: currentFileName },
+        ]} />
       </div>
 
       {workDirStatus === 'lock' && (

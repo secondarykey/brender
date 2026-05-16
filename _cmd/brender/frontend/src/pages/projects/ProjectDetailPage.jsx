@@ -4,6 +4,7 @@ import { ProjectApi, WorkDirApi } from '../../lib/api'
 import { useMessage } from '../../lib/toast'
 import WorkspaceTab from './tabs/WorkspaceTab'
 import SettingsTab from './tabs/SettingsTab'
+import Breadcrumb from '../../components/Breadcrumb'
 
 function ProjectDetailPage({ id, initialTab, focusName, navigate }) {
   const { t } = useTranslation()
@@ -43,13 +44,10 @@ function ProjectDetailPage({ id, initialTab, focusName, navigate }) {
   return (
     <div className="page">
       <div className="page-header">
-        <div className="breadcrumb">
-          <button className="breadcrumb-link" onClick={() => navigate('projects')}>
-            {t('breadcrumb.projects')}
-          </button>
-          <span className="breadcrumb-sep">›</span>
-          <span>{detail.project.name}</span>
-        </div>
+        <Breadcrumb items={[
+          { label: t('breadcrumb.projects'), onClick: () => navigate('projects') },
+          { label: detail.project.name },
+        ]} />
       </div>
 
       {workDir?.status === 'lock' && (

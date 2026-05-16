@@ -5,6 +5,7 @@ import { WorkspaceApi, BlenderApi, QueueApi, ProjectApi, WorkDirApi } from '../.
 import { useToast, useMessage } from '../../lib/toast'
 import Pagination from '../../components/Pagination'
 import ConfirmDialog from '../../components/ConfirmDialog'
+import Breadcrumb from '../../components/Breadcrumb'
 
 
 const isFrameDefault      = (start, end) => start === 0 && end === -1
@@ -641,19 +642,12 @@ function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspa
   return (
     <div className="page">
       <div className="page-header">
-        <div className="breadcrumb">
-          <button className="breadcrumb-link" onClick={() => navigate('projects')}>{t('breadcrumb.projects')}</button>
-          <span className="breadcrumb-sep">›</span>
-          <button className="breadcrumb-link" onClick={() => navigate('project', { id: projectID, initialTab: 'settings' })}>{projectName}</button>
-          <span className="breadcrumb-sep">›</span>
-          {effectiveFileName && (
-            <>
-              <button className="breadcrumb-link" onClick={() => navigate('file', { projectID, projectName, fileID: effectiveFileID, fileName: effectiveFileName, initialTab: 'settings' })}>{effectiveFileName}</button>
-              <span className="breadcrumb-sep">›</span>
-            </>
-          )}
-          <span>{detail.workspace.name}</span>
-        </div>
+        <Breadcrumb items={[
+          { label: t('breadcrumb.projects'), onClick: () => navigate('projects') },
+          { label: projectName, onClick: () => navigate('project', { id: projectID, initialTab: 'settings' }) },
+          effectiveFileName && { label: effectiveFileName, onClick: () => navigate('file', { projectID, projectName, fileID: effectiveFileID, fileName: effectiveFileName, initialTab: 'settings' }) },
+          { label: detail.workspace.name },
+        ].filter(Boolean)} />
       </div>
 
       {workDirStatus === 'lock' && (

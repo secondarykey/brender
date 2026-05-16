@@ -5,6 +5,7 @@ import { QueueApi, WorkspaceApi } from '../../lib/api'
 import { onAppEvent } from '../../lib/appEvents'
 import { useMessage } from '../../lib/toast'
 import ConfirmDialog from '../../components/ConfirmDialog'
+import Breadcrumb from '../../components/Breadcrumb'
 
 const VIDEO_EXTS = new Set(['.mp4', '.mov', '.avi', '.mkv', '.webm', '.m4v'])
 const IMAGE_EXTS = new Set(['.png', '.jpg', '.jpeg', '.exr', '.tiff', '.tif', '.bmp', '.hdr', '.webp', '.tga'])
@@ -598,32 +599,13 @@ function JobPage({ job: initialJob, navigate, backPage, backParams }) {
   return (
     <div className="page">
       <div className="page-header">
-        <div className="breadcrumb">
-          <button className="breadcrumb-link" onClick={() => navigate('projects')}>{t('breadcrumb.projects')}</button>
-          {bp.projectName && (
-            <>
-              <span className="breadcrumb-sep">›</span>
-              <button className="breadcrumb-link" onClick={() => navigate('project', { id: bp.projectID })}>{bp.projectName}</button>
-            </>
-          )}
-          {bp.fileName && (
-            <>
-              <span className="breadcrumb-sep">›</span>
-              <button className="breadcrumb-link" onClick={() => navigate('file', { projectID: bp.projectID, projectName: bp.projectName, fileID: bp.fileID, fileName: bp.fileName })}>{bp.fileName}</button>
-            </>
-          )}
-          {bp.workspaceName && (
-            <>
-              <span className="breadcrumb-sep">›</span>
-              {bp.workspaceID
-                ? <button className="breadcrumb-link" onClick={() => navigate(backPage, backParams)}>{bp.workspaceName}</button>
-                : <span>{bp.workspaceName}</span>
-              }
-            </>
-          )}
-          <span className="breadcrumb-sep">›</span>
-          <span>{t('breadcrumb.jobResult')}</span>
-        </div>
+        <Breadcrumb items={[
+          { label: t('breadcrumb.projects'), onClick: () => navigate('projects') },
+          bp.projectName && { label: bp.projectName, onClick: () => navigate('project', { id: bp.projectID }) },
+          bp.fileName   && { label: bp.fileName,    onClick: () => navigate('file', { projectID: bp.projectID, projectName: bp.projectName, fileID: bp.fileID, fileName: bp.fileName }) },
+          bp.workspaceName && { label: bp.workspaceName, onClick: bp.workspaceID ? () => navigate(backPage, backParams) : undefined },
+          { label: t('breadcrumb.jobResult') },
+        ].filter(Boolean)} />
       </div>
 
       <div className="tab-nav">
