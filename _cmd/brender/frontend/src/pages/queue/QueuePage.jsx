@@ -294,6 +294,7 @@ function HistoryTab({ navigate }) {
         </>
       )}
       <JobDetailDialog job={selected} onClose={() => setSelected(null)} onDeleted={() => { setSelected(null); load() }}
+        navigate={navigate}
         onStatusChanged={(id, status) => {
           setJobs(prev => prev.map(j => j.id === id ? { ...j, data_status: status } : j))
           setSelected(prev => prev && prev.id === id ? { ...prev, data_status: status } : prev)

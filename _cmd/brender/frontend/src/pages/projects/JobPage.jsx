@@ -574,10 +574,10 @@ function DataViewTab({ job }) {
 }
 
 // ── ページ本体 ────────────────────────────────────────────
-function JobPage({ job: initialJob, navigate, backPage, backParams }) {
+function JobPage({ job: initialJob, navigate, backPage, backParams, initialTab }) {
   const { t } = useTranslation()
   const hasData = initialJob && [2, 3, 6, 7, 8, 9].includes(initialJob.data_status)
-  const [tab, setTab]       = useState(hasData ? 'render' : 'detail')
+  const [tab, setTab]       = useState(initialTab || (hasData ? 'render' : 'detail'))
   const [job, setJob]       = useState(initialJob)
 
   useEffect(() => {

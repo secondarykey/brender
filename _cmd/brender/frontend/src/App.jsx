@@ -108,6 +108,7 @@ function App() {
             navigate={navigate}
             backPage={p.backPage}
             backParams={p.backParams}
+            initialTab={p.initialTab}
           />
         )
       case 'queue':
