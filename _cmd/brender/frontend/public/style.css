@@ -370,6 +370,7 @@ body {
 .btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   height: 32px;
   padding: 0 14px;
   border: none;
