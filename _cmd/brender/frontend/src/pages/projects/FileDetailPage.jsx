@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
 import { WorkspaceApi, QueueApi, ProjectApi, BlenderApi, WorkDirApi } from '../../lib/api'
 import { useToast, useMessage } from '../../lib/toast'
+import { onAppEvent } from '../../lib/appEvents'
 import Pagination from '../../components/Pagination'
 import SortSelect from '../../components/SortSelect'
 import Dialog from '../../components/Dialog'
@@ -319,6 +320,8 @@ function HistoryTab({ projectID, fileID, navigate, projectName, fileName }) {
   }, [projectID, fileID])
 
   useEffect(() => { load() }, [load])
+
+  useEffect(() => onAppEvent('queue:changed', load), [load])
 
   const statusLabel = (s) => ({ completed: t('status.completed'), error: t('status.error'), cancelled: t('status.cancelled'), running: t('status.running'), waiting: t('status.waiting') })[s] ?? t('status.running')
 

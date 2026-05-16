@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { QueueApi } from '../../lib/api'
 import { useMessage } from '../../lib/toast'
+import { onAppEvent } from '../../lib/appEvents'
 import JobDetailDialog from '../../components/JobDetailDialog'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import Pagination from '../../components/Pagination'
@@ -115,6 +116,8 @@ function ActiveTab({ navigate }) {
     return () => clearInterval(timer)
   }, [load])
 
+  useEffect(() => onAppEvent('queue:changed', load), [load])
+
   const handleCancel = async () => {
     setCancelling(true)
     try {
@@ -219,6 +222,8 @@ function HistoryTab({ navigate }) {
   }, [])
 
   useEffect(() => { load() }, [load])
+
+  useEffect(() => onAppEvent('queue:changed', load), [load])
 
   const totalPages  = Math.max(1, Math.ceil(jobs.length / pageSize))
   const currentPage = Math.min(page, totalPages)
