@@ -244,23 +244,23 @@ function HistoryTab({ navigate }) {
           <table className="queue-table">
             <thead>
               <tr>
-                <th>{t('table.status')}</th>
+                <th className="col-c">{t('table.status')}</th>
                 <th>{t('breadcrumb.jobResult')}</th>
-                <th>{t('table.engine')}</th>
-                <th>{t('table.scene')}</th>
-                <th>{t('table.camera')}</th>
-                <th className="col-r">{t('table.frames')}</th>
+                <th className="col-c">{t('table.engine')}</th>
+                <th className="col-c">{t('table.scene')}</th>
+                <th className="col-c">{t('table.camera')}</th>
+                <th className="col-c">{t('table.frames')}</th>
                 <th className="col-r">{t('table.samples')}</th>
-                <th className="col-r">{t('table.resolution')}</th>
-                <th className="col-r">{t('table.startedAt')}</th>
-                <th className="col-r">{t('table.completedAt')}</th>
+                <th className="col-c">{t('table.resolution')}</th>
+                <th className="col-c">{t('table.startedAt')}</th>
+                <th className="col-c">{t('table.completedAt')}</th>
                 <th className="col-r">{t('table.duration')}</th>
               </tr>
             </thead>
             <tbody>
               {pageJobs.map(j => (
                 <tr key={j.id} className={`${j.status === 'error' ? 'row-error' : ''} row-clickable`} onClick={() => setSelected(j)}>
-                  <td>
+                  <td className="col-c">
                     <StatusBadge status={j.status || 'running'} />
                     {j.status === 'error' && j.error_msg && (
                       <div className="queue-history-error" title={j.error_msg}>
@@ -278,14 +278,14 @@ function HistoryTab({ navigate }) {
                       {j.workspace_name || j.workspace_id}
                     </button>
                   </td>
-                  <td>{j.engine || '—'}</td>
-                  <td>{j.scene  || '—'}</td>
-                  <td>{j.camera || '—'}</td>
-                  <td className="frames-cell">{j.start_frame}–{j.end_frame}</td>
-                  <td className="num-cell">{j.samples > 0 ? j.samples : '—'}</td>
-                  <td className="num-cell">{(j.resolution_x > 0 && j.resolution_y > 0) ? `${j.resolution_x}×${j.resolution_y}` : '—'}</td>
-                  <td className="date-cell">{formatDate(j.started_at)}</td>
-                  <td className="date-cell">{formatDate(j.completed_at)}</td>
+                  <td className="col-c">{j.engine || '—'}</td>
+                  <td className="col-c">{j.scene  || '—'}</td>
+                  <td className="col-c">{j.camera || '—'}</td>
+                  <td className="col-c frames-cell">{j.start_frame}–{j.end_frame}</td>
+                  <td className="col-r num-cell">{j.samples > 0 ? j.samples : '—'}</td>
+                  <td className="col-c num-cell">{(j.resolution_x > 0 && j.resolution_y > 0) ? `${j.resolution_x}×${j.resolution_y}` : '—'}</td>
+                  <td className="col-c date-cell">{formatDate(j.started_at)}</td>
+                  <td className="col-c date-cell">{formatDate(j.completed_at)}</td>
                   <td className="duration-cell">{duration(j.started_at, j.completed_at, t)}</td>
                 </tr>
               ))}
