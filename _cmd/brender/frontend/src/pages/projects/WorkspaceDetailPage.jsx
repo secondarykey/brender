@@ -182,11 +182,12 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
   const hasFocused   = useRef(false)
   const lastFrameSpec      = useRef(null) // OFF 直前のフレーム値を退避
   const lastResolutionSpec = useRef(null) // OFF 直前の解像度を退避
+  const savedForm    = useRef(null)
 
   useEffect(() => {
     const start = detail.workspace.start ?? 0
     const end   = detail.workspace.end   ?? -1
-    setForm({
+    const next = {
       name:             detail.workspace.name,
       blenderInstallID: detail.workspace.blender_install_id,
       scene:            detail.workspace.scene || '',
@@ -199,7 +200,9 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
       samples:          detail.workspace.samples || 0,
       resolutionX:      detail.workspace.resolution_x || 0,
       resolutionY:      detail.workspace.resolution_y || 0,
-    })
+    }
+    setForm(next)
+    savedForm.current = next
     setSpecifyResolution(!isResolutionDefault(detail.workspace.resolution_x || 0, detail.workspace.resolution_y || 0))
     setSpecifyFrames(!isFrameDefault(start, end))
     lastResolutionSpec.current = null
@@ -315,6 +318,7 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
         samples: form.samples,
         resolutionX: form.resolutionX, resolutionY: form.resolutionY,
       })
+      savedForm.current = { ...form, name: form.name.trim() }
       showToast(t('common.saved'))
       onUpdated()
     } catch (err) {
@@ -383,6 +387,8 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
   }
 
   if (!form) return null
+
+  const isDirty = savedForm.current === null || JSON.stringify(form) !== JSON.stringify(savedForm.current)
 
   const blenderDefault = !fileBlenderFixed && form?.blenderInstallID === 0
     ? (blenders.find(b => b.id === fileBlenderID)?.name || blenders[0]?.name || null)
@@ -604,10 +610,10 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
           <button className="btn btn-run" onClick={handleTestEncode} disabled={testEnqueueing || workDirLocked}>
             {testEnqueueing ? t('common.enqueueing') : t('workspace.testRender')}
           </button>
-          <button className="btn btn-run" onClick={handleRenderClick} disabled={resolvingRender || workDirLocked}>
+          <button className="btn btn-run" onClick={handleRenderClick} disabled={resolvingRender || workDirLocked || isDirty}>
             {resolvingRender ? t('common.processing') : `▶ ${t('common.run')}`}
           </button>
-          <button className="btn btn-green" onClick={handleSave} disabled={saving}>
+          <button className="btn btn-green" onClick={handleSave} disabled={saving || !isDirty}>
             {saving ? t('common.saving') : t('common.save')}
           </button>
         </div>
