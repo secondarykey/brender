@@ -5,11 +5,11 @@ import LogTitleBar from './components/LogTitleBar'
 
 const TAIL_INTERVAL = 1000
 function detectLevelIdx(line, levels) {
-  if (line.length < 22 || line[20] !== '[') return -1
+  if (line.length < 28 || line[26] !== '[') return -1
   for (let i = 0; i < levels.length; i++) {
     const lv = levels[i]
-    if (line.startsWith(lv, 21)) {
-      const next = line[21 + lv.length]
+    if (line.startsWith(lv, 27)) {
+      const next = line[27 + lv.length]
       if (next === ']' || next === ' ') return i
     }
   }
