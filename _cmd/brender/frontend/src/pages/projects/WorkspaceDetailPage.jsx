@@ -699,6 +699,9 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
             </div>
           </div>
         )}
+        <button className="btn btn-outline btn-sm" onClick={handleCopy} disabled={copying} style={{ marginTop: 8, alignSelf: 'flex-start' }}>
+          {copying ? t('workspace.copying') : t('workspace.copy')}
+        </button>
       </div>
 
       {error && <div className="error-msg">{error}</div>}
@@ -710,9 +713,6 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
         <button className="btn btn-danger" onClick={() => { setForceDel(false); setConfirm(true) }}>{t('common.delete')}</button>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
           <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn btn-outline" onClick={handleCopy} disabled={copying}>
-            {copying ? t('workspace.copying') : t('workspace.copy')}
-          </button>
           <button className="btn btn-run" onClick={handleTestEncode} disabled={testEnqueueing || workDirLocked}>
             {testEnqueueing ? t('common.enqueueing') : t('workspace.testRender')}
           </button>
