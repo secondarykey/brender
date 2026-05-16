@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
 import { WorkspaceApi, ProjectApi, BlenderApi } from '../../../lib/api'
 import { onAppEvent } from '../../../lib/appEvents'
-import { useMessage } from '../../../lib/toast'
+import { useToast, useMessage } from '../../../lib/toast'
 import SortSelect from '../../../components/SortSelect'
 
 // ── サムネイルタイル ──────────────────────────────────────
@@ -65,12 +65,12 @@ function FileCard({ projectID, g, navigate, projectName, thumbnailMode, onSetThu
 
 function WorkspaceTab({ projectID, navigate, projectName }) {
   const { t } = useTranslation()
+  const { showToast } = useToast()
   const { showError } = useMessage()
   const [groups, setGroups]   = useState([])
   const [openingFileID, setOpeningFileID] = useState(null)
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('viewMode:files') || 'card')
   const [thumbnailMode, setThumbnailMode] = useState(false)
-  const [thumbMsg, setThumbMsg] = useState('')
   const [sort, setSort] = useState(() => localStorage.getItem('sort:files') || 'display_order')
   const [dir, setDir]   = useState(() => localStorage.getItem('dir:files') || '')
 
@@ -121,14 +121,12 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
   }
 
   const handleSetThumbnail = async (fileID) => {
-    setThumbMsg('')
     try {
       await ProjectApi.setProjectThumbnailFromFile({ projectID, fileID })
-      setThumbMsg(t('viewer.thumbnailSet'))
+      showToast(t('viewer.thumbnailSet'))
       setThumbnailMode(false)
-      setTimeout(() => setThumbMsg(''), 2500)
     } catch (err) {
-      setThumbMsg(t('common.error') + String(err))
+      showError(String(err))
     }
   }
 
@@ -160,7 +158,7 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
           <div style={{ marginLeft: 'auto' }}>
             <button
               className={`btn btn-sm${thumbnailMode ? ' btn-outline-active' : ' btn-outline'}`}
-              onClick={() => { setThumbnailMode(v => !v); setThumbMsg('') }}
+              onClick={() => setThumbnailMode(v => !v)}
             >
               {t('file.setAsProjectThumbnail')}
             </button>
@@ -171,7 +169,6 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
       {thumbnailMode && (
         <div className="thumbnail-mode-hint">{t('file.selectThumbnailHint')}</div>
       )}
-      {thumbMsg && <div className="thumbnail-mode-hint thumbnail-mode-ok">{thumbMsg}</div>}
 
       {groups.length === 0 ? (
         <p className="ws-empty">{t('workspace.noFilesRegistered')}</p>

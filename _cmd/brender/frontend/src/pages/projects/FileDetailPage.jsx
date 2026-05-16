@@ -70,6 +70,7 @@ function WorkspaceCard({ projectID, fileID, ws, navigate, projectName, fileName,
 // ── ワークスペースタブ ─────────────────────────────────────
 function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEnqueued, workDirLocked }) {
   const { t } = useTranslation()
+  const { showToast } = useToast()
   const { showError } = useMessage()
   const [workspaces, setWorkspaces] = useState([])
   const [creating, setCreating]     = useState(false) // 作成中フラグ
@@ -78,7 +79,6 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
   const [enqueuing, setEnqueuing]   = useState(false)
   const [viewMode, setViewMode]     = useState(() => localStorage.getItem('viewMode:workspaces') || 'list')
   const [thumbnailMode, setThumbnailMode] = useState(false)
-  const [thumbMsg, setThumbMsg]     = useState('')
   const [sort, setSort]             = useState(() => localStorage.getItem('sort:workspaces') || 'display_order')
   const [dir, setDir]               = useState(() => localStorage.getItem('dir:workspaces') || '')
 
@@ -146,14 +146,12 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
   }
 
   const handleSetThumbnail = async (workspaceID) => {
-    setThumbMsg('')
     try {
       await ProjectApi.setFileThumbnailFromWorkspace({ projectID, fileID, workspaceID })
-      setThumbMsg(t('viewer.thumbnailSet'))
+      showToast(t('viewer.thumbnailSet'))
       setThumbnailMode(false)
-      setTimeout(() => setThumbMsg(''), 2500)
     } catch (err) {
-      setThumbMsg(t('common.error') + String(err))
+      showError(String(err))
     }
   }
 
@@ -180,7 +178,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
           <button
             className={`btn btn-sm${thumbnailMode ? ' btn-outline-active' : ' btn-outline'}`}
             style={{ marginLeft: 'auto' }}
-            onClick={() => { setThumbnailMode(v => !v); setThumbMsg('') }}
+            onClick={() => setThumbnailMode(v => !v)}
           >
             {t('workspace.setAsFileThumbnail')}
           </button>
@@ -190,7 +188,6 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
       {thumbnailMode && (
         <div className="thumbnail-mode-hint">{t('file.selectThumbnailHint')}</div>
       )}
-      {thumbMsg && <div className="thumbnail-mode-hint thumbnail-mode-ok">{thumbMsg}</div>}
 
 
       <div style={{ position: 'relative' }}>

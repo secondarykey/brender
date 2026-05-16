@@ -818,11 +818,6 @@ body {
   font-size: 0.85rem;
   color: #7aaaf0;
 }
-.thumbnail-mode-ok {
-  background: rgba(40, 160, 80, 0.15);
-  border-color: rgba(40, 160, 80, 0.4);
-  color: #6fcf97;
-}
 .file-tile-thumb-select {
   cursor: crosshair;
   border-color: rgba(74, 124, 220, 0.5) !important;
