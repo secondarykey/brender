@@ -47,7 +47,8 @@
   "title": {
     "minimum": "Minimize",
     "maximum": "Maximize",
-    "close": "Close"
+    "close": "Close",
+    "alwaysOnTop": "Always on top"
   },
   "status": {
     "waiting": "Waiting",

@@ -1410,6 +1410,33 @@ body {
   background: #1e1e1e;
 }
 
+.log-alwaysontop-btn {
+  --wails-draggable: no-drag;
+  height: 26px;
+  padding: 0 8px;
+  margin-right: 8px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 4px;
+  color: rgba(255,255,255,0.55);
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.log-alwaysontop-btn:hover {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.3);
+  color: rgba(255,255,255,0.9);
+}
+.log-alwaysontop-btn.active {
+  background: rgba(74,124,220,0.25);
+  border-color: #4a7cdc;
+  color: #4a7cdc;
+}
+
 .log-viewer-root {
   display: flex;
   flex-direction: column;

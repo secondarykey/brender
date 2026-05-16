@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 function LogTitleBar({ title, logLevel, logLevels, onLogLevelChange }) {
   const { t } = useTranslation()
   const [isMac, setIsMac] = useState(false)
+  const [alwaysOnTop, setAlwaysOnTop] = useState(false)
 
   useEffect(() => {
     const id = setTimeout(() => {
@@ -12,6 +13,11 @@ function LogTitleBar({ title, logLevel, logLevels, onLogLevelChange }) {
     }, 100)
     return () => clearTimeout(id)
   }, [])
+
+  const toggleAlwaysOnTop = () => {
+    const next = !alwaysOnTop
+    Window.SetAlwaysOnTop(next).then(() => setAlwaysOnTop(next)).catch(() => {})
+  }
 
   return (
     <div className={`titlebar log-titlebar${isMac ? ' mac' : ''}`}>
@@ -28,6 +34,13 @@ function LogTitleBar({ title, logLevel, logLevels, onLogLevelChange }) {
           ))}
         </select>
       )}
+      <button
+        className={`log-alwaysontop-btn${alwaysOnTop ? ' active' : ''}`}
+        onClick={toggleAlwaysOnTop}
+        title={t('title.alwaysOnTop')}
+      >
+        &#8679;
+      </button>
       {!isMac && (
         <div className="titlebar-controls">
           <button className="titlebar-btn titlebar-btn-min"   onClick={() => Window.Minimise()}       title={t('title.minimum')}>&#8211;</button>
