@@ -212,7 +212,7 @@
     "filterImage": "Images",
     "filterVideo": "Video",
     "filterLog": "Log",
-    "showLog": "Show Log",
+    "showLog": "Show Rendering Log",
     "noLog": "No log file",
     "tail": "Follow tail",
     "wrap": "Word wrap",
