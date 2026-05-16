@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
 import { QueueApi, WorkspaceApi } from '../../lib/api'
 import { onAppEvent } from '../../lib/appEvents'
-import { useMessage } from '../../lib/toast'
+import { useToast, useMessage } from '../../lib/toast'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import Breadcrumb from '../../components/Breadcrumb'
 
@@ -226,6 +226,8 @@ function DetailTab({ job, onDeleted, onDataStatusChanged }) {
 // ── レンダリング結果タブ ───────────────────────────────────
 function RenderResultTab({ job }) {
   const { t } = useTranslation()
+  const { showToast } = useToast()
+  const { showError } = useMessage()
   const [images, setImages]             = useState([])
   const [index, setIndex]               = useState(0)
   const [imgSrc, setImgSrc]             = useState('')
@@ -234,7 +236,6 @@ function RenderResultTab({ job }) {
   const [error, setError]               = useState('')
   const [playing, setPlaying]           = useState(false)
   const [loop, setLoop]                 = useState(false)
-  const [msg, setMsg]                   = useState('')
   const [settingThumb, setSettingThumb] = useState(false)
   const [moviePath, setMoviePath]       = useState('')
   const [creatingMovie, setCreatingMovie] = useState(false)
@@ -286,7 +287,7 @@ function RenderResultTab({ job }) {
 
   const handleSetThumbnail = async () => {
     if (settingThumb || !images[index]) return
-    setSettingThumb(true); setMsg('')
+    setSettingThumb(true)
     try {
       await WorkspaceApi.setThumbnail({
         projectID:   job.project_id,
@@ -294,8 +295,8 @@ function RenderResultTab({ job }) {
         workspaceID: job.workspace_id,
         imagePath:   images[index],
       })
-      setMsg(t('viewer.thumbnailSet'))
-    } catch (e) { setMsg(String(e)) }
+      showToast(t('viewer.thumbnailSet'))
+    } catch (e) { showError(String(e)) }
     finally { setSettingThumb(false) }
   }
 
@@ -304,16 +305,16 @@ function RenderResultTab({ job }) {
       if (data.job_id !== job.id) return
       setCreatingMovie(false)
       if (data.error) {
-        setMsg(data.error)
+        showError(data.error)
       } else {
         setMoviePath(data.path || '')
-        setMsg(t('viewer.movieCreated'))
+        showToast(t('viewer.movieCreated'))
       }
     })
-  }, [job.id, t])
+  }, [job.id, t, showToast, showError])
 
   const handleCreateMovie = async () => {
-    setMsg('')
+    showError('')
     setCreatingMovie(true)
     try {
       await WorkspaceApi.createMovie({
@@ -324,7 +325,7 @@ function RenderResultTab({ job }) {
       })
     } catch (e) {
       setCreatingMovie(false)
-      setMsg(String(e))
+      showError(String(e))
     }
   }
 
@@ -341,8 +342,6 @@ function RenderResultTab({ job }) {
           {settingThumb ? '...' : t('viewer.setAsThumbnail')}
         </button>
       </div>
-
-      {msg && <div className="image-viewer-message">{msg}</div>}
 
       <div className="image-viewer-body">
         {loadingList && <div className="image-viewer-loading">{t('common.loading')}</div>}
