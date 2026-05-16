@@ -126,12 +126,15 @@ function LogViewerApp() {
     }
   }, [log, tail])
 
-  // Ctrl+F でサーチを開く
+  // Ctrl+F でサーチを開閉する
   useEffect(() => {
     const onKey = (e) => {
       if (e.ctrlKey && e.key === 'f') {
         e.preventDefault()
-        setSearchOpen(true)
+        setSearchOpen(v => {
+          if (v) { setSearchQuery(''); setFilterLevel(null) }
+          return !v
+        })
       }
     }
     window.addEventListener('keydown', onKey)
