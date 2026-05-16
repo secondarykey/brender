@@ -4,6 +4,12 @@ import { QueueApi, EnvironmentApi } from './lib/api'
 import LogTitleBar from './components/LogTitleBar'
 
 const TAIL_INTERVAL = 1000
+const LEVEL_RE = /\[([A-Z]+)\s*\]/
+
+function detectLevel(line) {
+  const m = line.match(LEVEL_RE)
+  return m ? m[1] : null
+}
 
 function highlightLine(line, query) {
   const q = query.toLowerCase()
@@ -36,6 +42,7 @@ function LogViewerApp() {
   const [searchOpen, setSearchOpen]   = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [matchIndex, setMatchIndex]   = useState(0)
+  const [filterLevel, setFilterLevel] = useState(null)
 
   const preRef         = useRef(null)
   const searchInputRef = useRef(null)
@@ -69,6 +76,23 @@ function LogViewerApp() {
       .catch(() => {})
   }
 
+  const logLines = useMemo(() => (log ? log.split('\n') : []), [log])
+
+  // フィルタ: filterLevel 以上のレベルを持つ行のインデックス集合 (null = 全表示)
+  const filteredSet = useMemo(() => {
+    if (!filterLevel || !logLevels) return null
+    const minIdx = logLevels.indexOf(filterLevel)
+    if (minIdx === -1) return null
+    const set = new Set()
+    logLines.forEach((line, i) => {
+      const level = detectLevel(line)
+      if (!level) return
+      const idx = logLevels.indexOf(level)
+      if (idx !== -1 && idx >= minIdx) set.add(i)
+    })
+    return set
+  }, [logLines, filterLevel, logLevels])
+
   const handleDownload = () => {
     if (!log) return
     const now = new Date()
@@ -79,7 +103,10 @@ function LogViewerApp() {
       + String(now.getMinutes()).padStart(2, '0')
       + String(now.getSeconds()).padStart(2, '0')
     const filename = isSysLog ? `brender-${ts}.log` : `brender-rendering-${ts}.log`
-    const url = URL.createObjectURL(new Blob([log], { type: 'text/plain' }))
+    const content = filteredSet
+      ? logLines.filter((_, i) => filteredSet.has(i)).join('\n')
+      : log
+    const url = URL.createObjectURL(new Blob([content], { type: 'text/plain' }))
     const a = document.createElement('a')
     a.href = url
     a.download = filename
@@ -125,26 +152,26 @@ function LogViewerApp() {
       if (e.key === 'Escape') {
         setSearchOpen(false)
         setSearchQuery('')
+        setFilterLevel(null)
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [searchOpen])
 
-  const logLines = useMemo(() => (log ? log.split('\n') : []), [log])
-
   const matchLines = useMemo(() => {
     if (!searchQuery) return []
     const q = searchQuery.toLowerCase()
     return logLines.reduce((acc, line, i) => {
+      if (filteredSet && !filteredSet.has(i)) return acc
       if (line.toLowerCase().includes(q)) acc.push(i)
       return acc
     }, [])
-  }, [logLines, searchQuery])
+  }, [logLines, searchQuery, filteredSet])
 
   const matchSet = useMemo(() => new Set(matchLines), [matchLines])
 
-  useEffect(() => { setMatchIndex(0) }, [searchQuery])
+  useEffect(() => { setMatchIndex(0) }, [searchQuery, filterLevel])
 
   useEffect(() => {
     if (!matchLines.length) return
@@ -171,6 +198,7 @@ function LogViewerApp() {
   const closeSearch = () => {
     setSearchOpen(false)
     setSearchQuery('')
+    setFilterLevel(null)
   }
 
   return (
@@ -192,6 +220,7 @@ function LogViewerApp() {
       {log && (
         <pre ref={preRef} className={`log-viewer-pre${wrap ? '' : ' no-wrap'}`}>
           {logLines.map((line, i) => {
+            if (filteredSet && !filteredSet.has(i)) return null
             const isMatch = searchQuery !== '' && matchSet.has(i)
             const isCurrent = isMatch && matchLines[matchIndex] === i
             return (
@@ -209,6 +238,16 @@ function LogViewerApp() {
       )}
       {searchOpen && (
         <div className="log-search-box">
+          {logLevels && (
+            <select
+              className="log-search-level"
+              value={filterLevel ?? ''}
+              onChange={e => setFilterLevel(e.target.value || null)}
+            >
+              <option value="">{t('job.allLevels')}</option>
+              {logLevels.map(lv => <option key={lv} value={lv}>{lv}</option>)}
+            </select>
+          )}
           <input
             ref={searchInputRef}
             className={`log-search-input${searchQuery && !matchLines.length ? ' no-match' : ''}`}

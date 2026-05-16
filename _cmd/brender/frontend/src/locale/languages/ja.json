@@ -217,6 +217,7 @@
     "tail": "末尾を追従",
     "wrap": "折り返し",
     "searchPlaceholder": "検索...",
+    "allLevels": "全レベル",
     "searchPrev": "前の一致",
     "searchNext": "次の一致",
     "deleteDataWarning": "出力フォルダを削除します。ジョブ履歴は残ります。この操作は取り消せません。",

@@ -217,6 +217,7 @@
     "tail": "Follow tail",
     "wrap": "Word wrap",
     "searchPlaceholder": "Search...",
+    "allLevels": "All levels",
     "searchPrev": "Previous match",
     "searchNext": "Next match",
     "deleteDataWarning": "The output folder will be deleted. Job history will be preserved. This action cannot be undone.",
