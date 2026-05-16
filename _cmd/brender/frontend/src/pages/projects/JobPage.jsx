@@ -509,6 +509,43 @@ function DataViewTab({ job }) {
   }
 
   const handleDownloadSelected = async () => {
+    if (selected.size === 1) {
+      const filePath = [...selected][0]
+      const file = files.find(f => f.path === filePath)
+      if (!file) return
+      setDownloading(true); showError('')
+      try {
+        const dataUri = await QueueApi.getImageBase64({ path: filePath })
+        const base64 = dataUri.split(',')[1]
+        const ext = file.name.split('.').pop().toLowerCase()
+        const MIME_MAP = {
+          png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg',
+          exr: 'image/x-exr', tiff: 'image/tiff', tif: 'image/tiff',
+          bmp: 'image/bmp', webp: 'image/webp', hdr: 'image/vnd.radiance',
+          mp4: 'video/mp4', mov: 'video/quicktime', avi: 'video/x-msvideo',
+          mkv: 'video/x-matroska', webm: 'video/webm', m4v: 'video/mp4',
+          log: 'text/plain', txt: 'text/plain',
+        }
+        const mime = MIME_MAP[ext] || 'application/octet-stream'
+        const binary = atob(base64)
+        const bytes = new Uint8Array(binary.length)
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+        const blob = new Blob([bytes], { type: mime })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = file.name
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+      } catch (err) {
+        showError(String(err))
+      } finally {
+        setDownloading(false)
+      }
+      return
+    }
     const savePath = await Dialogs.SaveFile({
       DefaultFilename: job.id + '_selected.zip',
       Filters: [{ DisplayName: 'ZIP Archive', Pattern: '*.zip' }],
@@ -557,7 +594,11 @@ function DataViewTab({ job }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
         <div style={{ display: 'flex', gap: 4 }}>
           <button className="btn btn-sm" onClick={handleDownloadSelected} disabled={downloading || !someSelected}>
-            {downloading ? t('common.downloading') : `${t('common.downloadZip')}${someSelected ? ` (${selected.size})` : ''}`}
+            {downloading
+              ? t('common.downloading')
+              : selected.size === 1
+                ? `${t('common.download')} (1)`
+                : `${t('common.downloadZip')}${someSelected ? ` (${selected.size})` : ''}`}
           </button>
           <button className="btn btn-sm btn-ghost" onClick={() => selectByExts(IMAGE_EXTS)}>{t('job.filterImage')}</button>
           <button className="btn btn-sm btn-ghost" onClick={() => selectByExts(VIDEO_EXTS)}>{t('job.filterVideo')}</button>
