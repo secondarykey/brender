@@ -1293,7 +1293,7 @@ body {
 .queue-table tr.row-error td   { background: rgba(220,74,74,0.05); }
 .queue-id    { color: rgba(255,255,255,0.35); font-size: 0.8rem; }
 .frames-cell { font-family: monospace; font-size: 0.82rem; white-space: nowrap; }
-.date-cell   { font-size: 0.8rem; color: rgba(255,255,255,0.55); white-space: nowrap; }
+.date-cell   { font-size: 0.8rem; color: rgba(255,255,255,0.55); white-space: nowrap; text-align: center; }
 .duration-cell { font-size: 0.8rem; white-space: nowrap; }
 .error-hint  { font-size: 0.78rem; color: #f17e72; cursor: pointer; text-decoration: underline dotted; }
 
