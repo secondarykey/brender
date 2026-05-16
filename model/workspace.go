@@ -130,12 +130,13 @@ func CreateSystemWorkspace(projectID string, projectFileID string, name string, 
 	return w, nil
 }
 
-func UpdateWorkspace(projectID string, workspaceID string, name string, blenderInstallID uint, scene, camera, engine string, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY int) (*WorkspaceDetail, error) {
+func UpdateWorkspace(projectID string, workspaceID string, name string, note string, blenderInstallID uint, scene, camera, engine string, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY int) (*WorkspaceDetail, error) {
 	var w Workspace
 	if res := db.First(&w, "id = ? AND project_id = ?", workspaceID, projectID); res.Error != nil {
 		return nil, xerrors.Errorf("UpdateWorkspace find: %w", res.Error)
 	}
 	w.Name = name
+	w.Note = note
 	w.BlenderInstallID = blenderInstallID
 	w.Scene = scene
 	w.Camera = camera

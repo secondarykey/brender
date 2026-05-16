@@ -9,6 +9,7 @@ import SortSelect from '../../components/SortSelect'
 import Dialog from '../../components/Dialog'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import Breadcrumb from '../../components/Breadcrumb'
+import NoteSection from '../../components/NoteSection'
 
 
 // ── ワークスペースカード（サムネイル表示） ──────────────────
@@ -425,6 +426,7 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
   const { showToast } = useToast()
   const { showError } = useMessage()
   const [name, setName]                   = useState(fileName)
+  const [note, setNote]                   = useState('')
   const [blenderInstallID, setBlenderID]  = useState(0)
   const [blenderFixed, setBlenderFixed]   = useState(false)
   const [scene, setScene]                 = useState('')
@@ -458,6 +460,7 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
       setBlenders(list || [])
       const installID = f?.blender_install_id || 0
       setName(f?.name || fileName)
+      setNote(f?.note || '')
       setFilePath(f?.path || '')
       setBlenderID(installID)
       setBlenderFixed(f?.blender_fixed || false)
@@ -486,7 +489,7 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
     setSaving(true)
     showError('')
     try {
-      const updated = await ProjectApi.updateFile({ fileID, name: name.trim(), blenderInstallID, blenderFixed, scene, sceneFixed, camera, cameraFixed, engine, engineFixed })
+      const updated = await ProjectApi.updateFile({ fileID, name: name.trim(), note, blenderInstallID, blenderFixed, scene, sceneFixed, camera, cameraFixed, engine, engineFixed })
       showToast(t('common.saved'))
       if (onUpdated) onUpdated(updated)
     } catch (e) {
@@ -660,6 +663,8 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
               </label>
             </div>
           </div>
+
+          <NoteSection value={note} onChange={setNote} />
 
           <div className="form-actions">
             <button className="btn btn-danger" onClick={() => setConfirm(true)}>{t('common.delete')}</button>

@@ -6,6 +6,7 @@ import { onAppEvent } from '../../../lib/appEvents'
 import { useToast, useMessage } from '../../../lib/toast'
 import Dialog from '../../../components/Dialog'
 import ConfirmDialog from '../../../components/ConfirmDialog'
+import NoteSection from '../../../components/NoteSection'
 
 const IMAGE_FILTER = [{ DisplayName: 'Image', Pattern: '*.jpg;*.jpeg;*.png;*.bmp;*.webp' }]
 
@@ -192,6 +193,7 @@ function SettingsTab({ detail, focusName, workDir, workDirs, onUpdated, onDelete
   const { showToast } = useToast()
   const { showError } = useMessage()
   const [form, setForm]         = useState(null)
+  const [note, setNote]         = useState('')
   const [saving, setSaving]     = useState(false)
   const [error, setError]       = useState('')
   const [confirm, setConfirm]   = useState(false)
@@ -203,6 +205,7 @@ function SettingsTab({ detail, focusName, workDir, workDirs, onUpdated, onDelete
 
   useEffect(() => {
     setForm({ name: detail.project.name })
+    setNote(detail.project.note || '')
     setError('')
   }, [detail])
 
@@ -223,7 +226,7 @@ function SettingsTab({ detail, focusName, workDir, workDirs, onUpdated, onDelete
     if (!form.name.trim()) { setError(t('project.nameRequired')); return }
     setSaving(true)
     try {
-      await ProjectApi.update({ id: detail.project.id, name: form.name.trim() })
+      await ProjectApi.update({ id: detail.project.id, name: form.name.trim(), note })
       showToast(t('common.saved'))
       onUpdated()
     } catch (err) {
@@ -268,6 +271,8 @@ function SettingsTab({ detail, focusName, workDir, workDirs, onUpdated, onDelete
           </div>
 
           {error && <div className="error-msg">{error}</div>}
+
+          <NoteSection value={note} onChange={setNote} />
 
           <div className="form-actions">
             <button className="btn btn-danger" onClick={() => setConfirm(true)}>

@@ -1161,6 +1161,38 @@ textarea.form-input {
   display: block;
 }
 
+/* 折り畳みノートセクション */
+.note-section {
+  border-top: 1px solid rgba(255,255,255,0.08);
+  margin-top: 20px;
+  padding-top: 4px;
+}
+.note-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.45);
+  font-size: 0.82rem;
+  cursor: pointer;
+  padding: 6px 0;
+  width: 100%;
+  text-align: left;
+  user-select: none;
+}
+.note-toggle:hover { color: rgba(255,255,255,0.7); }
+.note-toggle-arrow { font-size: 0.7rem; transition: transform 0.15s; }
+.note-toggle-arrow.open { transform: rotate(90deg); }
+.note-body {
+  margin-top: 8px;
+}
+.note-body textarea.form-input {
+  width: 100%;
+  min-height: 100px;
+  resize: vertical;
+}
+
 .form-checkbox-label {
   display: flex;
   align-items: center;

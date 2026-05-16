@@ -20,18 +20,18 @@ func GetProject(id string) (*model.ProjectDetail, error) {
 	return model.GetProject(id)
 }
 
-func UpdateProject(id, name string) (*model.ProjectDetail, error) {
+func UpdateProject(id, name, note string) (*model.ProjectDetail, error) {
 	if name == "" {
 		return nil, xerrors.New("project name is required")
 	}
-	return model.UpdateProject(id, name)
+	return model.UpdateProject(id, name, note)
 }
 
-func UpdateProjectFile(fileID string, name string, blenderInstallID uint, blenderFixed bool, scene string, sceneFixed bool, camera string, cameraFixed bool, engine string, engineFixed bool) (*model.ProjectFile, error) {
+func UpdateProjectFile(fileID string, name string, note string, blenderInstallID uint, blenderFixed bool, scene string, sceneFixed bool, camera string, cameraFixed bool, engine string, engineFixed bool) (*model.ProjectFile, error) {
 	if name == "" {
 		return nil, xerrors.New("file name is required")
 	}
-	return model.UpdateProjectFile(fileID, name, blenderInstallID, blenderFixed, scene, sceneFixed, camera, cameraFixed, engine, engineFixed)
+	return model.UpdateProjectFile(fileID, name, note, blenderInstallID, blenderFixed, scene, sceneFixed, camera, cameraFixed, engine, engineFixed)
 }
 
 func GetFile(fileID string) (*model.ProjectFile, error) {

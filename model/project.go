@@ -140,24 +140,26 @@ func FirstFile(projectID string) (*ProjectFile, error) {
 }
 
 
-func UpdateProject(id, name string) (*ProjectDetail, error) {
+func UpdateProject(id, name, note string) (*ProjectDetail, error) {
 	var p Project
 	if res := db.First(&p, "id = ?", id); res.Error != nil {
 		return nil, xerrors.Errorf("UpdateProject find: %w", res.Error)
 	}
 	p.Name = name
+	p.Note = note
 	if res := db.Save(&p); res.Error != nil {
 		return nil, xerrors.Errorf("UpdateProject save: %w", res.Error)
 	}
 	return loadProjectDetail(&p)
 }
 
-func UpdateProjectFile(fileID string, name string, blenderInstallID uint, blenderFixed bool, scene string, sceneFixed bool, camera string, cameraFixed bool, engine string, engineFixed bool) (*ProjectFile, error) {
+func UpdateProjectFile(fileID string, name string, note string, blenderInstallID uint, blenderFixed bool, scene string, sceneFixed bool, camera string, cameraFixed bool, engine string, engineFixed bool) (*ProjectFile, error) {
 	var f ProjectFile
 	if res := db.First(&f, "id = ?", fileID); res.Error != nil {
 		return nil, xerrors.Errorf("UpdateProjectFile find: %w", res.Error)
 	}
 	f.Name = name
+	f.Note = note
 	f.BlenderInstallID = blenderInstallID
 	f.BlenderFixed = blenderFixed
 	f.Scene = scene

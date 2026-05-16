@@ -8,6 +8,7 @@ import Pagination from '../../components/Pagination'
 import Dialog from '../../components/Dialog'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import Breadcrumb from '../../components/Breadcrumb'
+import NoteSection from '../../components/NoteSection'
 
 
 const isFrameDefault      = (start, end) => start === 0 && end === -1
@@ -167,6 +168,7 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
   const [toolLoading, setToolLoading]       = useState(false)
   const [cpuCount, setCpuCount]             = useState(null)
   const [form, setForm]                     = useState(null)
+  const [note, setNote]                     = useState('')
   const [specifyResolution, setSpecifyResolution] = useState(false)
   const [specifyFrames, setSpecifyFrames]         = useState(false)
   const [saving, setSaving]                 = useState(false)
@@ -203,6 +205,7 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
     }
     setForm(next)
     savedForm.current = next
+    setNote(detail.workspace.note || '')
     setSpecifyResolution(!isResolutionDefault(detail.workspace.resolution_x || 0, detail.workspace.resolution_y || 0))
     setSpecifyFrames(!isFrameDefault(start, end))
     lastResolutionSpec.current = null
@@ -310,7 +313,7 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
     setSaving(true)
     try {
       await WorkspaceApi.update({
-        projectID, workspaceID, name: form.name.trim(),
+        projectID, workspaceID, name: form.name.trim(), note,
         blenderInstallID: form.blenderInstallID,
         scene: form.scene, camera: form.camera, engine: form.engine,
         startFrame: form.startFrame, endFrame: form.endFrame,
@@ -603,6 +606,8 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
 
       {error && <div className="error-msg">{error}</div>}
       {testEnqueued && <div className="warning-msg">{t('workspace.testEnqueued')}</div>}
+
+      <NoteSection value={note} onChange={setNote} />
 
       <div className="form-actions">
         <button className="btn btn-danger" onClick={() => setConfirm(true)}>{t('common.delete')}</button>

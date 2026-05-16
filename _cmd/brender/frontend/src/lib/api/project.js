@@ -25,11 +25,11 @@ export const ProjectApi = {
               : serverCall('project', 'create', { name }),
 
   /** プロジェクトを更新
-   * @param {{ id: string, name: string }} args
+   * @param {{ id: string, name: string, note: string }} args
    */
-  update: ({ id, name }) =>
-    isWails() ? svc().then(s => s.Update(id, name))
-              : serverCall('project', 'update', { id, name }),
+  update: ({ id, name, note = '' }) =>
+    isWails() ? svc().then(s => s.Update(id, name, note))
+              : serverCall('project', 'update', { id, name, note }),
 
   /** プロジェクトを削除
    * @param {{ id: string }} args
@@ -53,11 +53,11 @@ export const ProjectApi = {
               : serverCall('project', 'get_file', { file_id: fileID }),
 
   /** ファイル情報を更新
-   * @param {{ fileID: number, name: string, blenderInstallID: number, scene: string, engine: string, engineFixed: boolean }} args
+   * @param {{ fileID: number, name: string, note: string, blenderInstallID: number, scene: string, engine: string, engineFixed: boolean }} args
    */
-  updateFile: ({ fileID, name, blenderInstallID, blenderFixed = false, scene, sceneFixed = false, camera = '', cameraFixed = false, engine = '', engineFixed = false }) =>
-    isWails() ? svc().then(s => s.UpdateFile(fileID, name, blenderInstallID, blenderFixed, scene, sceneFixed, camera, cameraFixed, engine, engineFixed))
-              : serverCall('project', 'update_file', { file_id: fileID, name, blender_install_id: blenderInstallID, blender_fixed: blenderFixed, scene, scene_fixed: sceneFixed, camera, camera_fixed: cameraFixed, engine, engine_fixed: engineFixed }),
+  updateFile: ({ fileID, name, note = '', blenderInstallID, blenderFixed = false, scene, sceneFixed = false, camera = '', cameraFixed = false, engine = '', engineFixed = false }) =>
+    isWails() ? svc().then(s => s.UpdateFile(fileID, name, note, blenderInstallID, blenderFixed, scene, sceneFixed, camera, cameraFixed, engine, engineFixed))
+              : serverCall('project', 'update_file', { file_id: fileID, name, note, blender_install_id: blenderInstallID, blender_fixed: blenderFixed, scene, scene_fixed: sceneFixed, camera, camera_fixed: cameraFixed, engine, engine_fixed: engineFixed }),
 
   /** ディレクトリ内の .blend ファイルを一括追加
    * @param {{ projectID: string, dir: string }} args

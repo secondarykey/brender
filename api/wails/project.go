@@ -28,12 +28,12 @@ func (s *Project) Delete(id string) error {
 	return api.DeleteProject(id)
 }
 
-func (s *Project) Update(id, name string) (*model.ProjectDetail, error) {
-	return api.UpdateProject(id, name)
+func (s *Project) Update(id, name, note string) (*model.ProjectDetail, error) {
+	return api.UpdateProject(id, name, note)
 }
 
-func (s *Project) UpdateFile(fileID string, name string, blenderInstallID uint, blenderFixed bool, scene string, sceneFixed bool, camera string, cameraFixed bool, engine string, engineFixed bool) (*model.ProjectFile, error) {
-	return api.UpdateProjectFile(fileID, name, blenderInstallID, blenderFixed, scene, sceneFixed, camera, cameraFixed, engine, engineFixed)
+func (s *Project) UpdateFile(fileID string, name string, note string, blenderInstallID uint, blenderFixed bool, scene string, sceneFixed bool, camera string, cameraFixed bool, engine string, engineFixed bool) (*model.ProjectFile, error) {
+	return api.UpdateProjectFile(fileID, name, note, blenderInstallID, blenderFixed, scene, sceneFixed, camera, cameraFixed, engine, engineFixed)
 }
 
 func (s *Project) GetFile(fileID string) (*model.ProjectFile, error) {

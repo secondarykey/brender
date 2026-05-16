@@ -38,7 +38,9 @@
     "dragToReorder": "Drag to reorder",
     "error": "Error: ",
     "reload": "Reload",
-    "edit": "Edit"
+    "edit": "Edit",
+    "note": "Note",
+    "notePlaceholder": "Enter notes..."
   },
   "menu": {
     "project": "Project",

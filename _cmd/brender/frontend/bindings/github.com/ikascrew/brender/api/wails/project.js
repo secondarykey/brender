@@ -158,10 +158,11 @@ export function SetProjectThumbnailFromFile(projectID, fileID) {
 /**
  * @param {string} id
  * @param {string} name
+ * @param {string} note
  * @returns {$CancellablePromise<model$0.ProjectDetail | null>}
  */
-export function Update(id, name) {
-    return $Call.ByID(2080245374, id, name).then(/** @type {($result: any) => any} */(($result) => {
+export function Update(id, name, note) {
+    return $Call.ByID(2080245374, id, name, note).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType5($result);
     }));
 }
@@ -169,6 +170,7 @@ export function Update(id, name) {
 /**
  * @param {string} fileID
  * @param {string} name
+ * @param {string} note
  * @param {number} blenderInstallID
  * @param {boolean} blenderFixed
  * @param {string} scene
@@ -179,8 +181,8 @@ export function Update(id, name) {
  * @param {boolean} engineFixed
  * @returns {$CancellablePromise<model$0.ProjectFile | null>}
  */
-export function UpdateFile(fileID, name, blenderInstallID, blenderFixed, scene, sceneFixed, camera, cameraFixed, engine, engineFixed) {
-    return $Call.ByID(2556186200, fileID, name, blenderInstallID, blenderFixed, scene, sceneFixed, camera, cameraFixed, engine, engineFixed).then(/** @type {($result: any) => any} */(($result) => {
+export function UpdateFile(fileID, name, note, blenderInstallID, blenderFixed, scene, sceneFixed, camera, cameraFixed, engine, engineFixed) {
+    return $Call.ByID(2556186200, fileID, name, note, blenderInstallID, blenderFixed, scene, sceneFixed, camera, cameraFixed, engine, engineFixed).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType1($result);
     }));
 }

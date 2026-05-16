@@ -38,7 +38,9 @@
     "dragToReorder": "ドラッグで並び替え",
     "error": "エラー: ",
     "reload": "再読み込み",
-    "edit": "編集"
+    "edit": "編集",
+    "note": "ノート",
+    "notePlaceholder": "メモを入力..."
   },
   "menu": {
     "project": "プロジェクト",

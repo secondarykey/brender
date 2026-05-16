@@ -25,14 +25,14 @@ export const WorkspaceApi = {
               : serverCall('workspace', 'create', { project_id: projectID, project_file_id: projectFileID, name }),
 
   /** ワークスペースを更新
-   * @param {{ projectID: string, workspaceID: string, name: string,
+   * @param {{ projectID: string, workspaceID: string, name: string, note: string,
    *           blenderInstallID: number, scene: string, camera: string, engine: string,
    *           startFrame: number, endFrame: number, frameStep: number, thread: number, samples: number }} args
    */
-  update: ({ projectID, workspaceID, name, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY }) =>
-    isWails() ? svc().then(s => s.Update(projectID, workspaceID, name, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY))
+  update: ({ projectID, workspaceID, name, note = '', blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY }) =>
+    isWails() ? svc().then(s => s.Update(projectID, workspaceID, name, note, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY))
               : serverCall('workspace', 'update', {
-                  project_id: projectID, workspace_id: workspaceID, name,
+                  project_id: projectID, workspace_id: workspaceID, name, note,
                   blender_install_id: blenderInstallID, scene, camera, engine,
                   start_frame: startFrame, end_frame: endFrame, frame_step: frameStep, thread, samples,
                   resolution_x: resolutionX, resolution_y: resolutionY,
