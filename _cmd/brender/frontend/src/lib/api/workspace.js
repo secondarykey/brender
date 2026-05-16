@@ -29,13 +29,14 @@ export const WorkspaceApi = {
    *           blenderInstallID: number, scene: string, camera: string, engine: string,
    *           startFrame: number, endFrame: number, frameStep: number, thread: number, samples: number }} args
    */
-  update: ({ projectID, workspaceID, name, note = '', blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY }) =>
-    isWails() ? svc().then(s => s.Update(projectID, workspaceID, name, note, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY))
+  update: ({ projectID, workspaceID, name, note = '', blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY, outputFormat = '' }) =>
+    isWails() ? svc().then(s => s.Update(projectID, workspaceID, name, note, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY, outputFormat))
               : serverCall('workspace', 'update', {
                   project_id: projectID, workspace_id: workspaceID, name, note,
                   blender_install_id: blenderInstallID, scene, camera, engine,
                   start_frame: startFrame, end_frame: endFrame, frame_step: frameStep, thread, samples,
                   resolution_x: resolutionX, resolution_y: resolutionY,
+                  output_format: outputFormat,
                 }),
 
   /** ワークスペースをコピーして新規作成
@@ -73,7 +74,7 @@ export const WorkspaceApi = {
     isWails() ? svc().then(s => s.CreateBatch(projectID, projectFileID, specs))
               : serverCall('workspace', 'create_batch', { project_id: projectID, project_file_id: projectFileID, specs }),
 
-  createMovie: ({ projectID, fileID, workspaceID, jobID, fps, inext, outext, extraArgs }) =>
-    isWails() ? svc().then(s => s.CreateMovie(projectID, fileID, workspaceID, jobID, fps, inext, outext, extraArgs))
-              : serverCall('workspace', 'create_movie', { project_id: projectID, file_id: fileID, workspace_id: workspaceID, job_id: jobID, fps, inext, outext, extra_args: extraArgs }),
+  createMovie: ({ projectID, fileID, workspaceID, jobID, fps, outext, extraArgs }) =>
+    isWails() ? svc().then(s => s.CreateMovie(projectID, fileID, workspaceID, jobID, fps, outext, extraArgs))
+              : serverCall('workspace', 'create_movie', { project_id: projectID, file_id: fileID, workspace_id: workspaceID, job_id: jobID, fps, outext, extra_args: extraArgs }),
 }

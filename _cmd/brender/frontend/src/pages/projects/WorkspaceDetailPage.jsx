@@ -285,6 +285,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
       samples:          detail.workspace.samples || 0,
       resolutionX:      detail.workspace.resolution_x || 0,
       resolutionY:      detail.workspace.resolution_y || 0,
+      outputFormat:     detail.workspace.output_format || '',
     }
     setForm(next)
     savedForm.current = next
@@ -419,6 +420,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
         frameStep: form.frameStep, thread: form.thread,
         samples: form.samples,
         resolutionX: form.resolutionX, resolutionY: form.resolutionY,
+        outputFormat: form.outputFormat,
       })
       savedForm.current = { ...form, name: form.name.trim() }
       showToast(t('common.saved'))
@@ -701,6 +703,15 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
             </div>
           </div>
         )}
+      </div>
+
+      <div className="form-field">
+        <label className="form-label">{t('workspace.outputFormat')}</label>
+        <select className="form-select" style={{ width: 200 }} value={form.outputFormat} onChange={e => set('outputFormat', e.target.value)}>
+          <option value="">{t('workspace.outputFormatDefault')}</option>
+          <option value="PNG">PNG</option>
+          <option value="JPEG">JPEG</option>
+        </select>
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -30 }}>

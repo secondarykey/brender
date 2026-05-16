@@ -87,7 +87,7 @@ func CopyWorkspace(projectID, workspaceID, newName string) (*model.Workspace, er
 	if _, err := model.UpdateWorkspace(projectID, newWS.ID, newName, src.Note, src.BlenderInstallID,
 		src.Scene, src.Camera, src.Engine,
 		src.StartFrame, src.EndFrame, src.FrameStep,
-		src.Thread, src.Samples, src.ResolutionX, src.ResolutionY); err != nil {
+		src.Thread, src.Samples, src.ResolutionX, src.ResolutionY, src.OutputFormat); err != nil {
 		return nil, err
 	}
 	now := time.Now()
@@ -103,11 +103,11 @@ func CopyWorkspace(projectID, workspaceID, newName string) (*model.Workspace, er
 	return newWS, nil
 }
 
-func UpdateWorkspace(projectID string, workspaceID string, name string, note string, blenderInstallID uint, scene, camera, engine string, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY int) (*model.WorkspaceDetail, error) {
+func UpdateWorkspace(projectID string, workspaceID string, name string, note string, blenderInstallID uint, scene, camera, engine string, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY int, outputFormat string) (*model.WorkspaceDetail, error) {
 	if name == "" {
 		return nil, xerrors.New("workspace name is required")
 	}
-	return model.UpdateWorkspace(projectID, workspaceID, name, note, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY)
+	return model.UpdateWorkspace(projectID, workspaceID, name, note, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY, outputFormat)
 }
 
 func DeleteWorkspace(projectID, workspaceID string, force bool) error {

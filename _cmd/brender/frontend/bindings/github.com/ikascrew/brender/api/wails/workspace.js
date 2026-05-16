@@ -52,18 +52,18 @@ export function CreateBatch(projectID, projectFileID, specs) {
 /**
  * CreateMovie は ffmpeg による動画作成を goroutine で開始し即返す。
  * ffmpeg プロセス完了後（成功・失敗とも）に "movie:created" イベントを emit する。
+ * 入力拡張子はジョブの OutputExt から自動取得するため、呼び出し元での指定は不要。
  * @param {string} projectID
  * @param {string} fileID
  * @param {string} workspaceID
  * @param {string} jobID
  * @param {number} fps
- * @param {string} inext
  * @param {string} outext
  * @param {string} extraArgs
  * @returns {$CancellablePromise<void>}
  */
-export function CreateMovie(projectID, fileID, workspaceID, jobID, fps, inext, outext, extraArgs) {
-    return $Call.ByID(711210437, projectID, fileID, workspaceID, jobID, fps, inext, outext, extraArgs);
+export function CreateMovie(projectID, fileID, workspaceID, jobID, fps, outext, extraArgs) {
+    return $Call.ByID(711210437, projectID, fileID, workspaceID, jobID, fps, outext, extraArgs);
 }
 
 /**
@@ -136,10 +136,11 @@ export function SetThumbnail(projectID, fileID, workspaceID, imagePath) {
  * @param {number} samples
  * @param {number} resolutionX
  * @param {number} resolutionY
+ * @param {string} outputFormat
  * @returns {$CancellablePromise<model$0.WorkspaceDetail | null>}
  */
-export function Update(projectID, workspaceID, name, note, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY) {
-    return $Call.ByID(971734846, projectID, workspaceID, name, note, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY).then(/** @type {($result: any) => any} */(($result) => {
+export function Update(projectID, workspaceID, name, note, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY, outputFormat) {
+    return $Call.ByID(971734846, projectID, workspaceID, name, note, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY, outputFormat).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType4($result);
     }));
 }

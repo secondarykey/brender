@@ -31,6 +31,10 @@ func (s *Environment) SetFfmpeg(cmd string, fps int, ext string, outExt string, 
 	})
 }
 
+func (s *Environment) SetOutputFormat(format string) error {
+	return api.SetOutputFormat(format)
+}
+
 func (s *Environment) SetMaxConcurrentJobs(n int) error {
 	return api.SetMaxConcurrentJobs(n)
 }

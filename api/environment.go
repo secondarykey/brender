@@ -33,6 +33,18 @@ func SetFfmpegSettings(s FfmpegSettings) error {
 	return model.SetEnvironment(env)
 }
 
+func SetOutputFormat(format string) error {
+	env, err := model.GetEnv()
+	if err != nil {
+		return xerrors.Errorf("GetEnv error: %w", err)
+	}
+	if env == nil {
+		env = &model.Environment{}
+	}
+	env.OutputFormat = format
+	return model.SetEnvironment(env)
+}
+
 func SetMaxConcurrentJobs(n int) error {
 	if n < 1 {
 		n = 1

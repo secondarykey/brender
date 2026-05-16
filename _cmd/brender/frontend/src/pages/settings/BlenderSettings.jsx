@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
 import { BlenderApi, EnvironmentApi } from '../../lib/api'
+import { useToast } from '../../lib/toast'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import { useMessage } from '../../lib/toast'
 
@@ -10,6 +11,7 @@ function BlenderSettings() {
   const [blenders, setBlenders] = useState([])
   const [loading, setLoading] = useState(false)
   const { showError } = useMessage()
+  const { showToast } = useToast()
   const [confirm, setConfirm] = useState(null)
   const [confirmError, setConfirmError] = useState('')
   const [deleting, setDeleting] = useState(false)
@@ -17,6 +19,8 @@ function BlenderSettings() {
   const [dragOver, setDragOver] = useState(null)
   const [maxJobs, setMaxJobs] = useState(1)
   const [savingMaxJobs, setSavingMaxJobs] = useState(false)
+  const [outputFormat, setOutputFormat] = useState('')
+  const [savingOutputFormat, setSavingOutputFormat] = useState(false)
 
   const load = () => {
     BlenderApi.list()
@@ -27,7 +31,10 @@ function BlenderSettings() {
   useEffect(() => {
     load()
     EnvironmentApi.get()
-      .then(env => { if (env?.max_concurrent_jobs > 0) setMaxJobs(env.max_concurrent_jobs) })
+      .then(env => {
+        if (env?.max_concurrent_jobs > 0) setMaxJobs(env.max_concurrent_jobs)
+        setOutputFormat(env?.output_format || '')
+      })
       .catch(() => {})
   }, [])
 
@@ -35,10 +42,23 @@ function BlenderSettings() {
     setSavingMaxJobs(true)
     try {
       await EnvironmentApi.setMaxConcurrentJobs({ n: maxJobs })
+      showToast(t('common.saved'))
     } catch (err) {
       showError(String(err))
     } finally {
       setSavingMaxJobs(false)
+    }
+  }
+
+  const handleOutputFormatSave = async () => {
+    setSavingOutputFormat(true)
+    try {
+      await EnvironmentApi.setOutputFormat({ format: outputFormat })
+      showToast(t('common.saved'))
+    } catch (err) {
+      showError(String(err))
+    } finally {
+      setSavingOutputFormat(false)
     }
   }
 
@@ -138,6 +158,24 @@ function BlenderSettings() {
             </button>
           </div>
           <span className="form-hint">{t('settings.maxConcurrentJobsHint')}</span>
+        </div>
+        <div className="form-field">
+          <label className="form-label">{t('settings.renderOutputFormat')}</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <select
+              className="form-select"
+              style={{ width: 160 }}
+              value={outputFormat}
+              onChange={e => setOutputFormat(e.target.value)}
+            >
+              <option value="PNG">PNG</option>
+              <option value="JPEG">JPEG</option>
+            </select>
+            <button className="btn btn-green btn-sm" onClick={handleOutputFormatSave} disabled={savingOutputFormat}>
+              {savingOutputFormat ? t('common.saving') : t('common.save')}
+            </button>
+          </div>
+          <span className="form-hint">{t('settings.renderOutputFormatHint')}</span>
         </div>
       </div>
 

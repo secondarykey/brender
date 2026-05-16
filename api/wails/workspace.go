@@ -33,8 +33,8 @@ func (s *Workspace) Copy(projectID string, workspaceID string, newName string) (
 	return api.CopyWorkspace(projectID, workspaceID, newName)
 }
 
-func (s *Workspace) Update(projectID string, workspaceID string, name string, note string, blenderInstallID uint, scene, camera, engine string, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY int) (*model.WorkspaceDetail, error) {
-	return api.UpdateWorkspace(projectID, workspaceID, name, note, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY)
+func (s *Workspace) Update(projectID string, workspaceID string, name string, note string, blenderInstallID uint, scene, camera, engine string, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY int, outputFormat string) (*model.WorkspaceDetail, error) {
+	return api.UpdateWorkspace(projectID, workspaceID, name, note, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY, outputFormat)
 }
 
 func (s *Workspace) Delete(projectID, workspaceID string, force bool) error {
@@ -58,9 +58,10 @@ type movieCreatedEvent struct {
 
 // CreateMovie は ffmpeg による動画作成を goroutine で開始し即返す。
 // ffmpeg プロセス完了後（成功・失敗とも）に "movie:created" イベントを emit する。
-func (s *Workspace) CreateMovie(projectID string, fileID string, workspaceID string, jobID string, fps int, inext string, outext string, extraArgs string) {
+// 入力拡張子はジョブの OutputExt から自動取得するため、呼び出し元での指定は不要。
+func (s *Workspace) CreateMovie(projectID string, fileID string, workspaceID string, jobID string, fps int, outext string, extraArgs string) {
 	go func() {
-		path, ch, err := api.CreateMovie(projectID, fileID, workspaceID, jobID, fps, inext, outext, extraArgs)
+		path, ch, err := api.CreateMovie(projectID, fileID, workspaceID, jobID, fps, outext, extraArgs)
 		if err != nil {
 			application.Get().Event.Emit("movie:created", movieCreatedEvent{JobID: jobID, Error: err.Error()})
 			return

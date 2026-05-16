@@ -180,6 +180,8 @@
     "resolutionX": "幅 (X)",
     "resolutionY": "高さ (Y)",
     "swapResolution": "X と Y を入れ替え",
+    "outputFormat": "出力フォーマット",
+    "outputFormatDefault": "システムデフォルト",
     "specifyFrames": "フレームを指定する",
     "specifyFrameRange": "フレーム範囲を指定する",
     "startFrame": "開始",
@@ -331,6 +333,8 @@
     "ffmpegArgsHint": "ffmpeg に渡す追加の引数（省略可）",
     "maxConcurrentJobs": "最大同時実行数",
     "maxConcurrentJobsHint": "同時に実行するジョブの最大数",
+    "renderOutputFormat": "レンダリング出力フォーマット",
+    "renderOutputFormatHint": "ワークスペース個別設定がない場合に使用されるデフォルトフォーマット",
     "systemLog": "システムログ",
     "openSystemLog": "システムログを開く",
     "logLevel": "ログレベル"

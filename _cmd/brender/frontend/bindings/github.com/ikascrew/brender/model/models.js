@@ -110,6 +110,14 @@ export class Environment {
              */
             this["server"] = false;
         }
+        if (!("output_format" in $$source)) {
+            /**
+             * レンダリング出力フォーマット（"PNG" / "JPEG"）。空なら "PNG"
+             * @member
+             * @type {string}
+             */
+            this["output_format"] = "";
+        }
         if (!("ffmpeg_cmd" in $$source)) {
             /**
              * @member
@@ -356,6 +364,14 @@ export class Job {
              * @type {number}
              */
             this["resolution_y"] = 0;
+        }
+        if (!("output_ext" in $$source)) {
+            /**
+             * レンダリング出力拡張子（"png" / "jpg"）
+             * @member
+             * @type {string}
+             */
+            this["output_ext"] = "";
         }
         if (!("status" in $$source)) {
             /**
@@ -979,6 +995,14 @@ export class Workspace {
              * @type {number}
              */
             this["resolution_y"] = 0;
+        }
+        if (!("output_format" in $$source)) {
+            /**
+             * "PNG" / "JPEG"。空 = システムデフォルト委譲
+             * @member
+             * @type {string}
+             */
+            this["output_format"] = "";
         }
         if (!("is_system" in $$source)) {
             /**
