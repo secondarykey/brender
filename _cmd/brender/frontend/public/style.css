@@ -1951,11 +1951,18 @@ body {
   opacity: 0.7;
   font-style: italic;
 }
+.job-data-view .queue-table tbody tr:hover td {
+  background: rgba(255,255,255,0.05);
+}
+.job-data-view .queue-table tbody tr.job-data-row-selected:hover td {
+  background: rgba(74,124,220,0.18);
+}
 .job-data-row-video {
   cursor: pointer;
 }
 .job-data-row-video:hover td {
-  color: #4a7cdc;
+  background: rgba(74,124,220,0.08);
+  color: #7aaae8;
 }
 
 /* ── 画像ビュワー ─────────────────────────────────────── */
