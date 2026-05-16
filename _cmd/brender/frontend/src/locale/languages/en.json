@@ -347,7 +347,12 @@
     "createMovie": "Create Video",
     "movieCreating": "Creating...",
     "movieCreated": "Video created",
-    "playMovie": "Show Video"
+    "playMovie": "Show Video",
+    "movieDialogTitle": "Create Video",
+    "movieDialogFps": "FPS",
+    "movieDialogInputExt": "Input Extension",
+    "movieDialogOutputExt": "Output Extension",
+    "movieDialogExtraArgs": "Extra Arguments"
   },
   "render": {
     "confirmTitle": "Start rendering?",

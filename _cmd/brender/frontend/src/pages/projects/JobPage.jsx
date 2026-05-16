@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useLayoutEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
-import { QueueApi, WorkspaceApi } from '../../lib/api'
+import { QueueApi, WorkspaceApi, EnvironmentApi } from '../../lib/api'
 import { onAppEvent } from '../../lib/appEvents'
 import { useToast, useMessage } from '../../lib/toast'
 import ConfirmDialog from '../../components/ConfirmDialog'
+import Dialog from '../../components/Dialog'
 import Breadcrumb from '../../components/Breadcrumb'
 
 const VIDEO_EXTS = new Set(['.mp4', '.mov', '.avi', '.mkv', '.webm', '.m4v'])
@@ -208,8 +209,13 @@ function RenderResultTab({ job }) {
   const [playing, setPlaying]           = useState(false)
   const [loop, setLoop]                 = useState(false)
   const [settingThumb, setSettingThumb] = useState(false)
-  const [moviePath, setMoviePath]       = useState('')
-  const [creatingMovie, setCreatingMovie] = useState(false)
+  const [moviePath, setMoviePath]           = useState('')
+  const [creatingMovie, setCreatingMovie]   = useState(false)
+  const [movieDialogOpen, setMovieDialogOpen] = useState(false)
+  const [movieFps, setMovieFps]             = useState('30')
+  const [movieInext, setMovieInext]         = useState('png')
+  const [movieOutext, setMovieOutext]       = useState('mp4')
+  const [movieExtraArgs, setMovieExtraArgs] = useState('')
   const playingRef = useRef(false)
   const loopRef    = useRef(false)
 
@@ -284,7 +290,21 @@ function RenderResultTab({ job }) {
     })
   }, [job.id, t, showToast, showError])
 
-  const handleCreateMovie = async () => {
+  const handleOpenMovieDialog = async () => {
+    try {
+      const env = await EnvironmentApi.get()
+      if (env) {
+        setMovieFps(String(env.ffmpeg_fps > 0 ? env.ffmpeg_fps : 30))
+        setMovieInext(env.ffmpeg_ext || 'png')
+        setMovieOutext(env.ffmpeg_out_ext || 'mp4')
+        setMovieExtraArgs(env.ffmpeg_args || '')
+      }
+    } catch (_) {}
+    setMovieDialogOpen(true)
+  }
+
+  const handleConfirmCreateMovie = async () => {
+    setMovieDialogOpen(false)
     showError('')
     setCreatingMovie(true)
     try {
@@ -293,6 +313,10 @@ function RenderResultTab({ job }) {
         fileID:      job.project_file_id,
         workspaceID: job.workspace_id,
         jobID:       job.id,
+        fps:         parseInt(movieFps, 10) || 30,
+        inext:       movieInext || 'png',
+        outext:      movieOutext || 'mp4',
+        extraArgs:   movieExtraArgs,
       })
     } catch (e) {
       setCreatingMovie(false)
@@ -353,11 +377,57 @@ function RenderResultTab({ job }) {
           )}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button className="btn btn-sm btn-green" onClick={handleCreateMovie} disabled={creatingMovie || images.length <= 1}>
+          <button className="btn btn-sm btn-green" onClick={handleOpenMovieDialog} disabled={creatingMovie || images.length <= 1}>
             {creatingMovie ? t('viewer.movieCreating') : t('viewer.createMovie')}
           </button>
         </div>
       </div>
+
+      <Dialog
+        open={movieDialogOpen}
+        title={t('viewer.movieDialogTitle')}
+        onClose={() => setMovieDialogOpen(false)}
+        closeOnBackdrop={true}
+        actions={
+          <>
+            <button className="btn btn-ghost btn-sm" onClick={() => setMovieDialogOpen(false)}>{t('common.cancel')}</button>
+            <button className="btn btn-green btn-sm" onClick={handleConfirmCreateMovie}>{t('viewer.createMovie')}</button>
+          </>
+        }
+      >
+        <div className="form-group">
+          <label className="form-label">{t('viewer.movieDialogFps')}</label>
+          <input
+            type="number" min={1} className="form-input"
+            value={movieFps}
+            onChange={e => setMovieFps(e.target.value)}
+          />
+        </div>
+        <div className="form-group">
+          <label className="form-label">{t('viewer.movieDialogInputExt')}</label>
+          <input
+            type="text" className="form-input"
+            value={movieInext}
+            onChange={e => setMovieInext(e.target.value)}
+          />
+        </div>
+        <div className="form-group">
+          <label className="form-label">{t('viewer.movieDialogOutputExt')}</label>
+          <input
+            type="text" className="form-input"
+            value={movieOutext}
+            onChange={e => setMovieOutext(e.target.value)}
+          />
+        </div>
+        <div className="form-group">
+          <label className="form-label">{t('viewer.movieDialogExtraArgs')}</label>
+          <input
+            type="text" className="form-input"
+            value={movieExtraArgs}
+            onChange={e => setMovieExtraArgs(e.target.value)}
+          />
+        </div>
+      </Dialog>
     </div>
   )
 }

@@ -50,9 +50,9 @@ type movieCreatedEvent struct {
 
 // CreateMovie は ffmpeg による動画作成を goroutine で開始し即返す。
 // 完了時（成功・失敗とも）に "movie:created" イベントを emit する。
-func (s *Workspace) CreateMovie(projectID string, fileID string, workspaceID string, jobID string) {
+func (s *Workspace) CreateMovie(projectID string, fileID string, workspaceID string, jobID string, fps int, inext string, outext string, extraArgs string) {
 	go func() {
-		path, err := api.CreateMovie(projectID, fileID, workspaceID, jobID)
+		path, err := api.CreateMovie(projectID, fileID, workspaceID, jobID, fps, inext, outext, extraArgs)
 		ev := movieCreatedEvent{JobID: jobID, Path: path}
 		if err != nil {
 			ev.Error = err.Error()

@@ -9,7 +9,7 @@ import (
 	"golang.org/x/xerrors"
 )
 
-func CreateMovie(projectID string, fileID string, workspaceID string, jobID string) (string, error) {
+func CreateMovie(projectID string, fileID string, workspaceID string, jobID string, fps int, inext string, outext string, extraArgs string) (string, error) {
 
 	baseDir, err := GetProjectBaseDir(projectID)
 	if err != nil {
@@ -28,16 +28,12 @@ func CreateMovie(projectID string, fileID string, workspaceID string, jobID stri
 	if cmd == "" {
 		cmd = "ffmpeg"
 	}
-	fps := env.FfmpegFPS
-	if fps == 0 {
+	if fps <= 0 {
 		fps = 30
 	}
-	inext := env.FfmpegExt
 	if inext == "" {
 		inext = "png"
 	}
-
-	outext := env.FfmpegOutExt
 	if outext == "" {
 		outext = "mp4"
 	}
@@ -47,8 +43,8 @@ func CreateMovie(projectID string, fileID string, workspaceID string, jobID stri
 	mvFile := filepath.Join(jobDir, out)
 
 	mp := exec.NewFFmpeg(cmd)
-	if env.FfmpegArgs != "" {
-		mp.ExtraArgs = env.FfmpegArgs
+	if extraArgs != "" {
+		mp.ExtraArgs = extraArgs
 	}
 	err = mp.CreateMovie(context.Background(), mvFile, fps, jobDir, inext)
 	if err != nil {

@@ -29,10 +29,14 @@ export function Create(projectID, projectFileID, name) {
  * @param {string} fileID
  * @param {string} workspaceID
  * @param {string} jobID
+ * @param {number} fps
+ * @param {string} inext
+ * @param {string} outext
+ * @param {string} extraArgs
  * @returns {$CancellablePromise<void>}
  */
-export function CreateMovie(projectID, fileID, workspaceID, jobID) {
-    return $Call.ByID(711210437, projectID, fileID, workspaceID, jobID);
+export function CreateMovie(projectID, fileID, workspaceID, jobID, fps, inext, outext, extraArgs) {
+    return $Call.ByID(711210437, projectID, fileID, workspaceID, jobID, fps, inext, outext, extraArgs);
 }
 
 /**

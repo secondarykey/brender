@@ -347,7 +347,12 @@
     "createMovie": "動画作成",
     "movieCreating": "作成中...",
     "movieCreated": "動画を作成しました",
-    "playMovie": "動画を表示"
+    "playMovie": "動画を表示",
+    "movieDialogTitle": "動画作成",
+    "movieDialogFps": "FPS",
+    "movieDialogInputExt": "入力拡張子",
+    "movieDialogOutputExt": "出力拡張子",
+    "movieDialogExtraArgs": "追加引数"
   },
   "render": {
     "confirmTitle": "レンダリングを実行しますか？",

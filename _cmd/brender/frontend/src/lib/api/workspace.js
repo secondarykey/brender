@@ -59,7 +59,7 @@ export const WorkspaceApi = {
     isWails() ? svc().then(s => s.SetThumbnail(projectID, fileID, workspaceID, imagePath))
               : serverCall('workspace', 'set_thumbnail', { project_id: projectID, file_id: fileID, workspace_id: workspaceID, image_path: imagePath }),
 
-  createMovie: ({ projectID, fileID, workspaceID, jobID }) =>
-    isWails() ? svc().then(s => s.CreateMovie(projectID, fileID, workspaceID, jobID))
-              : serverCall('workspace', 'create_movie', { project_id: projectID, file_id: fileID, workspace_id: workspaceID, job_id: jobID }),
+  createMovie: ({ projectID, fileID, workspaceID, jobID, fps, inext, outext, extraArgs }) =>
+    isWails() ? svc().then(s => s.CreateMovie(projectID, fileID, workspaceID, jobID, fps, inext, outext, extraArgs))
+              : serverCall('workspace', 'create_movie', { project_id: projectID, file_id: fileID, workspace_id: workspaceID, job_id: jobID, fps, inext, outext, extra_args: extraArgs }),
 }
