@@ -546,7 +546,6 @@ func calcDirSize(dir string) int64 {
 		".png": true, ".jpg": true, ".jpeg": true, ".exr": true,
 		".tiff": true, ".tif": true, ".bmp": true, ".hdr": true,
 		".webp": true, ".tga": true,
-		".mp4": true, ".mov": true, ".avi": true, ".mkv": true, ".webm": true, ".m4v": true,
 	}
 	var total int64
 	filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
