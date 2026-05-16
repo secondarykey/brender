@@ -417,6 +417,34 @@ return off  // useEffect cleanup
   - `queue:changed` (data: number — アクティブキュー件数)
   - `workdir:migrate` (data: `{ project_id, status, pct }` — 移行進捗。status: `running`/`done`/`error`)
 
+## 共通ダイアログ (`src/components/Dialog.jsx`, `ConfirmDialog.jsx`)
+
+モーダルは共通コンポーネント経由で作る。`.dialog-overlay`+`.dialog` を各ページに直接書かない。
+
+### `Dialog`
+汎用ダイアログ。props:
+- `open` — false なら非描画
+- `title` / `children`（本文）/ `actions`（フッターに差し込むノード）
+- `onClose` — 背景クリック・Esc キーで呼ぶ（`closeOnBackdrop` が true のときのみ）
+- `closeOnBackdrop`（既定 true）— 処理実行中は false を渡し誤クローズを防ぐ
+- `message` + `messageSeverity`（`error`/`success`/`info`）— ダイアログ上部のメッセージ領域（`.dialog-message`）
+- `wide`（`.dialog-wide`）/ `className` / `bodyClassName`
+
+### `ConfirmDialog`
+`Dialog` を派生した確認ダイアログ。props: `open` / `title` / `onConfirm` / `onCancel` / `confirmLabel` / `cancelLabel`（既定 `common.cancel`）/ `confirmClassName`（既定 `btn btn-danger`）/ `busy`（処理中はボタン無効化＋背景クローズ無効）/ `message` / `children`。
+**削除操作には必ず確認ダイアログを挟む**（`window.confirm` は使わない）。
+
+## メッセージ表示 (`src/lib/toast.jsx`)
+
+`ToastProvider` が `App.jsx` 全体をラップし、2系統のフィードバックを管理する。
+
+- **成功・完了** → `useToast()` の `showToast(msg)`。画面下部トースト、2秒で自動消去。
+- **エラー（API/通信/操作失敗）** → `useMessage()` の `showError(msg)`。`MainLayout` 上部の全幅バー（`.app-message-bar`）に表示し、クリアまたは次のエラーで置換されるまで残る。`clearError()` または × ボタンで消える。`useMessage()` は `{ showError, clearError, error }` を返す。
+- **入力検証エラー**（特定フィールドに紐づくもの。「名前は必須」など）はグローバルバーに出さず、フィールド近くにインライン表示する。
+- **ダイアログ内のエラー** はグローバルバーではなく `Dialog`/`ConfirmDialog` の `message` prop に渡し、ダイアログ上部に表示する。
+- 画像ビューアの読み込みエラーなど、特定領域に文脈依存するものはその領域内にインライン表示してよい。
+- `LogViewerApp` / `MovieViewerApp` は `MainLayout` を持たない独立 Wails ウィンドウのため、グローバルバー対象外（ローカルにインライン表示）。
+
 ## CSS Conventions (`frontend/public/style.css`)
 
 ### カラーパレット（黒系）
@@ -443,8 +471,16 @@ return off  // useEffect cleanup
 - `.page:has(.ws-detail-split)` → `display: flex; flex-direction: column; overflow: hidden`
 - `.tab-content:has(.ws-detail-split)` → `overflow: hidden; display: flex`
 
-### ボタンスタイル
-- `.btn-run` — オレンジ (`#d15904`)、実行・開くボタン共用
-- `.btn-sm` — 高さ 28px、小型ボタン
-- `.btn-ghost` — 透明背景、キャンセル等
-- `.btn-danger` — 赤、削除操作
+### ボタンスタイル（色は役割で統一）
+| 役割 | クラス | 色 |
+|---|---|---|
+| 表示系・ナビゲーション | `.btn` | 青 `#4a7cdc` |
+| 更新系（保存・作成など主要操作） | `.btn-green` | 緑 `#27ae60` |
+| 更新系（非主要・ツール用途） | `.btn-outline` | 透明＋白枠 |
+| 削除 | `.btn-danger` | 赤 `#c0392b` |
+| Blender 実行（レンダリング・ファイルを開く） | `.btn-run` | オレンジ `#d15904` |
+| ダイアログのキャンセル等 | `.btn-ghost` | 透明 |
+
+- `.btn-sm` は色クラスと併用する大きさ修飾（高さ 28px）
+- `.btn-outline-active` は選択モード等のトグル ON 状態用（青枠）
+- タブ (`.tab-btn`)・パンくず (`.breadcrumb-link`)・ページネーション (`.pagination-btn`)・表示切替トグル (`.file-view-btn`)・サイドバー (`.nav-item`)・タイトルバー (`.titlebar-btn`) はアクションボタンではないため色規約の対象外
