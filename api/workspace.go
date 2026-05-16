@@ -39,6 +39,38 @@ func CreateWorkspace(projectID string, projectFileID string, name string) (*mode
 	return ws, nil
 }
 
+type WorkspaceBatchSpec struct {
+	Name   string
+	Scene  string
+	Camera string
+	Engine string
+}
+
+func CreateWorkspaceBatch(projectID, projectFileID string, specs []WorkspaceBatchSpec) ([]*model.Workspace, error) {
+	if len(specs) == 0 {
+		return nil, xerrors.New("no workspace specs provided")
+	}
+	var results []*model.Workspace
+	now := time.Now()
+	for _, spec := range specs {
+		ws, err := model.CreateWorkspaceWithSettings(projectID, projectFileID, spec.Name, spec.Scene, spec.Camera, spec.Engine)
+		if err != nil {
+			return results, err
+		}
+		if err := model.UpdateWorkspaceProcessedAt(ws.ID, &now); err != nil {
+			log.Printf("CreateWorkspaceBatch: UpdateWorkspaceProcessedAt: %v", err)
+		}
+		results = append(results, ws)
+	}
+	if err := model.UpdateProjectFileProcessedAt(projectFileID, &now); err != nil {
+		log.Printf("CreateWorkspaceBatch: UpdateProjectFileProcessedAt: %v", err)
+	}
+	if err := model.UpdateProjectProcessedAt(projectID, &now); err != nil {
+		log.Printf("CreateWorkspaceBatch: UpdateProjectProcessedAt: %v", err)
+	}
+	return results, nil
+}
+
 func UpdateWorkspace(projectID string, workspaceID string, name string, note string, blenderInstallID uint, scene, camera, engine string, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY int) (*model.WorkspaceDetail, error) {
 	if name == "" {
 		return nil, xerrors.New("workspace name is required")

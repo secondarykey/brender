@@ -8,6 +8,9 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
+import * as api$0 from "../models.js";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
 import * as model$0 from "../../model/models.js";
 
 /**
@@ -19,6 +22,18 @@ import * as model$0 from "../../model/models.js";
 export function Create(projectID, projectFileID, name) {
     return $Call.ByID(534786391, projectID, projectFileID, name).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType1($result);
+    }));
+}
+
+/**
+ * @param {string} projectID
+ * @param {string} projectFileID
+ * @param {api$0.WorkspaceBatchSpec[]} specs
+ * @returns {$CancellablePromise<(model$0.Workspace | null)[]>}
+ */
+export function CreateBatch(projectID, projectFileID, specs) {
+    return $Call.ByID(812410825, projectID, projectFileID, specs).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType2($result);
     }));
 }
 
@@ -56,7 +71,7 @@ export function Delete(projectID, workspaceID, force) {
  */
 export function Get(projectID, workspaceID) {
     return $Call.ByID(1108603273, projectID, workspaceID).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType3($result);
+        return $$createType4($result);
     }));
 }
 
@@ -78,7 +93,7 @@ export function GetThumbnail(projectID, fileID, workspaceID) {
  */
 export function ListByProject(projectID, sort, dir) {
     return $Call.ByID(2381232515, projectID, sort, dir).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType6($result);
+        return $$createType7($result);
     }));
 }
 
@@ -113,15 +128,16 @@ export function SetThumbnail(projectID, fileID, workspaceID, imagePath) {
  */
 export function Update(projectID, workspaceID, name, note, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY) {
     return $Call.ByID(971734846, projectID, workspaceID, name, note, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType3($result);
+        return $$createType4($result);
     }));
 }
 
 // Private type creation functions
 const $$createType0 = model$0.Workspace.createFrom;
 const $$createType1 = $Create.Nullable($$createType0);
-const $$createType2 = model$0.WorkspaceDetail.createFrom;
-const $$createType3 = $Create.Nullable($$createType2);
-const $$createType4 = model$0.WorkspacesByFile.createFrom;
-const $$createType5 = $Create.Nullable($$createType4);
-const $$createType6 = $Create.Array($$createType5);
+const $$createType2 = $Create.Array($$createType1);
+const $$createType3 = model$0.WorkspaceDetail.createFrom;
+const $$createType4 = $Create.Nullable($$createType3);
+const $$createType5 = model$0.WorkspacesByFile.createFrom;
+const $$createType6 = $Create.Nullable($$createType5);
+const $$createType7 = $Create.Array($$createType6);

@@ -10,6 +10,7 @@ import Dialog from '../../components/Dialog'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import Breadcrumb from '../../components/Breadcrumb'
 import NoteSection from '../../components/NoteSection'
+import WorkspaceCreateDialog from '../../components/WorkspaceCreateDialog'
 
 
 // ── ワークスペースカード（サムネイル表示） ──────────────────
@@ -76,7 +77,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
   const { showToast } = useToast()
   const { showError } = useMessage()
   const [workspaces, setWorkspaces] = useState([])
-  const [creating, setCreating]     = useState(false) // 作成中フラグ
+  const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [confirm, setConfirm]       = useState(null) // { ws, preview }
   const [resolvingWsId, setResolvingWsId] = useState(null)
   const [enqueuing, setEnqueuing]   = useState(false)
@@ -108,15 +109,14 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
 
   useEffect(() => { load(sort, dir) }, [projectID, fileID])
 
-  const handleCreateWorkspace = async () => {
-    if (creating) return
-    setCreating(true)
-    try {
-      const ws = await WorkspaceApi.create({ projectID, projectFileID: fileID, name: 'New Workspace Name' })
-      navigate('workspace', { projectID, projectName, fileID, fileName, workspaceID: ws.id, focusName: true })
-    } catch (err) {
-      showError(String(err))
-      setCreating(false)
+  const handleCreateWorkspace = () => {
+    setCreateDialogOpen(true)
+  }
+
+  const handleCreated = (newWorkspaces) => {
+    load(sort, dir)
+    if (newWorkspaces.length === 1) {
+      navigate('workspace', { projectID, projectName, fileID, fileName, workspaceID: newWorkspaces[0].id, focusName: true })
     }
   }
 
@@ -266,10 +266,19 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
 
       <div className="list-spacer" />
       <div className="list-fab">
-        <button className="btn btn-green" onClick={handleCreateWorkspace} disabled={creating}>
-          {creating ? t('common.registering') : t('workspace.createNew')}
+        <button className="btn btn-green" onClick={handleCreateWorkspace}>
+          {t('workspace.createNew')}
         </button>
       </div>
+
+      <WorkspaceCreateDialog
+        open={createDialogOpen}
+        onClose={() => setCreateDialogOpen(false)}
+        projectID={projectID}
+        fileID={fileID}
+        fileName={fileName}
+        onCreated={handleCreated}
+      />
 
       <Dialog
         open={!!confirm}

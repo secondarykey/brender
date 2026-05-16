@@ -510,5 +510,54 @@ export class TestRenderParams {
     }
 }
 
+export class WorkspaceBatchSpec {
+    /**
+     * Creates a new WorkspaceBatchSpec instance.
+     * @param {Partial<WorkspaceBatchSpec>} [$$source = {}] - The source object to create the WorkspaceBatchSpec.
+     */
+    constructor($$source = {}) {
+        if (!("Name" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["Name"] = "";
+        }
+        if (!("Scene" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["Scene"] = "";
+        }
+        if (!("Camera" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["Camera"] = "";
+        }
+        if (!("Engine" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["Engine"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new WorkspaceBatchSpec instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {WorkspaceBatchSpec}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new WorkspaceBatchSpec(/** @type {Partial<WorkspaceBatchSpec>} */($$parsedSource));
+    }
+}
+
 // Private type creation functions
 const $$createType0 = $Create.Array($Create.Any);

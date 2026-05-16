@@ -25,6 +25,10 @@ func (s *Workspace) Create(projectID string, projectFileID string, name string) 
 	return api.CreateWorkspace(projectID, projectFileID, name)
 }
 
+func (s *Workspace) CreateBatch(projectID string, projectFileID string, specs []api.WorkspaceBatchSpec) ([]*model.Workspace, error) {
+	return api.CreateWorkspaceBatch(projectID, projectFileID, specs)
+}
+
 func (s *Workspace) Update(projectID string, workspaceID string, name string, note string, blenderInstallID uint, scene, camera, engine string, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY int) (*model.WorkspaceDetail, error) {
 	return api.UpdateWorkspace(projectID, workspaceID, name, note, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY)
 }

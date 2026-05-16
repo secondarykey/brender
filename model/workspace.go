@@ -109,6 +109,28 @@ func CreateWorkspace(projectID string, projectFileID string, name string, isSyst
 	return w, nil
 }
 
+func CreateWorkspaceWithSettings(projectID, projectFileID, name, scene, camera, engine string) (*Workspace, error) {
+	id, err := newWorkspaceID()
+	if err != nil {
+		return nil, xerrors.Errorf("newWorkspaceID: %w", err)
+	}
+	w := &Workspace{
+		ID:            id,
+		ProjectId:     projectID,
+		ProjectFileID: projectFileID,
+		Name:          name,
+		Scene:         scene,
+		Camera:        camera,
+		Engine:        engine,
+		StartFrame:    0,
+		EndFrame:      -1,
+	}
+	if res := db.Create(w); res.Error != nil {
+		return nil, xerrors.Errorf("CreateWorkspaceWithSettings: %w", res.Error)
+	}
+	return w, nil
+}
+
 func CreateSystemWorkspace(projectID string, projectFileID string, name string, startFrame, endFrame, samples int) (*Workspace, error) {
 	id, err := newWorkspaceID()
 	if err != nil {

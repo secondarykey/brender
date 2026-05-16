@@ -988,6 +988,64 @@ body {
   cursor: pointer;
 }
 
+/* ── ワークスペース作成ダイアログ ───────────────────────────── */
+.ws-create-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ws-create-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ws-create-section-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.85);
+  user-select: none;
+}
+
+.ws-create-section-toggle input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  accent-color: #4a7cdc;
+}
+
+.ws-create-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-left: 24px;
+}
+
+.ws-create-item-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.ws-create-item-label input[type="checkbox"] {
+  width: 13px;
+  height: 13px;
+  cursor: pointer;
+  accent-color: #4a7cdc;
+}
+
+.ws-create-item-label .ws-meta-chip {
+  color: rgba(255,255,255,0.7);
+  background: rgba(255,255,255,0.08);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
 .ws-item-run { cursor: default; }
 .ws-item-run:hover { background: rgba(255,255,255,0.04); }
 

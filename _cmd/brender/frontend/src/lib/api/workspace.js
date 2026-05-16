@@ -59,6 +59,13 @@ export const WorkspaceApi = {
     isWails() ? svc().then(s => s.SetThumbnail(projectID, fileID, workspaceID, imagePath))
               : serverCall('workspace', 'set_thumbnail', { project_id: projectID, file_id: fileID, workspace_id: workspaceID, image_path: imagePath }),
 
+  /** ワークスペースを一括作成（エンジン・シーン・カメラの組み合わせ）
+   * @param {{ projectID: string, projectFileID: string, specs: Array<{name:string, scene:string, camera:string, engine:string}> }} args
+   */
+  createBatch: ({ projectID, projectFileID, specs }) =>
+    isWails() ? svc().then(s => s.CreateBatch(projectID, projectFileID, specs))
+              : serverCall('workspace', 'create_batch', { project_id: projectID, project_file_id: projectFileID, specs }),
+
   createMovie: ({ projectID, fileID, workspaceID, jobID, fps, inext, outext, extraArgs }) =>
     isWails() ? svc().then(s => s.CreateMovie(projectID, fileID, workspaceID, jobID, fps, inext, outext, extraArgs))
               : serverCall('workspace', 'create_movie', { project_id: projectID, file_id: fileID, workspace_id: workspaceID, job_id: jobID, fps, inext, outext, extra_args: extraArgs }),

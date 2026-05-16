@@ -7,5 +7,6 @@ export {
     JobFileInfo,
     QueueItem,
     RenderPreview,
-    TestRenderParams
+    TestRenderParams,
+    WorkspaceBatchSpec
 } from "./models.js";

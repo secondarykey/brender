@@ -239,7 +239,18 @@
     "bulkDeleteDesc": "ロックされていないジョブのうち、最新N件を残して残りを削除します。ロック済みジョブは保持されます。",
     "keepCount": "残す件数",
     "bulkDeleteDataOnly": "履歴は残し、データのみ削除する",
-    "bulkDeleteResult": "{{count}}件削除しました"
+    "bulkDeleteResult": "{{count}}件削除しました",
+    "createDialog": {
+      "title": "ワークスペース作成",
+      "byEngine": "エンジンにより作成",
+      "byScene": "シーンにより作成",
+      "byCamera": "カメラにより作成",
+      "loading": "ブレンドファイルから情報を取得中...",
+      "createCount": "{{count}}個作成",
+      "noEngines": "エンジン情報がありません",
+      "noScenes": "シーン情報がありません",
+      "noCameras": "カメラ情報がありません"
+    }
   },
   "dialog": {
     "jobDetails": "ジョブ詳細",
