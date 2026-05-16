@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useLayoutEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
 import { QueueApi, WorkspaceApi } from '../../lib/api'
@@ -577,8 +577,12 @@ function DataViewTab({ job }) {
 function JobPage({ job: initialJob, navigate, backPage, backParams, initialTab }) {
   const { t } = useTranslation()
   const hasData = initialJob && [2, 3, 6, 7, 8, 9].includes(initialJob.data_status)
-  const [tab, setTab]       = useState(initialTab || (hasData ? 'render' : 'detail'))
+  const [tab, setTab]       = useState(hasData ? 'render' : 'detail')
   const [job, setJob]       = useState(initialJob)
+
+  useLayoutEffect(() => {
+    if (initialTab) setTab(initialTab)
+  }, [])
 
   useEffect(() => {
     return onAppEvent('queue:changed', () => {
