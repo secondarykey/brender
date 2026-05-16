@@ -215,21 +215,24 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
     if (!form) return
     const fid = detail?.workspace?.project_file_id
 
-    setEnginesLoading(true)
-    BlenderApi.getEngines({ installID: form.blenderInstallID })
-      .then(list => setEngines(list || []))
-      .catch(() => setEngines([]))
-      .finally(() => setEnginesLoading(false))
-
-    if (!fid) {
+    if (fid) {
+      setToolLoading(true)
+      setEnginesLoading(true)
+      BlenderApi.getToolData({ installID: form.blenderInstallID, fileID: fid })
+        .then(data => {
+          setToolData(data || null)
+          setEngines(data?.Engines || [])
+        })
+        .catch(() => { setToolData(null); setEngines([]) })
+        .finally(() => { setToolLoading(false); setEnginesLoading(false) })
+    } else {
       setToolData(null)
-      return
+      setEnginesLoading(true)
+      BlenderApi.getEngines({ installID: form.blenderInstallID })
+        .then(list => setEngines(list || []))
+        .catch(() => setEngines([]))
+        .finally(() => setEnginesLoading(false))
     }
-    setToolLoading(true)
-    BlenderApi.getToolData({ installID: form.blenderInstallID, fileID: fid })
-      .then(data => setToolData(data || null))
-      .catch(() => setToolData(null))
-      .finally(() => setToolLoading(false))
   }, [form?.blenderInstallID, detail?.workspace?.project_file_id])
 
   // ── デフォルト値の導出 ───────────────────────────────────
