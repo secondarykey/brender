@@ -580,6 +580,17 @@ function JobPage({ job: initialJob, navigate, backPage, backParams }) {
   const [tab, setTab]       = useState(hasData ? 'render' : 'detail')
   const [job, setJob]       = useState(initialJob)
 
+  useEffect(() => {
+    return onAppEvent('queue:changed', () => {
+      QueueApi.listJobsByWorkspace({ projectID: initialJob.project_id, workspaceID: initialJob.workspace_id })
+        .then(list => {
+          const updated = (list || []).find(j => j.id === initialJob.id)
+          if (updated) setJob(updated)
+        })
+        .catch(() => {})
+    })
+  }, [initialJob.id, initialJob.project_id, initialJob.workspace_id])
+
   const handleDataStatusChanged = (next) => {
     setJob(prev => ({ ...prev, data_status: next }))
   }
