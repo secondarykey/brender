@@ -62,7 +62,7 @@ function LogViewerApp() {
 
   const [log, setLog]         = useState(null)
   const [error, setError]     = useState('')
-  const [tail, setTail]       = useState(false)
+  const [tail, setTail]       = useState(isSysLog)
   const [wrap, setWrap]       = useState(false)
   const [logLevel, setLogLevel]   = useState(null)
   const [logLevels, setLogLevels] = useState(null)
