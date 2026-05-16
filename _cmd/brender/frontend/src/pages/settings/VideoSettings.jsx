@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { EnvironmentApi } from '../../lib/api'
-import { useMessage } from '../../lib/toast'
+import { useToast, useMessage } from '../../lib/toast'
 
 function VideoSettings() {
   const { t } = useTranslation()
+  const { showToast } = useToast()
   const { showError } = useMessage()
   const [cmd,    setCmd]    = useState('')
   const [fps,    setFps]    = useState('')
@@ -12,7 +13,6 @@ function VideoSettings() {
   const [outExt, setOutExt] = useState('')
   const [args,   setArgs]   = useState('')
   const [saving, setSaving] = useState(false)
-  const [saved,  setSaved]  = useState(false)
 
   useEffect(() => {
     EnvironmentApi.get()
@@ -29,7 +29,6 @@ function VideoSettings() {
 
   const handleSave = async () => {
     showError('')
-    setSaved(false)
     setSaving(true)
     try {
       await EnvironmentApi.setFfmpeg({
@@ -39,7 +38,7 @@ function VideoSettings() {
         outExt,
         args,
       })
-      setSaved(true)
+      showToast(t('common.saved'))
     } catch (err) {
       showError(String(err))
     } finally {
@@ -56,7 +55,7 @@ function VideoSettings() {
           className="form-input"
           type="text"
           value={cmd}
-          onChange={e => { setCmd(e.target.value); setSaved(false) }}
+          onChange={e => { setCmd(e.target.value) }}
           placeholder="ffmpeg"
         />
       </div>
@@ -70,7 +69,7 @@ function VideoSettings() {
           min="1"
           style={{ width: 120 }}
           value={fps}
-          onChange={e => { setFps(e.target.value); setSaved(false) }}
+          onChange={e => { setFps(e.target.value) }}
           placeholder="30"
         />
       </div>
@@ -83,7 +82,7 @@ function VideoSettings() {
           type="text"
           style={{ width: 160 }}
           value={ext}
-          onChange={e => { setExt(e.target.value); setSaved(false) }}
+          onChange={e => { setExt(e.target.value) }}
           placeholder="png"
         />
       </div>
@@ -96,7 +95,7 @@ function VideoSettings() {
           type="text"
           style={{ width: 160 }}
           value={outExt}
-          onChange={e => { setOutExt(e.target.value); setSaved(false) }}
+          onChange={e => { setOutExt(e.target.value) }}
           placeholder="mp4"
         />
       </div>
@@ -108,7 +107,7 @@ function VideoSettings() {
           className="form-input"
           type="text"
           value={args}
-          onChange={e => { setArgs(e.target.value); setSaved(false) }}
+          onChange={e => { setArgs(e.target.value) }}
           placeholder=""
         />
       </div>
@@ -119,8 +118,6 @@ function VideoSettings() {
           {saving ? t('common.saving') : t('common.save')}
         </button>
       </div>
-
-      {saved && <div className="success-msg">{t('common.saved')}</div>}
     </div>
   )
 }
