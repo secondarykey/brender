@@ -606,7 +606,8 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
 
       <div className="form-actions">
         <button className="btn btn-danger" onClick={() => setConfirm(true)}>{t('common.delete')}</button>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+          <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn btn-run" onClick={handleTestEncode} disabled={testEnqueueing || workDirLocked}>
             {testEnqueueing ? t('common.enqueueing') : t('workspace.testRender')}
           </button>
@@ -616,6 +617,8 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
           <button className="btn btn-green" onClick={handleSave} disabled={saving || !isDirty}>
             {saving ? t('common.saving') : t('common.save')}
           </button>
+          </div>
+          <span style={{ fontSize: '0.75rem', opacity: 0.45 }}>{t('workspace.testHint')}</span>
         </div>
       </div>
 

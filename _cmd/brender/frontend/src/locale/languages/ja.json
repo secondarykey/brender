@@ -196,7 +196,8 @@
     "confirmRender": "レンダリングを実行しますか？",
     "blendDefault": ".blend のデフォルト",
     "setAsFileThumbnail": "ファイルサムネイルに設定",
-    "testRender": "テストエンコード",
+    "testRender": "Test",
+    "testHint": "現在の値で1フレーム・Sample 8でRenderingします",
     "testEnqueued": "現在表示されている値でサンプル8・1フレームのテスト用エンコードをキューに追加しました。設定値の保存は行っていません。必要な場合は保存してください。"
   },
   "queue": {
