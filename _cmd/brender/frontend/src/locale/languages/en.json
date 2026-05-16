@@ -203,7 +203,7 @@
     "blendDefault": ".blend default",
     "setAsFileThumbnail": "Set as file thumbnail",
     "testRender": "Test",
-    "testHint": "Renders 1 frame at Sample 8 with the current values",
+    "testHint": "\"Test\" renders 1 frame at Sample 8 with the current values",
     "testEnqueued": "Added a test encode with the current values (sample 8, 1 frame) to the queue. Settings have not been saved — please save if needed.",
     "copy": "Copy Workspace",
     "copying": "Copying...",

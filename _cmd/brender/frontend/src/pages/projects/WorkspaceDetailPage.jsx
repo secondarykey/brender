@@ -712,7 +712,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
       {error && <div className="error-msg">{error}</div>}
       {testEnqueued && <div className="warning-msg">{t('workspace.testEnqueued')}</div>}
 
-      <NoteSection value={note} onChange={setNote} style={{ marginTop: 0 }} />
+      <NoteSection value={note} onChange={setNote} />
 
       <div className="form-actions">
         <button className="btn btn-danger" onClick={() => { setForceDel(false); setConfirm(true) }}>{t('common.delete')}</button>

@@ -1263,7 +1263,7 @@ textarea.form-input {
 /* 折り畳みノートセクション */
 .note-section {
   border-top: 1px solid rgba(255,255,255,0.08);
-  margin-top: 20px;
+  margin-top: 0;
   padding-top: 4px;
 }
 .note-toggle {
