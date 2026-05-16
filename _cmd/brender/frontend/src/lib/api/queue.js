@@ -157,4 +157,11 @@ export const QueueApi = {
   deleteJobFiles: ({ id, filePaths }) =>
     isWails() ? svc().then(s => s.DeleteJobFiles(id, filePaths))
               : serverCall('queue', 'delete_job_files', { id, file_paths: filePaths }),
+
+  /** ワークスペースのジョブを一括削除（ロック済み除く最新 keepCount 件を残す）
+   * @param {{ projectID: string, workspaceID: string, keepCount: number }} args
+   */
+  bulkDeleteJobsByWorkspace: ({ projectID, workspaceID, keepCount }) =>
+    isWails() ? svc().then(s => s.BulkDeleteJobsByWorkspace(projectID, workspaceID, keepCount))
+              : serverCall('queue', 'bulk_delete_jobs_by_workspace', { project_id: projectID, workspace_id: workspaceID, keep_count: keepCount }),
 }

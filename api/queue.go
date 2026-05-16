@@ -777,6 +777,39 @@ func DeleteJob(id string) error {
 	return model.DeleteJob(id)
 }
 
+// BulkDeleteJobsByWorkspace はワークスペースのジョブ履歴を一括削除する。
+// ロックされていないジョブのうち最新 keepCount 件を残し、残りを物理削除する。
+// ロック済みジョブは常に保持される。削除件数を返す。
+func BulkDeleteJobsByWorkspace(projectID, workspaceID string, keepCount int) (int, error) {
+	jobs, err := model.ListJobsByWorkspace(projectID, workspaceID)
+	if err != nil {
+		return 0, xerrors.Errorf("BulkDeleteJobsByWorkspace: %w", err)
+	}
+	if keepCount < 0 {
+		keepCount = 0
+	}
+	// jobs は enqueued_at DESC 順（最新が先頭）
+	var nonLocked []*model.Job
+	for _, j := range jobs {
+		if j.DataStatus%2 == 0 {
+			nonLocked = append(nonLocked, j)
+		}
+	}
+	if keepCount >= len(nonLocked) {
+		return 0, nil
+	}
+	toDelete := nonLocked[keepCount:]
+	deleted := 0
+	for _, j := range toDelete {
+		if err := DeleteJob(j.ID); err != nil {
+			log.Println("BulkDeleteJobsByWorkspace DeleteJob:", err)
+			continue
+		}
+		deleted++
+	}
+	return deleted, nil
+}
+
 func DeleteJobData(id string) error {
 	j, err := model.GetJob(id)
 	if err != nil {

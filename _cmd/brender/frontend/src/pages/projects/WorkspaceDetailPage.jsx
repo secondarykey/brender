@@ -7,6 +7,7 @@ import { onAppEvent } from '../../lib/appEvents'
 import Pagination from '../../components/Pagination'
 import Dialog from '../../components/Dialog'
 import ConfirmDialog from '../../components/ConfirmDialog'
+import HoldButton from '../../components/HoldButton'
 import Breadcrumb from '../../components/Breadcrumb'
 import NoteSection from '../../components/NoteSection'
 
@@ -84,9 +85,14 @@ function WorkspaceThumbnailPanel({ projectID, fileID, workspaceID }) {
 // ── 履歴タブ ──────────────────────────────────────────────
 function HistoryTab({ projectID, workspaceID, navigate, projectName, fileName, fileID, workspaceName, reloadTrigger }) {
   const { t } = useTranslation()
+  const { showToast } = useToast()
   const [jobs, setJobs]         = useState([])
   const [page, setPage]         = useState(1)
   const [pageSize, setPageSize] = useState(HISTORY_PAGE_SIZE)
+  const [bulkOpen, setBulkOpen]     = useState(false)
+  const [keepCount, setKeepCount]   = useState(5)
+  const [bulkBusy, setBulkBusy]     = useState(false)
+  const [bulkError, setBulkError]   = useState('')
 
   const load = useCallback(() => {
     QueueApi.listJobsByWorkspace({ projectID, workspaceID })
@@ -104,10 +110,6 @@ function HistoryTab({ projectID, workspaceID, navigate, projectName, fileName, f
   const currentPage = Math.min(page, totalPages)
   const pageJobs    = jobs.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 
-  if (jobs.length === 0) {
-    return <p className="empty-msg">{t('workspace.noHistory')}</p>
-  }
-
   const openJob = (j) => {
     navigate('job', {
       job: j,
@@ -117,34 +119,102 @@ function HistoryTab({ projectID, workspaceID, navigate, projectName, fileName, f
     })
   }
 
+  const handleBulkDelete = async () => {
+    setBulkBusy(true)
+    setBulkError('')
+    try {
+      const count = await QueueApi.bulkDeleteJobsByWorkspace({ projectID, workspaceID, keepCount: keepCount >= 0 ? keepCount : 0 })
+      setBulkOpen(false)
+      load()
+      showToast(t('job.bulkDeleteResult', { count }))
+    } catch (e) {
+      setBulkError(String(e))
+    } finally {
+      setBulkBusy(false)
+    }
+  }
+
   return (
     <>
-      <div className="queue-history-list">
-        {pageJobs.map(j => (
-          <div key={j.id} className="queue-history-item queue-history-item-clickable" onClick={() => openJob(j)}>
-            <div className="queue-history-top">
-              <div className="queue-history-detail" style={{ marginTop: 0 }}>
-                <span>{j.start_frame}–{j.end_frame}f</span>
-                {j.engine  && <span>{j.engine}</span>}
-                {j.scene   && <span>{j.scene}</span>}
-                {j.camera  && <span>{j.camera}</span>}
-                {j.samples > 0 && <span>{j.samples}smp</span>}
-                {(j.resolution_x > 0 && j.resolution_y > 0) && <span>{j.resolution_x}×{j.resolution_y}</span>}
-                {j.enqueued_at && (
-                  <span>{new Date(j.enqueued_at).toLocaleString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
-                )}
-              </div>
-              <span className={`status-badge status-${j.status || 'running'}`}>{statusLabel(j.status)}</span>
-            </div>
-            {j.status === 'error' && j.error_msg && (
-              <div className="queue-history-error">
-                {j.error_msg.slice(0, 80)}{j.error_msg.length > 80 ? '...' : ''}
-              </div>
-            )}
-          </div>
-        ))}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+        <button className="btn btn-outline btn-sm" onClick={() => { setBulkError(''); setBulkOpen(true) }}>
+          {t('job.bulkDelete')}
+        </button>
       </div>
-      <Pagination page={currentPage} totalPages={totalPages} onChange={p => setPage(p)} pageSize={pageSize} onPageSizeChange={p => { setPageSize(p); setPage(1) }} total={jobs.length} />
+
+      {jobs.length === 0
+        ? <p className="empty-msg">{t('workspace.noHistory')}</p>
+        : (
+          <>
+            <div className="queue-history-list">
+              {pageJobs.map(j => (
+                <div key={j.id} className="queue-history-item queue-history-item-clickable" onClick={() => openJob(j)}>
+                  <div className="queue-history-top">
+                    <div className="queue-history-detail" style={{ marginTop: 0 }}>
+                      <span>{j.start_frame}–{j.end_frame}f</span>
+                      {j.engine  && <span>{j.engine}</span>}
+                      {j.scene   && <span>{j.scene}</span>}
+                      {j.camera  && <span>{j.camera}</span>}
+                      {j.samples > 0 && <span>{j.samples}smp</span>}
+                      {(j.resolution_x > 0 && j.resolution_y > 0) && <span>{j.resolution_x}×{j.resolution_y}</span>}
+                      {j.enqueued_at && (
+                        <span>{new Date(j.enqueued_at).toLocaleString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+                      )}
+                    </div>
+                    <span className={`status-badge status-${j.status || 'running'}`}>{statusLabel(j.status)}</span>
+                  </div>
+                  {j.status === 'error' && j.error_msg && (
+                    <div className="queue-history-error">
+                      {j.error_msg.slice(0, 80)}{j.error_msg.length > 80 ? '...' : ''}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+            <Pagination page={currentPage} totalPages={totalPages} onChange={p => setPage(p)} pageSize={pageSize} onPageSizeChange={p => { setPageSize(p); setPage(1) }} total={jobs.length} />
+          </>
+        )
+      }
+
+      <Dialog
+        open={bulkOpen}
+        title={t('job.bulkDeleteTitle')}
+        onClose={() => setBulkOpen(false)}
+        closeOnBackdrop={!bulkBusy}
+        message={bulkError}
+        messageSeverity="error"
+        actions={
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', width: '100%' }}>
+            <button className="btn btn-ghost" onClick={() => setBulkOpen(false)} disabled={bulkBusy}>
+              {t('common.cancel')}
+            </button>
+            <HoldButton
+              onClick={handleBulkDelete}
+              disabled={bulkBusy}
+              className="btn btn-danger"
+              helpText={t('common.holdToConfirm')}
+            >
+              {bulkBusy ? t('common.deleting') : t('common.delete')}
+            </HoldButton>
+          </div>
+        }
+      >
+        <p style={{ marginBottom: 16, fontSize: '0.9rem', color: 'rgba(255,255,255,0.7)' }}>
+          {t('job.bulkDeleteDesc')}
+        </p>
+        <div className="form-field">
+          <label className="form-label">{t('job.keepCount')}</label>
+          <input
+            type="number"
+            min="0"
+            value={keepCount}
+            onChange={e => setKeepCount(Math.max(0, parseInt(e.target.value, 10) || 0))}
+            className="form-input"
+            style={{ width: 100 }}
+            disabled={bulkBusy}
+          />
+        </div>
+      </Dialog>
     </>
   )
 }
