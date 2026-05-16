@@ -146,6 +146,7 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
               <button className="btn btn-sm btn-ghost" onClick={handleLock} disabled={locking}>
                 {isLocked ? t('common.unlock') : t('common.lock')}
               </button>
+              <button className="btn btn-sm" onClick={() => QueueApi.openLogWindow({ id: job.id })}>{t('job.showLog')}</button>
             </div>
           } />
           <Row label={t('dialog.project')}   value={job.project_name} />
@@ -169,9 +170,6 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
           <Row label={t('dialog.startedAt')}   value={fmt(job.started_at)} />
           <Row label={t('dialog.completedAt')} value={fmt(job.completed_at)} />
           <Row label={t('dialog.duration')}    value={duration(job.started_at, job.completed_at, t)} />
-          <div style={{ marginTop: 8 }}>
-            <button className="btn btn-ghost btn-sm" onClick={() => QueueApi.openLogWindow({ id: job.id })}>{t('job.showLog')}</button>
-          </div>
         </div>
 
         {status === 'error' && job.error_msg && (
