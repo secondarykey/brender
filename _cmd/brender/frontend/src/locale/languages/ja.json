@@ -205,10 +205,11 @@
     "testRender": "Test",
     "testHint": "テストは現在の値で1フレーム・Sample 8でRenderingします",
     "testEnqueued": "現在表示されている値でサンプル8・1フレームのテスト用エンコードをキューに追加しました。設定値の保存は行っていません。必要な場合は保存してください。",
-    "copy": "コピー",
+    "copy": "ワークスペースをコピー",
     "copying": "コピー中...",
     "copied": "コピーしました",
     "copySuffix": " コピー",
+    "copyConfirmMsg": "現在の値でワークスペースをもう１つ作成します",
     "createDialog": {
       "title": "ワークスペース作成",
       "multipleFromFile": "ファイルの値から複数作成する",

@@ -253,6 +253,7 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
   const [specifyFrames, setSpecifyFrames]         = useState(false)
   const [saving, setSaving]                 = useState(false)
   const [copying, setCopying]               = useState(false)
+  const [copyConfirm, setCopyConfirm]       = useState(false)
   const [error, setError]                   = useState('')
   const [confirm, setConfirm]               = useState(false)
   const [deleting, setDeleting]             = useState(false)
@@ -395,6 +396,7 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
     try {
       const newName = form.name.trim() + t('workspace.copySuffix')
       const newWS = await WorkspaceApi.copy({ projectID, workspaceID, newName })
+      setCopyConfirm(false)
       showToast(t('workspace.copied'))
       navigate('workspace', { projectID, projectName, fileID, fileName, workspaceID: newWS.id })
     } catch (err) {
@@ -702,8 +704,8 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -30 }}>
-        <button className="btn btn-outline btn-sm" onClick={handleCopy} disabled={copying}>
-          {copying ? t('workspace.copying') : t('workspace.copy')}
+        <button className="btn btn-outline btn-sm" onClick={() => setCopyConfirm(true)} disabled={copying}>
+          {t('workspace.copy')}
         </button>
       </div>
 
@@ -790,6 +792,18 @@ function SettingsTab({ projectID, workspaceID, detail, focusName, onUpdated, onD
           <input type="checkbox" checked={forceDel} onChange={e => setForceDel(e.target.checked)} />
           {t('workspace.forceDeleteLabel')}
         </label>
+      </ConfirmDialog>
+
+      <ConfirmDialog
+        open={copyConfirm}
+        title={t('workspace.copy')}
+        confirmLabel={t('workspace.copy')}
+        confirmClassName="btn btn-outline"
+        onConfirm={handleCopy}
+        onCancel={() => setCopyConfirm(false)}
+        busy={copying}
+      >
+        <p>{t('workspace.copyConfirmMsg')}</p>
       </ConfirmDialog>
     </div>
   )
