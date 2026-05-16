@@ -60,7 +60,7 @@ function Row({ label, value, selectable }) {
   )
 }
 
-function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged, navigate }) {
+function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
   const { t } = useTranslation()
   const [confirm, setConfirm]   = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -121,23 +121,6 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged, navigate })
     }
   }
 
-  const handleNavigate = () => {
-    onClose()
-    navigate('job', {
-      job,
-      initialTab: 'render',
-      backPage: 'queue',
-      backParams: {
-        projectID:     job.project_id,
-        projectName:   job.project_name,
-        fileID:        job.project_file_id,
-        fileName:      job.file_name,
-        workspaceID:   job.workspace_id,
-        workspaceName: job.workspace_name,
-      },
-    })
-  }
-
   return (
     <>
       <Dialog
@@ -151,8 +134,6 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged, navigate })
         actions={
           <>
             <button className="btn btn-danger" style={{ marginRight: 'auto' }} onClick={() => setConfirm(true)} disabled={isLocked}>{t('common.delete')}</button>
-            {navigate && <button className="btn btn-ghost" onClick={handleNavigate}>{t('tabs.renderResults')}</button>}
-            <button className="btn btn-ghost" onClick={() => QueueApi.openLogWindow({ id: job.id })}>{t('job.showLog')}</button>
             <button className="btn btn-ghost" onClick={onClose}>{t('common.close')}</button>
           </>
         }
@@ -188,6 +169,9 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged, navigate })
           <Row label={t('dialog.startedAt')}   value={fmt(job.started_at)} />
           <Row label={t('dialog.completedAt')} value={fmt(job.completed_at)} />
           <Row label={t('dialog.duration')}    value={duration(job.started_at, job.completed_at, t)} />
+          <div style={{ marginTop: 8 }}>
+            <button className="btn btn-ghost btn-sm" onClick={() => QueueApi.openLogWindow({ id: job.id })}>{t('job.showLog')}</button>
+          </div>
         </div>
 
         {status === 'error' && job.error_msg && (
