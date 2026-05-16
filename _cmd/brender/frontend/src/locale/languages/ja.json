@@ -325,7 +325,8 @@
     "name": "名前",
     "version": "バージョン",
     "path": "パス",
-    "updatedAt": "更新日時"
+    "updatedAt": "更新日時",
+    "size": "サイズ"
   },
   "time": {
     "seconds": "秒",
