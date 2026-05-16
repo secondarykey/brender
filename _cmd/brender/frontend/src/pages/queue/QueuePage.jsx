@@ -249,12 +249,12 @@ function HistoryTab({ navigate }) {
                 <th>{t('table.engine')}</th>
                 <th>{t('table.scene')}</th>
                 <th>{t('table.camera')}</th>
-                <th>{t('table.frames')}</th>
-                <th>{t('table.samples')}</th>
-                <th>{t('table.resolution')}</th>
-                <th>{t('table.startedAt')}</th>
-                <th>{t('table.completedAt')}</th>
-                <th>{t('table.duration')}</th>
+                <th className="col-r">{t('table.frames')}</th>
+                <th className="col-r">{t('table.samples')}</th>
+                <th className="col-r">{t('table.resolution')}</th>
+                <th className="col-r">{t('table.startedAt')}</th>
+                <th className="col-r">{t('table.completedAt')}</th>
+                <th className="col-r">{t('table.duration')}</th>
               </tr>
             </thead>
             <tbody>
@@ -310,7 +310,7 @@ function QueuePage({ navigate }) {
 
   return (
     <div className="page">
-<div className="tab-nav">
+      <div className="tab-nav">
         <button
           className={`tab-btn${tab === 'active' ? ' active' : ''}`}
           onClick={() => setTab('active')}
