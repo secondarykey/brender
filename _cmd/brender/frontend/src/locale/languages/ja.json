@@ -209,7 +209,7 @@
     "copying": "コピー中...",
     "copied": "コピーしました",
     "copySuffix": " コピー",
-    "copyConfirmMsg": "現在の値でワークスペースをもう１つ作成します",
+    "copyConfirmMsg": "保存済みの値でワークスペースをもう１つ作成します",
     "createDialog": {
       "title": "ワークスペース作成",
       "multipleFromFile": "ファイルの値から複数作成する",

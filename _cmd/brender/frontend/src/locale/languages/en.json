@@ -209,7 +209,7 @@
     "copying": "Copying...",
     "copied": "Copied",
     "copySuffix": " Copy",
-    "copyConfirmMsg": "Creates another workspace with the current values.",
+    "copyConfirmMsg": "Creates another workspace with the saved values.",
     "createDialog": {
       "title": "Create Workspace",
       "multipleFromFile": "Create multiple from file values",
