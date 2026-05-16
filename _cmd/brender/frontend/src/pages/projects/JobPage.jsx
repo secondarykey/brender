@@ -77,11 +77,28 @@ function Row({ label, value, selectable }) {
 // ── 詳細タブ ──────────────────────────────────────────────
 function DetailTab({ job, onDeleted, onDataStatusChanged }) {
   const { t } = useTranslation()
+  const { showToast } = useToast()
   const { showError } = useMessage()
   const [confirm, setConfirm]           = useState(false)
   const [deleting, setDeleting]         = useState(false)
   const [locking, setLocking]           = useState(false)
   const [dataStatus, setDataStatus]     = useState(job?.data_status ?? 0)
+  const [metaName, setMetaName]         = useState(job?.name || '')
+  const [metaNote, setMetaNote]         = useState(job?.note || '')
+  const [savingMeta, setSavingMeta]     = useState(false)
+  const savedMeta = useRef({ name: job?.name || '', note: job?.note || '' })
+
+  const isMetaDirty = metaName !== savedMeta.current.name || metaNote !== savedMeta.current.note
+
+  const handleSaveMeta = async () => {
+    setSavingMeta(true)
+    try {
+      await QueueApi.updateJobMeta({ id: job.id, name: metaName, note: metaNote })
+      savedMeta.current = { name: metaName, note: metaNote }
+      showToast(t('common.saved'))
+    } catch (e) { showError(String(e)) }
+    finally { setSavingMeta(false) }
+  }
 
   useEffect(() => { if (job) setDataStatus(job.data_status ?? 0) }, [job])
 
@@ -126,58 +143,88 @@ function DetailTab({ job, onDeleted, onDataStatusChanged }) {
   }
 
   return (
-    <div className="job-page-detail">
-      <div className="job-detail-body">
-        <div className="job-detail-section">
-          <Row label={t('dialog.status')} value={
-            <span className={`status-badge status-${status}`}>{statusLabels[status] ?? status}</span>
-          } />
-          <Row label={t('dialog.data')} value={
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <DataStatusBadge status={dataStatus} />
-              <button className="btn btn-sm btn-ghost" onClick={handleLock} disabled={locking}>
-                {isLocked ? t('common.unlock') : t('common.lock')}
-              </button>
-            </div>
-          } />
-          <Row label={t('dialog.project')}   value={job.project_name} />
-          <Row label={t('dialog.workspace')} value={job.workspace_name} />
+    <div className="ws-detail-split">
+      <div className="ws-detail-left">
+        <div className="form-group">
+          <label className="form-label">{t('job.name')}</label>
+          <input
+            type="text" className="form-input"
+            value={metaName}
+            onChange={e => setMetaName(e.target.value)}
+          />
         </div>
-
-        <div className="job-detail-section">
-          <Row label={t('dialog.scene')}   value={job.scene  || t('common.default')} />
-          <Row label={t('dialog.camera')}  value={job.camera} />
-          <Row label={t('dialog.engine')}  value={job.engine || t('common.default')} />
-          <Row label={t('dialog.frames')}  value={`${job.start_frame} – ${job.end_frame}${job.frame_step > 1 ? ` (${t('dialog.step')}${job.frame_step})` : ''}`} />
-          <Row label={t('dialog.threads')} value={job.thread === 0 ? t('common.automatic') : String(job.thread)} />
-          <Row label={t('dialog.samples')}    value={job.samples === 0 ? t('common.default') : String(job.samples)} />
-          <Row label={t('dialog.resolution')} value={(job.resolution_x > 0 && job.resolution_y > 0) ? `${job.resolution_x}×${job.resolution_y}` : t('common.default')} />
+        <div className="form-group">
+          <label className="form-label">{t('job.note')}</label>
+          <textarea
+            className="form-input"
+            style={{ minHeight: 120, resize: 'vertical' }}
+            value={metaNote}
+            onChange={e => setMetaNote(e.target.value)}
+            placeholder={t('job.notePlaceholder')}
+          />
         </div>
-
-        <div className="job-detail-section">
-          <Row label={t('dialog.blender')}  value={job.blender_path} selectable />
-          <Row label={t('dialog.file')}     value={job.blender_file} selectable />
-          <Row label={t('dialog.output')}   value={job.output_dir}   selectable />
-          <Row label={t('dialog.dataSize')} value={
-            <span style={dataStatus >= 4 ? { textDecoration: 'line-through', opacity: 0.5 } : undefined}>{formatBytes(job.disk_size)}</span>
-          } />
+        <div className="form-actions">
+          <button className="btn btn-danger" onClick={() => setConfirm(true)} disabled={isLocked}>{t('common.delete')}</button>
+          <button className="btn btn-green" onClick={handleSaveMeta} disabled={savingMeta || !isMetaDirty}>
+            {savingMeta ? t('common.saving') : t('common.save')}
+          </button>
         </div>
-
-        <div className="job-detail-section">
-          <Row label={t('dialog.enrolledAt')}  value={fmt(job.enqueued_at)} />
-          <Row label={t('dialog.startedAt')}   value={fmt(job.started_at)} />
-          <Row label={t('dialog.completedAt')} value={fmt(job.completed_at)} />
-          <Row label={t('dialog.duration')}    value={duration(job.started_at, job.completed_at, t)} />
-        </div>
-
-        {status === 'error' && job.error_msg && (
-          <div className="job-detail-error">{job.error_msg}</div>
-        )}
       </div>
 
-      <div className="dialog-actions" style={{ justifyContent: 'space-between', marginTop: 16 }}>
-        <button className="btn btn-danger" onClick={() => setConfirm(true)} disabled={isLocked}>{t('common.delete')}</button>
-        <button className="btn btn-ghost" onClick={() => QueueApi.openLogWindow({ id: job.id })}>{t('job.showLog')}</button>
+      <div className="ws-detail-right">
+        <div className="job-page-detail">
+          <div className="job-detail-body">
+            <div className="job-detail-section">
+              <Row label={t('dialog.status')} value={
+                <span className={`status-badge status-${status}`}>{statusLabels[status] ?? status}</span>
+              } />
+              <Row label={t('dialog.data')} value={
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <DataStatusBadge status={dataStatus} />
+                  <button className="btn btn-sm btn-ghost" onClick={handleLock} disabled={locking}>
+                    {isLocked ? t('common.unlock') : t('common.lock')}
+                  </button>
+                </div>
+              } />
+              <Row label={t('dialog.project')}   value={job.project_name} />
+              <Row label={t('dialog.workspace')} value={job.workspace_name} />
+            </div>
+
+            <div className="job-detail-section">
+              <Row label={t('dialog.scene')}   value={job.scene  || t('common.default')} />
+              <Row label={t('dialog.camera')}  value={job.camera} />
+              <Row label={t('dialog.engine')}  value={job.engine || t('common.default')} />
+              <Row label={t('dialog.frames')}  value={`${job.start_frame} – ${job.end_frame}${job.frame_step > 1 ? ` (${t('dialog.step')}${job.frame_step})` : ''}`} />
+              <Row label={t('dialog.threads')} value={job.thread === 0 ? t('common.automatic') : String(job.thread)} />
+              <Row label={t('dialog.samples')}    value={job.samples === 0 ? t('common.default') : String(job.samples)} />
+              <Row label={t('dialog.resolution')} value={(job.resolution_x > 0 && job.resolution_y > 0) ? `${job.resolution_x}×${job.resolution_y}` : t('common.default')} />
+            </div>
+
+            <div className="job-detail-section">
+              <Row label={t('dialog.blender')}  value={job.blender_path} selectable />
+              <Row label={t('dialog.file')}     value={job.blender_file} selectable />
+              <Row label={t('dialog.output')}   value={job.output_dir}   selectable />
+              <Row label={t('dialog.dataSize')} value={
+                <span style={dataStatus >= 4 ? { textDecoration: 'line-through', opacity: 0.5 } : undefined}>{formatBytes(job.disk_size)}</span>
+              } />
+            </div>
+
+            <div className="job-detail-section">
+              <Row label={t('dialog.enrolledAt')}  value={fmt(job.enqueued_at)} />
+              <Row label={t('dialog.startedAt')}   value={fmt(job.started_at)} />
+              <Row label={t('dialog.completedAt')} value={fmt(job.completed_at)} />
+              <Row label={t('dialog.duration')}    value={duration(job.started_at, job.completed_at, t)} />
+            </div>
+
+            {status === 'error' && job.error_msg && (
+              <div className="job-detail-error">{job.error_msg}</div>
+            )}
+          </div>
+
+          <div className="dialog-actions" style={{ justifyContent: 'flex-end', marginTop: 16 }}>
+            <button className="btn btn-ghost" onClick={() => QueueApi.openLogWindow({ id: job.id })}>{t('job.showLog')}</button>
+          </div>
+        </div>
       </div>
 
       <ConfirmDialog
@@ -190,7 +237,6 @@ function DetailTab({ job, onDeleted, onDataStatusChanged }) {
       >
         <p>{t('job.deleteWarning')}</p>
       </ConfirmDialog>
-
     </div>
   )
 }
@@ -216,24 +262,8 @@ function RenderResultTab({ job }) {
   const [movieInext, setMovieInext]         = useState('png')
   const [movieOutext, setMovieOutext]       = useState('mp4')
   const [movieExtraArgs, setMovieExtraArgs] = useState('')
-  const [metaName, setMetaName]         = useState(job?.name || '')
-  const [metaNote, setMetaNote]         = useState(job?.note || '')
-  const [savingMeta, setSavingMeta]     = useState(false)
-  const savedMeta = useRef({ name: job?.name || '', note: job?.note || '' })
   const playingRef = useRef(false)
   const loopRef    = useRef(false)
-
-  const isMetaDirty = metaName !== savedMeta.current.name || metaNote !== savedMeta.current.note
-
-  const handleSaveMeta = async () => {
-    setSavingMeta(true)
-    try {
-      await QueueApi.updateJobMeta({ id: job.id, name: metaName, note: metaNote })
-      savedMeta.current = { name: metaName, note: metaNote }
-      showToast(t('common.saved'))
-    } catch (e) { showError(String(e)) }
-    finally { setSavingMeta(false) }
-  }
 
   const stopPlay = () => { playingRef.current = false; setPlaying(false) }
   const toggleLoop = () => { const v = !loopRef.current; loopRef.current = v; setLoop(v) }
@@ -347,86 +377,55 @@ function RenderResultTab({ job }) {
   const filename = images[index] ? images[index].replace(/\\/g, '/').split('/').pop() : ''
 
   return (
-    <div className="ws-detail-split">
-      <div className="ws-detail-left">
-        <div className="form-group">
-          <label className="form-label">{t('job.name')}</label>
+    <div className="job-page-viewer">
+      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+        <button className="btn btn-sm btn-outline" onClick={handleSetThumbnail} disabled={settingThumb || images.length === 0}>
+          {settingThumb ? '...' : t('viewer.setAsThumbnail')}
+        </button>
+      </div>
+
+      <div className="image-viewer-body">
+        {loadingList && <div className="image-viewer-loading">{t('common.loading')}</div>}
+        {imgSrc && <img src={imgSrc} alt={filename} className="image-viewer-img" />}
+        {!loadingList && !imgSrc && !error && images.length === 0 && (
+          <div className="image-viewer-empty">{t('viewer.noImages')}</div>
+        )}
+        {error && <div className="error-msg">{error}</div>}
+      </div>
+
+      <div className="image-viewer-controls" style={{ visibility: images.length > 0 ? 'visible' : 'hidden' }}>
+        <span className="image-viewer-filename" title={filename}>
+          {filename}{loadingImg && <span className="image-viewer-loading-inline"> {t('common.loading')}</span>}
+        </span>
+        <div className="image-viewer-slider-row">
           <input
-            type="text" className="form-input"
-            value={metaName}
-            onChange={e => setMetaName(e.target.value)}
+            type="range" min={0} max={Math.max(0, images.length - 1)} value={index}
+            onChange={e => { stopPlay(); setIndex(Number(e.target.value)) }}
+            className="image-viewer-slider" disabled={images.length <= 1}
           />
-        </div>
-        <div className="form-group">
-          <label className="form-label">{t('job.note')}</label>
-          <textarea
-            className="form-input"
-            style={{ minHeight: 120, resize: 'vertical' }}
-            value={metaNote}
-            onChange={e => setMetaNote(e.target.value)}
-            placeholder={t('job.notePlaceholder')}
-          />
-        </div>
-        <div className="form-actions">
-          <span />
-          <button className="btn btn-green" onClick={handleSaveMeta} disabled={savingMeta || !isMetaDirty}>
-            {savingMeta ? t('common.saving') : t('common.save')}
-          </button>
+          <span className="image-viewer-counter">{images.length > 0 ? `${index + 1} / ${images.length}` : '— / —'}</span>
         </div>
       </div>
 
-      <div className="ws-detail-right">
-        <div className="job-page-viewer">
-          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-            <button className="btn btn-sm btn-outline" onClick={handleSetThumbnail} disabled={settingThumb || images.length === 0}>
-              {settingThumb ? '...' : t('viewer.setAsThumbnail')}
+      <div className="dialog-actions" style={{ justifyContent: 'space-between', visibility: images.length > 0 ? 'visible' : 'hidden', marginTop: 8 }}>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-sm btn-ghost" onClick={handleTogglePlay} disabled={images.length <= 1}>
+            {playing ? t('viewer.stop') : t('viewer.play')}
+          </button>
+          <button
+            className={`btn btn-sm ${loop ? '' : 'btn-ghost'} image-viewer-loop-btn`}
+            onClick={toggleLoop} disabled={images.length <= 1} title={t('common.loop')}
+          >⟳ {t('common.loop')}</button>
+          {moviePath && (
+            <button className="btn btn-sm" onClick={handlePlayMovie}>
+              {t('viewer.playMovie')}
             </button>
-          </div>
-
-          <div className="image-viewer-body">
-            {loadingList && <div className="image-viewer-loading">{t('common.loading')}</div>}
-            {imgSrc && <img src={imgSrc} alt={filename} className="image-viewer-img" />}
-            {!loadingList && !imgSrc && !error && images.length === 0 && (
-              <div className="image-viewer-empty">{t('viewer.noImages')}</div>
-            )}
-            {error && <div className="error-msg">{error}</div>}
-          </div>
-
-          <div className="image-viewer-controls" style={{ visibility: images.length > 0 ? 'visible' : 'hidden' }}>
-            <span className="image-viewer-filename" title={filename}>
-              {filename}{loadingImg && <span className="image-viewer-loading-inline"> {t('common.loading')}</span>}
-            </span>
-            <div className="image-viewer-slider-row">
-              <input
-                type="range" min={0} max={Math.max(0, images.length - 1)} value={index}
-                onChange={e => { stopPlay(); setIndex(Number(e.target.value)) }}
-                className="image-viewer-slider" disabled={images.length <= 1}
-              />
-              <span className="image-viewer-counter">{images.length > 0 ? `${index + 1} / ${images.length}` : '— / —'}</span>
-            </div>
-          </div>
-
-          <div className="dialog-actions" style={{ justifyContent: 'space-between', visibility: images.length > 0 ? 'visible' : 'hidden', marginTop: 8 }}>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button className="btn btn-sm btn-ghost" onClick={handleTogglePlay} disabled={images.length <= 1}>
-                {playing ? t('viewer.stop') : t('viewer.play')}
-              </button>
-              <button
-                className={`btn btn-sm ${loop ? '' : 'btn-ghost'} image-viewer-loop-btn`}
-                onClick={toggleLoop} disabled={images.length <= 1} title={t('common.loop')}
-              >⟳ {t('common.loop')}</button>
-              {moviePath && (
-                <button className="btn btn-sm" onClick={handlePlayMovie}>
-                  {t('viewer.playMovie')}
-                </button>
-              )}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <button className="btn btn-sm btn-green" onClick={handleOpenMovieDialog} disabled={creatingMovie || images.length <= 1}>
-                {creatingMovie ? t('viewer.movieCreating') : t('viewer.createMovie')}
-              </button>
-            </div>
-          </div>
+          )}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button className="btn btn-sm btn-green" onClick={handleOpenMovieDialog} disabled={creatingMovie || images.length <= 1}>
+            {creatingMovie ? t('viewer.movieCreating') : t('viewer.createMovie')}
+          </button>
         </div>
       </div>
 
