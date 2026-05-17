@@ -28,7 +28,7 @@ type Workspace struct {
 	ResolutionY      int        `json:"resolution_y"`        // 0 = Blender デフォルト
 	OutputFormat     string     `json:"output_format"` // "PNG" / "JPEG"。空 = システムデフォルト委譲
 	AutoLock        bool       `gorm:"default:false" json:"auto_lock"`      // 完了時自動ロック
-	AutoLockMinSize int64      `gorm:"default:0" json:"auto_lock_min_size"` // 自動ロック対象の最小容量（バイト）。0=制限なし
+	AutoLockMinSize int64      `gorm:"default:104857600" json:"auto_lock_min_size"` // 自動ロック対象の最小容量（バイト）。デフォルト100MB
 	AutoLockKeep    int        `gorm:"default:1" json:"auto_lock_keep"`     // ロック保持件数。0=無制限
 	IsSystem         bool       `gorm:"default:false" json:"is_system"`
 	DisplayOrder     int        `gorm:"default:99999" json:"display_order"`

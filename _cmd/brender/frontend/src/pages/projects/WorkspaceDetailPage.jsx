@@ -288,7 +288,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
       resolutionY:      detail.workspace.resolution_y || 0,
       outputFormat:     detail.workspace.output_format || '',
       autoLock:         detail.workspace.auto_lock || false,
-      autoLockMinSize:  detail.workspace.auto_lock_min_size || 0,
+      autoLockMinSize:  detail.workspace.auto_lock_min_size || 100 * 1024 * 1024,
       autoLockKeep:     detail.workspace.auto_lock_keep || 1,
     }
     setForm(next)
