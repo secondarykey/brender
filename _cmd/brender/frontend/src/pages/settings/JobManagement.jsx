@@ -193,7 +193,11 @@ function JobManagement({ navigate }) {
             <tbody>
               {pageJobs.map(j => (
                 <tr key={j.id} className="row-clickable" onClick={() => setSelected(j)}>
-                  <td>{j.name || '—'}</td>
+                  <td>
+                    <button className="link-btn" onClick={e => { e.stopPropagation(); navigate && navigate('job', { job: j, initialTab: 'render', backPage: 'settings', backParams: { tab: 'jobManagement' } }) }}>
+                      {j.name || '—'}
+                    </button>
+                  </td>
                   <td className="col-c">
                     <span className={`status-badge status-${j.status}`}>{t(`status.${j.status}`)}</span>
                   </td>
