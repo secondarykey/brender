@@ -703,7 +703,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <label className="form-label" style={{ marginBottom: 0 }}>{t('workspace.outputFormat')}</label>
           {form.outputFormat === '' && (
-            <span style={{ fontSize: 11, color: '#888', whiteSpace: 'nowrap' }}>
+            <span className="form-hint" style={{ display: 'inline', whiteSpace: 'nowrap' }}>
               {t('workspace.outputFormatEffective', {
                 format: imageFormats.find(f => f.code === (envOutputFormat || 'PNG'))?.label ?? (envOutputFormat || 'PNG')
               })}
