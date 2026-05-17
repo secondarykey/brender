@@ -185,4 +185,14 @@ export const QueueApi = {
   cleanJobData: () =>
     isWails() ? svc().then(s => s.CleanJobData())
               : serverCall('queue', 'clean_job_data'),
+
+  /** ミニモニターウィンドウを開く */
+  openMiniMonitor: () =>
+    isWails() ? svc().then(s => s.OpenMiniMonitor())
+              : Promise.resolve(),
+
+  /** ミニモニターを閉じてメインウィンドウを復元 */
+  closeMiniMonitor: () =>
+    isWails() ? svc().then(s => s.CloseMiniMonitor())
+              : Promise.resolve(),
 }

@@ -47,6 +47,7 @@
   "menu": {
     "project": "プロジェクト",
     "queue": "キュー",
+    "miniMonitor": "ミニモニター",
     "settings": "設定"
   },
   "title": {
@@ -449,6 +450,13 @@
     "reset": "デフォルトに戻す",
     "resetConfirm": "ユーザー設定を削除してデフォルトに戻しますか？",
     "unsaved": "未保存の変更があります"
+  },
+  "miniMonitor": {
+    "title": "キューモニター",
+    "noActiveJobs": "実行中のジョブはありません",
+    "waiting": "待機中: {{count}}件",
+    "restore": "メインに戻る",
+    "eta": "残り {{time}}"
   },
   "render": {
     "confirmTitle": "レンダリングを実行しますか？",

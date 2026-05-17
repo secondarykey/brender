@@ -9,6 +9,7 @@ import (
 	"github.com/ikascrew/brender/api"
 	"github.com/ikascrew/brender/model"
 	"github.com/wailsapp/wails/v3/pkg/application"
+	"github.com/wailsapp/wails/v3/pkg/events"
 )
 
 type Queue struct{}
@@ -166,5 +167,48 @@ func (s *Queue) OpenLogWindow(jobID string) error {
 		BackgroundColour: application.NewRGB(26, 26, 26),
 	}).Show()
 
+	return nil
+}
+
+const miniMonitorWindowName = "mini-monitor"
+
+func (s *Queue) OpenMiniMonitor() error {
+	app := application.Get()
+	if win, ok := app.Window.GetByName(miniMonitorWindowName); ok {
+		win.Show()
+		win.Focus()
+		return nil
+	}
+	if main, ok := app.Window.GetByName("main"); ok {
+		main.Hide()
+	}
+	win := app.Window.NewWithOptions(application.WebviewWindowOptions{
+		Name:             miniMonitorWindowName,
+		Title:            "Queue Monitor",
+		Width:            400,
+		Height:           180,
+		Frameless:        true,
+		URL:              "/?minimonitor=1",
+		BackgroundColour: application.NewRGB(26, 26, 26),
+	})
+	win.RegisterHook(events.Common.WindowClosing, func(_ *application.WindowEvent) {
+		if main, ok := app.Window.GetByName("main"); ok {
+			main.Show()
+			main.Focus()
+		}
+	})
+	win.Show()
+	return nil
+}
+
+func (s *Queue) CloseMiniMonitor() error {
+	app := application.Get()
+	if main, ok := app.Window.GetByName("main"); ok {
+		main.Show()
+		main.Focus()
+	}
+	if win, ok := app.Window.GetByName(miniMonitorWindowName); ok {
+		win.Close()
+	}
 	return nil
 }

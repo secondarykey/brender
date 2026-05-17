@@ -134,6 +134,13 @@ export function GetJobLog(id) {
 }
 
 /**
+ * @returns {$CancellablePromise<void>}
+ */
+export function KillRunning() {
+    return $Call.ByID(3579055668);
+}
+
+/**
  * @returns {$CancellablePromise<(model$0.Queue | null)[]>}
  */
 export function List() {

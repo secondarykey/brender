@@ -126,6 +126,7 @@ func run() error {
 	//4 は 1450x850 程度？
 
 	mainWin := app.Window.NewWithOptions(application.WebviewWindowOptions{
+		Name:      "main",
 		Title:     "brender",
 		Width:     1460,
 		Height:    840,

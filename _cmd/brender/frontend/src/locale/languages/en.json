@@ -47,6 +47,7 @@
   "menu": {
     "project": "Project",
     "queue": "Queue",
+    "miniMonitor": "Mini Monitor",
     "settings": "Settings"
   },
   "title": {
@@ -449,6 +450,13 @@
     "reset": "Reset to Default",
     "resetConfirm": "Delete user settings and reset to defaults?",
     "unsaved": "You have unsaved changes"
+  },
+  "miniMonitor": {
+    "title": "Queue Monitor",
+    "noActiveJobs": "No active jobs",
+    "waiting": "Waiting: {{count}}",
+    "restore": "Restore Main",
+    "eta": "{{time}} remaining"
   },
   "render": {
     "confirmTitle": "Start rendering?",
