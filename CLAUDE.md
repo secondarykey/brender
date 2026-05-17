@@ -516,7 +516,6 @@ return off  // useEffect cleanup
 - **エラー（API/通信/操作失敗）** → `useMessage()` の `showError(msg)`。`MainLayout` 上部の全幅バー（`.app-message-bar`）に表示し、クリアまたは次のエラーで置換されるまで残る。`clearError()` または × ボタンで消える。`useMessage()` は `{ showError, clearError, error }` を返す。
 - **入力検証エラー**（特定フィールドに紐づくもの。「名前は必須」など）はグローバルバーに出さず、フィールド近くにインライン表示する。
 - **ダイアログ内のエラー** はグローバルバーではなく `Dialog`/`ConfirmDialog` の `message` prop に渡し、ダイアログ上部に表示する。
-- 画像ビューアの読み込みエラーなど、特定領域に文脈依存するものはその領域内にインライン表示してよい。
 - `LogViewerApp` / `MovieViewerApp` は `MainLayout` を持たない独立 Wails ウィンドウのため、グローバルバー対象外（ローカルにインライン表示）。
 
 ## CSS Conventions (`frontend/public/style.css`)

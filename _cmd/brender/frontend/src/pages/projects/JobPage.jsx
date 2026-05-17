@@ -251,7 +251,6 @@ function RenderResultTab({ job }) {
   const [imgSrc, setImgSrc]             = useState('')
   const [loadingList, setLoadingList]   = useState(true)
   const [loadingImg, setLoadingImg]     = useState(false)
-  const [error, setError]               = useState('')
   const [playing, setPlaying]           = useState(false)
   const [loop, setLoop]                 = useState(false)
   const [settingThumb, setSettingThumb] = useState(false)
@@ -271,10 +270,10 @@ function RenderResultTab({ job }) {
   useEffect(() => {
     if (!job) return
     stopPlay()
-    setLoadingList(true); setError(''); setImages([]); setIndex(0); setImgSrc('')
+    setLoadingList(true); setImages([]); setIndex(0); setImgSrc('')
     QueueApi.listJobImages({ id: job.id })
       .then(list => { setImages(list || []); setLoadingList(false) })
-      .catch(err => { setError(String(err)); setLoadingList(false) })
+      .catch(err => { showError(String(err)); setLoadingList(false) })
     QueueApi.listJobFiles({ id: job.id })
       .then(files => {
         const movie = (files || []).find(f => !f.is_dir && isVideoFile(f.name))
@@ -298,7 +297,7 @@ function RenderResultTab({ job }) {
           })
         }
       })
-      .catch(err => { setError(String(err)); setLoadingImg(false); stopPlay() })
+      .catch(err => { showError(String(err)); setLoadingImg(false); stopPlay() })
   }, [images, index])
 
   const handleTogglePlay = () => {
@@ -389,10 +388,9 @@ function RenderResultTab({ job }) {
       <div className="image-viewer-body">
         {loadingList && <div className="image-viewer-loading">{t('common.loading')}</div>}
         {imgSrc && <img src={imgSrc} alt={filename} className="image-viewer-img" />}
-        {!loadingList && !imgSrc && !error && images.length === 0 && (
+        {!loadingList && !imgSrc && images.length === 0 && (
           <div className="image-viewer-empty">{t('viewer.noImages')}</div>
         )}
-        {error && <div className="error-msg">{error}</div>}
       </div>
 
       <div className="image-viewer-controls" style={{ visibility: images.length > 0 ? 'visible' : 'hidden' }}>
