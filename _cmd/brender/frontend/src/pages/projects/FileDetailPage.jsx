@@ -539,7 +539,7 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
         <div className="form workspace" style={{ maxWidth: 640 }}>
           <div className="form-row">
             <div className="form-field" style={{ flex: 2 }}>
-              <label className="form-label">{t('file.displayName')}</label>
+              <label className="form-label">{t('file.displayName')} <span className="required">*</span></label>
               <input
                 className="form-input"
                 value={name}
