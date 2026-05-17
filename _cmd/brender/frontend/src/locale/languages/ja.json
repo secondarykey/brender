@@ -242,6 +242,15 @@
     "noJobs": "ジョブ履歴がありません",
     "dataStatus": "データ状態",
     "diskSize": "容量",
+    "filterLabel": "表示:",
+    "sortBySize": "容量順",
+    "statusFilter": {
+      "available": "データあり",
+      "deleted": "削除済",
+      "corrupted": "破損",
+      "modified": "操作済",
+      "none": "なし"
+    },
     "cleanData": "データクリーンアップ",
     "cleanTitle": "データクリーンアップ",
     "cleanDescription": "ロックされていない{{count}}件のジョブデータ（合計 {{size}}）を削除します。ジョブ履歴は残ります。",

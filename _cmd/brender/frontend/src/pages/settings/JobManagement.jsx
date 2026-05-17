@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { QueueApi } from '../../lib/api'
 import { useMessage, useToast } from '../../lib/toast'
@@ -17,6 +17,14 @@ const DATA_STATUS_LABELS = {
   8: 'modified',
   9: 'modifiedLocked',
 }
+
+const DATA_STATUS_GROUPS = [
+  { key: 'available', statuses: [2, 3] },
+  { key: 'deleted', statuses: [4, 5] },
+  { key: 'corrupted', statuses: [6, 7] },
+  { key: 'modified', statuses: [8, 9] },
+  { key: 'none', statuses: [0, 1] },
+]
 
 function DataStatusBadge({ status }) {
   const { t } = useTranslation()
@@ -54,6 +62,8 @@ function JobManagement() {
   const [cleanStats, setCleanStats] = useState(null)
   const [cleaning, setCleaning] = useState(false)
   const [cleanMsg, setCleanMsg] = useState('')
+  const [excludeStatuses, setExcludeStatuses] = useState(new Set([4, 5]))
+  const [sortBySize, setSortBySize] = useState(true)
 
   const load = useCallback(() => {
     QueueApi.listJobs()
@@ -63,16 +73,36 @@ function JobManagement() {
 
   useEffect(() => { load() }, [load])
 
-  const totalPages = Math.max(1, Math.ceil(jobs.length / pageSize))
-  const currentPage = Math.min(page, totalPages)
-  const pageJobs = jobs.slice((currentPage - 1) * pageSize, currentPage * pageSize)
-
-  const totalSize = jobs.reduce((sum, j) => {
-    if (j.data_status === 2 || j.data_status === 3 || j.data_status === 6 || j.data_status === 7) {
-      return sum + (j.disk_size || 0)
+  const filteredJobs = useMemo(() => {
+    let result = jobs.filter(j => !excludeStatuses.has(j.data_status))
+    if (sortBySize) {
+      result = [...result].sort((a, b) => (b.disk_size || 0) - (a.disk_size || 0))
     }
-    return sum
-  }, 0)
+    return result
+  }, [jobs, excludeStatuses, sortBySize])
+
+  const totalPages = Math.max(1, Math.ceil(filteredJobs.length / pageSize))
+  const currentPage = Math.min(page, totalPages)
+  const pageJobs = filteredJobs.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+
+  const totalSize = useMemo(() =>
+    filteredJobs.reduce((sum, j) => sum + (j.disk_size || 0), 0),
+    [filteredJobs]
+  )
+
+  const toggleStatusGroup = (statuses) => {
+    setExcludeStatuses(prev => {
+      const next = new Set(prev)
+      const allExcluded = statuses.every(s => next.has(s))
+      if (allExcluded) {
+        statuses.forEach(s => next.delete(s))
+      } else {
+        statuses.forEach(s => next.add(s))
+      }
+      return next
+    })
+    setPage(1)
+  }
 
   const handleCleanClick = async () => {
     try {
@@ -102,16 +132,38 @@ function JobManagement() {
 
   return (
     <div style={{ padding: '16px 0' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <div style={{ fontSize: '0.85rem', opacity: 0.7 }}>
-          {t('jobManagement.totalJobs', { count: jobs.length })} / {t('jobManagement.totalSize', { size: formatSize(totalSize) })}
+          {t('jobManagement.totalJobs', { count: filteredJobs.length })} / {t('jobManagement.totalSize', { size: formatSize(totalSize) })}
         </div>
         <button className="btn btn-danger btn-sm" onClick={handleCleanClick}>
           {t('jobManagement.cleanData')}
         </button>
       </div>
 
-      {jobs.length === 0 ? (
+      <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 12, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>{t('jobManagement.filterLabel')}</span>
+          {DATA_STATUS_GROUPS.map(g => {
+            const included = !g.statuses.every(s => excludeStatuses.has(s))
+            return (
+              <button
+                key={g.key}
+                className={`btn btn-sm ${included ? 'btn-outline-active' : 'btn-outline'}`}
+                onClick={() => toggleStatusGroup(g.statuses)}
+              >
+                {t(`jobManagement.statusFilter.${g.key}`)}
+              </button>
+            )
+          })}
+        </div>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.8rem', opacity: 0.8, marginLeft: 'auto' }}>
+          <input type="checkbox" checked={sortBySize} onChange={e => setSortBySize(e.target.checked)} />
+          {t('jobManagement.sortBySize')}
+        </label>
+      </div>
+
+      {filteredJobs.length === 0 ? (
         <p className="empty-msg">{t('jobManagement.noJobs')}</p>
       ) : (
         <>
@@ -141,7 +193,7 @@ function JobManagement() {
               ))}
             </tbody>
           </table>
-          <Pagination page={currentPage} totalPages={totalPages} onChange={p => setPage(p)} pageSize={pageSize} onPageSizeChange={p => { setPageSize(p); setPage(1) }} total={jobs.length} />
+          <Pagination page={currentPage} totalPages={totalPages} onChange={p => setPage(p)} pageSize={pageSize} onPageSizeChange={p => { setPageSize(p); setPage(1) }} total={filteredJobs.length} />
         </>
       )}
 

@@ -242,6 +242,15 @@
     "noJobs": "No job history",
     "dataStatus": "Data Status",
     "diskSize": "Size",
+    "filterLabel": "Show:",
+    "sortBySize": "Sort by size",
+    "statusFilter": {
+      "available": "Available",
+      "deleted": "Deleted",
+      "corrupted": "Corrupted",
+      "modified": "Modified",
+      "none": "None"
+    },
     "cleanData": "Data Cleanup",
     "cleanTitle": "Data Cleanup",
     "cleanDescription": "Delete data from {{count}} unlocked jobs (total {{size}}). Job history will be preserved.",
