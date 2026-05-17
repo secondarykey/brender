@@ -388,6 +388,19 @@
     "movieDialogOutputExt": "Output Extension",
     "movieDialogExtraArgs": "Extra Arguments"
   },
+  "code": {
+    "imageFormats": "Image Formats",
+    "videoFormats": "Video Formats",
+    "resolutionPresets": "Resolution Presets",
+    "colLabel": "Label",
+    "colExt": "Extension",
+    "colBlenderValue": "Blender Value",
+    "colWidth": "Width",
+    "colHeight": "Height",
+    "addRow": "+ Add Row",
+    "reset": "Reset to Default",
+    "resetConfirm": "Delete user settings and reset to defaults?"
+  },
   "render": {
     "confirmTitle": "Start rendering?",
     "workspace": "Workspace",

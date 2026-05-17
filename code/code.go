@@ -8,6 +8,35 @@ import (
 	_ "embed"
 )
 
+func save(name string, v any) error {
+	dir := userCodeDir()
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return err
+	}
+	data, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Join(dir, name), data, 0644)
+}
+
+func SaveImageFormats(items []ImageFormat) error          { return save("image_formats.json", items) }
+func SaveVideoFormats(items []VideoFormat) error           { return save("video_formats.json", items) }
+func SaveResolutionPresets(items []ResolutionPreset) error { return save("resolution_presets.json", items) }
+
+func ResetImageFormats() error      { return resetFile("image_formats.json") }
+func ResetVideoFormats() error      { return resetFile("video_formats.json") }
+func ResetResolutionPresets() error { return resetFile("resolution_presets.json") }
+
+func resetFile(name string) error {
+	path := filepath.Join(userCodeDir(), name)
+	err := os.Remove(path)
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	return nil
+}
+
 //go:embed _assets/image_formats.json
 var defaultImageFormats []byte
 
