@@ -102,6 +102,7 @@ func run() error {
 			application.NewService(wails.NewWorkspace()),
 			application.NewService(wails.NewQueue()),
 			application.NewService(wails.NewWorkDir()),
+			application.NewService(wails.NewCodes()),
 		},
 		Assets: application.AssetOptions{
 			Handler: &movieAwareHandler{fallback: application.AssetFileServerFS(assets)},

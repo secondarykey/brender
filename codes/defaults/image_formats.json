@@ -1,0 +1,7 @@
+[
+  { "code": "PNG",      "label": "PNG",  "ext": "png" },
+  { "code": "JPEG",     "label": "JPEG", "ext": "jpg" },
+  { "code": "OPEN_EXR", "label": "EXR",  "ext": "exr" },
+  { "code": "TIFF",     "label": "TIFF", "ext": "tif" },
+  { "code": "BMP",      "label": "BMP",  "ext": "bmp" }
+]
