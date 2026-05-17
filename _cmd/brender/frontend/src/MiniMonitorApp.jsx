@@ -25,7 +25,7 @@ function formatRemaining(iso, t) {
 
 function formatFinishTime(iso) {
   if (!iso) return null
-  return new Date(iso).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })
+  return new Date(iso).toLocaleString()
 }
 
 function MiniMonitorApp() {
