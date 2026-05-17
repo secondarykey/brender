@@ -64,11 +64,16 @@
   },
   "dataStatus": {
     "none": "No data",
+    "noneLocked": "No data (Locked)",
     "locked": "Locked",
     "available": "Available",
+    "availableLocked": "Available (Locked)",
     "deleted": "Deleted",
+    "deletedLocked": "Deleted (Locked)",
     "corrupted": "Corrupted",
-    "modified": "Modified"
+    "corruptedLocked": "Corrupted (Locked)",
+    "modified": "Modified",
+    "modifiedLocked": "Modified (Locked)"
   },
   "sort": {
     "label": "Sort",

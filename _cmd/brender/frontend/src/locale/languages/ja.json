@@ -64,11 +64,16 @@
   },
   "dataStatus": {
     "none": "データなし",
+    "noneLocked": "データなし（ロック）",
     "locked": "ロック",
     "available": "あり",
+    "availableLocked": "あり（ロック）",
     "deleted": "データ削除",
+    "deletedLocked": "データ削除（ロック）",
     "corrupted": "データ破損",
-    "modified": "データ操作済"
+    "corruptedLocked": "データ破損（ロック）",
+    "modified": "データ操作済",
+    "modifiedLocked": "データ操作済（ロック）"
   },
   "sort": {
     "label": "並び順",
