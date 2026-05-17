@@ -54,6 +54,10 @@ func (s *Queue) Cancel(id string) error {
 	return api.CancelQueue(id)
 }
 
+func (s *Queue) KillRunning() {
+	api.KillRunningQueues()
+}
+
 func (s *Queue) ListJobs() ([]*model.Job, error) {
 	return api.ListJobs()
 }

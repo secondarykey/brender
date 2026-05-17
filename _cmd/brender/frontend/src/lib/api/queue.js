@@ -41,6 +41,10 @@ export const QueueApi = {
     isWails() ? svc().then(s => s.Cancel(id))
               : serverCall('queue', 'cancel', { id }),
 
+  killRunning: () =>
+    isWails() ? svc().then(s => s.KillRunning())
+              : serverCall('queue', 'kill_running'),
+
   /** ジョブ履歴一覧を取得 */
   listJobs: () =>
     isWails() ? svc().then(s => s.ListJobs())

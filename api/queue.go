@@ -123,6 +123,24 @@ func RecoverStaleQueues() {
 	}
 }
 
+// KillRunningQueues は実行中キューの Blender プロセスを強制終了する。
+// アプリ終了前に呼び出し、孤立プロセスを防ぐ。
+func KillRunningQueues() {
+	queues, err := model.ListRunningQueues()
+	if err != nil {
+		log.Println("KillRunningQueues: ListRunningQueues:", err)
+		return
+	}
+	for _, q := range queues {
+		if q.ProcessID > 0 {
+			if proc, err := os.FindProcess(q.ProcessID); err == nil {
+				proc.Kill()
+				log.Printf("KillRunningQueues: killed process %d (queue %s)", q.ProcessID, q.ID)
+			}
+		}
+	}
+}
+
 // StartRecoveredQueues はリカバリされた waiting キューのスケジューリングを開始する。
 // QueueChangedHook 設定後に呼ぶこと。
 func StartRecoveredQueues() {

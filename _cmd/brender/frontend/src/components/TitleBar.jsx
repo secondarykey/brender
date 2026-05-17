@@ -43,7 +43,10 @@ function TitleBar() {
       <ConfirmDialog
         open={confirmClose}
         title={t('title.confirmClose')}
-        onConfirm={() => Window.Close()}
+        onConfirm={async () => {
+          try { await QueueApi.killRunning() } catch (_) {}
+          Window.Close()
+        }}
         onCancel={() => setConfirmClose(false)}
         confirmLabel={t('title.closeAnyway')}
         confirmClassName="btn btn-danger"
