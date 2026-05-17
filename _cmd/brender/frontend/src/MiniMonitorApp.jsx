@@ -13,7 +13,7 @@ function subFramePct(q) {
   return 0
 }
 
-function formatETA(iso, t) {
+function formatRemaining(iso, t) {
   if (!iso) return null
   const d = new Date(iso)
   const diffSec = Math.floor((d - new Date()) / 1000)
@@ -23,11 +23,17 @@ function formatETA(iso, t) {
   return `${Math.floor(diffSec / 3600)}${t('time.hours')}${Math.floor((diffSec % 3600) / 60)}${t('time.minutes')}`
 }
 
+function formatFinishTime(iso) {
+  if (!iso) return null
+  return new Date(iso).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })
+}
+
 function MiniMonitorApp() {
   const { t } = useTranslation()
   const [items, setItems] = useState([])
   const [pinned, setPinned] = useState(true)
   const [focused, setFocused] = useState(document.hasFocus())
+  const [showRemaining, setShowRemaining] = useState(false)
 
   useEffect(() => {
     import('@wailsio/runtime').then(({ Window }) => {
@@ -70,7 +76,9 @@ function MiniMonitorApp() {
     pct = Math.min(99.99, ((framesDone + subFramePct(running)) / totalFrames) * 100)
   }
 
-  const etaText = running ? formatETA(running.expected_at, t) : null
+  const timeText = running
+    ? (showRemaining ? formatRemaining(running.expected_at, t) : formatFinishTime(running.expected_at))
+    : null
 
   const handleRestore = () => { QueueApi.closeMiniMonitor() }
 
@@ -97,7 +105,7 @@ function MiniMonitorApp() {
           </div>
           <div className="mini-monitor-info">
             <span>{t('miniMonitor.remaining', { count: waitingCount })}</span>
-            {etaText && <span>{etaText}</span>}
+            {timeText && <span className="mini-monitor-time" onClick={() => setShowRemaining(v => !v)}>{timeText}</span>}
           </div>
         </>
       ) : (

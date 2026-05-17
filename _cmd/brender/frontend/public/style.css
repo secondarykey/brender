@@ -2261,6 +2261,10 @@ textarea.form-input {
   font-size: 0.75rem; color: rgba(255,255,255,0.5);
   --wails-draggable: drag;
 }
+.mini-monitor-time {
+  cursor: pointer; --wails-draggable: none;
+}
+.mini-monitor-time:hover { color: rgba(255,255,255,0.8); }
 .mini-monitor-empty {
   font-size: 0.8rem; color: rgba(255,255,255,0.35);
   text-align: center;
