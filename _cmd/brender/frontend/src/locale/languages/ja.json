@@ -389,8 +389,12 @@
   },
   "code": {
     "imageFormats": "画像フォーマット",
+    "imageFormatsDesc": "レンダリングで利用できる画像フォーマットを設定します。ラベルが各画面に表示され、「拡張子」は出力ファイルの拡張子、「Blender 値」は Blender が対応するフォーマット文字列（例: PNG, JPEG, OPEN_EXR）を指定してください。",
+    "imageFormatsLink": "Blender フォーマット一覧",
     "videoFormats": "動画フォーマット",
+    "videoFormatsDesc": "動画を作成する際に選択できる出力フォーマットを設定します。お使いの ffmpeg がその拡張子に対応していることを確認してください。",
     "resolutionPresets": "解像度プリセット",
+    "resolutionPresetsDesc": "ワークスペースで選択できる解像度のプリセットを設定します。",
     "colLabel": "ラベル",
     "colExt": "拡張子",
     "colBlenderValue": "Blender 値",

@@ -4,6 +4,8 @@ import { CodesApi } from '../../lib/api/codes'
 import { useToast, useMessage } from '../../lib/toast'
 import ConfirmDialog from '../../components/ConfirmDialog'
 
+const BLENDER_FORMAT_URL = 'https://docs.blender.org/manual/en/5.1/advanced/command_line/arguments.html#format-options'
+
 const CATEGORIES = [
   { key: 'imageFormats',      labelKey: 'code.imageFormats' },
   { key: 'videoFormats',      labelKey: 'code.videoFormats' },
@@ -95,7 +97,7 @@ function CodeSettings() {
 
   return (
     <div style={{ padding: '24px', maxWidth: 900 }}>
-      <div style={{ marginBottom: 24 }}>
+      <div style={{ marginBottom: 8 }}>
         <select
           className="form-select"
           value={category}
@@ -107,6 +109,8 @@ function CodeSettings() {
           ))}
         </select>
       </div>
+
+      <CategoryDesc category={category} t={t} />
 
       {loading ? (
         <div style={{ color: '#888', padding: '16px 0' }}>{t('common.loading')}</div>
@@ -161,6 +165,23 @@ function CodeSettings() {
       >
         {t('code.resetConfirm')}
       </ConfirmDialog>
+    </div>
+  )
+}
+
+function CategoryDesc({ category, t }) {
+  const descKey = category + 'Desc'
+  return (
+    <div style={{ marginBottom: 20, padding: '10px 12px', background: '#1e1e1e', borderRadius: 6, fontSize: 12, color: '#aaa', lineHeight: 1.6 }}>
+      {t('code.' + descKey)}
+      {category === 'imageFormats' && (
+        <>
+          {' '}
+          <a href={BLENDER_FORMAT_URL} target="_blank" rel="noreferrer" style={{ color: '#4a7cdc' }}>
+            {t('code.imageFormatsLink')}
+          </a>
+        </>
+      )}
     </div>
   )
 }
