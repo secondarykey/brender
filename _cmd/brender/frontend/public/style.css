@@ -2241,6 +2241,11 @@ textarea.form-input {
 .mini-monitor-header {
   display: flex; align-items: center; justify-content: space-between;
   --wails-draggable: drag;
+  opacity: 0; height: 0; overflow: hidden;
+  transition: opacity 0.2s, height 0.2s;
+}
+.mini-monitor-root.focused .mini-monitor-header {
+  opacity: 1; height: 28px;
 }
 .mini-monitor-job-name {
   font-size: 0.8rem; color: rgba(255,255,255,0.85);

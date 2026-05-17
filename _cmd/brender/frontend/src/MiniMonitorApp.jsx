@@ -27,11 +27,17 @@ function MiniMonitorApp() {
   const { t } = useTranslation()
   const [items, setItems] = useState([])
   const [pinned, setPinned] = useState(true)
+  const [focused, setFocused] = useState(document.hasFocus())
 
   useEffect(() => {
     import('@wailsio/runtime').then(({ Window }) => {
       Window.SetAlwaysOnTop(true).catch(() => {})
     }).catch(() => {})
+    const onFocus = () => setFocused(true)
+    const onBlur = () => setFocused(false)
+    window.addEventListener('focus', onFocus)
+    window.addEventListener('blur', onBlur)
+    return () => { window.removeEventListener('focus', onFocus); window.removeEventListener('blur', onBlur) }
   }, [])
 
   const togglePin = () => {
@@ -69,7 +75,7 @@ function MiniMonitorApp() {
   const handleRestore = () => { QueueApi.closeMiniMonitor() }
 
   return (
-    <div className="mini-monitor-root">
+    <div className={`mini-monitor-root${focused ? ' focused' : ''}`}>
       <div className="mini-monitor-header">
         <button
           className="mini-monitor-icon-btn"
