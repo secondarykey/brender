@@ -28,8 +28,8 @@ func getMaxConcurrentJobs() int64 {
 	return int64(env.MaxConcurrentJobs)
 }
 
-// RecoverStaleQueues は起動時に running 状態のまま残ったキューを waiting に戻す。
-// 前回のプロセス終了で孤立したキューを再実行可能にする。
+// RecoverStaleQueues は起動時に running 状態のまま残ったキューを検出し、
+// 旧ジョブを interrupted で閉じて新しい Job+Queue を recovering で作成する。
 func RecoverStaleQueues() {
 	queues, err := model.ListRunningQueues()
 	if err != nil {
@@ -39,19 +39,88 @@ func RecoverStaleQueues() {
 	if len(queues) == 0 {
 		return
 	}
+	var recovered int
 	for _, q := range queues {
 		if q.ProcessID > 0 {
 			if proc, err := os.FindProcess(q.ProcessID); err == nil {
 				proc.Kill()
 			}
 		}
-		if err := model.ResetQueueToRecovering(q.ID); err != nil {
-			log.Println("RecoverStaleQueues: ResetQueueToRecovering:", err)
+
+		oldJob, err := model.GetJob(q.ID)
+		if err != nil || oldJob == nil {
+			log.Printf("RecoverStaleQueues: job %s not found, deleting orphan queue", q.ID)
+			model.DeleteQueue(q.ID)
 			continue
 		}
-		log.Printf("RecoverStaleQueues: queue %s reset to waiting", q.ID)
+
+		now := time.Now()
+		diskSize := calcDirSize(oldJob.OutputDir)
+		if err := model.UpdateJobDone(q.ID, model.JobInterrupted, "", &now, diskSize, model.JobDataCorrupted); err != nil {
+			log.Println("RecoverStaleQueues: UpdateJobDone:", err)
+		}
+		if err := model.DeleteQueue(q.ID); err != nil {
+			log.Println("RecoverStaleQueues: DeleteQueue:", err)
+			continue
+		}
+
+		newID, err := model.NewQueueID()
+		if err != nil {
+			log.Println("RecoverStaleQueues: NewQueueID:", err)
+			continue
+		}
+
+		newOutputDir := filepath.Join(filepath.Dir(oldJob.OutputDir), newID)
+		if err := os.MkdirAll(newOutputDir, 0755); err != nil {
+			log.Println("RecoverStaleQueues: MkdirAll:", err)
+			continue
+		}
+
+		newJob := &model.Job{
+			ID:            newID,
+			Name:          oldJob.Name,
+			ProjectID:     oldJob.ProjectID,
+			WorkspaceID:   oldJob.WorkspaceID,
+			ProjectFileID: oldJob.ProjectFileID,
+			BlenderPath:   oldJob.BlenderPath,
+			BlenderFile:   oldJob.BlenderFile,
+			OutputDir:     newOutputDir,
+			Scene:         oldJob.Scene,
+			Engine:        oldJob.Engine,
+			StartFrame:    oldJob.StartFrame,
+			EndFrame:      oldJob.EndFrame,
+			FrameStep:     oldJob.FrameStep,
+			Thread:        oldJob.Thread,
+			Samples:       oldJob.Samples,
+			ResolutionX:   oldJob.ResolutionX,
+			ResolutionY:   oldJob.ResolutionY,
+			Camera:        oldJob.Camera,
+			OutputExt:     oldJob.OutputExt,
+			BlenderFormat: oldJob.BlenderFormat,
+			EnqueuedAt:    &now,
+		}
+		if err := model.CreateJob(newJob); err != nil {
+			log.Println("RecoverStaleQueues: CreateJob:", err)
+			continue
+		}
+
+		newQueue := &model.Queue{
+			ID:          newID,
+			ProjectID:   oldJob.ProjectID,
+			WorkspaceID: oldJob.WorkspaceID,
+			Status:      model.QueueRecovering,
+		}
+		if err := model.CreateQueue(newQueue); err != nil {
+			log.Println("RecoverStaleQueues: CreateQueue:", err)
+			continue
+		}
+
+		log.Printf("RecoverStaleQueues: job %s interrupted, new queue %s created", q.ID, newID)
+		recovered++
 	}
-	log.Printf("RecoverStaleQueues: %d queue(s) recovered", len(queues))
+	if recovered > 0 {
+		log.Printf("RecoverStaleQueues: %d queue(s) recovered", recovered)
+	}
 }
 
 // StartRecoveredQueues はリカバリされた waiting キューのスケジューリングを開始する。

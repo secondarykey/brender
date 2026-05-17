@@ -62,7 +62,8 @@
     "running": "実行中",
     "completed": "完了",
     "error": "エラー",
-    "cancelled": "キャンセル"
+    "cancelled": "キャンセル",
+    "interrupted": "中断"
   },
   "dataStatus": {
     "none": "データなし",

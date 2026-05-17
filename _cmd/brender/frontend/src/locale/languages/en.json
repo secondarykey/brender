@@ -62,7 +62,8 @@
     "running": "Running",
     "completed": "Completed",
     "error": "Error",
-    "cancelled": "Cancelled"
+    "cancelled": "Cancelled",
+    "interrupted": "Interrupted"
   },
   "dataStatus": {
     "none": "No data",

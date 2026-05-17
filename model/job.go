@@ -9,9 +9,10 @@ import (
 )
 
 const (
-	JobCompleted = "completed"
-	JobError     = "error"
-	JobCancelled = "cancelled"
+	JobCompleted   = "completed"
+	JobError       = "error"
+	JobCancelled   = "cancelled"
+	JobInterrupted = "interrupted"
 )
 
 const (

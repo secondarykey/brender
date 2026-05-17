@@ -1332,8 +1332,9 @@ textarea.form-input {
 .status-recovering  { background: rgba(209,89,4,0.2); color: #f0a050; }
 .status-running     { background: rgba(74,124,220,0.25); color: #7eb2ff; }
 .status-completed { background: rgba(39,174,96,0.2);  color: #5dde8e; }
-.status-error     { background: rgba(231,76,60,0.2);  color: #f17e72; }
-.status-cancelled { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.35); }
+.status-error       { background: rgba(231,76,60,0.2);  color: #f17e72; }
+.status-cancelled   { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.35); }
+.status-interrupted { background: rgba(155,89,182,0.2); color: #bb8fce; }
 
 @keyframes pulse-ring {
   0%   { opacity: 1; }
