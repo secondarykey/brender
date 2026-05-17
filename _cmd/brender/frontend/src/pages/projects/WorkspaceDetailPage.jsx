@@ -731,10 +731,10 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
       </div>
 
       <div className="form-field" style={{ marginTop: 16 }}>
-        <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <input type="checkbox" checked={form.autoLock} onChange={e => set('autoLock', e.target.checked)} />
-          {t('workspace.autoLock')}
-        </label>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <input type="checkbox" id="autoLock" checked={form.autoLock} onChange={e => set('autoLock', e.target.checked)} />
+          <label htmlFor="autoLock" className="form-label" style={{ marginBottom: 0, cursor: 'pointer' }}>{t('workspace.autoLock')}</label>
+        </div>
         {form.autoLock && (
           <div className="form-row" style={{ marginTop: 8 }}>
             <div className="form-field" style={{ flex: 1 }}>
