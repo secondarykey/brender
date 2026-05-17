@@ -20,7 +20,7 @@ function VideoSettings() {
         if (!env) return
         setCmd(env.ffmpeg_cmd        || '')
         setFps(env.ffmpeg_fps        ? String(env.ffmpeg_fps) : '')
-        setOutExt(env.ffmpeg_out_ext || '')
+        setOutExt(env.ffmpeg_out_ext || 'mp4')
         setArgs(env.ffmpeg_args      || '')
       })
       .catch(err => showError(String(err)))
@@ -83,7 +83,6 @@ function VideoSettings() {
             value={outExt}
             onChange={e => setOutExt(e.target.value)}
           >
-            <option value="">—</option>
             {videoFormats.map(f => (
               <option key={f.code} value={f.ext}>{f.label}</option>
             ))}
