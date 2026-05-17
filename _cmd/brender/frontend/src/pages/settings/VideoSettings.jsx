@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Dialogs } from '@wailsio/runtime'
 import { EnvironmentApi, CodesApi } from '../../lib/api'
 import { useToast, useMessage } from '../../lib/toast'
 
@@ -20,7 +21,7 @@ function VideoSettings() {
         if (!env) return
         setCmd(env.ffmpeg_cmd        || '')
         setFps(env.ffmpeg_fps        ? String(env.ffmpeg_fps) : '')
-        setOutExt(env.ffmpeg_out_ext || '')
+        setOutExt(env.ffmpeg_out_ext || 'mp4')
         setArgs(env.ffmpeg_args      || '')
       })
       .catch(err => showError(String(err)))
@@ -50,13 +51,32 @@ function VideoSettings() {
       <div className="form-group">
         <label className="form-label">{t('settings.ffmpegCmd')}</label>
         <p className="setting-desc">{t('settings.ffmpegCmdHint')}</p>
-        <input
-          className="form-input"
-          type="text"
-          value={cmd}
-          onChange={e => { setCmd(e.target.value) }}
-          placeholder="ffmpeg"
-        />
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <input
+            className="form-input"
+            type="text"
+            value={cmd}
+            readOnly
+            placeholder="ffmpeg"
+            style={{ flex: 1, cursor: 'default' }}
+          />
+          <button
+            className="btn btn-outline btn-sm"
+            onClick={async () => {
+              try {
+                const path = await Dialogs.OpenFile({})
+                if (path) setCmd(path)
+              } catch (_) {}
+            }}
+          >
+            {t('settings.selectFolder')}
+          </button>
+          {cmd && (
+            <button className="btn btn-ghost btn-sm" onClick={() => setCmd('')}>
+              {t('common.cancel')}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="form-group">
@@ -66,7 +86,7 @@ function VideoSettings() {
           className="form-input"
           type="number"
           min="1"
-          style={{ width: 120 }}
+          style={{ width: 120, textAlign: 'right' }}
           value={fps}
           onChange={e => { setFps(e.target.value) }}
           placeholder="30"
@@ -83,7 +103,6 @@ function VideoSettings() {
             value={outExt}
             onChange={e => setOutExt(e.target.value)}
           >
-            <option value="">—</option>
             {videoFormats.map(f => (
               <option key={f.code} value={f.ext}>{f.label}</option>
             ))}
