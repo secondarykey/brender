@@ -1997,7 +1997,7 @@ textarea.form-input {
 .data-status-available { background: rgba(74,180,100,0.18); color: #6dd98a; }
 .data-status-deleted   { background: rgba(200,100,50,0.18); color: #e0946a; }
 .data-status-corrupted { background: rgba(180,60,60,0.22); color: #e07070; }
-.data-status-modified  { background: rgba(180,150,40,0.20); color: #d4c060; }
+.data-status-modified  { background: rgba(220,140,50,0.20); color: #e0a040; }
 .data-status-locked    { background: rgba(220,180,40,0.20); color: #e8c840; }
 
 /* Pagination */
