@@ -713,11 +713,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <label className="form-label" style={{ marginBottom: 0 }}>{t('workspace.outputFormat')}</label>
           {form.outputFormat === '' && (
-            <span className="form-hint" style={{ display: 'inline', whiteSpace: 'nowrap' }}>
-              {t('workspace.outputFormatEffective', {
-                format: imageFormats.find(f => f.code === (envOutputFormat || 'PNG'))?.label ?? (envOutputFormat || 'PNG')
-              })}
-            </span>
+            <DefaultTag value={imageFormats.find(f => f.code === (envOutputFormat || 'PNG'))?.label ?? (envOutputFormat || 'PNG')} t={t} />
           )}
         </div>
         <select className="form-select" style={{ width: 200 }} value={form.outputFormat} onChange={e => set('outputFormat', e.target.value)}>
