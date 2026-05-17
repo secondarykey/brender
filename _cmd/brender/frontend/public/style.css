@@ -2240,7 +2240,7 @@ textarea.form-input {
   position: relative;
 }
 .mini-monitor-header {
-  position: absolute; top: 6px; left: 10px; right: 10px;
+  position: absolute; top: 0; left: 10px; right: 10px;
   display: flex; align-items: center; justify-content: space-between;
   pointer-events: none;
   opacity: 0;
