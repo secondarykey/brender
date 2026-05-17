@@ -152,7 +152,16 @@ function ActiveTab({ navigate }) {
           <tbody>
             {items.map(q => (
               <tr key={q.id} className={q.status === 'running' ? 'row-running' : ''}>
-                <td>{q.name || '—'}</td>
+                <td>
+                  <button className="link-btn" onClick={() => navigate && navigate('job', {
+                    jobID: q.id,
+                    initialTab: 'detail',
+                    backPage: 'queue',
+                    backParams: {},
+                  })}>
+                    {q.name || '—'}
+                  </button>
+                </td>
                 <td className="col-status"><StatusBadge status={q.status} /></td>
                 <ProgressCell q={q} />
                 <td className="col-datetime date-cell">

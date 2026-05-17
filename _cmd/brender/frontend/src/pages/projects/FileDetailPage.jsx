@@ -344,7 +344,6 @@ function HistoryTab({ projectID, fileID, navigate, projectName, fileName }) {
     navigate('job', {
       job: j,
       initialTab: 'render',
-      projectName, fileName,
       backPage: 'file',
       backParams: { projectID, projectName, fileID, fileName },
     })

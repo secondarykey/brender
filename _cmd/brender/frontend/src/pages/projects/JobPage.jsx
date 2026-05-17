@@ -728,42 +728,51 @@ function DataViewTab({ job }) {
 }
 
 // ── ページ本体 ────────────────────────────────────────────
-function JobPage({ job: initialJob, navigate, backPage, backParams, initialTab, projectName: propProjectName, fileName: propFileName, workspaceName: propWorkspaceName }) {
+function JobPage({ job: initialJob, jobID: propJobID, navigate, backPage, backParams, initialTab }) {
   const { t } = useTranslation()
-  const hasData = initialJob && [2, 3, 6, 7, 8, 9].includes(initialJob.data_status)
-  const [tab, setTab]       = useState(hasData ? 'render' : 'detail')
-  const [job, setJob]       = useState(initialJob)
-  const [names, setNames]   = useState({ project: propProjectName || '', file: propFileName || initialJob.file_name || '', workspace: propWorkspaceName || '' })
+  const id = propJobID || initialJob?.id
+  const [tab, setTab]       = useState(initialJob && [2, 3, 6, 7, 8, 9].includes(initialJob.data_status) ? 'render' : 'detail')
+  const [job, setJob]       = useState(initialJob || null)
+  const [names, setNames]   = useState({ project: '', file: '', workspace: '' })
 
   useLayoutEffect(() => {
     if (initialTab) setTab(initialTab)
   }, [])
 
   useEffect(() => {
-    const missing = []
-    if (!names.project && initialJob.project_id) {
-      missing.push(ProjectApi.get({ id: initialJob.project_id }).then(d => ({ project: d?.project?.name || '' })))
+    if (!job || !job.status) {
+      QueueApi.getJob({ id }).then(j => { if (j) setJob(j) }).catch(() => {})
     }
-    if (!names.workspace && initialJob.workspace_id && initialJob.project_id) {
-      missing.push(WorkspaceApi.get({ projectID: initialJob.project_id, workspaceID: initialJob.workspace_id }).then(d => ({ workspace: d?.workspace?.name || '' })))
+  }, [id])
+
+  useEffect(() => {
+    if (!job) return
+    const fetches = []
+    if (job.project_id) {
+      fetches.push(ProjectApi.get({ id: job.project_id }).then(d => ({ project: d?.project?.name || '' })))
     }
-    if (missing.length > 0) {
-      Promise.all(missing).then(results => {
+    if (job.project_id && job.workspace_id) {
+      fetches.push(WorkspaceApi.get({ projectID: job.project_id, workspaceID: job.workspace_id }).then(d => ({ workspace: d?.workspace?.name || '' })))
+    }
+    setNames(prev => ({ ...prev, file: job.file_name || '' }))
+    if (fetches.length > 0) {
+      Promise.all(fetches).then(results => {
         setNames(prev => Object.assign({}, prev, ...results))
       }).catch(() => {})
     }
-  }, [initialJob.project_id, initialJob.workspace_id])
+  }, [job?.project_id, job?.workspace_id, job?.file_name])
 
   useEffect(() => {
+    if (!job?.project_id || !job?.workspace_id) return
     return onAppEvent('queue:changed', () => {
-      QueueApi.listJobsByWorkspace({ projectID: initialJob.project_id, workspaceID: initialJob.workspace_id })
+      QueueApi.listJobsByWorkspace({ projectID: job.project_id, workspaceID: job.workspace_id })
         .then(list => {
-          const updated = (list || []).find(j => j.id === initialJob.id)
+          const updated = (list || []).find(j => j.id === id)
           if (updated) setJob(updated)
         })
         .catch(() => {})
     })
-  }, [initialJob.id, initialJob.project_id, initialJob.workspace_id])
+  }, [id, job?.project_id, job?.workspace_id])
 
   const handleDataStatusChanged = (next) => {
     setJob(prev => ({ ...prev, data_status: next }))
@@ -771,6 +780,10 @@ function JobPage({ job: initialJob, navigate, backPage, backParams, initialTab, 
 
   const handleDeleted = () => {
     navigate(backPage || 'projects', backParams || {})
+  }
+
+  if (!job) {
+    return <div className="page"><p className="setting-desc">{t('common.loading')}</p></div>
   }
 
   const tabs = [

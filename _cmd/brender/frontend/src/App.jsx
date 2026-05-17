@@ -105,13 +105,11 @@ function App() {
         return (
           <JobPage
             job={p.job}
+            jobID={p.jobID}
             navigate={navigate}
             backPage={p.backPage}
             backParams={p.backParams}
             initialTab={p.initialTab}
-            projectName={p.projectName}
-            fileName={p.fileName}
-            workspaceName={p.workspaceName}
           />
         )
       case 'queue':
