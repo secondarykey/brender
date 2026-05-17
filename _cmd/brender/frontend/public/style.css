@@ -2234,13 +2234,13 @@ textarea.form-input {
   border: 1px solid rgba(255,255,255,0.08);
   --wails-draggable: drag;
   user-select: none;
-  padding: 10px 14px;
+  padding: 16px;
   gap: 8px;
   box-sizing: border-box;
   position: relative;
 }
 .mini-monitor-header {
-  position: absolute; top: 0; right: 10px;
+  position: absolute; top: 8px; right: 8px;
   display: flex; align-items: center; justify-content: flex-end; gap: 4px;
   pointer-events: none;
   opacity: 0;
