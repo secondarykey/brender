@@ -78,15 +78,15 @@ function MiniMonitorApp() {
     <div className={`mini-monitor-root${focused ? ' focused' : ''}`}>
       <div className="mini-monitor-header">
         <button
-          className="mini-monitor-icon-btn"
-          onClick={handleRestore}
-          title={t('miniMonitor.restore')}
-        >&#x21A9;</button>
-        <button
           className={`mini-monitor-icon-btn${pinned ? ' active' : ''}`}
           onClick={togglePin}
           title={t('title.alwaysOnTop')}
         >&#x1F4CC;</button>
+        <button
+          className="mini-monitor-icon-btn"
+          onClick={handleRestore}
+          title={t('miniMonitor.restore')}
+        >&#x21A9;</button>
       </div>
 
       {running ? (

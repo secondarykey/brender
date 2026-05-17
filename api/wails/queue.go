@@ -185,8 +185,8 @@ func (s *Queue) OpenMiniMonitor() error {
 	win := app.Window.NewWithOptions(application.WebviewWindowOptions{
 		Name:             miniMonitorWindowName,
 		Title:            "Queue Monitor",
-		Width:            400,
-		Height:           180,
+		Width:            600,
+		Height:           90,
 		Frameless:        true,
 		URL:              "/?minimonitor=1",
 		BackgroundColour: application.NewRGB(26, 26, 26),
