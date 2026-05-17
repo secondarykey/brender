@@ -50,6 +50,7 @@ function TitleBar() {
         onCancel={() => setConfirmClose(false)}
         confirmLabel={t('title.closeAnyway')}
         confirmClassName="btn btn-danger"
+        hold
       >
         <p>{t('title.queueRunningWarning')}</p>
       </ConfirmDialog>
