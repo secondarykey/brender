@@ -87,6 +87,9 @@ func run() error {
 		return xerrors.Errorf("initDB() error: %w", err)
 	}
 
+	// 前回終了時に running のまま残ったキューを waiting に戻す
+	api.RecoverStaleQueues()
+
 	//国際化関連の初期処理
 
 	//移行処理
@@ -143,6 +146,9 @@ func run() error {
 	api.QueueChangedHook = func(count int64) {
 		application.Get().Event.Emit("queue:changed", count)
 	}
+
+	// リカバリされたキューのスケジューリングを開始
+	api.StartRecoveredQueues()
 
 	// 移行進捗イベントをフロントエンドへ通知
 	api.MigrationHook = func(projectID string, status string, pct float64) {

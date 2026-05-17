@@ -10,8 +10,9 @@ import (
 )
 
 const (
-	QueueWaiting = "waiting"
-	QueueRunning = "running"
+	QueueWaiting    = "waiting"
+	QueueRunning    = "running"
+	QueueRecovering = "recovering"
 )
 
 type Queue struct {
@@ -60,6 +61,25 @@ func UpdateQueueRunning(id string, pid int) error {
 	return nil
 }
 
+func ListRunningQueues() ([]*Queue, error) {
+	var list []*Queue
+	if res := db.Where("status = ?", QueueRunning).Find(&list); res.Error != nil {
+		return nil, xerrors.Errorf("ListRunningQueues: %w", res.Error)
+	}
+	return list, nil
+}
+
+func ResetQueueToRecovering(id string) error {
+	if res := db.Model(&Queue{}).Where("id = ?", id).Updates(map[string]any{
+		"status":     QueueRecovering,
+		"process_id": 0,
+		"started_at": nil,
+	}); res.Error != nil {
+		return xerrors.Errorf("ResetQueueToRecovering: %w", res.Error)
+	}
+	return nil
+}
+
 func CountRunningQueues() (int64, error) {
 	var count int64
 	if res := db.Model(&Queue{}).Where("status = ?", QueueRunning).Count(&count); res.Error != nil {
@@ -68,11 +88,11 @@ func CountRunningQueues() (int64, error) {
 	return count, nil
 }
 
-// GetOldestWaitingQueue は待機中のキューを登録順（id asc）で1件返す。
+// GetOldestWaitingQueue は待機中（waiting/recovering）のキューを登録順（id asc）で1件返す。
 // 存在しない場合は nil, nil を返す。
 func GetOldestWaitingQueue() (*Queue, error) {
 	var q Queue
-	res := db.Where("status = ?", QueueWaiting).Order("id asc").First(&q)
+	res := db.Where("status IN ?", []string{QueueWaiting, QueueRecovering}).Order("id asc").First(&q)
 	if res.Error != nil {
 		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
 			return nil, nil

@@ -10,11 +10,12 @@ import Pagination from '../../components/Pagination'
 function StatusBadge({ status }) {
   const { t } = useTranslation()
   const labels = {
-    waiting:   t('status.waiting'),
-    running:   t('status.running'),
-    completed: t('status.completed'),
-    error:     t('status.error'),
-    cancelled: t('status.cancelled'),
+    waiting:    t('status.waiting'),
+    recovering: t('status.recovering'),
+    running:    t('status.running'),
+    completed:  t('status.completed'),
+    error:      t('status.error'),
+    cancelled:  t('status.cancelled'),
   }
   return <span className={`status-badge status-${status}`}>{labels[status] ?? status}</span>
 }
@@ -63,7 +64,7 @@ function subFramePct(q) {
 function ProgressCell({ q }) {
   const { t } = useTranslation()
   const isRunning = q.status === 'running'
-  const isWaiting = q.status === 'waiting'
+  const isWaiting = q.status === 'waiting' || q.status === 'recovering'
 
   const totalFrames = Math.max(1, q.end_frame - q.start_frame + 1)
   const hasFrame   = isRunning && q.now_frame > 0 && q.frame_active

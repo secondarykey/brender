@@ -58,6 +58,7 @@
   },
   "status": {
     "waiting": "実行待ち",
+    "recovering": "再実行待ち",
     "running": "実行中",
     "completed": "完了",
     "error": "エラー",

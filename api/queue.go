@@ -28,6 +28,39 @@ func getMaxConcurrentJobs() int64 {
 	return int64(env.MaxConcurrentJobs)
 }
 
+// RecoverStaleQueues は起動時に running 状態のまま残ったキューを waiting に戻す。
+// 前回のプロセス終了で孤立したキューを再実行可能にする。
+func RecoverStaleQueues() {
+	queues, err := model.ListRunningQueues()
+	if err != nil {
+		log.Println("RecoverStaleQueues: ListRunningQueues:", err)
+		return
+	}
+	if len(queues) == 0 {
+		return
+	}
+	for _, q := range queues {
+		if q.ProcessID > 0 {
+			if proc, err := os.FindProcess(q.ProcessID); err == nil {
+				proc.Kill()
+			}
+		}
+		if err := model.ResetQueueToRecovering(q.ID); err != nil {
+			log.Println("RecoverStaleQueues: ResetQueueToRecovering:", err)
+			continue
+		}
+		log.Printf("RecoverStaleQueues: queue %s reset to waiting", q.ID)
+	}
+	log.Printf("RecoverStaleQueues: %d queue(s) recovered", len(queues))
+}
+
+// StartRecoveredQueues はリカバリされた waiting キューのスケジューリングを開始する。
+// QueueChangedHook 設定後に呼ぶこと。
+func StartRecoveredQueues() {
+	startNextWaiting()
+	notifyQueueChanged()
+}
+
 // scheduleMu はキューの起動判定と DB 更新をアトミックに行うためのミューテックス。
 var scheduleMu sync.Mutex
 
@@ -783,7 +816,7 @@ func CancelQueue(id string) error {
 	if err != nil {
 		return xerrors.Errorf("GetQueue: %w", err)
 	}
-	if q.Status != model.QueueRunning && q.Status != model.QueueWaiting {
+	if q.Status != model.QueueRunning && q.Status != model.QueueWaiting && q.Status != model.QueueRecovering {
 		return xerrors.New("実行中または待機中のジョブではありません")
 	}
 	if q.ProcessID > 0 {

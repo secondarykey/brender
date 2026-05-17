@@ -58,6 +58,7 @@
   },
   "status": {
     "waiting": "Waiting",
+    "recovering": "Re-queued",
     "running": "Running",
     "completed": "Completed",
     "error": "Error",
