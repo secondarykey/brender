@@ -70,40 +70,35 @@ function MiniMonitorApp() {
 
   return (
     <div className="mini-monitor-root">
-      <div className="mini-monitor-body">
-        {running ? (
-          <>
-            <div className="mini-monitor-job-name">{running.name || '—'}</div>
-            <div className="mini-monitor-progress-row">
-              <div className="progress-bar-track mini-monitor-track">
-                <div className="progress-bar-fill" style={{ width: `${pct.toFixed(2)}%` }} />
-              </div>
-              <span className="mini-monitor-pct">{pct.toFixed(1)}%</span>
-            </div>
-            {etaText && <div className="mini-monitor-eta">{t('miniMonitor.eta', { time: etaText })}</div>}
-          </>
-        ) : (
-          <div className="mini-monitor-empty">{t('miniMonitor.noActiveJobs')}</div>
-        )}
-
-        <div className="mini-monitor-footer">
-          <span className="mini-monitor-waiting">
-            {t('miniMonitor.waiting', { count: waitingCount })}
-          </span>
-          <div className="mini-monitor-actions">
-            <button
-              className={`mini-monitor-icon-btn${pinned ? ' active' : ''}`}
-              onClick={togglePin}
-              title={t('title.alwaysOnTop')}
-            >&#x1F4CC;</button>
-            <button
-              className="mini-monitor-icon-btn"
-              onClick={handleRestore}
-              title={t('miniMonitor.restore')}
-            >&#x21A9;</button>
-          </div>
-        </div>
+      <div className="mini-monitor-header">
+        <button
+          className="mini-monitor-icon-btn"
+          onClick={handleRestore}
+          title={t('miniMonitor.restore')}
+        >&#x21A9;</button>
+        <button
+          className={`mini-monitor-icon-btn${pinned ? ' active' : ''}`}
+          onClick={togglePin}
+          title={t('title.alwaysOnTop')}
+        >&#x1F4CC;</button>
       </div>
+
+      {running ? (
+        <>
+          <div className="mini-monitor-progress-row">
+            <div className="progress-bar-track mini-monitor-track">
+              <div className="progress-bar-fill" style={{ width: `${pct.toFixed(2)}%` }} />
+            </div>
+            <span className="mini-monitor-pct">{pct.toFixed(1)}%</span>
+          </div>
+          <div className="mini-monitor-info">
+            <span>{t('miniMonitor.remaining', { count: waitingCount })}</span>
+            {etaText && <span>{etaText}</span>}
+          </div>
+        </>
+      ) : (
+        <div className="mini-monitor-empty">{t('miniMonitor.noActiveJobs')}</div>
+      )}
     </div>
   )
 }

@@ -452,11 +452,9 @@
     "unsaved": "You have unsaved changes"
   },
   "miniMonitor": {
-    "title": "Queue Monitor",
     "noActiveJobs": "No active jobs",
-    "waiting": "Waiting: {{count}}",
-    "restore": "Restore Main",
-    "eta": "{{time}} remaining"
+    "remaining": "{{count}} remaining",
+    "restore": "Restore Main"
   },
   "render": {
     "confirmTitle": "Start rendering?",

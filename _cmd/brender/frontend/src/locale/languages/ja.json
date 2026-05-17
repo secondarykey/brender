@@ -452,11 +452,9 @@
     "unsaved": "未保存の変更があります"
   },
   "miniMonitor": {
-    "title": "キューモニター",
     "noActiveJobs": "実行中のジョブはありません",
-    "waiting": "待機中: {{count}}件",
-    "restore": "メインに戻る",
-    "eta": "残り {{time}}"
+    "remaining": "残り {{count}}件",
+    "restore": "メインに戻る"
   },
   "render": {
     "confirmTitle": "レンダリングを実行しますか？",
