@@ -183,6 +183,7 @@
     "swapResolution": "Swap X and Y",
     "outputFormat": "Output Format",
     "outputFormatDefault": "System Default",
+    "outputFormatEffective": "→ {{format}} will be used",
     "specifyFrames": "Specify frames",
     "specifyFrameRange": "Specify frame range",
     "startFrame": "Start",

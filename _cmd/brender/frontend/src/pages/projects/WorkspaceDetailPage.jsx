@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
-import { WorkspaceApi, BlenderApi, QueueApi, ProjectApi, WorkDirApi, CodesApi } from '../../lib/api'
+import { WorkspaceApi, BlenderApi, QueueApi, ProjectApi, WorkDirApi, CodesApi, EnvironmentApi } from '../../lib/api'
 import { useToast, useMessage } from '../../lib/toast'
 import { onAppEvent } from '../../lib/appEvents'
 import Pagination from '../../components/Pagination'
@@ -253,6 +253,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
   const [resolvingRender, setResolvingRender] = useState(false)
   const [imageFormats, setImageFormats]         = useState([])
   const [resolutionPresets, setResolutionPresets] = useState([])
+  const [envOutputFormat, setEnvOutputFormat]   = useState('')
   const nameRef      = useRef(null)
   const hasFocused   = useRef(false)
   const lastFrameSpec      = useRef(null) // OFF 直前のフレーム値を退避
@@ -300,6 +301,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
     BlenderApi.getCPUCount().then(n => setCpuCount(n)).catch(() => {})
     CodesApi.getImageFormats().then(list => setImageFormats(list || [])).catch(() => {})
     CodesApi.getResolutionPresets().then(list => setResolutionPresets(list || [])).catch(() => {})
+    EnvironmentApi.get().then(env => setEnvOutputFormat(env?.output_format || '')).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -705,6 +707,13 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
             <option key={f.code} value={f.code}>{f.label}</option>
           ))}
         </select>
+        {form.outputFormat === '' && (
+          <span className="form-hint">
+            {t('workspace.outputFormatEffective', {
+              format: imageFormats.find(f => f.code === (envOutputFormat || 'PNG'))?.label ?? (envOutputFormat || 'PNG')
+            })}
+          </span>
+        )}
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -30 }}>
