@@ -140,6 +140,7 @@ func run() error {
 	// メインウィンドウが閉じられたらアプリ全体を終了する（ログウィンドウも閉じる）
 	mainWin.RegisterHook(events.Common.WindowClosing, func(_ *application.WindowEvent) {
 		api.KillRunningQueues()
+		model.Close()
 		application.Get().Quit()
 	})
 
