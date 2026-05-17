@@ -643,15 +643,16 @@ func applyAutoLock(jobID string, diskSize int64) {
 		log.Println("applyAutoLock lock error:", err)
 		return
 	}
-	if ws.AutoLockKeep <= 0 {
-		return
+	keep := ws.AutoLockKeep
+	if keep < 1 {
+		keep = 1
 	}
 	count, err := model.CountAutoLockedJobs(ws.ID)
 	if err != nil {
 		log.Println("applyAutoLock count error:", err)
 		return
 	}
-	for count > int64(ws.AutoLockKeep) {
+	for count > int64(keep) {
 		oldest, err := model.GetOldestAutoLockedJob(ws.ID)
 		if err != nil || oldest == nil {
 			break

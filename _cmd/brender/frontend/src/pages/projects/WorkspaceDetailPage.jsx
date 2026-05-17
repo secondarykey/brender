@@ -735,7 +735,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
 
       <NoteSection value={note} onChange={setNote} />
 
-      <div className="form-field" style={{ marginTop: 16 }}>
+      <div className="form-field">
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <input type="checkbox" id="autoLock" checked={form.autoLock} onChange={e => set('autoLock', e.target.checked)} />
           <label htmlFor="autoLock" className="form-label" style={{ marginBottom: 0, cursor: 'pointer' }}>{t('workspace.autoLock')}</label>
@@ -744,13 +744,14 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
           <div className="form-row" style={{ marginTop: 8 }}>
             <div className="form-field" style={{ flex: 1 }}>
               <label className="form-label">{t('workspace.autoLockMinSize')}</label>
-              <input className="form-input" style={{ width: 120, textAlign: 'right' }} type="number" min={0} value={Math.round(form.autoLockMinSize / (1024 * 1024))} onChange={e => set('autoLockMinSize', Number(e.target.value) * 1024 * 1024)} />
-              <span className="form-hint">MB</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <input className="form-input" style={{ width: 120, textAlign: 'right' }} type="number" min={0} value={Math.round(form.autoLockMinSize / (1024 * 1024))} onChange={e => set('autoLockMinSize', Number(e.target.value) * 1024 * 1024)} />
+                <span style={{ fontSize: '0.85rem', opacity: 0.7 }}>MB</span>
+              </div>
             </div>
             <div className="form-field" style={{ flex: 1 }}>
               <label className="form-label">{t('workspace.autoLockKeep')}</label>
-              <input className="form-input" style={{ width: 80, textAlign: 'right' }} type="number" min={0} value={form.autoLockKeep} onChange={e => set('autoLockKeep', Number(e.target.value))} />
-              <span className="form-hint">{t('workspace.autoLockKeepHint')}</span>
+              <input className="form-input" style={{ width: 80, textAlign: 'right' }} type="number" min={1} value={form.autoLockKeep} onChange={e => set('autoLockKeep', Math.max(1, Number(e.target.value)))} />
             </div>
           </div>
         )}

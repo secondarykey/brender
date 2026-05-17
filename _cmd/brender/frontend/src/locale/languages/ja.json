@@ -222,7 +222,6 @@
     "autoLock": "完了時に自動ロック",
     "autoLockMinSize": "対象最小容量",
     "autoLockKeep": "保持件数",
-    "autoLockKeepHint": "0 = 無制限",
     "createDialog": {
       "title": "ワークスペース作成",
       "multipleFromFile": "ファイルの値から複数作成する",

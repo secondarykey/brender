@@ -222,7 +222,6 @@
     "autoLock": "Auto-lock on completion",
     "autoLockMinSize": "Min size",
     "autoLockKeep": "Keep count",
-    "autoLockKeepHint": "0 = unlimited",
     "createDialog": {
       "title": "Create Workspace",
       "multipleFromFile": "Create multiple from file values",
