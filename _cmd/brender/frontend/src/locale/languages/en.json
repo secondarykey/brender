@@ -20,6 +20,7 @@
     "versionUnknown": "Version unknown",
     "lock": "Lock",
     "unlock": "Unlock",
+    "locked": "Locked",
     "automatic": "Auto",
     "loop": "Loop",
     "processing": "Processing...",

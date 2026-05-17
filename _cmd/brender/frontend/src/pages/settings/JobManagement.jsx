@@ -29,12 +29,14 @@ const DATA_STATUS_GROUPS = [
 
 function DataStatusBadge({ status }) {
   const { t } = useTranslation()
-  const key = DATA_STATUS_LABELS[status] ?? 'none'
+  const base = status % 2 === 1 ? status - 1 : status
+  const baseKey = DATA_STATUS_LABELS[base] ?? 'none'
   const isLocked = status % 2 === 1
   return (
-    <span className={`status-badge ${isLocked ? 'status-locked' : ''} data-status-${key}`}>
-      {t(`dataStatus.${key}`)}
-    </span>
+    <>
+      <span className={`data-status-badge data-status-${baseKey}`}>{t(`dataStatus.${baseKey}`)}</span>
+      {isLocked && <span className="data-status-badge data-status-locked">{t('common.locked')}</span>}
+    </>
   )
 }
 

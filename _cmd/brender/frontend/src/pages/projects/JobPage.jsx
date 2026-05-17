@@ -29,6 +29,8 @@ function dataStatusClass(s) {
 
 function DataStatusBadge({ status }) {
   const { t } = useTranslation()
+  const base = status % 2 === 1 ? status - 1 : status
+  const isLocked = status % 2 === 1
   const labels = {
     0: t('dataStatus.none'),
     2: t('dataStatus.available'),
@@ -36,8 +38,12 @@ function DataStatusBadge({ status }) {
     6: t('dataStatus.corrupted'),
     8: t('dataStatus.modified'),
   }
-  const label = status % 2 === 1 ? t('dataStatus.locked') : (labels[status] ?? String(status))
-  return <span className={`data-status-badge ${dataStatusClass(status)}`}>{label}</span>
+  return (
+    <>
+      <span className={`data-status-badge ${dataStatusClass(base)}`}>{labels[base] ?? String(status)}</span>
+      {isLocked && <span className="data-status-badge data-status-locked">{t('common.locked')}</span>}
+    </>
+  )
 }
 
 function formatBytes(bytes) {
