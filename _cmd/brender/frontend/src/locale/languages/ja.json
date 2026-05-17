@@ -54,7 +54,10 @@
     "maximum": "最大化",
     "close": "閉じる",
     "alwaysOnTop": "最前面に表示",
-    "download": "ログをダウンロード"
+    "download": "ログをダウンロード",
+    "confirmClose": "アプリケーションの終了",
+    "closeAnyway": "終了する",
+    "queueRunningWarning": "実行中または待機中のキューがあります。終了するとジョブは中断されます。"
   },
   "status": {
     "waiting": "実行待ち",

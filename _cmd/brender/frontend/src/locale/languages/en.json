@@ -54,7 +54,10 @@
     "maximum": "Maximize",
     "close": "Close",
     "alwaysOnTop": "Always on top",
-    "download": "Download log"
+    "download": "Download log",
+    "confirmClose": "Close Application",
+    "closeAnyway": "Close",
+    "queueRunningWarning": "There are running or waiting queues. Closing will interrupt the jobs."
   },
   "status": {
     "waiting": "Waiting",
