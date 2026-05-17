@@ -2237,15 +2237,18 @@ textarea.form-input {
   padding: 10px 14px;
   gap: 8px;
   box-sizing: border-box;
+  position: relative;
 }
 .mini-monitor-header {
+  position: absolute; top: 6px; left: 10px; right: 10px;
   display: flex; align-items: center; justify-content: space-between;
-  --wails-draggable: drag;
-  opacity: 0; height: 0; overflow: hidden;
-  transition: opacity 0.2s, height 0.2s;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 1;
 }
 .mini-monitor-root.focused .mini-monitor-header {
-  opacity: 1; height: 28px;
+  opacity: 1; pointer-events: auto;
 }
 .mini-monitor-job-name {
   font-size: 0.8rem; color: rgba(255,255,255,0.85);
