@@ -24,8 +24,8 @@ func (s *Project) Create(name string) (*model.ProjectDetail, error) {
 	return api.CreateProject(name)
 }
 
-func (s *Project) Delete(id string) error {
-	return api.DeleteProject(id)
+func (s *Project) Delete(id string, force bool) error {
+	return api.DeleteProject(id, force)
 }
 
 func (s *Project) Update(id, name, note string) (*model.ProjectDetail, error) {
@@ -52,8 +52,8 @@ func (s *Project) RemoveFile(fileID string) error {
 	return api.RemoveProjectFile(fileID)
 }
 
-func (s *Project) DeleteFile(fileID string) error {
-	return api.DeleteProjectFile(fileID)
+func (s *Project) DeleteFile(fileID string, force bool) error {
+	return api.DeleteProjectFile(fileID, force)
 }
 
 func (s *Project) GetFileThumbnail(projectID string, fileID string) (string, error) {

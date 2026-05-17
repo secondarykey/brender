@@ -152,6 +152,32 @@ func DeleteJobsByWorkspace(workspaceID string) error {
 	return nil
 }
 
+func HasLockedJobsByProject(projectID string) (bool, error) {
+	var count int64
+	res := db.Model(&Job{}).Where(
+		"project_id = ? AND data_status IN (?,?,?,?,?)",
+		projectID,
+		JobDataNoneLocked, JobDataAvailableLocked, JobDataDeletedLocked, JobDataCorruptedLocked, JobDataModifiedLocked,
+	).Count(&count)
+	if res.Error != nil {
+		return false, xerrors.Errorf("HasLockedJobsByProject: %w", res.Error)
+	}
+	return count > 0, nil
+}
+
+func HasLockedJobsByProjectFile(fileID string) (bool, error) {
+	var count int64
+	res := db.Model(&Job{}).Where(
+		"project_file_id = ? AND data_status IN (?,?,?,?,?)",
+		fileID,
+		JobDataNoneLocked, JobDataAvailableLocked, JobDataDeletedLocked, JobDataCorruptedLocked, JobDataModifiedLocked,
+	).Count(&count)
+	if res.Error != nil {
+		return false, xerrors.Errorf("HasLockedJobsByProjectFile: %w", res.Error)
+	}
+	return count > 0, nil
+}
+
 func HasLockedJobsByWorkspace(workspaceID string) (bool, error) {
 	var count int64
 	res := db.Model(&Job{}).Where(

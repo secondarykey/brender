@@ -108,9 +108,36 @@ func RemoveProjectFile(fileID string) error {
 	return model.RemoveProjectFile(fileID)
 }
 
-func DeleteProjectFile(fileID string) error {
+func DeleteProjectFile(fileID string, force bool) error {
+	if !force {
+		locked, err := model.HasLockedJobsByProjectFile(fileID)
+		if err != nil {
+			return xerrors.Errorf("DeleteProjectFile: %w", err)
+		}
+		if locked {
+			return xerrors.New("locked_jobs_exist")
+		}
+	}
 	dirs, _ := model.ListOutputDirsByProjectFile(fileID)
 	removeOutputDirs(dirs)
+	// ジョブディレクトリ削除後、{fileID}/ ディレクトリごと削除する
+	// （サムネイルや空の {workspaceID}/ ディレクトリを含む）
+	if len(dirs) > 0 {
+		fileDir := filepath.Dir(filepath.Dir(dirs[0]))
+		if err := os.RemoveAll(fileDir); err != nil {
+			slog.Warn("DeleteProjectFile: remove file dir", "error", err)
+		}
+	} else {
+		// ジョブがなくてもサムネイルが存在する可能性があるため fileID ディレクトリを削除
+		if pf, err := model.GetProjectFile(fileID); err == nil {
+			if baseDir, err := GetProjectBaseDir(pf.ProjectID); err == nil {
+				fileDir := filepath.Join(baseDir, pf.ProjectID, fileID)
+				if err := os.RemoveAll(fileDir); err != nil {
+					slog.Warn("DeleteProjectFile: remove file dir (no jobs)", "error", err)
+				}
+			}
+		}
+	}
 	if err := model.DeleteJobsByProjectFile(fileID); err != nil {
 		return xerrors.Errorf("DeleteProjectFile jobs: %w", err)
 	}
@@ -120,9 +147,33 @@ func DeleteProjectFile(fileID string) error {
 	return model.RemoveProjectFile(fileID)
 }
 
-func DeleteProject(id string) error {
+func DeleteProject(id string, force bool) error {
+	if !force {
+		locked, err := model.HasLockedJobsByProject(id)
+		if err != nil {
+			return xerrors.Errorf("DeleteProject: %w", err)
+		}
+		if locked {
+			return xerrors.New("locked_jobs_exist")
+		}
+	}
 	dirs, _ := model.ListOutputDirsByProject(id)
 	removeOutputDirs(dirs)
+	// ジョブディレクトリ削除後、{projectID}/ ディレクトリごと削除する
+	// （プロジェクト/ファイル/ワークスペースのサムネイルや空ディレクトリを含む）
+	if len(dirs) > 0 {
+		projectDir := filepath.Dir(filepath.Dir(filepath.Dir(dirs[0])))
+		if err := os.RemoveAll(projectDir); err != nil {
+			slog.Warn("DeleteProject: remove project dir", "error", err)
+		}
+	} else {
+		if baseDir, err := GetProjectBaseDir(id); err == nil {
+			projectDir := filepath.Join(baseDir, id)
+			if err := os.RemoveAll(projectDir); err != nil {
+				slog.Warn("DeleteProject: remove project dir (no jobs)", "error", err)
+			}
+		}
+	}
 	if err := model.DeleteJobsByProject(id); err != nil {
 		return xerrors.Errorf("DeleteProject jobs: %w", err)
 	}
