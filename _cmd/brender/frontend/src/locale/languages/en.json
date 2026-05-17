@@ -390,8 +390,12 @@
   },
   "code": {
     "imageFormats": "Image Formats",
+    "imageFormatsDesc": "Configure image formats available for rendering. The label is shown in each screen, \"Extension\" is the output file extension, and \"Blender Value\" is the format string Blender recognizes (e.g. PNG, JPEG, OPEN_EXR).",
+    "imageFormatsLink": "Blender format options",
     "videoFormats": "Video Formats",
+    "videoFormatsDesc": "Configure output formats available when creating videos. Make sure your ffmpeg supports the specified extension.",
     "resolutionPresets": "Resolution Presets",
+    "resolutionPresetsDesc": "Configure resolution presets selectable in workspace settings.",
     "colLabel": "Label",
     "colExt": "Extension",
     "colBlenderValue": "Blender Value",
