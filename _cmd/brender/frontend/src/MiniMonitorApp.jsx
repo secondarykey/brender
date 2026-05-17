@@ -89,7 +89,7 @@ function MiniMonitorApp() {
           className={`mini-monitor-icon-btn${pinned ? ' active' : ''}`}
           onClick={togglePin}
           title={t('title.alwaysOnTop')}
-        >&#x1F4CC;</button>
+        >&#8679;</button>
         <button
           className="mini-monitor-icon-btn"
           onClick={handleRestore}
