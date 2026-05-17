@@ -139,7 +139,12 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
         }
       >
         <div className="job-detail-section">
-          <Row label={t('dialog.status')} value={<span className={`status-badge status-${status}`}>{statusLabels[status] ?? status}</span>} />
+          <Row label={t('dialog.status')} value={
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flex: 1 }}>
+              <span className={`status-badge status-${status}`}>{statusLabels[status] ?? status}</span>
+              <button className="btn btn-outline btn-sm" onClick={() => QueueApi.openLogWindow({ id: job.id })}>{t('job.showLog')}</button>
+            </div>
+          } />
           <Row label={t('dialog.data')} value={
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <DataStatusBadge status={dataStatus} />
@@ -150,7 +155,6 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
           } />
           <Row label={t('dialog.project')}   value={job.project_name} />
           <Row label={t('dialog.workspace')} value={job.workspace_name} />
-          <button className="btn btn-sm" style={{ marginTop: 8 }} onClick={() => QueueApi.openLogWindow({ id: job.id })}>{t('job.showLog')}</button>
         </div>
 
         <div className="job-detail-section">
