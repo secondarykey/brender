@@ -1,21 +1,21 @@
 package wails
 
 import (
-	"github.com/ikascrew/brender/codes"
+	"github.com/ikascrew/brender/code"
 )
 
 type Codes struct{}
 
 func NewCodes() *Codes { return &Codes{} }
 
-func (s *Codes) GetImageFormats() ([]codes.ImageFormat, error) {
-	return codes.GetImageFormats()
+func (s *Codes) GetImageFormats() ([]code.ImageFormat, error) {
+	return code.GetImageFormats()
 }
 
-func (s *Codes) GetVideoFormats() ([]codes.VideoFormat, error) {
-	return codes.GetVideoFormats()
+func (s *Codes) GetVideoFormats() ([]code.VideoFormat, error) {
+	return code.GetVideoFormats()
 }
 
-func (s *Codes) GetResolutionPresets() ([]codes.ResolutionPreset, error) {
-	return codes.GetResolutionPresets()
+func (s *Codes) GetResolutionPresets() ([]code.ResolutionPreset, error) {
+	return code.GetResolutionPresets()
 }

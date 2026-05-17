@@ -8,10 +8,10 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as codes$0 from "../../codes/models.js";
+import * as code$0 from "../../code/models.js";
 
 /**
- * @returns {$CancellablePromise<codes$0.ImageFormat[]>}
+ * @returns {$CancellablePromise<code$0.ImageFormat[]>}
  */
 export function GetImageFormats() {
     return $Call.ByID(3648121609).then(/** @type {($result: any) => any} */(($result) => {
@@ -20,7 +20,7 @@ export function GetImageFormats() {
 }
 
 /**
- * @returns {$CancellablePromise<codes$0.ResolutionPreset[]>}
+ * @returns {$CancellablePromise<code$0.ResolutionPreset[]>}
  */
 export function GetResolutionPresets() {
     return $Call.ByID(1961915884).then(/** @type {($result: any) => any} */(($result) => {
@@ -29,7 +29,7 @@ export function GetResolutionPresets() {
 }
 
 /**
- * @returns {$CancellablePromise<codes$0.VideoFormat[]>}
+ * @returns {$CancellablePromise<code$0.VideoFormat[]>}
  */
 export function GetVideoFormats() {
     return $Call.ByID(1959442431).then(/** @type {($result: any) => any} */(($result) => {
@@ -38,9 +38,9 @@ export function GetVideoFormats() {
 }
 
 // Private type creation functions
-const $$createType0 = codes$0.ImageFormat.createFrom;
+const $$createType0 = code$0.ImageFormat.createFrom;
 const $$createType1 = $Create.Array($$createType0);
-const $$createType2 = codes$0.ResolutionPreset.createFrom;
+const $$createType2 = code$0.ResolutionPreset.createFrom;
 const $$createType3 = $Create.Array($$createType2);
-const $$createType4 = codes$0.VideoFormat.createFrom;
+const $$createType4 = code$0.VideoFormat.createFrom;
 const $$createType5 = $Create.Array($$createType4);
