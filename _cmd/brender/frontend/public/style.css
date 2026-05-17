@@ -2230,29 +2230,24 @@ textarea.form-input {
   width: 100%; height: 100%;
   display: flex; flex-direction: column;
   background: #1a1a1a; overflow: hidden;
-}
-.mini-monitor-titlebar {
-  height: 32px; background: #111111;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 0 0 12px; flex-shrink: 0;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.08);
   --wails-draggable: drag;
   user-select: none;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-}
-.mini-monitor-title {
-  font-size: 0.75rem; color: rgba(255,255,255,0.5);
-  --wails-draggable: drag;
 }
 .mini-monitor-body {
-  flex: 1; padding: 10px 14px;
+  flex: 1; padding: 12px 16px;
   display: flex; flex-direction: column; justify-content: center; gap: 6px;
+  --wails-draggable: drag;
 }
 .mini-monitor-job-name {
   font-size: 0.8rem; color: rgba(255,255,255,0.85);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  --wails-draggable: drag;
 }
 .mini-monitor-progress-row {
   display: flex; align-items: center; gap: 8px;
+  --wails-draggable: drag;
 }
 .mini-monitor-track { flex: 1; height: 6px; }
 .mini-monitor-pct {
@@ -2261,15 +2256,41 @@ textarea.form-input {
 }
 .mini-monitor-eta {
   font-size: 0.7rem; color: rgba(255,255,255,0.45);
+  --wails-draggable: drag;
 }
 .mini-monitor-empty {
   font-size: 0.8rem; color: rgba(255,255,255,0.35);
   text-align: center; padding: 12px 0;
+  --wails-draggable: drag;
 }
 .mini-monitor-footer {
   display: flex; align-items: center; justify-content: space-between;
   margin-top: 2px;
+  --wails-draggable: drag;
 }
 .mini-monitor-waiting {
   font-size: 0.7rem; color: rgba(255,255,255,0.45);
+}
+.mini-monitor-actions {
+  display: flex; gap: 4px;
+}
+.mini-monitor-icon-btn {
+  --wails-draggable: none;
+  width: 28px; height: 28px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 4px;
+  color: rgba(255,255,255,0.5);
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0;
+}
+.mini-monitor-icon-btn:hover {
+  border-color: rgba(255,255,255,0.5);
+  color: rgba(255,255,255,0.8);
+}
+.mini-monitor-icon-btn.active {
+  border-color: #4a7cdc;
+  color: #4a7cdc;
 }

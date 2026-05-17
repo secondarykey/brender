@@ -26,12 +26,20 @@ function formatETA(iso, t) {
 function MiniMonitorApp() {
   const { t } = useTranslation()
   const [items, setItems] = useState([])
+  const [pinned, setPinned] = useState(true)
 
   useEffect(() => {
     import('@wailsio/runtime').then(({ Window }) => {
       Window.SetAlwaysOnTop(true).catch(() => {})
     }).catch(() => {})
   }, [])
+
+  const togglePin = () => {
+    const next = !pinned
+    import('@wailsio/runtime').then(({ Window }) => {
+      Window.SetAlwaysOnTop(next).then(() => setPinned(next)).catch(() => {})
+    }).catch(() => {})
+  }
 
   const load = useCallback(() => {
     QueueApi.listItems()
@@ -59,20 +67,9 @@ function MiniMonitorApp() {
   const etaText = running ? formatETA(running.expected_at, t) : null
 
   const handleRestore = () => { QueueApi.closeMiniMonitor() }
-  const handleMinimise = () => {
-    import('@wailsio/runtime').then(({ Window }) => Window.Minimise()).catch(() => {})
-  }
 
   return (
     <div className="mini-monitor-root">
-      <div className="mini-monitor-titlebar">
-        <span className="mini-monitor-title">{t('miniMonitor.title')}</span>
-        <div className="titlebar-controls">
-          <button className="titlebar-btn titlebar-btn-min" onClick={handleMinimise}>&#8211;</button>
-          <button className="titlebar-btn titlebar-btn-close" onClick={handleRestore}>&#10005;</button>
-        </div>
-      </div>
-
       <div className="mini-monitor-body">
         {running ? (
           <>
@@ -93,9 +90,18 @@ function MiniMonitorApp() {
           <span className="mini-monitor-waiting">
             {t('miniMonitor.waiting', { count: waitingCount })}
           </span>
-          <button className="btn btn-sm" onClick={handleRestore}>
-            {t('miniMonitor.restore')}
-          </button>
+          <div className="mini-monitor-actions">
+            <button
+              className={`mini-monitor-icon-btn${pinned ? ' active' : ''}`}
+              onClick={togglePin}
+              title={t('title.alwaysOnTop')}
+            >&#x1F4CC;</button>
+            <button
+              className="mini-monitor-icon-btn"
+              onClick={handleRestore}
+              title={t('miniMonitor.restore')}
+            >&#x21A9;</button>
+          </div>
         </div>
       </div>
     </div>
