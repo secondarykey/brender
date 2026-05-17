@@ -109,6 +109,9 @@ function App() {
             backPage={p.backPage}
             backParams={p.backParams}
             initialTab={p.initialTab}
+            projectName={p.projectName}
+            fileName={p.fileName}
+            workspaceName={p.workspaceName}
           />
         )
       case 'queue':

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useLayoutEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
-import { QueueApi, WorkspaceApi, EnvironmentApi, CodesApi } from '../../lib/api'
+import { QueueApi, ProjectApi, WorkspaceApi, EnvironmentApi, CodesApi } from '../../lib/api'
 import { onAppEvent } from '../../lib/appEvents'
 import { useToast, useMessage } from '../../lib/toast'
 import ConfirmDialog from '../../components/ConfirmDialog'
@@ -728,15 +728,31 @@ function DataViewTab({ job }) {
 }
 
 // ── ページ本体 ────────────────────────────────────────────
-function JobPage({ job: initialJob, navigate, backPage, backParams, initialTab }) {
+function JobPage({ job: initialJob, navigate, backPage, backParams, initialTab, projectName: propProjectName, fileName: propFileName, workspaceName: propWorkspaceName }) {
   const { t } = useTranslation()
   const hasData = initialJob && [2, 3, 6, 7, 8, 9].includes(initialJob.data_status)
   const [tab, setTab]       = useState(hasData ? 'render' : 'detail')
   const [job, setJob]       = useState(initialJob)
+  const [names, setNames]   = useState({ project: propProjectName || '', file: propFileName || initialJob.file_name || '', workspace: propWorkspaceName || '' })
 
   useLayoutEffect(() => {
     if (initialTab) setTab(initialTab)
   }, [])
+
+  useEffect(() => {
+    const missing = []
+    if (!names.project && initialJob.project_id) {
+      missing.push(ProjectApi.get({ id: initialJob.project_id }).then(d => ({ project: d?.project?.name || '' })))
+    }
+    if (!names.workspace && initialJob.workspace_id && initialJob.project_id) {
+      missing.push(WorkspaceApi.get({ projectID: initialJob.project_id, workspaceID: initialJob.workspace_id }).then(d => ({ workspace: d?.workspace?.name || '' })))
+    }
+    if (missing.length > 0) {
+      Promise.all(missing).then(results => {
+        setNames(prev => Object.assign({}, prev, ...results))
+      }).catch(() => {})
+    }
+  }, [initialJob.project_id, initialJob.workspace_id])
 
   useEffect(() => {
     return onAppEvent('queue:changed', () => {
@@ -768,9 +784,9 @@ function JobPage({ job: initialJob, navigate, backPage, backParams, initialTab }
       <div className="page-header">
         <Breadcrumb items={[
           { label: t('breadcrumb.projects'), onClick: () => navigate('projects') },
-          { label: job.project_name, onClick: () => navigate('project', { id: job.project_id }) },
-          { label: job.file_name,    onClick: () => navigate('file', { projectID: job.project_id, projectName: job.project_name, fileID: job.project_file_id, fileName: job.file_name }) },
-          { label: job.workspace_name, onClick: () => navigate('workspace', { projectID: job.project_id, projectName: job.project_name, fileID: job.project_file_id, fileName: job.file_name, workspaceID: job.workspace_id }) },
+          names.project && { label: names.project, onClick: () => navigate('project', { id: job.project_id }) },
+          names.file && { label: names.file, onClick: () => navigate('file', { projectID: job.project_id, projectName: names.project, fileID: job.project_file_id, fileName: names.file }) },
+          names.workspace && { label: names.workspace, onClick: () => navigate('workspace', { projectID: job.project_id, projectName: names.project, fileID: job.project_file_id, fileName: names.file, workspaceID: job.workspace_id, workspaceName: names.workspace }) },
           { label: t('breadcrumb.jobResult') },
         ].filter(Boolean)} />
       </div>
