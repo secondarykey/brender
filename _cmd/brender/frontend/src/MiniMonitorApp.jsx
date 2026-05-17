@@ -85,11 +85,9 @@ function MiniMonitorApp() {
 
       {running ? (
         <>
-          <div className="mini-monitor-progress-row">
-            <div className="progress-bar-track mini-monitor-track">
-              <div className="progress-bar-fill" style={{ width: `${pct.toFixed(2)}%` }} />
-            </div>
-            <span className="mini-monitor-pct">{pct.toFixed(1)}%</span>
+          <div className="mini-monitor-job-name">{running.name || '—'}</div>
+          <div className="progress-bar-track mini-monitor-track">
+            <div className="progress-bar-fill" style={{ width: `${pct.toFixed(2)}%` }} />
           </div>
           <div className="mini-monitor-info">
             <span>{t('miniMonitor.remaining', { count: waitingCount })}</span>

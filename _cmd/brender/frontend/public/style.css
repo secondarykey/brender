@@ -2242,15 +2242,12 @@ textarea.form-input {
   display: flex; align-items: center; justify-content: space-between;
   --wails-draggable: drag;
 }
-.mini-monitor-progress-row {
-  display: flex; align-items: center; gap: 8px;
+.mini-monitor-job-name {
+  font-size: 0.8rem; color: rgba(255,255,255,0.85);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   --wails-draggable: drag;
 }
-.mini-monitor-track { flex: 1; height: 6px; }
-.mini-monitor-pct {
-  font-size: 0.8rem; font-weight: 600; color: #4a7cdc;
-  min-width: 48px; text-align: right;
-}
+.mini-monitor-track { height: 6px; }
 .mini-monitor-info {
   display: flex; align-items: center; justify-content: space-between;
   font-size: 0.75rem; color: rgba(255,255,255,0.5);
