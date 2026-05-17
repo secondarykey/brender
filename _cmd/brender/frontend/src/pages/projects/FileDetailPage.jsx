@@ -330,7 +330,7 @@ function HistoryTab({ projectID, fileID, navigate, projectName, fileName }) {
 
   useEffect(() => onAppEvent('queue:changed', load), [load])
 
-  const statusLabel = (s) => ({ completed: t('status.completed'), error: t('status.error'), cancelled: t('status.cancelled'), interrupted: t('status.interrupted'), running: t('status.running'), waiting: t('status.waiting') })[s] ?? t('status.running')
+  const statusLabel = (s) => t(`status.${s || 'running'}`)
 
   const totalPages  = Math.max(1, Math.ceil(jobs.length / pageSize))
   const currentPage = Math.min(page, totalPages)

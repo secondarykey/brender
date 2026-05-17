@@ -108,15 +108,6 @@ function DetailTab({ job, onDeleted, onDataStatusChanged }) {
 
   useEffect(() => { if (job) setDataStatus(job.data_status ?? 0) }, [job])
 
-  const statusLabels = {
-    completed:   t('status.completed'),
-    error:       t('status.error'),
-    cancelled:   t('status.cancelled'),
-    interrupted: t('status.interrupted'),
-    running:     t('status.running'),
-    waiting:     t('status.waiting'),
-  }
-
   const status   = job.status || 'running'
   const isLocked = dataStatus % 2 === 1
 
@@ -186,7 +177,7 @@ function DetailTab({ job, onDeleted, onDataStatusChanged }) {
             <div className="job-detail-section">
               <Row label={t('dialog.status')} value={
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flex: 1 }}>
-                  <span className={`status-badge status-${status}`}>{statusLabels[status] ?? status}</span>
+                  <span className={`status-badge status-${status}`}>{t(`status.${status}`)}</span>
                   <button className="btn btn-outline btn-sm" onClick={() => QueueApi.openLogWindow({ id: job.id })}>{t('job.showLog')}</button>
                 </div>
               } />

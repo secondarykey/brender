@@ -9,16 +9,7 @@ import Pagination from '../../components/Pagination'
 
 function StatusBadge({ status }) {
   const { t } = useTranslation()
-  const labels = {
-    waiting:     t('status.waiting'),
-    recovering:  t('status.recovering'),
-    running:     t('status.running'),
-    completed:   t('status.completed'),
-    error:       t('status.error'),
-    cancelled:   t('status.cancelled'),
-    interrupted: t('status.interrupted'),
-  }
-  return <span className={`status-badge status-${status}`}>{labels[status] ?? status}</span>
+  return <span className={`status-badge status-${status}`}>{t(`status.${status}`)}</span>
 }
 
 function elapsed(startedAt, t) {
