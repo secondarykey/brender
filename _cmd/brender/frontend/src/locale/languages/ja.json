@@ -93,6 +93,7 @@
     "blender": "Blender",
     "video": "動画",
     "code": "コード",
+    "jobManagement": "ジョブ管理",
     "jobResult": "実行結果",
     "renderResults": "レンダリング結果",
     "dataView": "データ表示"
@@ -233,7 +234,14 @@
     "confirmCancel": "ジョブをキャンセルしますか？",
     "almostComplete": "間もなく完了",
     "preparing": "準備中... (",
-    "secondsPerFrame": "秒/f",
+    "secondsPerFrame": "秒/f"
+  },
+  "jobManagement": {
+    "totalJobs": "全{{count}}件",
+    "totalSize": "合計容量: {{size}}",
+    "noJobs": "ジョブ履歴がありません",
+    "dataStatus": "データ状態",
+    "diskSize": "容量",
     "cleanData": "データクリーンアップ",
     "cleanTitle": "データクリーンアップ",
     "cleanDescription": "ロックされていない{{count}}件のジョブデータ（合計 {{size}}）を削除します。ジョブ履歴は残ります。",

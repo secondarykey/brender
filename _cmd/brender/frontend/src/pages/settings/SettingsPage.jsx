@@ -5,6 +5,7 @@ import EnvironmentSettings from './EnvironmentSettings'
 import BlenderSettings from './BlenderSettings'
 import VideoSettings from './VideoSettings'
 import CodeSettings from './CodeSettings'
+import JobManagement from './JobManagement'
 
 function SettingsPage({ initialTab }) {
   const { t } = useTranslation()
@@ -15,6 +16,7 @@ function SettingsPage({ initialTab }) {
     { id: 'envSettings', label: t('tabs.envSettings') },
     { id: 'video',       label: t('tabs.video') },
     { id: 'code',        label: t('tabs.code') },
+    { id: 'jobManagement', label: t('tabs.jobManagement') },
   ]
 
   return (
@@ -40,6 +42,7 @@ function SettingsPage({ initialTab }) {
         )}
         {tab === 'video'       && <VideoSettings />}
         {tab === 'code'        && <CodeSettings />}
+        {tab === 'jobManagement' && <JobManagement />}
       </div>
     </div>
   )

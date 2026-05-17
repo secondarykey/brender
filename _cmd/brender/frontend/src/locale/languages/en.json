@@ -93,6 +93,7 @@
     "blender": "Blender",
     "video": "Video",
     "code": "Code",
+    "jobManagement": "Job Management",
     "jobResult": "Result",
     "renderResults": "Render Results",
     "dataView": "Data"
@@ -233,7 +234,14 @@
     "confirmCancel": "Cancel this job?",
     "almostComplete": "Almost done",
     "preparing": "Preparing... (",
-    "secondsPerFrame": "s/f",
+    "secondsPerFrame": "s/f"
+  },
+  "jobManagement": {
+    "totalJobs": "{{count}} jobs",
+    "totalSize": "Total size: {{size}}",
+    "noJobs": "No job history",
+    "dataStatus": "Data Status",
+    "diskSize": "Size",
     "cleanData": "Data Cleanup",
     "cleanTitle": "Data Cleanup",
     "cleanDescription": "Delete data from {{count}} unlocked jobs (total {{size}}). Job history will be preserved.",
