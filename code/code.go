@@ -1,4 +1,4 @@
-package codes
+package code
 
 import (
 	"encoding/json"
@@ -8,13 +8,13 @@ import (
 	_ "embed"
 )
 
-//go:embed defaults/image_formats.json
+//go:embed _assets/image_formats.json
 var defaultImageFormats []byte
 
-//go:embed defaults/video_formats.json
+//go:embed _assets/video_formats.json
 var defaultVideoFormats []byte
 
-//go:embed defaults/resolution_presets.json
+//go:embed _assets/resolution_presets.json
 var defaultResolutionPresets []byte
 
 // ImageFormat は画像出力フォーマットのコード定義。
