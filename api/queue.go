@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/ikascrew/brender/code"
@@ -123,9 +124,17 @@ func RecoverStaleQueues() {
 	}
 }
 
+var shuttingDown atomic.Bool
+
+// IsShuttingDown はアプリがシャットダウン中かどうかを返す。
+func IsShuttingDown() bool {
+	return shuttingDown.Load()
+}
+
 // KillRunningQueues は実行中キューの Blender プロセスを強制終了する。
 // アプリ終了前に呼び出し、孤立プロセスを防ぐ。
 func KillRunningQueues() {
+	shuttingDown.Store(true)
 	queues, err := model.ListRunningQueues()
 	if err != nil {
 		log.Println("KillRunningQueues: ListRunningQueues:", err)
@@ -721,6 +730,10 @@ func removeOutputDirs(dirs []string) {
 
 // finishJob updates the Job status, sets CompletedAt, then deletes the Queue record.
 func finishJob(id string, success bool, errMsg string, diskSize int64) {
+	if shuttingDown.Load() {
+		log.Printf("finishJob: skipped (shutting down) id=%s", id)
+		return
+	}
 	now := time.Now()
 	status := model.JobCompleted
 	dataStatus := model.JobDataAvailable
