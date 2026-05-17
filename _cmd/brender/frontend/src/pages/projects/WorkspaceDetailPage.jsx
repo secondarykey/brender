@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
-import { WorkspaceApi, BlenderApi, QueueApi, ProjectApi, WorkDirApi } from '../../lib/api'
+import { WorkspaceApi, BlenderApi, QueueApi, ProjectApi, WorkDirApi, CodesApi } from '../../lib/api'
 import { useToast, useMessage } from '../../lib/toast'
 import { onAppEvent } from '../../lib/appEvents'
 import Pagination from '../../components/Pagination'
@@ -14,18 +14,6 @@ import NoteSection from '../../components/NoteSection'
 
 const isFrameDefault      = (start, end) => start === 0 && end === -1
 const isResolutionDefault = (x, y)       => x === 0 && y === 0
-
-const RESOLUTION_PRESETS = [
-  { label: 'Half HD',  x:  960, y:  540 },
-  { label: 'HD',       x: 1280, y:  720 },
-  { label: 'Full HD',  x: 1920, y: 1080 },
-  { label: '2K DCI',   x: 2048, y: 1080 },
-  { label: '4K UHD',   x: 3840, y: 2160 },
-  { label: 'DCI 4K',   x: 4096, y: 2160 },
-  { label: '8K UHD',   x: 7680, y: 4320 },
-  { label: 'Square',   x: 1080, y: 1080 },
-  { label: 'Portrait', x: 1080, y: 1350 },
-]
 
 // EngineFlags 相当: エンジン名の揺れを吸収して Samples マップから値を返す
 function samplesForEngine(engine, samplesMap) {
@@ -263,6 +251,8 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
   const [renderConfirm, setRenderConfirm]   = useState(null)
   const [renderEnqueuing, setRenderEnqueuing] = useState(false)
   const [resolvingRender, setResolvingRender] = useState(false)
+  const [imageFormats, setImageFormats]         = useState([])
+  const [resolutionPresets, setResolutionPresets] = useState([])
   const nameRef      = useRef(null)
   const hasFocused   = useRef(false)
   const lastFrameSpec      = useRef(null) // OFF 直前のフレーム値を退避
@@ -308,6 +298,8 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
   useEffect(() => {
     BlenderApi.list().then(list => setBlenders(list || [])).catch(() => {})
     BlenderApi.getCPUCount().then(n => setCpuCount(n)).catch(() => {})
+    CodesApi.getImageFormats().then(list => setImageFormats(list || [])).catch(() => {})
+    CodesApi.getResolutionPresets().then(list => setResolutionPresets(list || [])).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -646,15 +638,15 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
               <label className="form-label">{t('workspace.resolutionPreset')}</label>
               <select
                 className="form-select"
-                value={RESOLUTION_PRESETS.find(p => p.x === form.resolutionX && p.y === form.resolutionY)?.label ?? ''}
+                value={resolutionPresets.find(p => p.width === form.resolutionX && p.height === form.resolutionY)?.code ?? ''}
                 onChange={e => {
-                  const p = RESOLUTION_PRESETS.find(p => p.label === e.target.value)
-                  if (p) setForm(prev => ({ ...prev, resolutionX: p.x, resolutionY: p.y }))
+                  const p = resolutionPresets.find(p => p.code === e.target.value)
+                  if (p) setForm(prev => ({ ...prev, resolutionX: p.width, resolutionY: p.height }))
                 }}
               >
                 <option value="">—</option>
-                {RESOLUTION_PRESETS.map(p => (
-                  <option key={p.label} value={p.label}>{p.label} ({p.x}×{p.y})</option>
+                {resolutionPresets.map(p => (
+                  <option key={p.code} value={p.code}>{p.label} ({p.width}×{p.height})</option>
                 ))}
               </select>
             </div>
@@ -709,8 +701,9 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
         <label className="form-label">{t('workspace.outputFormat')}</label>
         <select className="form-select" style={{ width: 200 }} value={form.outputFormat} onChange={e => set('outputFormat', e.target.value)}>
           <option value="">{t('workspace.outputFormatDefault')}</option>
-          <option value="PNG">PNG</option>
-          <option value="JPEG">JPEG</option>
+          {imageFormats.map(f => (
+            <option key={f.code} value={f.code}>{f.label}</option>
+          ))}
         </select>
       </div>
 
