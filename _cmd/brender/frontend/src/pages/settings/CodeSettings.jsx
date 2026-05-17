@@ -23,6 +23,7 @@ function CodeSettings() {
   const [saving, setSaving] = useState(false)
   const [resetOpen, setResetOpen] = useState(false)
   const [resetting, setResetting] = useState(false)
+  const [dirty, setDirty] = useState(false)
   const dragIndex = useRef(null)
   const [dragOver, setDragOver] = useState(null)
 
@@ -34,6 +35,7 @@ function CodeSettings() {
       else if (cat === 'videoFormats') data = await CodesApi.getVideoFormats()
       else                             data = await CodesApi.getResolutionPresets()
       setRows(data ?? [])
+      setDirty(false)
     } catch (e) {
       showError(String(e))
     } finally {
@@ -47,6 +49,7 @@ function CodeSettings() {
 
   const handleCellChange = (idx, field, value) => {
     setRows(prev => prev.map((r, i) => i === idx ? { ...r, [field]: value } : r))
+    setDirty(true)
   }
 
   const handleAddRow = async () => {
@@ -58,6 +61,7 @@ function CodeSettings() {
         ? { code: id, label: '', ext: '' }
         : { code: id, label: '', width: 0, height: 0 }
       setRows(prev => [...prev, newRow])
+      setDirty(true)
     } catch (e) {
       showError(String(e))
     }
@@ -65,6 +69,7 @@ function CodeSettings() {
 
   const handleDeleteRow = (idx) => {
     setRows(prev => prev.filter((_, i) => i !== idx))
+    setDirty(true)
   }
 
   const handleDragStart = (e, index) => {
@@ -93,6 +98,7 @@ function CodeSettings() {
       next.splice(dropIndex, 0, moved)
       return next
     })
+    setDirty(true)
   }
 
   const handleDragEnd = () => {
@@ -106,6 +112,7 @@ function CodeSettings() {
       if (category === 'imageFormats')      await CodesApi.saveImageFormats(rows)
       else if (category === 'videoFormats') await CodesApi.saveVideoFormats(rows)
       else                                  await CodesApi.saveResolutionPresets(rows)
+      setDirty(false)
       showToast(t('common.saved'))
     } catch (e) {
       showError(String(e))
@@ -197,9 +204,14 @@ function CodeSettings() {
         <button className="btn btn-ghost btn-sm" onClick={() => setResetOpen(true)}>
           {t('code.reset')}
         </button>
-        <button className="btn btn-green" onClick={handleSave} disabled={saving}>
-          {saving ? t('common.saving') : t('common.save')}
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {dirty && (
+            <span style={{ fontSize: 12, color: '#e8a020' }}>{t('code.unsaved')}</span>
+          )}
+          <button className="btn btn-green" onClick={handleSave} disabled={saving}>
+            {saving ? t('common.saving') : t('common.save')}
+          </button>
+        </div>
       </div>
 
       <ConfirmDialog
