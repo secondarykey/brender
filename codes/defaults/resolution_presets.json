@@ -1,0 +1,7 @@
+[
+  { "code": "4K",   "label": "4K UHD",       "width": 3840, "height": 2160 },
+  { "code": "FHD",  "label": "Full HD",       "width": 1920, "height": 1080 },
+  { "code": "FHDV", "label": "Full HD (縦)",  "width": 1080, "height": 1920 },
+  { "code": "HD",   "label": "HD",            "width": 1280, "height": 720  },
+  { "code": "SQ",   "label": "Square",        "width": 1080, "height": 1080 }
+]
