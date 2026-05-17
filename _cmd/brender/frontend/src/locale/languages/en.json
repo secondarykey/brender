@@ -213,6 +213,10 @@
     "copied": "Copied",
     "copySuffix": " Copy",
     "copyConfirmMsg": "Creates another workspace with the saved values.",
+    "autoLock": "Auto-lock on completion",
+    "autoLockMinSize": "Min size",
+    "autoLockKeep": "Keep count",
+    "autoLockKeepHint": "0 = unlimited",
     "createDialog": {
       "title": "Create Workspace",
       "multipleFromFile": "Create multiple from file values",
@@ -229,7 +233,12 @@
     "confirmCancel": "Cancel this job?",
     "almostComplete": "Almost done",
     "preparing": "Preparing... (",
-    "secondsPerFrame": "s/f"
+    "secondsPerFrame": "s/f",
+    "cleanData": "Data Cleanup",
+    "cleanTitle": "Data Cleanup",
+    "cleanDescription": "Delete data from {{count}} unlocked jobs (total {{size}}). Job history will be preserved.",
+    "cleanConfirm": "Delete",
+    "cleanComplete": "Deleted data from {{count}} jobs"
   },
   "job": {
     "noFiles": "No files found",

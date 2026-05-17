@@ -616,8 +616,52 @@ func finishJob(id string, success bool, errMsg string, diskSize int64) {
 	if err := model.DeleteQueue(id); err != nil {
 		log.Println("DeleteQueue error:", err)
 	}
+	if success {
+		applyAutoLock(id, diskSize)
+	}
 	startNextWaiting()
 	notifyQueueChanged()
+}
+
+// applyAutoLock は完了ジョブに対して自動ロック設定を適用する。
+func applyAutoLock(jobID string, diskSize int64) {
+	j, err := model.GetJob(jobID)
+	if err != nil || j == nil {
+		return
+	}
+	ws, err := model.SelectWorkspace(j.ProjectID, j.WorkspaceID)
+	if err != nil || ws == nil {
+		return
+	}
+	if !ws.AutoLock {
+		return
+	}
+	if ws.AutoLockMinSize > 0 && diskSize < ws.AutoLockMinSize {
+		return
+	}
+	if err := model.UpdateJobDataStatus(jobID, model.JobDataAvailableLocked); err != nil {
+		log.Println("applyAutoLock lock error:", err)
+		return
+	}
+	if ws.AutoLockKeep <= 0 {
+		return
+	}
+	count, err := model.CountAutoLockedJobs(ws.ID)
+	if err != nil {
+		log.Println("applyAutoLock count error:", err)
+		return
+	}
+	for count > int64(ws.AutoLockKeep) {
+		oldest, err := model.GetOldestAutoLockedJob(ws.ID)
+		if err != nil || oldest == nil {
+			break
+		}
+		if err := model.UpdateJobDataStatus(oldest.ID, model.JobDataAvailable); err != nil {
+			log.Println("applyAutoLock unlock error:", err)
+			break
+		}
+		count--
+	}
 }
 
 // startNextWaiting は実行上限に空きがあれば待機中の最古ジョブを起動する。
@@ -1144,5 +1188,28 @@ func resolveOutputExt(formatCode string) string {
 
 func resolveBlenderFormat(formatCode string) string {
 	return resolveImageFormat(formatCode).BlenderValue
+}
+
+// GetCleanableJobStats はクリーンアップ対象のジョブ統計を返す。
+func GetCleanableJobStats() (*model.CleanableJobStats, error) {
+	return model.GetCleanableJobStats()
+}
+
+// CleanJobData はロックされていない全ジョブの出力データを削除する（履歴は残す）。
+// 削除件数を返す。
+func CleanJobData() (int, error) {
+	jobs, err := model.ListCleanableJobs()
+	if err != nil {
+		return 0, xerrors.Errorf("CleanJobData: %w", err)
+	}
+	deleted := 0
+	for _, j := range jobs {
+		if err := DeleteJobData(j.ID); err != nil {
+			log.Println("CleanJobData:", err)
+			continue
+		}
+		deleted++
+	}
+	return deleted, nil
 }
 

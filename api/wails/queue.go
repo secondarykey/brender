@@ -133,6 +133,14 @@ func (s *Queue) OpenMovieWindow(videoPath string) error {
 	return nil
 }
 
+func (s *Queue) GetCleanableJobStats() (*model.CleanableJobStats, error) {
+	return api.GetCleanableJobStats()
+}
+
+func (s *Queue) CleanJobData() (int, error) {
+	return api.CleanJobData()
+}
+
 func (s *Queue) OpenLogWindow(jobID string) error {
 	title := "render.log"
 	if j, err := model.GetJob(jobID); err == nil && j != nil {

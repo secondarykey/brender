@@ -287,6 +287,9 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
       resolutionX:      detail.workspace.resolution_x || 0,
       resolutionY:      detail.workspace.resolution_y || 0,
       outputFormat:     detail.workspace.output_format || '',
+      autoLock:         detail.workspace.auto_lock || false,
+      autoLockMinSize:  detail.workspace.auto_lock_min_size || 0,
+      autoLockKeep:     detail.workspace.auto_lock_keep || 1,
     }
     setForm(next)
     savedForm.current = next
@@ -425,6 +428,9 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
         samples: form.samples,
         resolutionX: form.resolutionX, resolutionY: form.resolutionY,
         outputFormat: form.outputFormat,
+        autoLock: form.autoLock,
+        autoLockMinSize: form.autoLockMinSize,
+        autoLockKeep: form.autoLockKeep,
       })
       savedForm.current = { ...form, name: form.name.trim() }
       showToast(t('common.saved'))
@@ -722,6 +728,27 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
             <option key={f.code} value={f.code}>{f.label}</option>
           ))}
         </select>
+      </div>
+
+      <div className="form-field" style={{ marginTop: 16 }}>
+        <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <input type="checkbox" checked={form.autoLock} onChange={e => set('autoLock', e.target.checked)} />
+          {t('workspace.autoLock')}
+        </label>
+        {form.autoLock && (
+          <div className="form-row" style={{ marginTop: 8 }}>
+            <div className="form-field" style={{ flex: 1 }}>
+              <label className="form-label">{t('workspace.autoLockMinSize')}</label>
+              <input className="form-input" style={{ width: 120, textAlign: 'right' }} type="number" min={0} value={Math.round(form.autoLockMinSize / (1024 * 1024))} onChange={e => set('autoLockMinSize', Number(e.target.value) * 1024 * 1024)} />
+              <span className="form-hint">MB</span>
+            </div>
+            <div className="form-field" style={{ flex: 1 }}>
+              <label className="form-label">{t('workspace.autoLockKeep')}</label>
+              <input className="form-input" style={{ width: 80, textAlign: 'right' }} type="number" min={0} value={form.autoLockKeep} onChange={e => set('autoLockKeep', Number(e.target.value))} />
+              <span className="form-hint">{t('workspace.autoLockKeepHint')}</span>
+            </div>
+          </div>
+        )}
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -30 }}>

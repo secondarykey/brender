@@ -220,6 +220,67 @@ func UpdateJobDataStatus(id string, dataStatus int) error {
 	return nil
 }
 
+// CountAutoLockedJobs は指定ワークスペースの自動ロック済みジョブ件数を返す。
+// 自動ロック対象 = status=completed かつ data_status=JobDataAvailableLocked
+func CountAutoLockedJobs(workspaceID string) (int64, error) {
+	var count int64
+	if res := db.Model(&Job{}).Where(
+		"workspace_id = ? AND status = ? AND data_status = ?",
+		workspaceID, JobCompleted, JobDataAvailableLocked,
+	).Count(&count); res.Error != nil {
+		return 0, xerrors.Errorf("CountAutoLockedJobs: %w", res.Error)
+	}
+	return count, nil
+}
+
+// GetOldestAutoLockedJob は指定ワークスペースで最も古い自動ロック済みジョブを返す。
+func GetOldestAutoLockedJob(workspaceID string) (*Job, error) {
+	var j Job
+	res := db.Where(
+		"workspace_id = ? AND status = ? AND data_status = ?",
+		workspaceID, JobCompleted, JobDataAvailableLocked,
+	).Order("enqueued_at asc").First(&j)
+	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if res.Error != nil {
+		return nil, xerrors.Errorf("GetOldestAutoLockedJob: %w", res.Error)
+	}
+	return &j, nil
+}
+
+// CleanableJobStats はクリーンアップ対象のジョブ統計を返す。
+type CleanableJobStats struct {
+	Count    int64 `json:"count"`
+	TotalSize int64 `json:"total_size"`
+}
+
+// GetCleanableJobStats はロックされていない削除可能なジョブの件数と合計容量を返す。
+func GetCleanableJobStats() (*CleanableJobStats, error) {
+	var stats CleanableJobStats
+	res := db.Model(&Job{}).Where(
+		"data_status IN (?,?)",
+		JobDataAvailable, JobDataCorrupted,
+	).Select("COUNT(*) as count, COALESCE(SUM(disk_size), 0) as total_size").Scan(&stats)
+	if res.Error != nil {
+		return nil, xerrors.Errorf("GetCleanableJobStats: %w", res.Error)
+	}
+	return &stats, nil
+}
+
+// ListCleanableJobs はロックされていない削除可能なジョブ一覧を返す。
+func ListCleanableJobs() ([]*Job, error) {
+	var list []*Job
+	res := db.Where(
+		"data_status IN (?,?)",
+		JobDataAvailable, JobDataCorrupted,
+	).Order("enqueued_at asc").Find(&list)
+	if res.Error != nil {
+		return nil, xerrors.Errorf("ListCleanableJobs: %w", res.Error)
+	}
+	return list, nil
+}
+
 // ListOutputDirsByWorkspace はワークスペースに紐づくジョブの出力フォルダ一覧を返す。
 func ListOutputDirsByWorkspace(workspaceID string) ([]string, error) {
 	var dirs []string

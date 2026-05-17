@@ -27,6 +27,9 @@ type Workspace struct {
 	ResolutionX      int        `json:"resolution_x"`        // 0 = Blender デフォルト
 	ResolutionY      int        `json:"resolution_y"`        // 0 = Blender デフォルト
 	OutputFormat     string     `json:"output_format"` // "PNG" / "JPEG"。空 = システムデフォルト委譲
+	AutoLock        bool       `gorm:"default:false" json:"auto_lock"`      // 完了時自動ロック
+	AutoLockMinSize int64      `gorm:"default:0" json:"auto_lock_min_size"` // 自動ロック対象の最小容量（バイト）。0=制限なし
+	AutoLockKeep    int        `gorm:"default:1" json:"auto_lock_keep"`     // ロック保持件数。0=無制限
 	IsSystem         bool       `gorm:"default:false" json:"is_system"`
 	DisplayOrder     int        `gorm:"default:99999" json:"display_order"`
 	ProcessedAt      *time.Time `json:"processed_at"`
@@ -153,7 +156,7 @@ func CreateSystemWorkspace(projectID string, projectFileID string, name string, 
 	return w, nil
 }
 
-func UpdateWorkspace(projectID string, workspaceID string, name string, note string, blenderInstallID uint, scene, camera, engine string, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY int, outputFormat string) (*WorkspaceDetail, error) {
+func UpdateWorkspace(projectID string, workspaceID string, name string, note string, blenderInstallID uint, scene, camera, engine string, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY int, outputFormat string, autoLock bool, autoLockMinSize int64, autoLockKeep int) (*WorkspaceDetail, error) {
 	var w Workspace
 	if res := db.First(&w, "id = ? AND project_id = ?", workspaceID, projectID); res.Error != nil {
 		return nil, xerrors.Errorf("UpdateWorkspace find: %w", res.Error)
@@ -172,6 +175,9 @@ func UpdateWorkspace(projectID string, workspaceID string, name string, note str
 	w.ResolutionX = resolutionX
 	w.ResolutionY = resolutionY
 	w.OutputFormat = outputFormat
+	w.AutoLock = autoLock
+	w.AutoLockMinSize = autoLockMinSize
+	w.AutoLockKeep = autoLockKeep
 	if res := db.Save(&w); res.Error != nil {
 		return nil, xerrors.Errorf("UpdateWorkspace save: %w", res.Error)
 	}

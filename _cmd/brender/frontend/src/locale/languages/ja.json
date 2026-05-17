@@ -213,6 +213,10 @@
     "copied": "コピーしました",
     "copySuffix": " コピー",
     "copyConfirmMsg": "保存済みの値でワークスペースをもう１つ作成します",
+    "autoLock": "完了時に自動ロック",
+    "autoLockMinSize": "対象最小容量",
+    "autoLockKeep": "保持件数",
+    "autoLockKeepHint": "0 = 無制限",
     "createDialog": {
       "title": "ワークスペース作成",
       "multipleFromFile": "ファイルの値から複数作成する",
@@ -229,7 +233,12 @@
     "confirmCancel": "ジョブをキャンセルしますか？",
     "almostComplete": "間もなく完了",
     "preparing": "準備中... (",
-    "secondsPerFrame": "秒/f"
+    "secondsPerFrame": "秒/f",
+    "cleanData": "データクリーンアップ",
+    "cleanTitle": "データクリーンアップ",
+    "cleanDescription": "ロックされていない{{count}}件のジョブデータ（合計 {{size}}）を削除します。ジョブ履歴は残ります。",
+    "cleanConfirm": "削除する",
+    "cleanComplete": "{{count}}件のデータを削除しました"
   },
   "job": {
     "noFiles": "ファイルが見つかりません",

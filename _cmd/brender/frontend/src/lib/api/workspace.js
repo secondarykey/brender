@@ -29,14 +29,15 @@ export const WorkspaceApi = {
    *           blenderInstallID: number, scene: string, camera: string, engine: string,
    *           startFrame: number, endFrame: number, frameStep: number, thread: number, samples: number }} args
    */
-  update: ({ projectID, workspaceID, name, note = '', blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY, outputFormat = '' }) =>
-    isWails() ? svc().then(s => s.Update(projectID, workspaceID, name, note, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY, outputFormat))
+  update: ({ projectID, workspaceID, name, note = '', blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY, outputFormat = '', autoLock = false, autoLockMinSize = 0, autoLockKeep = 1 }) =>
+    isWails() ? svc().then(s => s.Update(projectID, workspaceID, name, note, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY, outputFormat, autoLock, autoLockMinSize, autoLockKeep))
               : serverCall('workspace', 'update', {
                   project_id: projectID, workspace_id: workspaceID, name, note,
                   blender_install_id: blenderInstallID, scene, camera, engine,
                   start_frame: startFrame, end_frame: endFrame, frame_step: frameStep, thread, samples,
                   resolution_x: resolutionX, resolution_y: resolutionY,
                   output_format: outputFormat,
+                  auto_lock: autoLock, auto_lock_min_size: autoLockMinSize, auto_lock_keep: autoLockKeep,
                 }),
 
   /** ワークスペースをコピーして新規作成

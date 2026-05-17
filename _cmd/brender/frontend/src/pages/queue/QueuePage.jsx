@@ -214,6 +214,10 @@ function HistoryTab({ navigate }) {
   const [selected, setSelected] = useState(null)
   const [page, setPage]         = useState(1)
   const [pageSize, setPageSize] = useState(PAGE_SIZE)
+  const [cleanConfirm, setCleanConfirm] = useState(false)
+  const [cleanStats, setCleanStats]     = useState(null)
+  const [cleaning, setCleaning]         = useState(false)
+  const [cleanMsg, setCleanMsg]         = useState('')
 
   const load = useCallback(() => {
     QueueApi.listJobs()
@@ -235,8 +239,44 @@ function HistoryTab({ navigate }) {
 
   const handlePageChange = (p) => { setPage(p); setSelected(null) }
 
+  const handleCleanClick = async () => {
+    try {
+      const stats = await QueueApi.getCleanableJobStats()
+      setCleanStats(stats)
+      setCleanMsg('')
+      setCleanConfirm(true)
+    } catch (err) {
+      showError(String(err))
+    }
+  }
+
+  const handleCleanConfirm = async () => {
+    setCleaning(true)
+    setCleanMsg('')
+    try {
+      const deleted = await QueueApi.cleanJobData()
+      setCleanMsg(t('queue.cleanComplete', { count: deleted }))
+      load()
+    } catch (err) {
+      setCleanMsg(String(err))
+    } finally {
+      setCleaning(false)
+    }
+  }
+
+  const formatSize = (bytes) => {
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+    return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`
+  }
+
   return (
     <>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+        <button className="btn btn-outline btn-sm" onClick={handleCleanClick}>
+          {t('queue.cleanData')}
+        </button>
+      </div>
       {jobs.length === 0 ? (
         <p className="empty-msg">{t('queue.noHistory')}</p>
       ) : (
@@ -299,6 +339,19 @@ function HistoryTab({ navigate }) {
           setJobs(prev => prev.map(j => j.id === id ? { ...j, data_status: status } : j))
           setSelected(prev => prev && prev.id === id ? { ...prev, data_status: status } : prev)
         }} />
+      <ConfirmDialog
+        open={cleanConfirm}
+        title={t('queue.cleanTitle')}
+        onConfirm={handleCleanConfirm}
+        onCancel={() => setCleanConfirm(false)}
+        confirmLabel={t('queue.cleanConfirm')}
+        busy={cleaning}
+        message={cleanMsg}
+      >
+        {cleanStats && (
+          <p>{t('queue.cleanDescription', { count: cleanStats.count, size: formatSize(cleanStats.total_size) })}</p>
+        )}
+      </ConfirmDialog>
     </>
   )
 }
