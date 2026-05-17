@@ -701,19 +701,21 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
 
       <div className="form-field">
         <label className="form-label">{t('workspace.outputFormat')}</label>
-        <select className="form-select" style={{ width: 200 }} value={form.outputFormat} onChange={e => set('outputFormat', e.target.value)}>
-          <option value="">{t('workspace.outputFormatDefault')}</option>
-          {imageFormats.map(f => (
-            <option key={f.code} value={f.code}>{f.label}</option>
-          ))}
-        </select>
-        {form.outputFormat === '' && (
-          <span className="form-hint">
-            {t('workspace.outputFormatEffective', {
-              format: imageFormats.find(f => f.code === (envOutputFormat || 'PNG'))?.label ?? (envOutputFormat || 'PNG')
-            })}
-          </span>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <select className="form-select" style={{ width: 200 }} value={form.outputFormat} onChange={e => set('outputFormat', e.target.value)}>
+            <option value="">{t('workspace.outputFormatDefault')}</option>
+            {imageFormats.map(f => (
+              <option key={f.code} value={f.code}>{f.label}</option>
+            ))}
+          </select>
+          {form.outputFormat === '' && (
+            <span className="form-hint" style={{ whiteSpace: 'nowrap' }}>
+              {t('workspace.outputFormatEffective', {
+                format: imageFormats.find(f => f.code === (envOutputFormat || 'PNG'))?.label ?? (envOutputFormat || 'PNG')
+              })}
+            </span>
+          )}
+        </div>
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -30 }}>
