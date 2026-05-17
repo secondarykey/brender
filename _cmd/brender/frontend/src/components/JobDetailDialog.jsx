@@ -80,11 +80,12 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged, navigate })
   if (!job) return null
 
   const statusLabels = {
-    completed: t('status.completed'),
-    error:     t('status.error'),
-    cancelled: t('status.cancelled'),
-    running:   t('status.running'),
-    waiting:   t('status.waiting'),
+    completed:   t('status.completed'),
+    error:       t('status.error'),
+    cancelled:   t('status.cancelled'),
+    interrupted: t('status.interrupted'),
+    running:     t('status.running'),
+    waiting:     t('status.waiting'),
   }
 
   const status   = job.status || 'running'
