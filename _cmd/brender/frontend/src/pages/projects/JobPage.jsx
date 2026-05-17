@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useLayoutEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
-import { QueueApi, WorkspaceApi, EnvironmentApi } from '../../lib/api'
+import { QueueApi, WorkspaceApi, EnvironmentApi, CodesApi } from '../../lib/api'
 import { onAppEvent } from '../../lib/appEvents'
 import { useToast, useMessage } from '../../lib/toast'
 import ConfirmDialog from '../../components/ConfirmDialog'
@@ -263,6 +263,7 @@ function RenderResultTab({ job }) {
   const [movieFps, setMovieFps]             = useState('30')
   const [movieOutext, setMovieOutext]       = useState('mp4')
   const [movieExtraArgs, setMovieExtraArgs] = useState('')
+  const [videoFormats, setVideoFormats]     = useState([])
   const playingRef = useRef(false)
   const loopRef    = useRef(false)
 
@@ -339,12 +340,16 @@ function RenderResultTab({ job }) {
 
   const handleOpenMovieDialog = async () => {
     try {
-      const env = await EnvironmentApi.get()
+      const [env, formats] = await Promise.all([
+        EnvironmentApi.get(),
+        CodesApi.getVideoFormats(),
+      ])
       if (env) {
         setMovieFps(String(env.ffmpeg_fps > 0 ? env.ffmpeg_fps : 30))
         setMovieOutext(env.ffmpeg_out_ext || 'mp4')
         setMovieExtraArgs(env.ffmpeg_args || '')
       }
+      setVideoFormats(formats || [])
     } catch (_) {}
     setMovieDialogOpen(true)
   }
@@ -454,13 +459,26 @@ function RenderResultTab({ job }) {
 
           <span className="form-label" style={{ textAlign: 'right' }}>{t('viewer.movieDialogOutputExt')}</span>
           <div>
-            <input
-              type="text" className="form-input"
-              style={{ width: 100 }}
-              value={movieOutext}
-              onChange={e => setMovieOutext(e.target.value)}
-              placeholder="mp4"
-            />
+            {videoFormats.length > 0 ? (
+              <select
+                className="form-select"
+                style={{ width: 120 }}
+                value={movieOutext}
+                onChange={e => setMovieOutext(e.target.value)}
+              >
+                {videoFormats.map(f => (
+                  <option key={f.code} value={f.ext}>{f.label}</option>
+                ))}
+              </select>
+            ) : (
+              <input
+                type="text" className="form-input"
+                style={{ width: 100 }}
+                value={movieOutext}
+                onChange={e => setMovieOutext(e.target.value)}
+                placeholder="mp4"
+              />
+            )}
           </div>
 
           <span className="form-label" style={{ textAlign: 'right' }}>{t('viewer.movieDialogExtraArgs')}</span>

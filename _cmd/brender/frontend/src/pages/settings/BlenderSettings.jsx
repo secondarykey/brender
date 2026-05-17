@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
-import { BlenderApi, EnvironmentApi } from '../../lib/api'
+import { BlenderApi, EnvironmentApi, CodesApi } from '../../lib/api'
 import { useToast } from '../../lib/toast'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import { useMessage } from '../../lib/toast'
@@ -21,6 +21,7 @@ function BlenderSettings() {
   const [savingMaxJobs, setSavingMaxJobs] = useState(false)
   const [outputFormat, setOutputFormat] = useState('')
   const [savingOutputFormat, setSavingOutputFormat] = useState(false)
+  const [imageFormats, setImageFormats] = useState([])
 
   const load = () => {
     BlenderApi.list()
@@ -36,6 +37,7 @@ function BlenderSettings() {
         setOutputFormat(env?.output_format || '')
       })
       .catch(() => {})
+    CodesApi.getImageFormats().then(list => setImageFormats(list || [])).catch(() => {})
   }, [])
 
   const handleMaxJobsSave = async () => {
@@ -168,8 +170,9 @@ function BlenderSettings() {
               value={outputFormat}
               onChange={e => setOutputFormat(e.target.value)}
             >
-              <option value="PNG">PNG</option>
-              <option value="JPEG">JPEG</option>
+              {imageFormats.map(f => (
+                <option key={f.code} value={f.code}>{f.label}</option>
+              ))}
             </select>
             <button className="btn btn-green btn-sm" onClick={handleOutputFormatSave} disabled={savingOutputFormat}>
               {savingOutputFormat ? t('common.saving') : t('common.save')}
