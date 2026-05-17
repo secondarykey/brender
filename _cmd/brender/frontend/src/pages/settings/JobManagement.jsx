@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { QueueApi } from '../../lib/api'
 import { useMessage, useToast } from '../../lib/toast'
 import ConfirmDialog from '../../components/ConfirmDialog'
+import JobDetailDialog from '../../components/JobDetailDialog'
 import Pagination from '../../components/Pagination'
 
 const DATA_STATUS_LABELS = {
@@ -62,6 +63,7 @@ function JobManagement() {
   const [cleanStats, setCleanStats] = useState(null)
   const [cleaning, setCleaning] = useState(false)
   const [cleanMsg, setCleanMsg] = useState('')
+  const [selected, setSelected] = useState(null)
   const [excludeStatuses, setExcludeStatuses] = useState(new Set([4, 5]))
   const [showLocked, setShowLocked] = useState(false)
   const [sortBySize, setSortBySize] = useState(true)
@@ -191,7 +193,7 @@ function JobManagement() {
             </thead>
             <tbody>
               {pageJobs.map(j => (
-                <tr key={j.id}>
+                <tr key={j.id} className="row-clickable" onClick={() => setSelected(j)}>
                   <td>{j.project_name || '—'}</td>
                   <td>{j.workspace_name || '—'}</td>
                   <td className="col-c">
@@ -207,6 +209,16 @@ function JobManagement() {
           <Pagination page={currentPage} totalPages={totalPages} onChange={p => setPage(p)} pageSize={pageSize} onPageSizeChange={p => { setPageSize(p); setPage(1) }} total={filteredJobs.length} />
         </>
       )}
+
+      <JobDetailDialog
+        job={selected}
+        onClose={() => setSelected(null)}
+        onDeleted={() => { setSelected(null); load() }}
+        onStatusChanged={(id, status) => {
+          setJobs(prev => prev.map(j => j.id === id ? { ...j, data_status: status } : j))
+          setSelected(prev => prev && prev.id === id ? { ...prev, data_status: status } : prev)
+        }}
+      />
 
       <ConfirmDialog
         open={cleanConfirm}
