@@ -14,6 +14,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ikascrew/brender/code"
 	"github.com/ikascrew/brender/exec"
 	"github.com/ikascrew/brender/model"
 	"golang.org/x/xerrors"
@@ -384,7 +385,8 @@ func EnqueueWithPreview(projectID, workspaceID string, preview *RenderPreview) (
 		ResolutionX:   preview.ResolutionX,
 		ResolutionY:   preview.ResolutionY,
 		Camera:        preview.Camera,
-		OutputExt:     exec.FormatToExt(preview.OutputFormat),
+		OutputExt:     resolveOutputExt(preview.OutputFormat),
+		BlenderFormat: resolveBlenderFormat(preview.OutputFormat),
 		EnqueuedAt:    &now,
 	}
 	if err := model.CreateJob(job); err != nil {
@@ -483,7 +485,11 @@ func executeQueue(q *model.Queue, job *model.Job) {
 	b.File = job.BlenderFile
 	b.Scene = job.Scene
 	b.Engine = job.Engine
-	b.Format = exec.ExtToFormat(job.OutputExt)
+	if job.BlenderFormat != "" {
+		b.Format = job.BlenderFormat
+	} else {
+		b.Format = exec.ExtToFormat(job.OutputExt) // 既存ジョブ向けフォールバック
+	}
 	b.Start = job.StartFrame
 	b.End = job.EndFrame
 	b.Skip = job.FrameStep
@@ -1117,3 +1123,26 @@ func DeleteJobFiles(id string, filePaths []string) error {
 	}
 	return model.UpdateJobDataStatus(id, newStatus)
 }
+
+// resolveImageFormat は出力フォーマット code から ImageFormat を引く。
+// 見つからない場合は PNG のデフォルト値を返す。
+func resolveImageFormat(formatCode string) code.ImageFormat {
+	formats, err := code.GetImageFormats()
+	if err == nil {
+		for _, f := range formats {
+			if f.Code == formatCode {
+				return f
+			}
+		}
+	}
+	return code.ImageFormat{Code: "PNG", Label: "PNG", Ext: "png", BlenderValue: "PNG"}
+}
+
+func resolveOutputExt(formatCode string) string {
+	return resolveImageFormat(formatCode).Ext
+}
+
+func resolveBlenderFormat(formatCode string) string {
+	return resolveImageFormat(formatCode).BlenderValue
+}
+

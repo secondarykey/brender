@@ -92,6 +92,7 @@
     "environment": "Environment",
     "blender": "Blender",
     "video": "Video",
+    "code": "Code",
     "jobResult": "Result",
     "renderResults": "Render Results",
     "dataView": "Data"

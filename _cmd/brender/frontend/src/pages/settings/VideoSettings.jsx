@@ -125,6 +125,7 @@ function VideoSettings() {
         <input
           className="form-input"
           type="text"
+          style={{ width: '100%' }}
           value={args}
           onChange={e => { setArgs(e.target.value) }}
           placeholder=""
