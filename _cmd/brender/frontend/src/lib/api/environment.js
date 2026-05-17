@@ -11,9 +11,9 @@ export const EnvironmentApi = {
   /** ffmpeg 設定を保存
    * @param {{ cmd: string, fps: number, ext: string, args: string }} args
    */
-  setFfmpeg: ({ cmd, fps, ext, outExt, args }) =>
-    isWails() ? svc().then(s => s.SetFfmpeg(cmd, fps, ext, outExt, args))
-              : serverCall('environment', 'set_ffmpeg', { cmd, fps, ext, out_ext: outExt, args }),
+  setFfmpeg: ({ cmd, fps, outExt, args }) =>
+    isWails() ? svc().then(s => s.SetFfmpeg(cmd, fps, outExt, args))
+              : serverCall('environment', 'set_ffmpeg', { cmd, fps, out_ext: outExt, args }),
 
   /** システムログの内容を取得 */
   getSystemLog: () =>

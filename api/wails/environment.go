@@ -21,11 +21,10 @@ func (s *Environment) Get() (*model.Environment, error) {
 	return api.GetEnvironment()
 }
 
-func (s *Environment) SetFfmpeg(cmd string, fps int, ext string, outExt string, args string) error {
+func (s *Environment) SetFfmpeg(cmd string, fps int, outExt string, args string) error {
 	return api.SetFfmpegSettings(api.FfmpegSettings{
 		Cmd:    cmd,
 		FPS:    fps,
-		Ext:    ext,
 		OutExt: outExt,
 		Args:   args,
 	})

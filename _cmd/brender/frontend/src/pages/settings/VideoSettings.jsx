@@ -9,25 +9,21 @@ function VideoSettings() {
   const { showError } = useMessage()
   const [cmd,    setCmd]    = useState('')
   const [fps,    setFps]    = useState('')
-  const [ext,    setExt]    = useState('')
   const [outExt, setOutExt] = useState('')
   const [args,   setArgs]   = useState('')
   const [saving, setSaving] = useState(false)
-  const [imageFormats, setImageFormats] = useState([])
   const [videoFormats, setVideoFormats] = useState([])
 
   useEffect(() => {
     EnvironmentApi.get()
       .then(env => {
         if (!env) return
-        setCmd(env.ffmpeg_cmd     || '')
-        setFps(env.ffmpeg_fps     ? String(env.ffmpeg_fps) : '')
-        setExt(env.ffmpeg_ext     || '')
+        setCmd(env.ffmpeg_cmd        || '')
+        setFps(env.ffmpeg_fps        ? String(env.ffmpeg_fps) : '')
         setOutExt(env.ffmpeg_out_ext || '')
-        setArgs(env.ffmpeg_args   || '')
+        setArgs(env.ffmpeg_args      || '')
       })
       .catch(err => showError(String(err)))
-    CodesApi.getImageFormats().then(list => setImageFormats(list || [])).catch(() => {})
     CodesApi.getVideoFormats().then(list => setVideoFormats(list || [])).catch(() => {})
   }, [])
 
@@ -38,7 +34,6 @@ function VideoSettings() {
       await EnvironmentApi.setFfmpeg({
         cmd,
         fps: fps ? parseInt(fps, 10) : 0,
-        ext,
         outExt,
         args,
       })
@@ -76,33 +71,6 @@ function VideoSettings() {
           onChange={e => { setFps(e.target.value) }}
           placeholder="30"
         />
-      </div>
-
-      <div className="form-group">
-        <label className="form-label">{t('settings.ffmpegExt')}</label>
-        <p className="setting-desc">{t('settings.ffmpegExtHint')}</p>
-        {imageFormats.length > 0 ? (
-          <select
-            className="form-select"
-            style={{ width: 160 }}
-            value={ext}
-            onChange={e => setExt(e.target.value)}
-          >
-            <option value="">—</option>
-            {imageFormats.map(f => (
-              <option key={f.code} value={f.ext}>{f.label} (.{f.ext})</option>
-            ))}
-          </select>
-        ) : (
-          <input
-            className="form-input"
-            type="text"
-            style={{ width: 160 }}
-            value={ext}
-            onChange={e => setExt(e.target.value)}
-            placeholder="png"
-          />
-        )}
       </div>
 
       <div className="form-group">
