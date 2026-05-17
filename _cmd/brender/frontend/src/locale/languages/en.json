@@ -254,7 +254,8 @@
       "deleted": "Deleted",
       "corrupted": "Corrupted",
       "modified": "Modified",
-      "none": "None"
+      "none": "None",
+      "locked": "Locked"
     },
     "cleanData": "Data Cleanup",
     "cleanTitle": "Data Cleanup",

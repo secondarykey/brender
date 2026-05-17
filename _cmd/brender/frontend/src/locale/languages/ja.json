@@ -254,7 +254,8 @@
       "deleted": "削除済",
       "corrupted": "破損",
       "modified": "操作済",
-      "none": "なし"
+      "none": "なし",
+      "locked": "ロック"
     },
     "cleanData": "データクリーンアップ",
     "cleanTitle": "データクリーンアップ",

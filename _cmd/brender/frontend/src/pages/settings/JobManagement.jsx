@@ -63,6 +63,7 @@ function JobManagement() {
   const [cleaning, setCleaning] = useState(false)
   const [cleanMsg, setCleanMsg] = useState('')
   const [excludeStatuses, setExcludeStatuses] = useState(new Set([4, 5]))
+  const [showLocked, setShowLocked] = useState(true)
   const [sortBySize, setSortBySize] = useState(true)
 
   const load = useCallback(() => {
@@ -74,12 +75,16 @@ function JobManagement() {
   useEffect(() => { load() }, [load])
 
   const filteredJobs = useMemo(() => {
-    let result = jobs.filter(j => !excludeStatuses.has(j.data_status))
+    let result = jobs.filter(j => {
+      if (excludeStatuses.has(j.data_status)) return false
+      if (!showLocked && j.data_status % 2 === 1) return false
+      return true
+    })
     if (sortBySize) {
       result = [...result].sort((a, b) => (b.disk_size || 0) - (a.disk_size || 0))
     }
     return result
-  }, [jobs, excludeStatuses, sortBySize])
+  }, [jobs, excludeStatuses, showLocked, sortBySize])
 
   const totalPages = Math.max(1, Math.ceil(filteredJobs.length / pageSize))
   const currentPage = Math.min(page, totalPages)
@@ -156,6 +161,12 @@ function JobManagement() {
               </button>
             )
           })}
+          <button
+            className={`btn btn-sm ${showLocked ? 'btn-outline-active' : 'btn-outline'}`}
+            onClick={() => { setShowLocked(v => !v); setPage(1) }}
+          >
+            {t('jobManagement.statusFilter.locked')}
+          </button>
         </div>
         <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.8rem', opacity: 0.8, marginLeft: 'auto' }}>
           <input type="checkbox" checked={sortBySize} onChange={e => setSortBySize(e.target.checked)} />
