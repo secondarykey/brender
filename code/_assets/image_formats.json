@@ -1,7 +1,4 @@
 [
-  { "code": "PNG",      "label": "PNG",  "ext": "png", "blender_value": "PNG"      },
-  { "code": "JPEG",     "label": "JPEG", "ext": "jpg", "blender_value": "JPEG"     },
-  { "code": "OPEN_EXR", "label": "EXR",  "ext": "exr", "blender_value": "OPEN_EXR" },
-  { "code": "TIFF",     "label": "TIFF", "ext": "tif", "blender_value": "TIFF"     },
-  { "code": "BMP",      "label": "BMP",  "ext": "bmp", "blender_value": "BMP"      }
+  { "code": "PNG",  "label": "PNG",  "ext": "png", "blender_value": "PNG"  },
+  { "code": "JPEG", "label": "JPEG", "ext": "jpg", "blender_value": "JPEG" }
 ]

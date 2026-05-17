@@ -403,7 +403,8 @@
     "colHeight": "高さ",
     "addRow": "+ 行を追加",
     "reset": "デフォルトに戻す",
-    "resetConfirm": "ユーザー設定を削除してデフォルトに戻しますか？"
+    "resetConfirm": "ユーザー設定を削除してデフォルトに戻しますか？",
+    "unsaved": "未保存の変更があります"
   },
   "render": {
     "confirmTitle": "レンダリングを実行しますか？",

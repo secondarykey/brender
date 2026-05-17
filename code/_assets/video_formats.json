@@ -1,6 +1,4 @@
 [
   { "code": "MP4", "label": "MP4", "ext": "mp4" },
-  { "code": "MOV", "label": "MOV", "ext": "mov" },
-  { "code": "MKV", "label": "MKV", "ext": "mkv" },
-  { "code": "AVI", "label": "AVI", "ext": "avi" }
+  { "code": "MKV", "label": "MKV", "ext": "mkv" }
 ]

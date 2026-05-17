@@ -403,7 +403,8 @@
     "colHeight": "Height",
     "addRow": "+ Add Row",
     "reset": "Reset to Default",
-    "resetConfirm": "Delete user settings and reset to defaults?"
+    "resetConfirm": "Delete user settings and reset to defaults?",
+    "unsaved": "You have unsaved changes"
   },
   "render": {
     "confirmTitle": "Start rendering?",
