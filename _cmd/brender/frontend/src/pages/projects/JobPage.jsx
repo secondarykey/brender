@@ -178,7 +178,10 @@ function DetailTab({ job, onDeleted, onDataStatusChanged }) {
           <div className="job-detail-body">
             <div className="job-detail-section">
               <Row label={t('dialog.status')} value={
-                <span className={`status-badge status-${status}`}>{statusLabels[status] ?? status}</span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flex: 1 }}>
+                  <span className={`status-badge status-${status}`}>{statusLabels[status] ?? status}</span>
+                  <button className="btn btn-outline btn-sm" onClick={() => QueueApi.openLogWindow({ id: job.id })}>{t('job.showLog')}</button>
+                </div>
               } />
               <Row label={t('dialog.data')} value={
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -223,9 +226,6 @@ function DetailTab({ job, onDeleted, onDataStatusChanged }) {
             )}
           </div>
 
-          <div className="dialog-actions" style={{ justifyContent: 'flex-end', marginTop: 16 }}>
-            <button className="btn btn-ghost" onClick={() => QueueApi.openLogWindow({ id: job.id })}>{t('job.showLog')}</button>
-          </div>
         </div>
       </div>
 
