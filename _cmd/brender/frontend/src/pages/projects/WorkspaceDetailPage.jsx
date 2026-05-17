@@ -700,14 +700,8 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
       </div>
 
       <div className="form-field">
-        <label className="form-label">{t('workspace.outputFormat')}</label>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <select className="form-select" style={{ width: 200 }} value={form.outputFormat} onChange={e => set('outputFormat', e.target.value)}>
-            <option value="">{t('workspace.outputFormatDefault')}</option>
-            {imageFormats.map(f => (
-              <option key={f.code} value={f.code}>{f.label}</option>
-            ))}
-          </select>
+          <label className="form-label" style={{ marginBottom: 0 }}>{t('workspace.outputFormat')}</label>
           {form.outputFormat === '' && (
             <span className="form-hint" style={{ whiteSpace: 'nowrap' }}>
               {t('workspace.outputFormatEffective', {
@@ -716,6 +710,12 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
             </span>
           )}
         </div>
+        <select className="form-select" style={{ width: 200 }} value={form.outputFormat} onChange={e => set('outputFormat', e.target.value)}>
+          <option value="">{t('workspace.outputFormatDefault')}</option>
+          {imageFormats.map(f => (
+            <option key={f.code} value={f.code}>{f.label}</option>
+          ))}
+        </select>
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -30 }}>
