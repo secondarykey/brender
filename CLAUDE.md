@@ -194,6 +194,30 @@ Services are registered in `_cmd/brender/main.go`. After adding or changing a se
 
 `finishJob()` は完了時に `calcDirSize()` で出力ディレクトリ容量を計算して `Job.DiskSize` に保存、Queue レコードを削除後 `startNextWaiting()` → `notifyQueueChanged()` を呼ぶ。
 
+### 起動時キューリカバリ (`api/queue.go`)
+アプリがクラッシュや強制終了した場合、Queue テーブルに `running` 状態のレコードが残る。次回起動時に `RecoverStaleQueues()` がこれを検出してリカバリする。
+
+**フロー**（`main.go` の `initDB()` 直後に呼ばれる）:
+1. `running` 状態の Queue を全件取得
+2. 孤立プロセスが生きていれば `Kill()` する（Mac では生存する場合がある）
+3. 旧ジョブを `interrupted`（中断）ステータスで閉じる — 途中の render.log やフレーム出力が履歴として残る
+4. 同じパラメータで新しい Job + Queue を `recovering` ステータスで作成（出力ディレクトリは新規）
+5. `QueueChangedHook` 設定後に `StartRecoveredQueues()` でスケジューラを起動し、再実行を開始
+
+**Queue ステータス**:
+- `waiting` — 通常の実行待ち
+- `recovering` — リカバリによる再実行待ち（フロントエンドでは「再実行待ち」バッジ、オレンジ）
+- `running` — 実行中
+
+**Job ステータス**:
+- `completed` / `error` / `cancelled` — 既存
+- `interrupted` — システム中断（フロントエンドでは「中断」バッジ、紫）
+
+**プロセス生存の OS 差異**:
+- Windows: 親プロセス終了時に子プロセス（Blender）も終了する
+- Mac/Linux: 子プロセスは orphan として生存する（init に引き取られる）
+- いずれの場合も stdout パイプは切断され再接続不可のため、新ジョブで再実行する
+
 ### Queue changed hook (`api/queue.go`)
 ```go
 var QueueChangedHook func(count int64)
