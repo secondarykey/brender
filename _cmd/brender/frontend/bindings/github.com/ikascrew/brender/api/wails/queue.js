@@ -34,6 +34,13 @@ export function Cancel(id) {
 }
 
 /**
+ * @returns {$CancellablePromise<number>}
+ */
+export function CleanJobData() {
+    return $Call.ByID(1048288085);
+}
+
+/**
  * @param {string} id
  * @returns {$CancellablePromise<void>}
  */
@@ -92,11 +99,30 @@ export function Get(id) {
 }
 
 /**
+ * @returns {$CancellablePromise<model$0.CleanableJobStats | null>}
+ */
+export function GetCleanableJobStats() {
+    return $Call.ByID(3948659350).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType3($result);
+    }));
+}
+
+/**
  * @param {string} path
  * @returns {$CancellablePromise<string>}
  */
 export function GetImageBase64(path) {
     return $Call.ByID(1202128375, path);
+}
+
+/**
+ * @param {string} id
+ * @returns {$CancellablePromise<model$0.Job | null>}
+ */
+export function GetJob(id) {
+    return $Call.ByID(1771650178, id).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType5($result);
+    }));
 }
 
 /**
@@ -112,7 +138,7 @@ export function GetJobLog(id) {
  */
 export function List() {
     return $Call.ByID(3165860213).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType2($result);
+        return $$createType6($result);
     }));
 }
 
@@ -123,7 +149,7 @@ export function List() {
  */
 export function ListByWorkspace(projectID, workspaceID) {
     return $Call.ByID(1462409681, projectID, workspaceID).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType2($result);
+        return $$createType6($result);
     }));
 }
 
@@ -132,7 +158,7 @@ export function ListByWorkspace(projectID, workspaceID) {
  */
 export function ListItems() {
     return $Call.ByID(305390015).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType5($result);
+        return $$createType9($result);
     }));
 }
 
@@ -142,7 +168,7 @@ export function ListItems() {
  */
 export function ListJobFiles(id) {
     return $Call.ByID(324552011, id).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType8($result);
+        return $$createType12($result);
     }));
 }
 
@@ -152,7 +178,7 @@ export function ListJobFiles(id) {
  */
 export function ListJobImages(id) {
     return $Call.ByID(1978976334, id).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType9($result);
+        return $$createType13($result);
     }));
 }
 
@@ -161,7 +187,7 @@ export function ListJobImages(id) {
  */
 export function ListJobs() {
     return $Call.ByID(1456638637).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType12($result);
+        return $$createType14($result);
     }));
 }
 
@@ -172,7 +198,7 @@ export function ListJobs() {
  */
 export function ListJobsByProjectFile(projectID, fileID) {
     return $Call.ByID(774568071, projectID, fileID).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType12($result);
+        return $$createType14($result);
     }));
 }
 
@@ -183,7 +209,7 @@ export function ListJobsByProjectFile(projectID, fileID) {
  */
 export function ListJobsByWorkspace(projectID, workspaceID) {
     return $Call.ByID(1990300201, projectID, workspaceID).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType12($result);
+        return $$createType14($result);
     }));
 }
 
@@ -218,7 +244,7 @@ export function OpenMovieWindow(videoPath) {
  */
 export function PreviewRender(projectID, workspaceID) {
     return $Call.ByID(2094811495, projectID, workspaceID).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType14($result);
+        return $$createType16($result);
     }));
 }
 
@@ -274,16 +300,18 @@ export function ZipJobSelectedFiles(id, filePaths, savePath) {
 // Private type creation functions
 const $$createType0 = model$0.Queue.createFrom;
 const $$createType1 = $Create.Nullable($$createType0);
-const $$createType2 = $Create.Array($$createType1);
-const $$createType3 = api$0.QueueItem.createFrom;
-const $$createType4 = $Create.Nullable($$createType3);
-const $$createType5 = $Create.Array($$createType4);
-const $$createType6 = api$0.JobFileInfo.createFrom;
-const $$createType7 = $Create.Nullable($$createType6);
-const $$createType8 = $Create.Array($$createType7);
-const $$createType9 = $Create.Array($Create.Any);
-const $$createType10 = model$0.Job.createFrom;
+const $$createType2 = model$0.CleanableJobStats.createFrom;
+const $$createType3 = $Create.Nullable($$createType2);
+const $$createType4 = model$0.Job.createFrom;
+const $$createType5 = $Create.Nullable($$createType4);
+const $$createType6 = $Create.Array($$createType1);
+const $$createType7 = api$0.QueueItem.createFrom;
+const $$createType8 = $Create.Nullable($$createType7);
+const $$createType9 = $Create.Array($$createType8);
+const $$createType10 = api$0.JobFileInfo.createFrom;
 const $$createType11 = $Create.Nullable($$createType10);
 const $$createType12 = $Create.Array($$createType11);
-const $$createType13 = api$0.RenderPreview.createFrom;
-const $$createType14 = $Create.Nullable($$createType13);
+const $$createType13 = $Create.Array($Create.Any);
+const $$createType14 = $Create.Array($$createType5);
+const $$createType15 = api$0.RenderPreview.createFrom;
+const $$createType16 = $Create.Nullable($$createType15);

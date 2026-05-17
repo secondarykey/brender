@@ -131,6 +131,13 @@ export class QueueItem {
              */
             this["id"] = "";
         }
+        if (!("name" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["name"] = "";
+        }
         if (!("project_id" in $$source)) {
             /**
              * @member
@@ -138,26 +145,12 @@ export class QueueItem {
              */
             this["project_id"] = "";
         }
-        if (!("project_name" in $$source)) {
-            /**
-             * @member
-             * @type {string}
-             */
-            this["project_name"] = "";
-        }
         if (!("workspace_id" in $$source)) {
             /**
              * @member
              * @type {string}
              */
             this["workspace_id"] = "";
-        }
-        if (!("workspace_name" in $$source)) {
-            /**
-             * @member
-             * @type {string}
-             */
-            this["workspace_name"] = "";
         }
         if (!("engine" in $$source)) {
             /**

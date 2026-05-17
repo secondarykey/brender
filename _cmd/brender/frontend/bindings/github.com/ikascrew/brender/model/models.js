@@ -90,6 +90,44 @@ export class BlenderInstall {
     }
 }
 
+/**
+ * CleanableJobStats はクリーンアップ対象のジョブ統計を返す。
+ */
+export class CleanableJobStats {
+    /**
+     * Creates a new CleanableJobStats instance.
+     * @param {Partial<CleanableJobStats>} [$$source = {}] - The source object to create the CleanableJobStats.
+     */
+    constructor($$source = {}) {
+        if (!("count" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["count"] = 0;
+        }
+        if (!("total_size" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["total_size"] = 0;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new CleanableJobStats instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {CleanableJobStats}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new CleanableJobStats(/** @type {Partial<CleanableJobStats>} */($$parsedSource));
+    }
+}
+
 export class Environment {
     /**
      * Creates a new Environment instance.
@@ -228,26 +266,12 @@ export class Job {
              */
             this["project_id"] = "";
         }
-        if (!("project_name" in $$source)) {
-            /**
-             * @member
-             * @type {string}
-             */
-            this["project_name"] = "";
-        }
         if (!("workspace_id" in $$source)) {
             /**
              * @member
              * @type {string}
              */
             this["workspace_id"] = "";
-        }
-        if (!("workspace_name" in $$source)) {
-            /**
-             * @member
-             * @type {string}
-             */
-            this["workspace_name"] = "";
         }
         if (!("project_file_id" in $$source)) {
             /**
@@ -1004,6 +1028,30 @@ export class Workspace {
              * @type {string}
              */
             this["output_format"] = "";
+        }
+        if (!("auto_lock" in $$source)) {
+            /**
+             * 完了時自動ロック
+             * @member
+             * @type {boolean}
+             */
+            this["auto_lock"] = false;
+        }
+        if (!("auto_lock_min_size" in $$source)) {
+            /**
+             * 自動ロック対象の最小容量（バイト）。デフォルト100MB
+             * @member
+             * @type {number}
+             */
+            this["auto_lock_min_size"] = 0;
+        }
+        if (!("auto_lock_keep" in $$source)) {
+            /**
+             * ロック保持件数。0=無制限
+             * @member
+             * @type {number}
+             */
+            this["auto_lock_keep"] = 0;
         }
         if (!("is_system" in $$source)) {
             /**

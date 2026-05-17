@@ -137,10 +137,13 @@ export function SetThumbnail(projectID, fileID, workspaceID, imagePath) {
  * @param {number} resolutionX
  * @param {number} resolutionY
  * @param {string} outputFormat
+ * @param {boolean} autoLock
+ * @param {number} autoLockMinSize
+ * @param {number} autoLockKeep
  * @returns {$CancellablePromise<model$0.WorkspaceDetail | null>}
  */
-export function Update(projectID, workspaceID, name, note, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY, outputFormat) {
-    return $Call.ByID(971734846, projectID, workspaceID, name, note, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY, outputFormat).then(/** @type {($result: any) => any} */(($result) => {
+export function Update(projectID, workspaceID, name, note, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY, outputFormat, autoLock, autoLockMinSize, autoLockKeep) {
+    return $Call.ByID(971734846, projectID, workspaceID, name, note, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY, outputFormat, autoLock, autoLockMinSize, autoLockKeep).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType4($result);
     }));
 }
