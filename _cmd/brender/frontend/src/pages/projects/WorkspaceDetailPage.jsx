@@ -730,6 +730,11 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
         </select>
       </div>
 
+      {error && <div className="error-msg">{error}</div>}
+      {testEnqueued && <div className="warning-msg">{t('workspace.testEnqueued')}</div>}
+
+      <NoteSection value={note} onChange={setNote} />
+
       <div className="form-field" style={{ marginTop: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <input type="checkbox" id="autoLock" checked={form.autoLock} onChange={e => set('autoLock', e.target.checked)} />
@@ -751,16 +756,11 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
         )}
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: -30 }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <button className="btn btn-outline btn-sm" onClick={() => setCopyConfirm(true)} disabled={copying}>
           {t('workspace.copy')}
         </button>
       </div>
-
-      {error && <div className="error-msg">{error}</div>}
-      {testEnqueued && <div className="warning-msg">{t('workspace.testEnqueued')}</div>}
-
-      <NoteSection value={note} onChange={setNote} />
 
       <div className="form-actions">
         <button className="btn btn-danger" onClick={() => { setForceDel(false); setConfirm(true) }}>{t('common.delete')}</button>
