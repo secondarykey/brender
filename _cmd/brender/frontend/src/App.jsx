@@ -114,7 +114,7 @@ function App() {
       case 'queue':
         return <QueuePage key={queueKey} navigate={navigate} />
       case 'settings':
-        return <SettingsPage initialTab={p.tab} />
+        return <SettingsPage initialTab={p.tab} navigate={navigate} />
       default:
         return <ProjectListPage navigate={navigate} />
     }

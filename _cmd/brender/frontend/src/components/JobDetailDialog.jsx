@@ -60,7 +60,7 @@ function Row({ label, value, selectable }) {
   )
 }
 
-function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
+function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged, navigate }) {
   const { t } = useTranslation()
   const [confirm, setConfirm]   = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -153,8 +153,11 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged }) {
               </button>
             </div>
           } />
-          <Row label={t('dialog.project')}   value={job.project_name} />
-          <Row label={t('dialog.workspace')} value={job.workspace_name} />
+          {navigate && (
+            <Row label={t('dialog.jobName')} value={
+              <button className="link-btn" onClick={() => { onClose(); navigate('job', { job, backPage: 'settings', backParams: { tab: 'jobManagement' } }) }}>{job.name || '—'}</button>
+            } />
+          )}
         </div>
 
         <div className="job-detail-section">

@@ -191,8 +191,6 @@ function DetailTab({ job, onDeleted, onDataStatusChanged }) {
                   </button>
                 </div>
               } />
-              <Row label={t('dialog.project')}   value={job.project_name} />
-              <Row label={t('dialog.workspace')} value={job.workspace_name} />
             </div>
 
             <div className="job-detail-section">

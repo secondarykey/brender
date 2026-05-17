@@ -356,7 +356,7 @@ function HistoryTab({ projectID, fileID, navigate, projectName, fileName }) {
           <div key={j.id} className="queue-history-item queue-history-item-clickable" onClick={() => openJob(j)}>
             <div className="queue-history-top">
               <div>
-                <span className="queue-history-name">{j.workspace_name}</span>
+                <span className="queue-history-name">{j.name || j.workspace_name}</span>
                 <div className="queue-history-detail" style={{ marginTop: 4 }}>
                   <span>{j.start_frame}–{j.end_frame}f</span>
                   {j.engine && <span>{j.engine}</span>}

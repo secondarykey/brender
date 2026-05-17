@@ -141,7 +141,7 @@ function ActiveTab({ navigate }) {
         <table className="queue-table">
           <thead>
             <tr>
-              <th className="col-name">{t('table.workspace')}</th>
+              <th className="col-name">{t('table.jobName')}</th>
               <th className="col-status">{t('table.status')}</th>
               <th className="col-progress" style={{ width: 300, minWidth: 300, maxWidth: 300 }}>{t('table.frameProgress')}</th>
               <th className="col-datetime">{t('table.startExpected')}</th>
@@ -152,13 +152,7 @@ function ActiveTab({ navigate }) {
           <tbody>
             {items.map(q => (
               <tr key={q.id} className={q.status === 'running' ? 'row-running' : ''}>
-                <td>
-                  <button className="link-btn" onClick={() => navigate && navigate('workspace', {
-                    projectID: q.project_id, projectName: q.project_name, workspaceID: q.workspace_id,
-                  })}>
-                    {q.workspace_name || q.workspace_id}
-                  </button>
-                </td>
+                <td>{q.name || '—'}</td>
                 <td className="col-status"><StatusBadge status={q.status} /></td>
                 <ProgressCell q={q} />
                 <td className="col-datetime date-cell">
@@ -194,8 +188,7 @@ function ActiveTab({ navigate }) {
       >
         {confirmItem && (
           <>
-            <p><span className="dialog-label">{t('dialog.project')}</span>{confirmItem.project_name}</p>
-            <p><span className="dialog-label">{t('dialog.workspace')}</span>{confirmItem.workspace_name}</p>
+            <p><span className="dialog-label">{t('dialog.jobName')}</span>{confirmItem.name || '—'}</p>
             <p><span className="dialog-label">{t('dialog.status')}</span><StatusBadge status={confirmItem.status} /></p>
           </>
         )}
@@ -273,9 +266,9 @@ function HistoryTab({ navigate }) {
                       job: j,
                       initialTab: 'render',
                       backPage: 'queue',
-                      backParams: { projectID: j.project_id, projectName: j.project_name, fileID: j.project_file_id, fileName: j.file_name, workspaceID: j.workspace_id, workspaceName: j.workspace_name },
+                      backParams: {},
                     })}}>
-                      {j.workspace_name || j.workspace_id}
+                      {j.name || '—'}
                     </button>
                   </td>
                   <td className="col-c">{j.engine || '—'}</td>

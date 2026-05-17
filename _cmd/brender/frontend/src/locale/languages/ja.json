@@ -294,6 +294,7 @@
     "jobDetails": "ジョブ詳細",
     "status": "ステータス",
     "data": "データ",
+    "jobName": "ジョブ名",
     "project": "プロジェクト",
     "workspace": "ワークスペース",
     "scene": "シーン",
@@ -371,6 +372,7 @@
     "logLevel": "ログレベル"
   },
   "table": {
+    "jobName": "ジョブ名",
     "workspace": "ワークスペース",
     "status": "ステータス",
     "frameProgress": "フレーム / 進捗",

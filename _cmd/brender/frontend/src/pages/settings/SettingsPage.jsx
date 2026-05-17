@@ -7,7 +7,7 @@ import VideoSettings from './VideoSettings'
 import CodeSettings from './CodeSettings'
 import JobManagement from './JobManagement'
 
-function SettingsPage({ initialTab }) {
+function SettingsPage({ initialTab, navigate }) {
   const { t } = useTranslation()
   const [tab, setTab] = useState(initialTab || 'basic')
 
@@ -42,7 +42,7 @@ function SettingsPage({ initialTab }) {
         )}
         {tab === 'video'       && <VideoSettings />}
         {tab === 'code'        && <CodeSettings />}
-        {tab === 'jobManagement' && <JobManagement />}
+        {tab === 'jobManagement' && <JobManagement navigate={navigate} />}
       </div>
     </div>
   )

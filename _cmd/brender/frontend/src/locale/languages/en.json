@@ -294,6 +294,7 @@
     "jobDetails": "Job Details",
     "status": "Status",
     "data": "Data",
+    "jobName": "Job Name",
     "project": "Project",
     "workspace": "Workspace",
     "scene": "Scene",
@@ -371,6 +372,7 @@
     "logLevel": "Log Level"
   },
   "table": {
+    "jobName": "Job Name",
     "workspace": "Workspace",
     "status": "Status",
     "frameProgress": "Frame / Progress",

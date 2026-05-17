@@ -119,7 +119,7 @@ function ImageViewerDialog({ job, onClose }) {
     <Dialog
       open
       className="image-viewer-dialog"
-      title={`${t('dialog.renderResults')}${job.workspace_name}`}
+      title={`${t('dialog.renderResults')}${job.name || job.workspace_name}`}
       onClose={onClose}
       message={thumbMsg || undefined}
       messageSeverity="info"

@@ -52,7 +52,7 @@ function formatDate(iso) {
 
 const PAGE_SIZE = 20
 
-function JobManagement() {
+function JobManagement({ navigate }) {
   const { t } = useTranslation()
   const { showError } = useMessage()
   const { showToast } = useToast()
@@ -183,8 +183,7 @@ function JobManagement() {
           <table className="queue-table">
             <thead>
               <tr>
-                <th>{t('table.project')}</th>
-                <th>{t('table.workspace')}</th>
+                <th>{t('table.jobName')}</th>
                 <th className="col-c">{t('table.status')}</th>
                 <th className="col-c">{t('jobManagement.dataStatus')}</th>
                 <th className="col-r">{t('jobManagement.diskSize')}</th>
@@ -194,8 +193,7 @@ function JobManagement() {
             <tbody>
               {pageJobs.map(j => (
                 <tr key={j.id} className="row-clickable" onClick={() => setSelected(j)}>
-                  <td>{j.project_name || '—'}</td>
-                  <td>{j.workspace_name || '—'}</td>
+                  <td>{j.name || '—'}</td>
                   <td className="col-c">
                     <span className={`status-badge status-${j.status}`}>{t(`status.${j.status}`)}</span>
                   </td>
@@ -218,6 +216,7 @@ function JobManagement() {
           setJobs(prev => prev.map(j => j.id === id ? { ...j, data_status: status } : j))
           setSelected(prev => prev && prev.id === id ? { ...prev, data_status: status } : prev)
         }}
+        navigate={navigate}
       />
 
       <ConfirmDialog

@@ -144,7 +144,7 @@ func (s *Queue) CleanJobData() (int, error) {
 func (s *Queue) OpenLogWindow(jobID string) error {
 	title := "render.log"
 	if j, err := model.GetJob(jobID); err == nil && j != nil {
-		title = fmt.Sprintf("render.log — %s / %s", j.ProjectName, j.WorkspaceName)
+		title = fmt.Sprintf("render.log — %s", j.Name)
 	}
 
 	winName := fmt.Sprintf("log-%s-%d", jobID, time.Now().UnixNano())

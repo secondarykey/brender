@@ -368,9 +368,7 @@ func EnqueueWithPreview(projectID, workspaceID string, preview *RenderPreview) (
 		ID:            id,
 		Name:          fmt.Sprintf("%s(%d-%d)", preview.WorkspaceName, preview.StartFrame, preview.EndFrame),
 		ProjectID:     projectID,
-		ProjectName:   preview.ProjectName,
 		WorkspaceID:   workspaceID,
-		WorkspaceName: preview.WorkspaceName,
 		ProjectFileID: preview.ProjectFileID,
 		BlenderPath:   preview.BlenderPath,
 		BlenderFile:   preview.BlenderFile,
@@ -699,11 +697,10 @@ func startNextWaiting() {
 
 // QueueItem combines Queue (active state) with Job (parameters/names) for display.
 type QueueItem struct {
-	ID            string     `json:"id"`
-	ProjectID     string     `json:"project_id"`
-	ProjectName   string     `json:"project_name"`
-	WorkspaceID   string     `json:"workspace_id"`
-	WorkspaceName string     `json:"workspace_name"`
+	ID          string     `json:"id"`
+	Name        string     `json:"name"`
+	ProjectID   string     `json:"project_id"`
+	WorkspaceID string     `json:"workspace_id"`
 	Engine        string     `json:"engine"`
 	StartFrame    int        `json:"start_frame"`
 	EndFrame      int        `json:"end_frame"`
@@ -745,8 +742,7 @@ func ListQueueItems() ([]*QueueItem, error) {
 			CreatedAt:   q.CreatedAt,
 		}
 		if j, err := model.GetJob(q.ID); err == nil && j != nil {
-			item.ProjectName = j.ProjectName
-			item.WorkspaceName = j.WorkspaceName
+			item.Name = j.Name
 			item.Engine = j.Engine
 			item.StartFrame = j.StartFrame
 			item.EndFrame = j.EndFrame
