@@ -11,6 +11,13 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 import * as code$0 from "../../code/models.js";
 
 /**
+ * @returns {$CancellablePromise<string>}
+ */
+export function GenerateID() {
+    return $Call.ByID(3586256300);
+}
+
+/**
  * @returns {$CancellablePromise<code$0.ImageFormat[]>}
  */
 export function GetImageFormats() {
@@ -35,6 +42,51 @@ export function GetVideoFormats() {
     return $Call.ByID(1959442431).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType5($result);
     }));
+}
+
+/**
+ * @returns {$CancellablePromise<void>}
+ */
+export function ResetImageFormats() {
+    return $Call.ByID(3771829114);
+}
+
+/**
+ * @returns {$CancellablePromise<void>}
+ */
+export function ResetResolutionPresets() {
+    return $Call.ByID(2147383693);
+}
+
+/**
+ * @returns {$CancellablePromise<void>}
+ */
+export function ResetVideoFormats() {
+    return $Call.ByID(4096317864);
+}
+
+/**
+ * @param {code$0.ImageFormat[]} items
+ * @returns {$CancellablePromise<void>}
+ */
+export function SaveImageFormats(items) {
+    return $Call.ByID(1871674216, items);
+}
+
+/**
+ * @param {code$0.ResolutionPreset[]} items
+ * @returns {$CancellablePromise<void>}
+ */
+export function SaveResolutionPresets(items) {
+    return $Call.ByID(1148764939, items);
+}
+
+/**
+ * @param {code$0.VideoFormat[]} items
+ * @returns {$CancellablePromise<void>}
+ */
+export function SaveVideoFormats(items) {
+    return $Call.ByID(2610292266, items);
 }
 
 // Private type creation functions

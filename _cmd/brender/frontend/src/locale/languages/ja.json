@@ -387,6 +387,19 @@
     "movieDialogOutputExt": "出力拡張子",
     "movieDialogExtraArgs": "追加引数"
   },
+  "code": {
+    "imageFormats": "画像フォーマット",
+    "videoFormats": "動画フォーマット",
+    "resolutionPresets": "解像度プリセット",
+    "colLabel": "ラベル",
+    "colExt": "拡張子",
+    "colBlenderValue": "Blender 値",
+    "colWidth": "幅",
+    "colHeight": "高さ",
+    "addRow": "+ 行を追加",
+    "reset": "デフォルトに戻す",
+    "resetConfirm": "ユーザー設定を削除してデフォルトに戻しますか？"
+  },
   "render": {
     "confirmTitle": "レンダリングを実行しますか？",
     "workspace": "ワークスペース",
