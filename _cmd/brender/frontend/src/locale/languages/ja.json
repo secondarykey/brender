@@ -183,6 +183,7 @@
     "swapResolution": "X と Y を入れ替え",
     "outputFormat": "出力フォーマット",
     "outputFormatDefault": "システムデフォルト",
+    "outputFormatEffective": "→ {{format}} が使用されます",
     "specifyFrames": "フレームを指定する",
     "specifyFrameRange": "フレーム範囲を指定する",
     "startFrame": "開始",
