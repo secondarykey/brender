@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CodesApi } from '../../lib/api/codes'
 import { useToast, useMessage } from '../../lib/toast'
@@ -23,6 +23,8 @@ function CodeSettings() {
   const [saving, setSaving] = useState(false)
   const [resetOpen, setResetOpen] = useState(false)
   const [resetting, setResetting] = useState(false)
+  const dragIndex = useRef(null)
+  const [dragOver, setDragOver] = useState(null)
 
   const load = useCallback(async (cat) => {
     setLoading(true)
@@ -63,6 +65,39 @@ function CodeSettings() {
 
   const handleDeleteRow = (idx) => {
     setRows(prev => prev.filter((_, i) => i !== idx))
+  }
+
+  const handleDragStart = (e, index) => {
+    dragIndex.current = index
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', index)
+  }
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDragOver(index)
+  }
+
+  const handleDragLeave = () => setDragOver(null)
+
+  const handleDrop = (e, dropIndex) => {
+    e.preventDefault()
+    setDragOver(null)
+    const from = dragIndex.current
+    dragIndex.current = null
+    if (from === null || from === dropIndex) return
+    setRows(prev => {
+      const next = [...prev]
+      const [moved] = next.splice(from, 1)
+      next.splice(dropIndex, 0, moved)
+      return next
+    })
+  }
+
+  const handleDragEnd = () => {
+    dragIndex.current = null
+    setDragOver(null)
   }
 
   const handleSave = async () => {
@@ -115,16 +150,27 @@ function CodeSettings() {
       {loading ? (
         <div style={{ color: '#888', padding: '16px 0' }}>{t('common.loading')}</div>
       ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+        <table className="blender-table" style={{ width: '100%', fontSize: 13 }}>
           <thead>
-            <tr style={{ borderBottom: '1px solid #333' }}>
+            <tr>
+              <th style={{ width: 32 }} />
               <ColHeaders category={category} t={t} />
               <th style={{ width: 60 }} />
             </tr>
           </thead>
           <tbody>
             {rows.map((row, idx) => (
-              <tr key={row.code} style={{ borderBottom: '1px solid #222' }}>
+              <tr
+                key={row.code}
+                draggable
+                onDragStart={e => handleDragStart(e, idx)}
+                onDragOver={e => handleDragOver(e, idx)}
+                onDragLeave={handleDragLeave}
+                onDrop={e => handleDrop(e, idx)}
+                onDragEnd={handleDragEnd}
+                className={dragOver === idx ? 'drag-over' : ''}
+              >
+                <td className="drag-handle" title={t('common.dragToReorder')}>≡</td>
                 <RowCells category={category} row={row} idx={idx} onChange={handleCellChange} />
                 <td style={{ padding: '4px 8px', textAlign: 'center' }}>
                   <button
