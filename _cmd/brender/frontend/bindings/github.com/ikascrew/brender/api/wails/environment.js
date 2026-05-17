@@ -57,13 +57,12 @@ export function OpenSystemLogWindow() {
 /**
  * @param {string} cmd
  * @param {number} fps
- * @param {string} ext
  * @param {string} outExt
  * @param {string} args
  * @returns {$CancellablePromise<void>}
  */
-export function SetFfmpeg(cmd, fps, ext, outExt, args) {
-    return $Call.ByID(1734480084, cmd, fps, ext, outExt, args);
+export function SetFfmpeg(cmd, fps, outExt, args) {
+    return $Call.ByID(1734480084, cmd, fps, outExt, args);
 }
 
 /**

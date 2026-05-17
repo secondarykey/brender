@@ -326,8 +326,6 @@
     "ffmpegCmdHint": "Path or command name for ffmpeg (defaults to \"ffmpeg\" if empty)",
     "ffmpegFPS": "FPS",
     "ffmpegFPSHint": "Video frame rate (defaults to 30 if empty)",
-    "ffmpegExt": "Input file extension",
-    "ffmpegExtHint": "Extension of rendered images (e.g. png, exr)",
     "ffmpegOutExt": "Output file extension",
     "ffmpegOutExtHint": "Extension for the output video file (e.g. mp4, mov)",
     "ffmpegArgs": "Extra arguments",

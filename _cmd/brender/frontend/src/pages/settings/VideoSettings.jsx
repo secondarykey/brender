@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { EnvironmentApi } from '../../lib/api'
+import { EnvironmentApi, CodesApi } from '../../lib/api'
 import { useToast, useMessage } from '../../lib/toast'
 
 function VideoSettings() {
@@ -9,22 +9,22 @@ function VideoSettings() {
   const { showError } = useMessage()
   const [cmd,    setCmd]    = useState('')
   const [fps,    setFps]    = useState('')
-  const [ext,    setExt]    = useState('')
   const [outExt, setOutExt] = useState('')
   const [args,   setArgs]   = useState('')
   const [saving, setSaving] = useState(false)
+  const [videoFormats, setVideoFormats] = useState([])
 
   useEffect(() => {
     EnvironmentApi.get()
       .then(env => {
         if (!env) return
-        setCmd(env.ffmpeg_cmd     || '')
-        setFps(env.ffmpeg_fps     ? String(env.ffmpeg_fps) : '')
-        setExt(env.ffmpeg_ext     || '')
+        setCmd(env.ffmpeg_cmd        || '')
+        setFps(env.ffmpeg_fps        ? String(env.ffmpeg_fps) : '')
         setOutExt(env.ffmpeg_out_ext || '')
-        setArgs(env.ffmpeg_args   || '')
+        setArgs(env.ffmpeg_args      || '')
       })
       .catch(err => showError(String(err)))
+    CodesApi.getVideoFormats().then(list => setVideoFormats(list || [])).catch(() => {})
   }, [])
 
   const handleSave = async () => {
@@ -34,7 +34,6 @@ function VideoSettings() {
       await EnvironmentApi.setFfmpeg({
         cmd,
         fps: fps ? parseInt(fps, 10) : 0,
-        ext,
         outExt,
         args,
       })
@@ -75,29 +74,30 @@ function VideoSettings() {
       </div>
 
       <div className="form-group">
-        <label className="form-label">{t('settings.ffmpegExt')}</label>
-        <p className="setting-desc">{t('settings.ffmpegExtHint')}</p>
-        <input
-          className="form-input"
-          type="text"
-          style={{ width: 160 }}
-          value={ext}
-          onChange={e => { setExt(e.target.value) }}
-          placeholder="png"
-        />
-      </div>
-
-      <div className="form-group">
         <label className="form-label">{t('settings.ffmpegOutExt')}</label>
         <p className="setting-desc">{t('settings.ffmpegOutExtHint')}</p>
-        <input
-          className="form-input"
-          type="text"
-          style={{ width: 160 }}
-          value={outExt}
-          onChange={e => { setOutExt(e.target.value) }}
-          placeholder="mp4"
-        />
+        {videoFormats.length > 0 ? (
+          <select
+            className="form-select"
+            style={{ width: 160 }}
+            value={outExt}
+            onChange={e => setOutExt(e.target.value)}
+          >
+            <option value="">—</option>
+            {videoFormats.map(f => (
+              <option key={f.code} value={f.ext}>{f.label}</option>
+            ))}
+          </select>
+        ) : (
+          <input
+            className="form-input"
+            type="text"
+            style={{ width: 160 }}
+            value={outExt}
+            onChange={e => setOutExt(e.target.value)}
+            placeholder="mp4"
+          />
+        )}
       </div>
 
       <div className="form-group">

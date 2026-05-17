@@ -132,13 +132,6 @@ export class Environment {
              */
             this["ffmpeg_fps"] = 0;
         }
-        if (!("ffmpeg_ext" in $$source)) {
-            /**
-             * @member
-             * @type {string}
-             */
-            this["ffmpeg_ext"] = "";
-        }
         if (!("ffmpeg_out_ext" in $$source)) {
             /**
              * @member
