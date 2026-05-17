@@ -63,7 +63,7 @@ function JobManagement() {
   const [cleaning, setCleaning] = useState(false)
   const [cleanMsg, setCleanMsg] = useState('')
   const [excludeStatuses, setExcludeStatuses] = useState(new Set([4, 5]))
-  const [showLocked, setShowLocked] = useState(true)
+  const [showLocked, setShowLocked] = useState(false)
   const [sortBySize, setSortBySize] = useState(true)
 
   const load = useCallback(() => {
