@@ -255,7 +255,8 @@
       "corrupted": "破損",
       "modified": "操作済",
       "none": "なし",
-      "locked": "ロック"
+      "lockInclude": "ロックを含む",
+      "lockOnly": "ロックのみ"
     },
     "cleanData": "データクリーンアップ",
     "cleanTitle": "データクリーンアップ",

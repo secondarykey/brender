@@ -67,7 +67,7 @@ function JobManagement({ navigate }) {
   const [cleanMsg, setCleanMsg] = useState('')
   const [selected, setSelected] = useState(null)
   const [excludeStatuses, setExcludeStatuses] = useState(new Set([4, 5]))
-  const [showLocked, setShowLocked] = useState(false)
+  const [lockFilter, setLockFilter] = useState('hide')
   const [sortBySize, setSortBySize] = useState(true)
 
   const load = useCallback(() => {
@@ -81,14 +81,16 @@ function JobManagement({ navigate }) {
   const filteredJobs = useMemo(() => {
     let result = jobs.filter(j => {
       if (excludeStatuses.has(j.data_status)) return false
-      if (!showLocked && j.data_status % 2 === 1) return false
+      const isLocked = j.data_status % 2 === 1
+      if (lockFilter === 'hide' && isLocked) return false
+      if (lockFilter === 'only' && !isLocked) return false
       return true
     })
     if (sortBySize) {
       result = [...result].sort((a, b) => (b.disk_size || 0) - (a.disk_size || 0))
     }
     return result
-  }, [jobs, excludeStatuses, showLocked, sortBySize])
+  }, [jobs, excludeStatuses, lockFilter, sortBySize])
 
   const totalPages = Math.max(1, Math.ceil(filteredJobs.length / pageSize))
   const currentPage = Math.min(page, totalPages)
@@ -165,11 +167,19 @@ function JobManagement({ navigate }) {
               </button>
             )
           })}
+        </div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <button
-            className={`btn btn-sm ${showLocked ? 'btn-outline-active' : 'btn-outline'}`}
-            onClick={() => { setShowLocked(v => !v); setPage(1) }}
+            className={`btn btn-sm ${lockFilter === 'include' ? 'btn-outline-active' : 'btn-outline'}`}
+            onClick={() => { setLockFilter(v => v === 'include' ? 'hide' : 'include'); setPage(1) }}
           >
-            {t('jobManagement.statusFilter.locked')}
+            {t('jobManagement.statusFilter.lockInclude')}
+          </button>
+          <button
+            className={`btn btn-sm ${lockFilter === 'only' ? 'btn-outline-active' : 'btn-outline'}`}
+            onClick={() => { setLockFilter(v => v === 'only' ? 'hide' : 'only'); setPage(1) }}
+          >
+            {t('jobManagement.statusFilter.lockOnly')}
           </button>
         </div>
         <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.8rem', opacity: 0.8, marginLeft: 'auto' }}>

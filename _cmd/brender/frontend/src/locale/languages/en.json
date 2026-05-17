@@ -255,7 +255,8 @@
       "corrupted": "Corrupted",
       "modified": "Modified",
       "none": "None",
-      "locked": "Locked"
+      "lockInclude": "Include locked",
+      "lockOnly": "Locked only"
     },
     "cleanData": "Data Cleanup",
     "cleanTitle": "Data Cleanup",
