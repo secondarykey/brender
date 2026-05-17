@@ -57,7 +57,7 @@
     "download": "ログをダウンロード",
     "confirmClose": "アプリケーションの終了",
     "closeAnyway": "終了する",
-    "queueRunningWarning": "実行中または待機中のキューがあります。終了するとジョブは中断されます。"
+    "queueRunningWarning": "実行中または待機中のキューがあります。終了するとジョブは中断されますが、次回起動時に自動で再実行されます。"
   },
   "status": {
     "waiting": "実行待ち",

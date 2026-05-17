@@ -57,7 +57,7 @@
     "download": "Download log",
     "confirmClose": "Close Application",
     "closeAnyway": "Close",
-    "queueRunningWarning": "There are running or waiting queues. Closing will interrupt the jobs."
+    "queueRunningWarning": "There are running or waiting queues. Jobs will be interrupted but automatically re-queued on next startup."
   },
   "status": {
     "waiting": "Waiting",
