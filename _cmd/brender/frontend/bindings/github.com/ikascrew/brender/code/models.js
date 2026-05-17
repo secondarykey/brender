@@ -8,7 +8,7 @@ import { Create as $Create } from "@wailsio/runtime";
 
 /**
  * ImageFormat は画像出力フォーマットのコード定義。
- * Code は Blender の -F 引数に渡す値（例: "PNG", "JPEG"）。
+ * BlenderValue が Blender の -F 引数に渡す値（例: "PNG", "JPEG", "OPEN_EXR"）。
  */
 export class ImageFormat {
     /**
@@ -36,6 +36,13 @@ export class ImageFormat {
              * @type {string}
              */
             this["ext"] = "";
+        }
+        if (!("blender_value" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["blender_value"] = "";
         }
 
         Object.assign(this, $$source);

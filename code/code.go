@@ -18,11 +18,12 @@ var defaultVideoFormats []byte
 var defaultResolutionPresets []byte
 
 // ImageFormat は画像出力フォーマットのコード定義。
-// Code は Blender の -F 引数に渡す値（例: "PNG", "JPEG"）。
+// BlenderValue が Blender の -F 引数に渡す値（例: "PNG", "JPEG", "OPEN_EXR"）。
 type ImageFormat struct {
-	Code  string `json:"code"`
-	Label string `json:"label"`
-	Ext   string `json:"ext"`
+	Code         string `json:"code"`
+	Label        string `json:"label"`
+	Ext          string `json:"ext"`
+	BlenderValue string `json:"blender_value"`
 }
 
 // VideoFormat は動画出力フォーマットのコード定義。

@@ -366,6 +366,14 @@ export class Job {
              */
             this["output_ext"] = "";
         }
+        if (!("blender_format" in $$source)) {
+            /**
+             * Blender -F 引数に渡した値（"PNG" / "JPEG" / "OPEN_EXR" など）
+             * @member
+             * @type {string}
+             */
+            this["blender_format"] = "";
+        }
         if (!("status" in $$source)) {
             /**
              * completed / error / cancelled
