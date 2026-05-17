@@ -271,6 +271,8 @@ function RenderResultTab({ job }) {
     if (!job) return
     stopPlay()
     setLoadingList(true); setImages([]); setIndex(0); setImgSrc('')
+    const hasData = [2, 3, 6, 7, 8, 9].includes(job.data_status)
+    if (!hasData) { setLoadingList(false); return }
     QueueApi.listJobImages({ id: job.id })
       .then(list => { setImages(list || []); setLoadingList(false) })
       .catch(err => { showError(String(err)); setLoadingList(false) })
