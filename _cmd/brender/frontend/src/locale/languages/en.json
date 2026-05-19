@@ -88,6 +88,7 @@
     "created_at": "Created",
     "processed_at": "Processed",
     "name": "Name",
+    "file_modified_at": "File Modified",
     "asc": "Ascending",
     "desc": "Descending"
   },

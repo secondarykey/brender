@@ -57,7 +57,7 @@ function FileCard({ projectID, g, navigate, projectName, thumbnailMode, onSetThu
         }
       </div>
       <div className="file-tile-info">
-        <div className="file-tile-name" title={fileName}>{fileName}</div>
+        <div className={`file-tile-name${g.file.file_exists === false ? ' file-missing' : ''}`} title={fileName}>{fileName}</div>
       </div>
     </div>
   )
@@ -202,7 +202,7 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
                 </button>
               )}
               <div className="file-item-info">
-                <span className="ws-file-name">{g.file.name || g.file.path.split(/[/\\]/).pop()}</span>
+                <span className={`ws-file-name${g.file.file_exists === false ? ' file-missing' : ''}`}>{g.file.name || g.file.path.split(/[/\\]/).pop()}</span>
                 <span className="ws-file-path">{g.file.path}</span>
               </div>
               <div className="file-item-meta">

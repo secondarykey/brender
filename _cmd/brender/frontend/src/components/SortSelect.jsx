@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 
-const SORT_OPTIONS = ['display_order', 'name', 'created_at', 'processed_at']
+const SORT_OPTIONS = ['display_order', 'name', 'created_at', 'processed_at', 'file_modified_at']
 
 export default function SortSelect({ value, onChange, dir = 'asc', onDirChange }) {
   const { t } = useTranslation()

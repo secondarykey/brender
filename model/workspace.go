@@ -2,6 +2,7 @@ package model
 
 import (
 	"errors"
+	gosort "sort"
 	"time"
 
 	"github.com/google/uuid"
@@ -57,23 +58,54 @@ func newWorkspaceID() (string, error) {
 }
 
 func ListWorkspacesByProject(projectID string, sort, dir string) ([]*WorkspacesByFile, error) {
-	order := resolveOrder(sort, dir)
+	fileOrder := sort
+	if sort == "file_modified_at" {
+		fileOrder = "display_order"
+	}
+	order := resolveOrder(fileOrder, dir)
 	var files []*ProjectFile
 	if res := db.Where("project_id = ?", projectID).Order(order).Find(&files); res.Error != nil {
 		return nil, xerrors.Errorf("ListWorkspacesByProject files: %w", res.Error)
 	}
 
+	wsOrder := resolveOrder(sort, dir)
 	result := make([]*WorkspacesByFile, 0, len(files))
 	for _, f := range files {
 		populateFileInfo(f)
 		var ws []*Workspace
 		if res := db.Where("project_id = ? AND project_file_id = ? AND is_system = ?", projectID, f.ID, false).
-			Order(order).Find(&ws); res.Error != nil {
+			Order(wsOrder).Find(&ws); res.Error != nil {
 			return nil, xerrors.Errorf("ListWorkspacesByProject workspaces: %w", res.Error)
 		}
 		result = append(result, &WorkspacesByFile{File: f, Workspaces: ws})
 	}
+
+	if sort == "file_modified_at" {
+		sortFilesByModifiedAt(result, dir)
+	}
+
 	return result, nil
+}
+
+func sortFilesByModifiedAt(result []*WorkspacesByFile, dir string) {
+	desc := dir != "asc"
+	gosort.SliceStable(result, func(i, j int) bool {
+		ti := result[i].File.FileModifiedAt
+		tj := result[j].File.FileModifiedAt
+		if ti == nil && tj == nil {
+			return false
+		}
+		if ti == nil {
+			return !desc
+		}
+		if tj == nil {
+			return desc
+		}
+		if desc {
+			return ti.After(*tj)
+		}
+		return ti.Before(*tj)
+	})
 }
 
 func GetWorkspace(projectID string, workspaceID string) (*WorkspaceDetail, error) {
