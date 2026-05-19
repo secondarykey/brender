@@ -57,6 +57,31 @@ function ProgressCell({ q }) {
   const { t } = useTranslation()
   const isRunning = q.status === 'running'
   const isWaiting = q.status === 'waiting' || q.status === 'recovering'
+  const isSamplesComparison = q.job_type === 'samples_comparison'
+
+  if (isSamplesComparison) {
+    const total = q.end_frame || 1
+    const done = q.now_frame || 0
+    const pct = Math.min(99.99, (done / total) * 100)
+    const pctText = pct.toFixed(2)
+    const label = isWaiting
+      ? t('queue.samplesComparison', { total })
+      : isRunning
+        ? `sample ${done}/${total} (${q.log1 || ''}) ${pctText}%`
+        : `sample ${done}/${total}`
+    const logText = q.log2 || ''
+    return (
+      <td className="queue-progress-cell" style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
+        <div className="progress-bar-track">
+          <div className="progress-bar-fill" style={{ width: `${pctText}%` }} />
+        </div>
+        <div className="progress-meta">
+          <span className="progress-frame">{label}</span>
+        </div>
+        <div className="progress-log" title={logText}>{logText}</div>
+      </td>
+    )
+  }
 
   const totalFrames = Math.max(1, q.end_frame - q.start_frame + 1)
   const hasFrame   = isRunning && q.now_frame > 0 && q.frame_active

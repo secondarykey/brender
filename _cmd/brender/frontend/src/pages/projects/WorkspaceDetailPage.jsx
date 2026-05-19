@@ -261,6 +261,9 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
   const [renderConfirm, setRenderConfirm]   = useState(null)
   const [renderEnqueuing, setRenderEnqueuing] = useState(false)
   const [resolvingRender, setResolvingRender] = useState(false)
+  const [samplesDialogOpen, setSamplesDialogOpen] = useState(false)
+  const [samplesListText, setSamplesListText]     = useState('2,4,8,16,32,64,128,256,512')
+  const [samplesEnqueuing, setSamplesEnqueuing]   = useState(false)
   const [imageFormats, setImageFormats]         = useState([])
   const [resolutionPresets, setResolutionPresets] = useState([])
   const [envOutputFormat, setEnvOutputFormat]   = useState('')
@@ -468,6 +471,25 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
       showError(String(err))
     } finally {
       setTestEnqueueing(false)
+    }
+  }
+
+  const handleSamplesComparison = async () => {
+    showError('')
+    setSamplesEnqueuing(true)
+    try {
+      const counts = samplesListText.split(',').map(s => parseInt(s.trim(), 10)).filter(n => n > 0)
+      if (counts.length === 0) {
+        showError(t('workspace.samplesListEmpty'))
+        return
+      }
+      await QueueApi.samplesComparisonEnqueue({ projectID, workspaceID, sampleCounts: counts })
+      setSamplesDialogOpen(false)
+      navigate('queue')
+    } catch (err) {
+      showError(String(err))
+    } finally {
+      setSamplesEnqueuing(false)
     }
   }
 
@@ -770,6 +792,9 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
           <button className="btn btn-run" onClick={handleTestEncode} disabled={testEnqueueing || workDirLocked}>
             {testEnqueueing ? t('common.enqueueing') : t('workspace.testRender')}
           </button>
+          <button className="btn btn-outline btn-sm" onClick={() => setSamplesDialogOpen(true)} disabled={workDirLocked}>
+            {t('workspace.samplesComparison')}
+          </button>
           <button className="btn btn-run" onClick={handleRenderClick} disabled={resolvingRender || workDirLocked || isDirty}>
             {resolvingRender ? t('common.processing') : `▶ ${t('common.run')}`}
           </button>
@@ -806,6 +831,33 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
             {renderConfirm.frame_step > 1 && <p><span className="dialog-label">{t('render.step')}</span>{renderConfirm.frame_step}</p>}
           </>
         )}
+      </Dialog>
+
+      <Dialog
+        open={samplesDialogOpen}
+        title={t('workspace.samplesComparison')}
+        onClose={() => setSamplesDialogOpen(false)}
+        closeOnBackdrop={!samplesEnqueuing}
+        actions={
+          <>
+            <button className="btn btn-ghost" onClick={() => setSamplesDialogOpen(false)}>{t('common.cancel')}</button>
+            <button className="btn btn-run" onClick={handleSamplesComparison} disabled={samplesEnqueuing}>
+              {samplesEnqueuing ? t('common.enqueueing') : `▶ ${t('common.run')}`}
+            </button>
+          </>
+        }
+      >
+        <div className="form-field">
+          <label className="form-label">{t('workspace.samplesListLabel')}</label>
+          <input
+            className="form-input"
+            style={{ width: '100%' }}
+            value={samplesListText}
+            onChange={e => setSamplesListText(e.target.value)}
+            placeholder="2,4,8,16,32,64,128,256,512"
+          />
+          <span className="form-hint">{t('workspace.samplesListHint')}</span>
+        </div>
       </Dialog>
 
       <ConfirmDialog

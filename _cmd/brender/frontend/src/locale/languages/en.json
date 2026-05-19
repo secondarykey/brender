@@ -230,6 +230,10 @@
     "copied": "Copied",
     "copySuffix": " Copy",
     "copyConfirmMsg": "Creates another workspace with the saved values.",
+    "samplesComparison": "Samples Comparison",
+    "samplesListLabel": "Sample counts (comma-separated)",
+    "samplesListHint": "Renders 1 frame at each sample count for quality comparison",
+    "samplesListEmpty": "No valid sample counts",
     "autoLock": "Auto-lock on completion",
     "autoLockMinSize": "Min size",
     "autoLockKeep": "Keep count",
@@ -249,7 +253,8 @@
     "confirmCancel": "Cancel this job?",
     "almostComplete": "Almost done",
     "preparing": "Preparing... (",
-    "secondsPerFrame": "s/f"
+    "secondsPerFrame": "s/f",
+    "samplesComparison": "Samples Comparison ({{total}} types)"
   },
   "jobManagement": {
     "totalJobs": "{{count}} jobs",

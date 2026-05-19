@@ -567,6 +567,193 @@ func Enqueue(projectID string, workspaceID string) (*model.Queue, error) {
 	return EnqueueWithPreview(projectID, workspaceID, preview)
 }
 
+// SamplesComparisonEnqueue はサンプル比較ジョブをキューに投入する。
+func SamplesComparisonEnqueue(projectID, workspaceID string, sampleCounts []int) (*model.Queue, error) {
+	if len(sampleCounts) == 0 {
+		return nil, xerrors.New("サンプル数リストが空です")
+	}
+
+	preview, err := PreviewRender(projectID, workspaceID)
+	if err != nil {
+		return nil, err
+	}
+
+	frame := (preview.StartFrame + preview.EndFrame) / 2
+
+	sampleStrs := make([]string, len(sampleCounts))
+	for i, s := range sampleCounts {
+		sampleStrs[i] = fmt.Sprintf("%d", s)
+	}
+	samplesList := strings.Join(sampleStrs, ",")
+
+	baseDir, err := GetProjectBaseDir(projectID)
+	if err != nil {
+		return nil, xerrors.Errorf("GetProjectBaseDir: %w", err)
+	}
+
+	p, err := model.SelectProject(projectID)
+	if err != nil || p == nil {
+		return nil, xerrors.Errorf("project not found: %w", err)
+	}
+	wd, err := model.GetWorkDir(p.WorkDirID)
+	if err != nil || wd == nil {
+		return nil, xerrors.New("作業ディレクトリが設定されていません")
+	}
+	if wd.Status == model.WorkDirStatusLock {
+		return nil, xerrors.New("作業ディレクトリがロックされています。移行後に実行してください")
+	}
+
+	exists, err := model.ExistsQueueByWorkspace(projectID, workspaceID)
+	if err != nil {
+		return nil, xerrors.Errorf("ExistsQueueByWorkspace: %w", err)
+	}
+	if exists {
+		return nil, xerrors.New("同一ワークスペースのジョブがすでにキューに存在します")
+	}
+
+	id, err := model.NewQueueID()
+	if err != nil {
+		return nil, xerrors.Errorf("NewQueueID: %w", err)
+	}
+
+	outputDir := filepath.Join(baseDir, projectID, preview.ProjectFileID, workspaceID, id)
+	if err := os.MkdirAll(outputDir, 0755); err != nil {
+		return nil, xerrors.Errorf("MkdirAll: %w", err)
+	}
+
+	now := time.Now()
+
+	job := &model.Job{
+		ID:            id,
+		Name:          fmt.Sprintf("%s(Samples Comparison)", preview.WorkspaceName),
+		ProjectID:     projectID,
+		WorkspaceID:   workspaceID,
+		ProjectFileID: preview.ProjectFileID,
+		BlenderPath:   preview.BlenderPath,
+		BlenderFile:   preview.BlenderFile,
+		OutputDir:     outputDir,
+		Scene:         preview.Scene,
+		Engine:        preview.Engine,
+		StartFrame:    frame,
+		EndFrame:      frame,
+		FrameStep:     1,
+		Thread:        preview.Thread,
+		ResolutionX:   preview.ResolutionX,
+		ResolutionY:   preview.ResolutionY,
+		Camera:        preview.Camera,
+		OutputExt:     resolveOutputExt(preview.OutputFormat),
+		BlenderFormat: resolveBlenderFormat(preview.OutputFormat),
+		JobType:       "samples_comparison",
+		SamplesList:   samplesList,
+		EnqueuedAt:    &now,
+	}
+	if err := model.CreateJob(job); err != nil {
+		return nil, xerrors.Errorf("CreateJob: %w", err)
+	}
+
+	if err := model.UpdateWorkspaceProcessedAt(workspaceID, &now); err != nil {
+		log.Println("UpdateWorkspaceProcessedAt:", err)
+	}
+	if err := model.UpdateProjectFileProcessedAt(preview.ProjectFileID, &now); err != nil {
+		log.Println("UpdateProjectFileProcessedAt:", err)
+	}
+	if err := model.UpdateProjectProcessedAt(projectID, &now); err != nil {
+		log.Println("UpdateProjectProcessedAt:", err)
+	}
+
+	q := &model.Queue{
+		ID:          id,
+		ProjectID:   projectID,
+		WorkspaceID: workspaceID,
+		Status:      model.QueueWaiting,
+	}
+	if err := model.CreateQueue(q); err != nil {
+		return nil, xerrors.Errorf("CreateQueue: %w", err)
+	}
+
+	scheduleMu.Lock()
+	running, _ := model.CountRunningQueues()
+	shouldStart := running < getMaxConcurrentJobs()
+	if shouldStart {
+		_ = model.MarkQueueStarting(id)
+	}
+	scheduleMu.Unlock()
+
+	if shouldStart {
+		go executeSamplesComparison(q, job)
+	}
+	notifyQueueChanged()
+
+	return q, nil
+}
+
+func executeSamplesComparison(q *model.Queue, job *model.Job) {
+	b, err := exec.NewBlender(job.BlenderPath)
+	if err != nil {
+		finishJob(q.ID, false, err.Error(), 0)
+		return
+	}
+
+	b.File = job.BlenderFile
+
+	sampleList := exec.ParseSamplesList(job.SamplesList)
+
+	isCycles, isEevee, isWorkbench := exec.EngineFlags(job.Engine)
+	dto := &exec.SamplesComparisonRun{
+		Scene:       job.Scene,
+		Frame:       job.StartFrame,
+		SamplesList: job.SamplesList,
+		IsCycles:    isCycles,
+		IsEevee:     isEevee,
+		IsWorkbench: isWorkbench,
+		OutputDir:   filepath.ToSlash(job.OutputDir),
+	}
+
+	scriptPath, err := exec.GetSamplesComparisonPythonFile(dto)
+	if err != nil {
+		finishJob(q.ID, false, err.Error(), 0)
+		return
+	}
+	b.Python = scriptPath
+
+	pw := exec.NewSamplesComparisonWriter(sampleList)
+	exec.RegisterProgress(q.ID, pw)
+	defer exec.UnregisterProgress(q.ID)
+
+	logPath := filepath.Join(job.OutputDir, "render.log")
+	logFile, logErr := os.Create(logPath)
+	if logErr == nil {
+		b.Writer = io.MultiWriter(logFile, pw)
+		b.ErrorWriter = io.MultiWriter(logFile, pw)
+		defer logFile.Close()
+	} else {
+		b.Writer = pw
+		b.ErrorWriter = pw
+	}
+
+	pid, errCh, err := b.RunWithPID(context.Background())
+	if err != nil {
+		finishJob(q.ID, false, err.Error(), 0)
+		return
+	}
+
+	now := time.Now()
+	if updateErr := model.UpdateQueueRunning(q.ID, pid); updateErr != nil {
+		log.Println("UpdateQueueRunning error:", updateErr)
+	}
+	if updateErr := model.UpdateJobStarted(q.ID, &now); updateErr != nil {
+		log.Println("UpdateJobStarted error:", updateErr)
+	}
+
+	blenderErr := <-errCh
+	diskSize := calcDirSize(job.OutputDir)
+	if blenderErr != nil {
+		finishJob(q.ID, false, blenderErr.Error(), diskSize)
+	} else {
+		finishJob(q.ID, true, "", diskSize)
+	}
+}
+
 func resolveBlenderPath(workspaceBlenderID, projectBlenderID uint) (string, error) {
 	id := workspaceBlenderID
 	if id == 0 {
@@ -825,7 +1012,15 @@ func startNextWaiting() {
 	_ = model.MarkQueueStarting(q.ID)
 	scheduleMu.Unlock()
 
-	go executeQueue(q, j)
+	go dispatchQueue(q, j)
+}
+
+func dispatchQueue(q *model.Queue, j *model.Job) {
+	if j.JobType == "samples_comparison" {
+		executeSamplesComparison(q, j)
+	} else {
+		executeQueue(q, j)
+	}
 }
 
 // QueueItem combines Queue (active state) with Job (parameters/names) for display.
@@ -841,6 +1036,7 @@ type QueueItem struct {
 	ProcessID     int        `json:"process_id"`
 	StartedAt     *time.Time `json:"started_at"`
 	CreatedAt     *time.Time `json:"created_at"`
+	JobType       string     `json:"job_type"`
 	// Progress (populated only while running)
 	NowFrame     int        `json:"now_frame"`
 	ExpectedAt   *time.Time `json:"expected_at,omitempty"`
@@ -879,6 +1075,7 @@ func ListQueueItems() ([]*QueueItem, error) {
 			item.Engine = j.Engine
 			item.StartFrame = j.StartFrame
 			item.EndFrame = j.EndFrame
+			item.JobType = j.JobType
 		}
 		if pr := exec.GetProgress(q.ID); pr != nil {
 			if pr.NowFrame > 0 {

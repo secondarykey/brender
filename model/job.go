@@ -56,7 +56,9 @@ type Job struct {
 	Status        string     `json:"status"`      // completed / error / cancelled
 	ErrorMsg      string     `json:"error_msg"`
 	DataStatus    int        `json:"data_status"` // 0=なし 1=なしロック 2=あり 3=ありロック 4=削除 5=削除ロック
-	DiskSize      int64      `json:"disk_size"`   // 出力フォルダの容量（バイト）
+	JobType       string     `json:"job_type"`      // "" = 通常, "samples_comparison"
+	SamplesList   string     `json:"samples_list"`  // カンマ区切りサンプル数
+	DiskSize      int64      `json:"disk_size"`     // 出力フォルダの容量（バイト）
 	StartedAt     *time.Time `json:"started_at"`
 	CompletedAt   *time.Time `json:"completed_at"`
 	EnqueuedAt    *time.Time `json:"enqueued_at"` // キュー登録時刻

@@ -2,15 +2,19 @@ package exec
 
 import "sync"
 
+type ProgressProvider interface {
+	Result() ProcessingResult
+}
+
 var (
 	progressMu       sync.RWMutex
-	progressRegistry = map[string]*ProcessingWriter{}
+	progressRegistry = map[string]ProgressProvider{}
 )
 
-func RegisterProgress(id string, pw *ProcessingWriter) {
+func RegisterProgress(id string, p ProgressProvider) {
 	progressMu.Lock()
 	defer progressMu.Unlock()
-	progressRegistry[id] = pw
+	progressRegistry[id] = p
 }
 
 func UnregisterProgress(id string) {
@@ -22,10 +26,10 @@ func UnregisterProgress(id string) {
 func GetProgress(id string) *ProcessingResult {
 	progressMu.RLock()
 	defer progressMu.RUnlock()
-	pw, ok := progressRegistry[id]
+	p, ok := progressRegistry[id]
 	if !ok {
 		return nil
 	}
-	r := pw.Result()
+	r := p.Result()
 	return &r
 }

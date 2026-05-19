@@ -230,6 +230,10 @@
     "copied": "コピーしました",
     "copySuffix": " コピー",
     "copyConfirmMsg": "保存済みの値でワークスペースをもう１つ作成します",
+    "samplesComparison": "サンプル比較",
+    "samplesListLabel": "サンプル数リスト（カンマ区切り）",
+    "samplesListHint": "中間フレーム1枚を各サンプル数でレンダリングして比較します",
+    "samplesListEmpty": "有効なサンプル数がありません",
     "autoLock": "完了時に自動ロック",
     "autoLockMinSize": "対象最小容量",
     "autoLockKeep": "保持件数",
@@ -249,7 +253,8 @@
     "confirmCancel": "ジョブをキャンセルしますか？",
     "almostComplete": "間もなく完了",
     "preparing": "準備中... (",
-    "secondsPerFrame": "秒/f"
+    "secondsPerFrame": "秒/f",
+    "samplesComparison": "サンプル比較 ({{total}}種)"
   },
   "jobManagement": {
     "totalJobs": "全{{count}}件",
