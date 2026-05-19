@@ -163,7 +163,8 @@
     "fixed": "Fixed",
     "engineFixed": "Fixed",
     "engineFixedHint": "When enabled, the engine cannot be changed in workspaces",
-    "fileChanged": "Modified"
+    "fileChanged": "Modified",
+    "fileChangedTooltip": "File has been modified since the last render"
   },
   "workspace": {
     "name": "Workspace Name",

@@ -43,12 +43,10 @@ function WorkspaceCard({ projectID, fileID, ws, navigate, projectName, fileName,
           ? <img src={thumb} alt={ws.name} />
           : <span className="file-tile-thumb-placeholder">{t('workspace.noImage')}</span>
         }
+        {stale && <span className="stale-mark" title={t('file.fileChangedTooltip')}>!</span>}
       </div>
       <div className="ws-tile-info">
-        <span className="file-tile-name" title={ws.name}>
-          {ws.name}
-          {stale && <span className="badge badge-warn" style={{ marginLeft: 6 }}>{t('file.fileChanged')}</span>}
-        </span>
+        <span className="file-tile-name" title={ws.name}>{ws.name}</span>
         {!small && (
           <div className="ws-item-meta" style={{ marginTop: 4 }}>
             {ws.engine && <span className="ws-meta-chip">{ws.engine}</span>}
@@ -230,7 +228,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
                 >
                   <span className="ws-item-name">
                     {ws.name}
-                    {isStale(ws) && <span className="badge badge-warn" style={{ marginLeft: 6 }}>{t('file.fileChanged')}</span>}
+                    {isStale(ws) && <span className="stale-mark-inline" title={t('file.fileChangedTooltip')}>!</span>}
                   </span>
                   <div className="ws-item-meta">
                     {ws.engine && <span className="ws-meta-chip">{ws.engine}</span>}

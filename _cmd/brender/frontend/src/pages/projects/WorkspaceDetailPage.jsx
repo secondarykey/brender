@@ -1016,7 +1016,7 @@ function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspa
           { label: t('breadcrumb.projects'), onClick: () => navigate('projects') },
           { label: projectName, onClick: () => navigate('project', { id: projectID, initialTab: 'settings' }) },
           effectiveFileName && { label: effectiveFileName, onClick: () => navigate('file', { projectID, projectName, fileID: effectiveFileID, fileName: effectiveFileName, initialTab: 'settings' }) },
-          { label: detail.workspace.name, suffix: wsStale ? <span className="badge badge-warn" style={{ marginLeft: 6 }}>{t('file.fileChanged')}</span> : null },
+          { label: detail.workspace.name, suffix: wsStale ? <span className="stale-mark-inline" title={t('file.fileChangedTooltip')} style={{ marginLeft: 6 }}>!</span> : null },
         ].filter(Boolean)} />
       </div>
 
