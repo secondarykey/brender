@@ -1085,6 +1085,10 @@ func ListQueueItems() ([]*QueueItem, error) {
 			item.StartFrame = j.StartFrame
 			item.EndFrame = j.EndFrame
 			item.JobType = j.JobType
+			if j.JobType == "samples_comparison" && j.SamplesList != "" {
+				item.EndFrame = len(exec.ParseSamplesList(j.SamplesList))
+				item.StartFrame = 0
+			}
 		}
 		if pr := exec.GetProgress(q.ID); pr != nil {
 			if pr.NowFrame > 0 {
@@ -1103,6 +1107,10 @@ func ListQueueItems() ([]*QueueItem, error) {
 			item.NowSample = pr.NowSample
 			item.TotalSamples = pr.TotalSamples
 			item.FrameActive = pr.FrameActive
+			if item.JobType == "samples_comparison" {
+				item.StartFrame = pr.StartFrame
+				item.EndFrame = pr.EndFrame
+			}
 		}
 		items = append(items, item)
 	}
