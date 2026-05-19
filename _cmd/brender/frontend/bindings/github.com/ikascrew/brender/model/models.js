@@ -704,6 +704,13 @@ export class ProjectFile {
              */
             this["file_modified_at"] = null;
         }
+        if (!("file_exists" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["file_exists"] = false;
+        }
         if (!("display_order" in $$source)) {
             /**
              * @member

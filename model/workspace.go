@@ -65,6 +65,7 @@ func ListWorkspacesByProject(projectID string, sort, dir string) ([]*WorkspacesB
 
 	result := make([]*WorkspacesByFile, 0, len(files))
 	for _, f := range files {
+		populateFileInfo(f)
 		var ws []*Workspace
 		if res := db.Where("project_id = ? AND project_file_id = ? AND is_system = ?", projectID, f.ID, false).
 			Order(order).Find(&ws); res.Error != nil {

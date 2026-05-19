@@ -235,7 +235,7 @@ function DefaultTag({ value, t }) {
 }
 
 // ── 設定タブ ──────────────────────────────────────────────
-function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, detail, focusName, onUpdated, onDeleted, onTestEnqueued, onRenderEnqueued, workDirLocked, navigate }) {
+function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, detail, focusName, onUpdated, onDeleted, onTestEnqueued, onRenderEnqueued, workDirLocked, navigate, wsStale }) {
   const { t } = useTranslation()
   const { showToast } = useToast()
   const { showError } = useMessage()
@@ -838,13 +838,22 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
       >
         {renderConfirm && (
           <>
-            <p><span className="dialog-label">{t('render.scene')}</span>{renderConfirm.scene}</p>
+            {detail.workspace.processed_at && !wsStale && (
+              <p className="dialog-message dialog-message-warn">{t('render.fileNotModifiedWarning')}</p>
+            )}
             {renderConfirm.engine
               ? <p><span className="dialog-label">{t('render.engine')}</span>{renderConfirm.engine}</p>
               : <p><span className="dialog-label">{t('render.engine')}</span><span style={{ opacity: 0.5 }}>{t('render.blendDefault')}</span></p>
             }
+            {renderConfirm.samples > 0 && <p><span className="dialog-label">{t('render.samples')}</span>{renderConfirm.samples}</p>}
+            <p><span className="dialog-label">{t('render.scene')}</span>{renderConfirm.scene}</p>
+            {renderConfirm.camera && <p><span className="dialog-label">{t('render.camera')}</span>{renderConfirm.camera}</p>}
+            {(renderConfirm.resolution_x > 0 || renderConfirm.resolution_y > 0) && (
+              <p><span className="dialog-label">{t('render.resolution')}</span>{renderConfirm.resolution_x} × {renderConfirm.resolution_y}</p>
+            )}
             <p><span className="dialog-label">{t('render.frames')}</span>{renderConfirm.start_frame} – {renderConfirm.end_frame}</p>
             {renderConfirm.frame_step > 1 && <p><span className="dialog-label">{t('render.step')}</span>{renderConfirm.frame_step}</p>}
+            {renderConfirm.output_format && <p><span className="dialog-label">{t('render.outputFormat')}</span>{renderConfirm.output_format}</p>}
           </>
         )}
       </Dialog>
@@ -975,6 +984,9 @@ function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspa
 
   const effectiveFileID   = fileID   || detail.workspace.project_file_id || ''
   const effectiveFileName = fileName || detail.project_files?.find(f => f.id === effectiveFileID)?.name || ''
+  const effectiveFile     = detail.project_files?.find(f => f.id === effectiveFileID)
+  const wsStale = effectiveFile?.file_modified_at && detail.workspace.processed_at
+    && new Date(effectiveFile.file_modified_at) > new Date(detail.workspace.processed_at)
 
   return (
     <div className="page">
@@ -983,7 +995,7 @@ function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspa
           { label: t('breadcrumb.projects'), onClick: () => navigate('projects') },
           { label: projectName, onClick: () => navigate('project', { id: projectID, initialTab: 'settings' }) },
           effectiveFileName && { label: effectiveFileName, onClick: () => navigate('file', { projectID, projectName, fileID: effectiveFileID, fileName: effectiveFileName, initialTab: 'settings' }) },
-          { label: detail.workspace.name },
+          { label: detail.workspace.name, suffix: wsStale ? <span className="badge badge-warn" style={{ marginLeft: 6 }}>{t('file.fileChanged')}</span> : null },
         ].filter(Boolean)} />
       </div>
 
@@ -1010,6 +1022,7 @@ function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspa
             onRenderEnqueued={() => navigate('queue')}
             workDirLocked={workDirStatus === 'lock'}
             navigate={navigate}
+            wsStale={wsStale}
           />
         </div>
         <div className="ws-detail-right">

@@ -162,7 +162,8 @@
     "engineHint": "未設定の場合: ワークスペースの設定が使用されます",
     "fixed": "固定",
     "engineFixed": "固定",
-    "engineFixedHint": "有効にすると、ワークスペースでエンジンを変更できなくなります"
+    "engineFixedHint": "有効にすると、ワークスペースでエンジンを変更できなくなります",
+    "fileChanged": "更新あり"
   },
   "workspace": {
     "name": "ワークスペース名",
@@ -476,6 +477,10 @@
     "auto": "自動",
     "samples": "サンプル数",
     "blenderPath": "Blender",
-    "filePath": "ファイル"
+    "filePath": "ファイル",
+    "camera": "カメラ",
+    "resolution": "解像度",
+    "outputFormat": "出力フォーマット",
+    "fileNotModifiedWarning": "前回の実行からファイルが更新されていません。同じファイルで再実行しますか？"
   }
 }

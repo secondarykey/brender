@@ -16,6 +16,12 @@ const (
 )
 
 const (
+	JobTypeRender            = "render"              // 通常レンダリング
+	JobTypeTest              = "test"                // テストレンダリング
+	JobTypeSamplesComparison = "samples_comparison"  // サンプル比較
+)
+
+const (
 	JobDataNone             = 0 // データなし
 	JobDataNoneLocked       = 1 // データなし（ロック）
 	JobDataAvailable        = 2 // データあり

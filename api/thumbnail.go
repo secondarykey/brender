@@ -37,7 +37,10 @@ func CreateThumbnailWorkspace(projectID string, file *model.ProjectFile) error {
 		return err
 	}
 
-	_, err = Enqueue(projectID, ws.ID)
+	_, err = TestEnqueue(projectID, ws.ID, TestRenderParams{
+		StartFrame: mid,
+		EndFrame:   mid,
+	})
 	return err
 }
 

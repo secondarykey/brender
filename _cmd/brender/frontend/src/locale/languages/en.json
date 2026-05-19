@@ -162,7 +162,8 @@
     "engineHint": "If not set: the workspace setting will be used",
     "fixed": "Fixed",
     "engineFixed": "Fixed",
-    "engineFixedHint": "When enabled, the engine cannot be changed in workspaces"
+    "engineFixedHint": "When enabled, the engine cannot be changed in workspaces",
+    "fileChanged": "Modified"
   },
   "workspace": {
     "name": "Workspace Name",
@@ -476,6 +477,10 @@
     "auto": "Auto",
     "samples": "Samples",
     "blenderPath": "Blender",
-    "filePath": "File"
+    "filePath": "File",
+    "camera": "Camera",
+    "resolution": "Resolution",
+    "outputFormat": "Output Format",
+    "fileNotModifiedWarning": "The file has not been modified since the last render. Run again with the same file?"
   }
 }

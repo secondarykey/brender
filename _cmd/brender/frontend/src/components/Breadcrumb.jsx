@@ -10,6 +10,7 @@ export default function Breadcrumb({ items }) {
             ? <button className="breadcrumb-link" onClick={item.onClick}>{item.label}</button>
             : <span>{item.label}</span>
           }
+          {item.suffix}
         </React.Fragment>
       ))}
     </div>

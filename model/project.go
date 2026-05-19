@@ -36,7 +36,8 @@ type ProjectFile struct {
 	CameraFixed      bool       `json:"camera_fixed"`   // true = ワークスペースで変更不可
 	Engine           string     `json:"engine"`
 	EngineFixed      bool       `json:"engine_fixed"`   // true = ワークスペースで変更不可
-	FileModifiedAt   *time.Time `json:"file_modified_at"`
+	FileModifiedAt   *time.Time `gorm:"-" json:"file_modified_at"`
+	FileExists       bool       `gorm:"-" json:"file_exists"`
 	DisplayOrder     int        `gorm:"default:99999" json:"display_order"`
 	ProcessedAt      *time.Time `json:"processed_at"`
 	MetaFields       `gorm:"embedded"`
@@ -97,6 +98,9 @@ func loadProjectDetail(p *Project) (*ProjectDetail, error) {
 	if res := db.Where("project_id = ?", p.ID).Find(&files); res.Error != nil {
 		return nil, xerrors.Errorf("loadProjectFiles: %w", res.Error)
 	}
+	for _, f := range files {
+		populateFileInfo(f)
+	}
 	return &ProjectDetail{Project: p, Files: files}, nil
 }
 
@@ -123,6 +127,7 @@ func GetProjectFile(fileID string) (*ProjectFile, error) {
 	if res.Error != nil {
 		return nil, xerrors.Errorf("GetProjectFile: %w", res.Error)
 	}
+	populateFileInfo(&f)
 	return &f, nil
 }
 
@@ -175,17 +180,11 @@ func UpdateProjectFile(fileID string, name string, note string, blenderInstallID
 }
 
 func AddProjectFile(projectID, path string) (*ProjectFile, error) {
-	var modAt *time.Time
-	if info, err := os.Stat(path); err == nil {
-		t := info.ModTime()
-		modAt = &t
-	}
 	f := &ProjectFile{
-		ID:             newFileID(),
-		ProjectID:      projectID,
-		Path:           path,
-		Name:           filepath.Base(path),
-		FileModifiedAt: modAt,
+		ID:        newFileID(),
+		ProjectID: projectID,
+		Path:      path,
+		Name:      filepath.Base(path),
 	}
 	if res := db.Create(f); res.Error != nil {
 		return nil, xerrors.Errorf("AddProjectFile: %w", res.Error)
@@ -222,6 +221,16 @@ func UpdateProjectFileProcessedAt(id string, t *time.Time) error {
 		return xerrors.Errorf("UpdateProjectFileProcessedAt: %w", res.Error)
 	}
 	return nil
+}
+
+func populateFileInfo(f *ProjectFile) {
+	info, err := os.Stat(f.Path)
+	if err != nil {
+		return
+	}
+	f.FileExists = true
+	modTime := info.ModTime().Truncate(time.Second)
+	f.FileModifiedAt = &modTime
 }
 
 func CreateProject(name string, paths []string, workDirID uint) (*ProjectDetail, error) {

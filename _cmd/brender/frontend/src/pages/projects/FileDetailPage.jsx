@@ -14,7 +14,7 @@ import WorkspaceCreateDialog from '../../components/WorkspaceCreateDialog'
 
 
 // ── ワークスペースカード（サムネイル表示） ──────────────────
-function WorkspaceCard({ projectID, fileID, ws, navigate, projectName, fileName, onRunClick, resolvingWsId, thumbnailMode, onSetThumbnail, workDirLocked, small }) {
+function WorkspaceCard({ projectID, fileID, ws, navigate, projectName, fileName, onRunClick, resolvingWsId, thumbnailMode, onSetThumbnail, workDirLocked, small, stale }) {
   const { t } = useTranslation()
   const [thumb, setThumb] = useState(null)
 
@@ -45,7 +45,10 @@ function WorkspaceCard({ projectID, fileID, ws, navigate, projectName, fileName,
         }
       </div>
       <div className="ws-tile-info">
-        <span className="file-tile-name" title={ws.name}>{ws.name}</span>
+        <span className="file-tile-name" title={ws.name}>
+          {ws.name}
+          {stale && <span className="badge badge-warn" style={{ marginLeft: 6 }}>{t('file.fileChanged')}</span>}
+        </span>
         {!small && (
           <div className="ws-item-meta" style={{ marginTop: 4 }}>
             {ws.engine && <span className="ws-meta-chip">{ws.engine}</span>}
@@ -77,6 +80,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
   const { showToast } = useToast()
   const { showError } = useMessage()
   const [workspaces, setWorkspaces] = useState([])
+  const [fileModifiedAt, setFileModifiedAt] = useState(null)
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [confirm, setConfirm]       = useState(null) // { ws, preview }
   const [resolvingWsId, setResolvingWsId] = useState(null)
@@ -91,8 +95,14 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
       .then(list => {
         const group = (list || []).find(g => g.file.id === fileID)
         setWorkspaces(group ? group.workspaces : [])
+        if (group?.file?.file_modified_at) setFileModifiedAt(group.file.file_modified_at)
       })
       .catch(() => {})
+  }
+
+  const isStale = (ws) => {
+    if (!fileModifiedAt || !ws.processed_at) return false
+    return new Date(fileModifiedAt) > new Date(ws.processed_at)
   }
 
   const handleSortChange = (s) => {
@@ -218,7 +228,10 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
                   className="ws-item-info ws-item-link"
                   onClick={thumbnailMode ? undefined : () => navigate('workspace', { projectID, projectName, fileID, fileName, workspaceID: ws.id })}
                 >
-                  <span className="ws-item-name">{ws.name}</span>
+                  <span className="ws-item-name">
+                    {ws.name}
+                    {isStale(ws) && <span className="badge badge-warn" style={{ marginLeft: 6 }}>{t('file.fileChanged')}</span>}
+                  </span>
                   <div className="ws-item-meta">
                     {ws.engine && <span className="ws-meta-chip">{ws.engine}</span>}
                     {(ws.start === 0 && ws.end === -1)
@@ -253,6 +266,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
                 onSetThumbnail={handleSetThumbnail}
                 workDirLocked={workDirLocked}
                 small={viewMode === 'card-sm'}
+                stale={isStale(ws)}
               />
             ))}
           </div>
@@ -296,14 +310,23 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
       >
         {confirm && (
           <>
+            {confirm.ws.processed_at && !isStale(confirm.ws) && (
+              <p className="dialog-message dialog-message-warn">{t('render.fileNotModifiedWarning')}</p>
+            )}
             <p><span className="dialog-label">{t('render.workspace')}</span>{confirm.ws.name}</p>
-            <p><span className="dialog-label">{t('render.scene')}</span>{confirm.preview.scene}</p>
             {confirm.preview.engine
               ? <p><span className="dialog-label">{t('render.engine')}</span>{confirm.preview.engine}</p>
               : <p><span className="dialog-label">{t('render.engine')}</span><span style={{ opacity: 0.5 }}>{t('render.blendDefault')}</span></p>
             }
+            {confirm.preview.samples > 0 && <p><span className="dialog-label">{t('render.samples')}</span>{confirm.preview.samples}</p>}
+            <p><span className="dialog-label">{t('render.scene')}</span>{confirm.preview.scene}</p>
+            {confirm.preview.camera && <p><span className="dialog-label">{t('render.camera')}</span>{confirm.preview.camera}</p>}
+            {(confirm.preview.resolution_x > 0 || confirm.preview.resolution_y > 0) && (
+              <p><span className="dialog-label">{t('render.resolution')}</span>{confirm.preview.resolution_x} × {confirm.preview.resolution_y}</p>
+            )}
             <p><span className="dialog-label">{t('render.frames')}</span>{confirm.preview.start_frame} – {confirm.preview.end_frame}</p>
             {confirm.preview.frame_step > 1 && <p><span className="dialog-label">{t('render.step')}</span>{confirm.preview.frame_step}</p>}
+            {confirm.preview.output_format && <p><span className="dialog-label">{t('render.outputFormat')}</span>{confirm.preview.output_format}</p>}
           </>
         )}
       </Dialog>

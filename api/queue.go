@@ -98,6 +98,8 @@ func RecoverStaleQueues() {
 			Camera:        oldJob.Camera,
 			OutputExt:     oldJob.OutputExt,
 			BlenderFormat: oldJob.BlenderFormat,
+			JobType:       oldJob.JobType,
+			SamplesList:   oldJob.SamplesList,
 			EnqueuedAt:    &now,
 		}
 		if err := model.CreateJob(newJob); err != nil {
@@ -190,6 +192,7 @@ type RenderPreview struct {
 	ResolutionY   int    `json:"resolution_y"`
 	Camera        string `json:"camera"`
 	OutputFormat  string `json:"output_format"` // 解決済みフォーマット名（"PNG" / "JPEG"）
+	JobType       string `json:"job_type"`
 }
 
 // PreviewRender はToolを実行してレンダリングパラメータを解決・検証する。
@@ -320,6 +323,7 @@ func PreviewRender(projectID, workspaceID string) (*RenderPreview, error) {
 		ResolutionY:   w.ResolutionY,
 		Camera:        camera,
 		OutputFormat:  outputFormat,
+		JobType:       model.JobTypeRender,
 	}, nil
 }
 
@@ -448,6 +452,7 @@ func TestEnqueue(projectID, workspaceID string, params TestRenderParams) (*model
 		ResolutionX:   params.ResolutionX,
 		ResolutionY:   params.ResolutionY,
 		Camera:        camera,
+		JobType:       model.JobTypeTest,
 	}
 
 	return EnqueueWithPreview(projectID, workspaceID, preview)
@@ -514,21 +519,23 @@ func EnqueueWithPreview(projectID, workspaceID string, preview *RenderPreview) (
 		Camera:        preview.Camera,
 		OutputExt:     resolveOutputExt(preview.OutputFormat),
 		BlenderFormat: resolveBlenderFormat(preview.OutputFormat),
+		JobType:       preview.JobType,
 		EnqueuedAt:    &now,
 	}
 	if err := model.CreateJob(job); err != nil {
 		return nil, xerrors.Errorf("CreateJob: %w", err)
 	}
 
-	// ワークスペース・ファイル・プロジェクトのデータ処理日を更新
-	if err := model.UpdateWorkspaceProcessedAt(workspaceID, &now); err != nil {
-		log.Println("UpdateWorkspaceProcessedAt:", err)
-	}
-	if err := model.UpdateProjectFileProcessedAt(preview.ProjectFileID, &now); err != nil {
-		log.Println("UpdateProjectFileProcessedAt:", err)
-	}
-	if err := model.UpdateProjectProcessedAt(projectID, &now); err != nil {
-		log.Println("UpdateProjectProcessedAt:", err)
+	if preview.JobType == model.JobTypeRender {
+		if err := model.UpdateWorkspaceProcessedAt(workspaceID, &now); err != nil {
+			log.Println("UpdateWorkspaceProcessedAt:", err)
+		}
+		if err := model.UpdateProjectFileProcessedAt(preview.ProjectFileID, &now); err != nil {
+			log.Println("UpdateProjectFileProcessedAt:", err)
+		}
+		if err := model.UpdateProjectProcessedAt(projectID, &now); err != nil {
+			log.Println("UpdateProjectProcessedAt:", err)
+		}
 	}
 
 	q := &model.Queue{
@@ -648,22 +655,12 @@ func SamplesComparisonEnqueue(projectID, workspaceID string, sampleCounts []int,
 		Camera:        preview.Camera,
 		OutputExt:     resolveOutputExt(preview.OutputFormat),
 		BlenderFormat: resolveBlenderFormat(preview.OutputFormat),
-		JobType:       "samples_comparison",
+		JobType:       model.JobTypeSamplesComparison,
 		SamplesList:   samplesList,
 		EnqueuedAt:    &now,
 	}
 	if err := model.CreateJob(job); err != nil {
 		return nil, xerrors.Errorf("CreateJob: %w", err)
-	}
-
-	if err := model.UpdateWorkspaceProcessedAt(workspaceID, &now); err != nil {
-		log.Println("UpdateWorkspaceProcessedAt:", err)
-	}
-	if err := model.UpdateProjectFileProcessedAt(preview.ProjectFileID, &now); err != nil {
-		log.Println("UpdateProjectFileProcessedAt:", err)
-	}
-	if err := model.UpdateProjectProcessedAt(projectID, &now); err != nil {
-		log.Println("UpdateProjectProcessedAt:", err)
 	}
 
 	q := &model.Queue{
@@ -1027,7 +1024,7 @@ func startNextWaiting() {
 }
 
 func dispatchQueue(q *model.Queue, j *model.Job) {
-	if j.JobType == "samples_comparison" {
+	if j.JobType == model.JobTypeSamplesComparison {
 		executeSamplesComparison(q, j)
 	} else {
 		executeQueue(q, j)
@@ -1087,7 +1084,7 @@ func ListQueueItems() ([]*QueueItem, error) {
 			item.StartFrame = j.StartFrame
 			item.EndFrame = j.EndFrame
 			item.JobType = j.JobType
-			if j.JobType == "samples_comparison" && j.SamplesList != "" {
+			if j.JobType == model.JobTypeSamplesComparison && j.SamplesList != "" {
 				item.EndFrame = len(exec.ParseSamplesList(j.SamplesList))
 				item.StartFrame = 0
 			}
@@ -1109,7 +1106,7 @@ func ListQueueItems() ([]*QueueItem, error) {
 			item.NowSample = pr.NowSample
 			item.TotalSamples = pr.TotalSamples
 			item.FrameActive = pr.FrameActive
-			if item.JobType == "samples_comparison" {
+			if item.JobType == model.JobTypeSamplesComparison {
 				item.StartFrame = pr.StartFrame
 				item.EndFrame = pr.EndFrame
 			}
