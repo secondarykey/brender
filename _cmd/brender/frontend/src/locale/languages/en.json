@@ -271,7 +271,7 @@
     "sortLabel": "Sort:",
     "sortSize": "Size",
     "sortDate": "Completed",
-    "dateFilterLabel": "Period:",
+    "dateFilterLabel": "Older than:",
     "dateFilterUnit": "days",
     "statusFilter": {
       "available": "Available",

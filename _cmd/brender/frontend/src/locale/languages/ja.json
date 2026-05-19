@@ -271,8 +271,8 @@
     "sortLabel": "並び替え:",
     "sortSize": "容量",
     "sortDate": "終了日付",
-    "dateFilterLabel": "期間:",
-    "dateFilterUnit": "日以内",
+    "dateFilterLabel": "経過:",
+    "dateFilterUnit": "日以上前",
     "statusFilter": {
       "available": "データあり",
       "deleted": "削除済",

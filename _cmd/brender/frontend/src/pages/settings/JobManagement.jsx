@@ -104,7 +104,7 @@ function JobManagement({ navigate }) {
       if (filterDays > 0 && j.completed_at) {
         const cutoff = new Date()
         cutoff.setDate(cutoff.getDate() - filterDays)
-        if (new Date(j.completed_at) < cutoff) return false
+        if (new Date(j.completed_at) > cutoff) return false
       }
       return true
     })
@@ -221,7 +221,7 @@ function JobManagement({ navigate }) {
             min="0"
             value={filterDays}
             onChange={e => { setFilterDays(Math.max(0, parseInt(e.target.value) || 0)); setPage(1) }}
-            style={{ width: 56, height: 28, textAlign: 'center' }}
+            style={{ width: 56, height: 28 }}
             className="form-input"
           />
           <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>{t('jobManagement.dateFilterUnit')}</span>

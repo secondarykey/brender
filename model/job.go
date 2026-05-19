@@ -319,7 +319,7 @@ func applyCleanFilter(filter *CleanFilter) func(*gorm.DB) *gorm.DB {
 		}
 		if filter != nil && filter.Days > 0 {
 			cutoff := time.Now().AddDate(0, 0, -filter.Days)
-			tx = tx.Where("completed_at >= ?", cutoff)
+			tx = tx.Where("completed_at <= ?", cutoff)
 		}
 		return tx
 	}
