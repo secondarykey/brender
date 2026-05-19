@@ -84,7 +84,10 @@ func UpdateJobMeta(id, name, note string) error {
 
 func GetJob(id string) (*Job, error) {
 	var j Job
-	if res := db.First(&j, "id = ?", id); res.Error != nil {
+	res := db.Select("jobs.*, project_files.name AS file_name").
+		Joins("LEFT JOIN project_files ON project_files.id = jobs.project_file_id").
+		First(&j, "jobs.id = ?", id)
+	if res.Error != nil {
 		return nil, xerrors.Errorf("GetJob: %w", res.Error)
 	}
 	return &j, nil

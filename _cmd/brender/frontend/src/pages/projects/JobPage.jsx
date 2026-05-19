@@ -738,7 +738,7 @@ function JobPage({ job: initialJob, jobID: propJobID, navigate, backPage, backPa
   }, [])
 
   useEffect(() => {
-    if (!job || !job.status) {
+    if (!job) {
       QueueApi.getJob({ id }).then(j => { if (j) setJob(j) }).catch(() => {})
     }
   }, [id])
