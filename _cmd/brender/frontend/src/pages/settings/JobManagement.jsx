@@ -131,8 +131,10 @@ function JobManagement({ navigate }) {
   const currentPage = Math.min(page, totalPages)
   const pageJobs = filteredJobs.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 
+  const DELETED_STATUSES = [4, 5]
+
   const totalSize = useMemo(() =>
-    filteredJobs.reduce((sum, j) => sum + (j.disk_size || 0), 0),
+    filteredJobs.reduce((sum, j) => DELETED_STATUSES.includes(j.data_status) ? sum : sum + (j.disk_size || 0), 0),
     [filteredJobs]
   )
 
@@ -308,7 +310,7 @@ function JobManagement({ navigate }) {
                     <span className={`status-badge status-${j.status}`}>{t(`status.${j.status}`)}</span>
                   </td>
                   <td className="col-c"><DataStatusBadge status={j.data_status} /></td>
-                  <td className="col-r num-cell">{formatSize(j.disk_size)}</td>
+                  <td className="col-r num-cell" style={DELETED_STATUSES.includes(j.data_status) ? { textDecoration: 'line-through', opacity: 0.5 } : undefined}>{formatSize(j.disk_size)}</td>
                   <td className="col-c date-cell">{formatDate(j.completed_at)}</td>
                 </tr>
               ))}
