@@ -151,7 +151,7 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
               onClick={() => { setViewMode('card-sm'); localStorage.setItem('viewMode:files', 'card-sm') }}
               title={t('workspace.smallCardView')}
             >▦</button>
-            <SortSelect value={sort} onChange={handleSortChange} dir={dir} onDirChange={handleDirChange} />
+            <SortSelect value={sort} onChange={handleSortChange} dir={dir} onDirChange={handleDirChange} options={['display_order', 'name', 'created_at', 'processed_at', 'file_modified_at']} />
           </>
         )}
         {groups.length > 0 && (

@@ -315,8 +315,9 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
             && pv.frame_step === prev.frame_step && pv.samples === prev.samples
             && pv.resolution_x === prev.resolution_x && pv.resolution_y === prev.resolution_y
             && pv.camera === prev.camera && pv.output_format === prev.output_format
+          const showPrev = fileNotModified && prev
           const Prev = ({ cur, prevVal }) => {
-            if (!prev) return null
+            if (!showPrev) return null
             const changed = String(cur) !== String(prevVal)
             return <span className={changed ? 'dialog-prev-changed' : 'dialog-prev'}>({t('render.previousValue')}: {prevVal || '-'})</span>
           }
@@ -338,11 +339,11 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
             {pv.camera && <p><span className="dialog-label">{t('render.camera')}</span>{pv.camera}<Prev cur={pv.camera} prevVal={prev?.camera} /></p>}
             {(pv.resolution_x > 0 || pv.resolution_y > 0) && (
               <p><span className="dialog-label">{t('render.resolution')}</span>{pv.resolution_x} × {pv.resolution_y}
-                {prev && <Prev cur={`${pv.resolution_x}×${pv.resolution_y}`} prevVal={`${prev.resolution_x}×${prev.resolution_y}`} />}
+                {showPrev && <Prev cur={`${pv.resolution_x}×${pv.resolution_y}`} prevVal={`${prev.resolution_x}×${prev.resolution_y}`} />}
               </p>
             )}
             <p><span className="dialog-label">{t('render.frames')}</span>{pv.start_frame} – {pv.end_frame}
-              {prev && <Prev cur={`${pv.start_frame}-${pv.end_frame}`} prevVal={`${prev.start_frame}-${prev.end_frame}`} />}
+              {showPrev && <Prev cur={`${pv.start_frame}-${pv.end_frame}`} prevVal={`${prev.start_frame}-${prev.end_frame}`} />}
             </p>
             {pv.frame_step > 1 && <p><span className="dialog-label">{t('render.step')}</span>{pv.frame_step}<Prev cur={pv.frame_step} prevVal={prev?.frame_step} /></p>}
             {pv.output_format && <p><span className="dialog-label">{t('render.outputFormat')}</span>{pv.output_format}<Prev cur={pv.output_format} prevVal={prev?.output_format} /></p>}
