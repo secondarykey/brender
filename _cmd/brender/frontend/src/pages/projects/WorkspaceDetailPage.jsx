@@ -633,7 +633,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
         </div>
       </div>
 
-      <div className="form-row" style={{ alignItems: 'flex-start' }}>
+      <div className="form-row" style={{ alignItems: 'flex-start', marginTop: -20 }}>
         <div className="form-field" style={{ flex: 1 }}>
           <label className="form-label">
             {t('workspace.scene')}
