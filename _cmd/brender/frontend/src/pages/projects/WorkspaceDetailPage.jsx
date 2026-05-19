@@ -263,7 +263,11 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
   const [resolvingRender, setResolvingRender] = useState(false)
   const [samplesDialogOpen, setSamplesDialogOpen] = useState(false)
   const [samplesListText, setSamplesListText]     = useState('2,4,8,16,32,64,128,256,512')
-  const [samplesFrame, setSamplesFrame]           = useState(0)
+  const [samplesFrame, setSamplesFrame]           = useState(() => {
+    const s = detail.workspace.start ?? 0
+    const e = detail.workspace.end ?? 0
+    return Math.floor((s + e) / 2)
+  })
   const [samplesEnqueuing, setSamplesEnqueuing]   = useState(false)
   const [imageFormats, setImageFormats]         = useState([])
   const [resolutionPresets, setResolutionPresets] = useState([])

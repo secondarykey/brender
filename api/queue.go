@@ -579,8 +579,10 @@ func SamplesComparisonEnqueue(projectID, workspaceID string, sampleCounts []int,
 		return nil, err
 	}
 
-	if frame <= 0 {
-		frame = (preview.StartFrame + preview.EndFrame) / 2
+	if frame < preview.StartFrame {
+		frame = preview.StartFrame
+	} else if frame > preview.EndFrame {
+		frame = preview.EndFrame
 	}
 
 	sampleStrs := make([]string, len(sampleCounts))
