@@ -587,7 +587,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
         </div>
       </div>
 
-      <details className="form-collapsible" open>
+      <details className="form-collapsible" open={!detail.workspace.auto_lock}>
         <summary>{t('workspace.renderSettings')}</summary>
         <div className="form-collapsible-body">
       <div className="form-row" style={{ alignItems: 'flex-start' }}>
