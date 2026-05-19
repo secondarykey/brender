@@ -481,6 +481,8 @@
     "camera": "Camera",
     "resolution": "Resolution",
     "outputFormat": "Output Format",
-    "fileNotModifiedWarning": "The file has not been modified since the last render. Run again with the same file?"
+    "fileNotModifiedWarning": "The file has not been modified since the last render. Run again with the same file?",
+    "identicalRenderWarning": "Settings are identical to the last render. Did you forget to update the file?",
+    "previousValue": "Previous"
   }
 }

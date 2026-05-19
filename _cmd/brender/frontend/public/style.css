@@ -2005,6 +2005,21 @@ textarea.form-input {
   border: 1px solid rgba(209,89,4,0.4);
   color: #f0944d;
 }
+.dialog-message-danger {
+  background: rgba(192,57,43,0.12);
+  border: 1px solid rgba(192,57,43,0.4);
+  color: #f17e72;
+}
+.dialog-prev {
+  color: rgba(255,255,255,0.3);
+  font-size: 0.8rem;
+  margin-left: 8px;
+}
+.dialog-prev-changed {
+  color: #f0944d;
+  font-size: 0.8rem;
+  margin-left: 8px;
+}
 .dialog-body p {
   display: flex;
   gap: 12px;

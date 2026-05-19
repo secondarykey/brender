@@ -193,6 +193,20 @@ type RenderPreview struct {
 	Camera        string `json:"camera"`
 	OutputFormat  string `json:"output_format"` // 解決済みフォーマット名（"PNG" / "JPEG"）
 	JobType       string `json:"job_type"`
+	Previous      *PreviousRenderInfo `json:"previous"`
+}
+
+type PreviousRenderInfo struct {
+	Scene        string `json:"scene"`
+	Engine       string `json:"engine"`
+	StartFrame   int    `json:"start_frame"`
+	EndFrame     int    `json:"end_frame"`
+	FrameStep    int    `json:"frame_step"`
+	Samples      int    `json:"samples"`
+	ResolutionX  int    `json:"resolution_x"`
+	ResolutionY  int    `json:"resolution_y"`
+	Camera       string `json:"camera"`
+	OutputFormat string `json:"output_format"`
 }
 
 // PreviewRender はToolを実行してレンダリングパラメータを解決・検証する。
@@ -306,7 +320,7 @@ func PreviewRender(projectID, workspaceID string) (*RenderPreview, error) {
 		}
 	}
 
-	return &RenderPreview{
+	preview := &RenderPreview{
 		ProjectName:   p.Name,
 		WorkspaceName: w.Name,
 		ProjectFileID: w.ProjectFileID,
@@ -324,7 +338,24 @@ func PreviewRender(projectID, workspaceID string) (*RenderPreview, error) {
 		Camera:        camera,
 		OutputFormat:  outputFormat,
 		JobType:       model.JobTypeRender,
-	}, nil
+	}
+
+	if prev, err := model.GetLatestCompletedRenderJob(workspaceID); err == nil && prev != nil {
+		preview.Previous = &PreviousRenderInfo{
+			Scene:        prev.Scene,
+			Engine:       prev.Engine,
+			StartFrame:   prev.StartFrame,
+			EndFrame:     prev.EndFrame,
+			FrameStep:    prev.FrameStep,
+			Samples:      prev.Samples,
+			ResolutionX:  prev.ResolutionX,
+			ResolutionY:  prev.ResolutionY,
+			Camera:       prev.Camera,
+			OutputFormat: prev.BlenderFormat,
+		}
+	}
+
+	return preview, nil
 }
 
 // TestRenderParams はテストレンダリングのインラインパラメータ（ワークスペースへの保存は行わない）

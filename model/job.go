@@ -123,6 +123,19 @@ func GetLatestCompletedJobByWorkspace(workspaceID string) (*Job, error) {
 	return &j, nil
 }
 
+func GetLatestCompletedRenderJob(workspaceID string) (*Job, error) {
+	var j Job
+	res := db.Where("workspace_id = ? AND status = ? AND job_type = ?", workspaceID, JobCompleted, JobTypeRender).
+		Order("enqueued_at desc").First(&j)
+	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if res.Error != nil {
+		return nil, xerrors.Errorf("GetLatestCompletedRenderJob: %w", res.Error)
+	}
+	return &j, nil
+}
+
 // GetLatestJobForThumbnail はサムネイル生成用に最新の完了ジョブを返す。
 // data_status は問わない（findFirstImage でファイル存在を確認するため）。
 func GetLatestJobForThumbnail(workspaceID string) (*Job, error) {

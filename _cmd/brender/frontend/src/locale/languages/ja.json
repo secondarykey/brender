@@ -481,6 +481,8 @@
     "camera": "カメラ",
     "resolution": "解像度",
     "outputFormat": "出力フォーマット",
-    "fileNotModifiedWarning": "前回の実行からファイルが更新されていません。同じファイルで再実行しますか？"
+    "fileNotModifiedWarning": "前回の実行からファイルが更新されていません。同じファイルで再実行しますか？",
+    "identicalRenderWarning": "前回と完全に同じ設定です。ファイルを更新し忘れていませんか？",
+    "previousValue": "前回"
   }
 }

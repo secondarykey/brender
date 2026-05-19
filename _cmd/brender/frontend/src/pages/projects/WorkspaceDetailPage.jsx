@@ -836,26 +836,47 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
           </>
         }
       >
-        {renderConfirm && (
-          <>
-            {detail.workspace.processed_at && !wsStale && (
+        {renderConfirm && (() => {
+          const pv = renderConfirm
+          const prev = pv.previous
+          const fileNotModified = detail.workspace.processed_at && !wsStale
+          const allIdentical = prev && pv.scene === prev.scene && pv.engine === prev.engine
+            && pv.start_frame === prev.start_frame && pv.end_frame === prev.end_frame
+            && pv.frame_step === prev.frame_step && pv.samples === prev.samples
+            && pv.resolution_x === prev.resolution_x && pv.resolution_y === prev.resolution_y
+            && pv.camera === prev.camera && pv.output_format === prev.output_format
+          const Prev = ({ cur, prevVal }) => {
+            if (!prev) return null
+            const changed = String(cur) !== String(prevVal)
+            return <span className={changed ? 'dialog-prev-changed' : 'dialog-prev'}>({t('render.previousValue')}: {prevVal || '-'})</span>
+          }
+          return <>
+            {fileNotModified && (
               <p className="dialog-message dialog-message-warn">{t('render.fileNotModifiedWarning')}</p>
             )}
-            {renderConfirm.engine
-              ? <p><span className="dialog-label">{t('render.engine')}</span>{renderConfirm.engine}</p>
-              : <p><span className="dialog-label">{t('render.engine')}</span><span style={{ opacity: 0.5 }}>{t('render.blendDefault')}</span></p>
-            }
-            {renderConfirm.samples > 0 && <p><span className="dialog-label">{t('render.samples')}</span>{renderConfirm.samples}</p>}
-            <p><span className="dialog-label">{t('render.scene')}</span>{renderConfirm.scene}</p>
-            {renderConfirm.camera && <p><span className="dialog-label">{t('render.camera')}</span>{renderConfirm.camera}</p>}
-            {(renderConfirm.resolution_x > 0 || renderConfirm.resolution_y > 0) && (
-              <p><span className="dialog-label">{t('render.resolution')}</span>{renderConfirm.resolution_x} × {renderConfirm.resolution_y}</p>
+            {fileNotModified && allIdentical && (
+              <p className="dialog-message dialog-message-danger">{t('render.identicalRenderWarning')}</p>
             )}
-            <p><span className="dialog-label">{t('render.frames')}</span>{renderConfirm.start_frame} – {renderConfirm.end_frame}</p>
-            {renderConfirm.frame_step > 1 && <p><span className="dialog-label">{t('render.step')}</span>{renderConfirm.frame_step}</p>}
-            {renderConfirm.output_format && <p><span className="dialog-label">{t('render.outputFormat')}</span>{renderConfirm.output_format}</p>}
+            <p>
+              <span className="dialog-label">{t('render.engine')}</span>
+              {pv.engine || <span style={{ opacity: 0.5 }}>{t('render.blendDefault')}</span>}
+              <Prev cur={pv.engine} prevVal={prev?.engine} />
+            </p>
+            {pv.samples > 0 && <p><span className="dialog-label">{t('render.samples')}</span>{pv.samples}<Prev cur={pv.samples} prevVal={prev?.samples} /></p>}
+            <p><span className="dialog-label">{t('render.scene')}</span>{pv.scene}<Prev cur={pv.scene} prevVal={prev?.scene} /></p>
+            {pv.camera && <p><span className="dialog-label">{t('render.camera')}</span>{pv.camera}<Prev cur={pv.camera} prevVal={prev?.camera} /></p>}
+            {(pv.resolution_x > 0 || pv.resolution_y > 0) && (
+              <p><span className="dialog-label">{t('render.resolution')}</span>{pv.resolution_x} × {pv.resolution_y}
+                {prev && <Prev cur={`${pv.resolution_x}×${pv.resolution_y}`} prevVal={`${prev.resolution_x}×${prev.resolution_y}`} />}
+              </p>
+            )}
+            <p><span className="dialog-label">{t('render.frames')}</span>{pv.start_frame} – {pv.end_frame}
+              {prev && <Prev cur={`${pv.start_frame}-${pv.end_frame}`} prevVal={`${prev.start_frame}-${prev.end_frame}`} />}
+            </p>
+            {pv.frame_step > 1 && <p><span className="dialog-label">{t('render.step')}</span>{pv.frame_step}<Prev cur={pv.frame_step} prevVal={prev?.frame_step} /></p>}
+            {pv.output_format && <p><span className="dialog-label">{t('render.outputFormat')}</span>{pv.output_format}<Prev cur={pv.output_format} prevVal={prev?.output_format} /></p>}
           </>
-        )}
+        })()}
       </Dialog>
 
       <Dialog
