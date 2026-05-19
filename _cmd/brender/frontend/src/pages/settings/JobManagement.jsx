@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { QueueApi } from '../../lib/api'
 import { useMessage, useToast } from '../../lib/toast'
-import ConfirmDialog from '../../components/ConfirmDialog'
+import Dialog from '../../components/Dialog'
 import JobDetailDialog from '../../components/JobDetailDialog'
+import HoldButton from '../../components/HoldButton'
 import Pagination from '../../components/Pagination'
 
 const DATA_STATUS_LABELS = {
@@ -52,6 +53,21 @@ function formatDate(iso) {
   return new Date(iso).toLocaleString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
 
+function buildCleanFilter(excludeStatuses, lockFilter, filterDays) {
+  const statuses = []
+  for (const g of DATA_STATUS_GROUPS) {
+    if (g.statuses.every(s => excludeStatuses.has(s))) continue
+    for (const s of g.statuses) {
+      if (excludeStatuses.has(s)) continue
+      const isLocked = s % 2 === 1
+      if (lockFilter === 'hide' && isLocked) continue
+      if (lockFilter === 'only' && !isLocked) continue
+      statuses.push(s)
+    }
+  }
+  return { data_statuses: statuses, days: filterDays }
+}
+
 const PAGE_SIZE = 20
 
 function JobManagement({ navigate }) {
@@ -68,7 +84,8 @@ function JobManagement({ navigate }) {
   const [selected, setSelected] = useState(null)
   const [excludeStatuses, setExcludeStatuses] = useState(new Set([4, 5]))
   const [lockFilter, setLockFilter] = useState('hide')
-  const [sortBySize, setSortBySize] = useState(true)
+  const [sortBy, setSortBy] = useState('size')
+  const [filterDays, setFilterDays] = useState(0)
 
   const load = useCallback(() => {
     QueueApi.listJobs()
@@ -84,13 +101,24 @@ function JobManagement({ navigate }) {
       const isLocked = j.data_status % 2 === 1
       if (lockFilter === 'hide' && isLocked) return false
       if (lockFilter === 'only' && !isLocked) return false
+      if (filterDays > 0 && j.completed_at) {
+        const cutoff = new Date()
+        cutoff.setDate(cutoff.getDate() - filterDays)
+        if (new Date(j.completed_at) < cutoff) return false
+      }
       return true
     })
-    if (sortBySize) {
+    if (sortBy === 'size') {
       result = [...result].sort((a, b) => (b.disk_size || 0) - (a.disk_size || 0))
+    } else if (sortBy === 'date') {
+      result = [...result].sort((a, b) => {
+        const da = a.completed_at ? new Date(a.completed_at).getTime() : 0
+        const db = b.completed_at ? new Date(b.completed_at).getTime() : 0
+        return db - da
+      })
     }
     return result
-  }, [jobs, excludeStatuses, lockFilter, sortBySize])
+  }, [jobs, excludeStatuses, lockFilter, sortBy, filterDays])
 
   const totalPages = Math.max(1, Math.ceil(filteredJobs.length / pageSize))
   const currentPage = Math.min(page, totalPages)
@@ -100,6 +128,8 @@ function JobManagement({ navigate }) {
     filteredJobs.reduce((sum, j) => sum + (j.disk_size || 0), 0),
     [filteredJobs]
   )
+
+  const lockedIncluded = lockFilter !== 'hide'
 
   const toggleStatusGroup = (statuses) => {
     setExcludeStatuses(prev => {
@@ -117,7 +147,8 @@ function JobManagement({ navigate }) {
 
   const handleCleanClick = async () => {
     try {
-      const stats = await QueueApi.getCleanableJobStats()
+      const filter = buildCleanFilter(excludeStatuses, lockFilter, filterDays)
+      const stats = await QueueApi.getCleanableJobStats({ filter })
       setCleanStats(stats)
       setCleanMsg('')
       setCleanConfirm(true)
@@ -130,7 +161,8 @@ function JobManagement({ navigate }) {
     setCleaning(true)
     setCleanMsg('')
     try {
-      const deleted = await QueueApi.cleanJobData()
+      const filter = buildCleanFilter(excludeStatuses, lockFilter, filterDays)
+      const deleted = await QueueApi.cleanJobData({ filter })
       setCleanConfirm(false)
       showToast(t('jobManagement.cleanComplete', { count: deleted }))
       load()
@@ -182,10 +214,33 @@ function JobManagement({ navigate }) {
             {t('jobManagement.statusFilter.lockOnly')}
           </button>
         </div>
-        <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.8rem', opacity: 0.8, marginLeft: 'auto' }}>
-          <input type="checkbox" checked={sortBySize} onChange={e => setSortBySize(e.target.checked)} />
-          {t('jobManagement.sortBySize')}
-        </label>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>{t('jobManagement.dateFilterLabel')}</span>
+          <input
+            type="number"
+            min="0"
+            value={filterDays}
+            onChange={e => { setFilterDays(Math.max(0, parseInt(e.target.value) || 0)); setPage(1) }}
+            style={{ width: 56, height: 28, textAlign: 'center' }}
+            className="form-input"
+          />
+          <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>{t('jobManagement.dateFilterUnit')}</span>
+        </div>
+        <div style={{ display: 'flex', gap: 4, alignItems: 'center', marginLeft: 'auto' }}>
+          <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>{t('jobManagement.sortLabel')}</span>
+          <button
+            className={`btn btn-sm ${sortBy === 'size' ? 'btn-outline-active' : 'btn-outline'}`}
+            onClick={() => setSortBy('size')}
+          >
+            {t('jobManagement.sortSize')}
+          </button>
+          <button
+            className={`btn btn-sm ${sortBy === 'date' ? 'btn-outline-active' : 'btn-outline'}`}
+            onClick={() => setSortBy('date')}
+          >
+            {t('jobManagement.sortDate')}
+          </button>
+        </div>
       </div>
 
       {filteredJobs.length === 0 ? (
@@ -235,19 +290,37 @@ function JobManagement({ navigate }) {
         navigate={navigate}
       />
 
-      <ConfirmDialog
+      <Dialog
         open={cleanConfirm}
         title={t('jobManagement.cleanTitle')}
-        onConfirm={handleCleanConfirm}
-        onCancel={() => setCleanConfirm(false)}
-        confirmLabel={t('jobManagement.cleanConfirm')}
-        busy={cleaning}
+        onClose={() => !cleaning && setCleanConfirm(false)}
+        closeOnBackdrop={!cleaning}
         message={cleanMsg}
+        messageSeverity="error"
+        actions={
+          <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+            <button className="btn btn-ghost" onClick={() => setCleanConfirm(false)} disabled={cleaning}>
+              {t('common.cancel')}
+            </button>
+            <HoldButton
+              onClick={handleCleanConfirm}
+              className="btn btn-danger"
+              disabled={cleaning || !cleanStats || cleanStats.count === 0}
+            >
+              {cleaning ? t('common.processing') : t('jobManagement.cleanConfirm')}
+            </HoldButton>
+          </div>
+        }
       >
+        {lockedIncluded && (
+          <div style={{ background: 'rgba(255, 165, 0, 0.15)', border: '1px solid rgba(255, 165, 0, 0.4)', borderRadius: 4, padding: '8px 12px', marginBottom: 12, fontSize: '0.85rem', color: '#f0a030' }}>
+            {t('jobManagement.cleanLockWarning')}
+          </div>
+        )}
         {cleanStats && (
           <p>{t('jobManagement.cleanDescription', { count: cleanStats.count, size: formatSize(cleanStats.total_size) })}</p>
         )}
-      </ConfirmDialog>
+      </Dialog>
     </div>
   )
 }

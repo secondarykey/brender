@@ -1564,15 +1564,15 @@ func resolveBlenderFormat(formatCode string) string {
 	return resolveImageFormat(formatCode).BlenderValue
 }
 
-// GetCleanableJobStats はクリーンアップ対象のジョブ統計を返す。
-func GetCleanableJobStats() (*model.CleanableJobStats, error) {
-	return model.GetCleanableJobStats()
+// GetCleanableJobStats はフィルタ条件に合致するクリーンアップ対象のジョブ統計を返す。
+func GetCleanableJobStats(filter *model.CleanFilter) (*model.CleanableJobStats, error) {
+	return model.GetCleanableJobStats(filter)
 }
 
-// CleanJobData はロックされていない全ジョブの出力データを削除する（履歴は残す）。
+// CleanJobData はフィルタ条件に合致するジョブの出力データを削除する（履歴は残す）。
 // 削除件数を返す。
-func CleanJobData() (int, error) {
-	jobs, err := model.ListCleanableJobs()
+func CleanJobData(filter *model.CleanFilter) (int, error) {
+	jobs, err := model.ListCleanableJobs(filter)
 	if err != nil {
 		return 0, xerrors.Errorf("CleanJobData: %w", err)
 	}

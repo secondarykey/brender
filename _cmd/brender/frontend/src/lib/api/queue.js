@@ -183,15 +183,19 @@ export const QueueApi = {
     isWails() ? svc().then(s => s.BulkDeleteJobsByWorkspace(projectID, workspaceID, keepCount, dataOnly, errorOnly))
               : serverCall('queue', 'bulk_delete_jobs_by_workspace', { project_id: projectID, workspace_id: workspaceID, keep_count: keepCount, data_only: dataOnly, error_only: errorOnly }),
 
-  /** クリーンアップ対象のジョブ統計を取得 */
-  getCleanableJobStats: () =>
-    isWails() ? svc().then(s => s.GetCleanableJobStats())
-              : serverCall('queue', 'get_cleanable_job_stats'),
+  /** フィルタ条件に合致するクリーンアップ対象のジョブ統計を取得
+   * @param {{ filter: { data_statuses: number[], days: number } }} args
+   */
+  getCleanableJobStats: ({ filter }) =>
+    isWails() ? svc().then(s => s.GetCleanableJobStats(filter))
+              : serverCall('queue', 'get_cleanable_job_stats', { filter }),
 
-  /** ロックされていない全ジョブのデータを削除（履歴は残す） */
-  cleanJobData: () =>
-    isWails() ? svc().then(s => s.CleanJobData())
-              : serverCall('queue', 'clean_job_data'),
+  /** フィルタ条件に合致するジョブのデータを削除（履歴は残す）
+   * @param {{ filter: { data_statuses: number[], days: number } }} args
+   */
+  cleanJobData: ({ filter }) =>
+    isWails() ? svc().then(s => s.CleanJobData(filter))
+              : serverCall('queue', 'clean_job_data', { filter }),
 
   /** ミニモニターウィンドウを開く */
   openMiniMonitor: () =>

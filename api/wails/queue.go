@@ -146,12 +146,12 @@ func (s *Queue) OpenMovieWindow(videoPath string) error {
 	return nil
 }
 
-func (s *Queue) GetCleanableJobStats() (*model.CleanableJobStats, error) {
-	return api.GetCleanableJobStats()
+func (s *Queue) GetCleanableJobStats(filter *model.CleanFilter) (*model.CleanableJobStats, error) {
+	return api.GetCleanableJobStats(filter)
 }
 
-func (s *Queue) CleanJobData() (int, error) {
-	return api.CleanJobData()
+func (s *Queue) CleanJobData(filter *model.CleanFilter) (int, error) {
+	return api.CleanJobData(filter)
 }
 
 func (s *Queue) OpenLogWindow(jobID string) error {

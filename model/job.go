@@ -300,30 +300,46 @@ func GetOldestAutoLockedJob(workspaceID string) (*Job, error) {
 
 // CleanableJobStats はクリーンアップ対象のジョブ統計を返す。
 type CleanableJobStats struct {
-	Count    int64 `json:"count"`
+	Count     int64 `json:"count"`
 	TotalSize int64 `json:"total_size"`
 }
 
-// GetCleanableJobStats はロックされていない削除可能なジョブの件数と合計容量を返す。
-func GetCleanableJobStats() (*CleanableJobStats, error) {
+// CleanFilter はクリーンアップ対象のフィルタ条件。
+type CleanFilter struct {
+	DataStatuses []int `json:"data_statuses"`
+	Days         int   `json:"days"`
+}
+
+func applyCleanFilter(filter *CleanFilter) func(*gorm.DB) *gorm.DB {
+	return func(tx *gorm.DB) *gorm.DB {
+		if filter != nil && len(filter.DataStatuses) > 0 {
+			tx = tx.Where("data_status IN ?", filter.DataStatuses)
+		} else {
+			tx = tx.Where("data_status IN ?", []int{JobDataAvailable, JobDataCorrupted})
+		}
+		if filter != nil && filter.Days > 0 {
+			cutoff := time.Now().AddDate(0, 0, -filter.Days)
+			tx = tx.Where("completed_at >= ?", cutoff)
+		}
+		return tx
+	}
+}
+
+// GetCleanableJobStats はフィルタ条件に合致する削除可能なジョブの件数と合計容量を返す。
+func GetCleanableJobStats(filter *CleanFilter) (*CleanableJobStats, error) {
 	var stats CleanableJobStats
-	res := db.Model(&Job{}).Where(
-		"data_status IN (?,?)",
-		JobDataAvailable, JobDataCorrupted,
-	).Select("COUNT(*) as count, COALESCE(SUM(disk_size), 0) as total_size").Scan(&stats)
+	res := db.Model(&Job{}).Scopes(applyCleanFilter(filter)).
+		Select("COUNT(*) as count, COALESCE(SUM(disk_size), 0) as total_size").Scan(&stats)
 	if res.Error != nil {
 		return nil, xerrors.Errorf("GetCleanableJobStats: %w", res.Error)
 	}
 	return &stats, nil
 }
 
-// ListCleanableJobs はロックされていない削除可能なジョブ一覧を返す。
-func ListCleanableJobs() ([]*Job, error) {
+// ListCleanableJobs はフィルタ条件に合致する削除可能なジョブ一覧を返す。
+func ListCleanableJobs(filter *CleanFilter) ([]*Job, error) {
 	var list []*Job
-	res := db.Where(
-		"data_status IN (?,?)",
-		JobDataAvailable, JobDataCorrupted,
-	).Order("enqueued_at asc").Find(&list)
+	res := db.Scopes(applyCleanFilter(filter)).Order("enqueued_at asc").Find(&list)
 	if res.Error != nil {
 		return nil, xerrors.Errorf("ListCleanableJobs: %w", res.Error)
 	}

@@ -268,7 +268,11 @@
     "dataStatus": "データ状態",
     "diskSize": "容量",
     "filterLabel": "表示:",
-    "sortBySize": "容量順",
+    "sortLabel": "並び替え:",
+    "sortSize": "容量",
+    "sortDate": "終了日付",
+    "dateFilterLabel": "期間:",
+    "dateFilterUnit": "日以内",
     "statusFilter": {
       "available": "データあり",
       "deleted": "削除済",
@@ -280,7 +284,8 @@
     },
     "cleanData": "データクリーンアップ",
     "cleanTitle": "データクリーンアップ",
-    "cleanDescription": "ロックされていない{{count}}件のジョブデータ（合計 {{size}}）を削除します。ジョブ履歴は残ります。",
+    "cleanDescription": "現在のフィルタ条件に一致する{{count}}件のジョブデータ（合計 {{size}}）を削除します。ジョブ履歴は残ります。",
+    "cleanLockWarning": "ロック済みジョブが対象に含まれています。ロック済みのデータも削除されます。",
     "cleanConfirm": "削除する",
     "cleanComplete": "{{count}}件のデータを削除しました"
   },

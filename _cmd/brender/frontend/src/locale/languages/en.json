@@ -268,7 +268,11 @@
     "dataStatus": "Data Status",
     "diskSize": "Size",
     "filterLabel": "Show:",
-    "sortBySize": "Sort by size",
+    "sortLabel": "Sort:",
+    "sortSize": "Size",
+    "sortDate": "Completed",
+    "dateFilterLabel": "Period:",
+    "dateFilterUnit": "days",
     "statusFilter": {
       "available": "Available",
       "deleted": "Deleted",
@@ -280,7 +284,8 @@
     },
     "cleanData": "Data Cleanup",
     "cleanTitle": "Data Cleanup",
-    "cleanDescription": "Delete data from {{count}} unlocked jobs (total {{size}}). Job history will be preserved.",
+    "cleanDescription": "Delete data from {{count}} jobs matching current filters (total {{size}}). Job history will be preserved.",
+    "cleanLockWarning": "Locked jobs are included in the current filter. Their data will also be deleted.",
     "cleanConfirm": "Delete",
     "cleanComplete": "Deleted data from {{count}} jobs"
   },
