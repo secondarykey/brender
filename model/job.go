@@ -125,7 +125,8 @@ func GetLatestCompletedJobByWorkspace(workspaceID string) (*Job, error) {
 
 func GetLatestCompletedRenderJob(workspaceID string) (*Job, error) {
 	var j Job
-	res := db.Where("workspace_id = ? AND status = ? AND job_type = ?", workspaceID, JobCompleted, JobTypeRender).
+	res := db.Where("workspace_id = ? AND status = ? AND job_type = ? AND data_status IN (?,?)",
+		workspaceID, JobCompleted, JobTypeRender, JobDataAvailable, JobDataAvailableLocked).
 		Order("enqueued_at desc").First(&j)
 	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
 		return nil, nil

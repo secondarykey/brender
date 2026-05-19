@@ -777,6 +777,7 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.file-missing { color: #c0392b; }
 
 /* 小サムネイルタイル (190px) */
 .file-tile-grid--sm {

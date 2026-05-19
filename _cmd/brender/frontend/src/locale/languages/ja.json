@@ -89,6 +89,7 @@
     "created_at": "作成日",
     "processed_at": "処理日",
     "name": "名称",
+    "file_modified_at": "ファイル更新日",
     "asc": "昇順",
     "desc": "降順"
   },
