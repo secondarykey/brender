@@ -263,6 +263,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
   const [resolvingRender, setResolvingRender] = useState(false)
   const [samplesDialogOpen, setSamplesDialogOpen] = useState(false)
   const [samplesListText, setSamplesListText]     = useState('2,4,8,16,32,64,128,256,512')
+  const [samplesFrame, setSamplesFrame]           = useState(0)
   const [samplesEnqueuing, setSamplesEnqueuing]   = useState(false)
   const [imageFormats, setImageFormats]         = useState([])
   const [resolutionPresets, setResolutionPresets] = useState([])
@@ -483,7 +484,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
         showError(t('workspace.samplesListEmpty'))
         return
       }
-      await QueueApi.samplesComparisonEnqueue({ projectID, workspaceID, sampleCounts: counts })
+      await QueueApi.samplesComparisonEnqueue({ projectID, workspaceID, sampleCounts: counts, frame: samplesFrame })
       setSamplesDialogOpen(false)
       navigate('queue')
     } catch (err) {
@@ -857,6 +858,18 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
             placeholder="2,4,8,16,32,64,128,256,512"
           />
           <span className="form-hint">{t('workspace.samplesListHint')}</span>
+        </div>
+        <div className="form-field">
+          <label className="form-label">{t('workspace.samplesFrame')}</label>
+          <input
+            className="form-input"
+            style={{ width: 120 }}
+            type="number"
+            min={0}
+            value={samplesFrame}
+            onChange={e => setSamplesFrame(Number(e.target.value))}
+          />
+          <span className="form-hint">{t('workspace.samplesFrameHint')}</span>
         </div>
       </Dialog>
 

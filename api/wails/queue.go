@@ -35,8 +35,8 @@ func (s *Queue) TestEnqueue(projectID string, workspaceID string, params api.Tes
 	return api.TestEnqueue(projectID, workspaceID, params)
 }
 
-func (s *Queue) SamplesComparisonEnqueue(projectID string, workspaceID string, sampleCounts []int) (*model.Queue, error) {
-	return api.SamplesComparisonEnqueue(projectID, workspaceID, sampleCounts)
+func (s *Queue) SamplesComparisonEnqueue(projectID string, workspaceID string, sampleCounts []int, frame int) (*model.Queue, error) {
+	return api.SamplesComparisonEnqueue(projectID, workspaceID, sampleCounts, frame)
 }
 
 func (s *Queue) List() ([]*model.Queue, error) {

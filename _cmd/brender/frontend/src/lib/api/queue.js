@@ -25,11 +25,11 @@ export const QueueApi = {
               : serverCall('queue', 'test_enqueue', { project_id: projectID, workspace_id: workspaceID, params }),
 
   /** サンプル比較レンダリングをキューに追加
-   * @param {{ projectID: string, workspaceID: string, sampleCounts: number[] }} args
+   * @param {{ projectID: string, workspaceID: string, sampleCounts: number[], frame: number }} args
    */
-  samplesComparisonEnqueue: ({ projectID, workspaceID, sampleCounts }) =>
-    isWails() ? svc().then(s => s.SamplesComparisonEnqueue(projectID, workspaceID, sampleCounts))
-              : serverCall('queue', 'samples_comparison_enqueue', { project_id: projectID, workspace_id: workspaceID, sample_counts: sampleCounts }),
+  samplesComparisonEnqueue: ({ projectID, workspaceID, sampleCounts, frame }) =>
+    isWails() ? svc().then(s => s.SamplesComparisonEnqueue(projectID, workspaceID, sampleCounts, frame))
+              : serverCall('queue', 'samples_comparison_enqueue', { project_id: projectID, workspace_id: workspaceID, sample_counts: sampleCounts, frame }),
 
   /** 実行中キュー一覧を取得 */
   list: () =>

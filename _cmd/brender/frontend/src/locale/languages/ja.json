@@ -234,6 +234,8 @@
     "samplesListLabel": "サンプル数リスト（カンマ区切り）",
     "samplesListHint": "中間フレーム1枚を各サンプル数でレンダリングして比較します",
     "samplesListEmpty": "有効なサンプル数がありません",
+    "samplesFrame": "フレーム番号",
+    "samplesFrameHint": "0 = 中間フレームを自動選択",
     "autoLock": "完了時に自動ロック",
     "autoLockMinSize": "対象最小容量",
     "autoLockKeep": "保持件数",

@@ -568,7 +568,8 @@ func Enqueue(projectID string, workspaceID string) (*model.Queue, error) {
 }
 
 // SamplesComparisonEnqueue はサンプル比較ジョブをキューに投入する。
-func SamplesComparisonEnqueue(projectID, workspaceID string, sampleCounts []int) (*model.Queue, error) {
+// frame が 0 以下の場合は中間フレームを自動選択する。
+func SamplesComparisonEnqueue(projectID, workspaceID string, sampleCounts []int, frame int) (*model.Queue, error) {
 	if len(sampleCounts) == 0 {
 		return nil, xerrors.New("サンプル数リストが空です")
 	}
@@ -578,7 +579,9 @@ func SamplesComparisonEnqueue(projectID, workspaceID string, sampleCounts []int)
 		return nil, err
 	}
 
-	frame := (preview.StartFrame + preview.EndFrame) / 2
+	if frame <= 0 {
+		frame = (preview.StartFrame + preview.EndFrame) / 2
+	}
 
 	sampleStrs := make([]string, len(sampleCounts))
 	for i, s := range sampleCounts {
@@ -700,13 +703,19 @@ func executeSamplesComparison(q *model.Queue, job *model.Job) {
 
 	isCycles, isEevee, isWorkbench := exec.EngineFlags(job.Engine)
 	dto := &exec.SamplesComparisonRun{
-		Scene:       job.Scene,
-		Frame:       job.StartFrame,
-		SamplesList: job.SamplesList,
-		IsCycles:    isCycles,
-		IsEevee:     isEevee,
-		IsWorkbench: isWorkbench,
-		OutputDir:   filepath.ToSlash(job.OutputDir),
+		Scene:         job.Scene,
+		Frame:         job.StartFrame,
+		SamplesList:   job.SamplesList,
+		IsCycles:      isCycles,
+		IsEevee:       isEevee,
+		IsWorkbench:   isWorkbench,
+		OutputDir:     filepath.ToSlash(job.OutputDir),
+		Camera:        job.Camera,
+		HasResolution: job.ResolutionX > 0 && job.ResolutionY > 0,
+		ResolutionX:   job.ResolutionX,
+		ResolutionY:   job.ResolutionY,
+		Engine:        job.Engine,
+		Format:        job.BlenderFormat,
 	}
 
 	scriptPath, err := exec.GetSamplesComparisonPythonFile(dto)

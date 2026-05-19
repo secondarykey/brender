@@ -234,6 +234,8 @@
     "samplesListLabel": "Sample counts (comma-separated)",
     "samplesListHint": "Renders 1 frame at each sample count for quality comparison",
     "samplesListEmpty": "No valid sample counts",
+    "samplesFrame": "Frame number",
+    "samplesFrameHint": "0 = auto-select middle frame",
     "autoLock": "Auto-lock on completion",
     "autoLockMinSize": "Min size",
     "autoLockKeep": "Keep count",
