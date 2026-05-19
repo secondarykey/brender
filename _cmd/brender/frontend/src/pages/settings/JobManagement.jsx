@@ -312,6 +312,9 @@ function JobManagement({ navigate }) {
           </div>
         }
       >
+        <div style={{ fontSize: '0.85rem', opacity: 0.7, marginBottom: 12 }}>
+          {t('jobManagement.cleanFilteredSummary', { count: filteredJobs.length, size: formatSize(totalSize) })}
+        </div>
         {lockedIncluded && (
           <div style={{ background: 'rgba(255, 165, 0, 0.15)', border: '1px solid rgba(255, 165, 0, 0.4)', borderRadius: 4, padding: '8px 12px', marginBottom: 12, fontSize: '0.85rem', color: '#f0a030' }}>
             {t('jobManagement.cleanLockWarning')}

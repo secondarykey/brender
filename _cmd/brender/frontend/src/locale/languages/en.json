@@ -284,7 +284,8 @@
     },
     "cleanData": "Data Cleanup",
     "cleanTitle": "Data Cleanup",
-    "cleanDescription": "Delete data from {{count}} jobs matching current filters (total {{size}}). Job history will be preserved.",
+    "cleanFilteredSummary": "Filtered: {{count}} jobs / Total size: {{size}}",
+    "cleanDescription": "{{count}} jobs ({{size}}) will have their data deleted. Job history will be preserved.",
     "cleanLockWarning": "Locked jobs are included in the current filter. Their data will also be deleted.",
     "cleanConfirm": "Delete",
     "cleanComplete": "Deleted data from {{count}} jobs"

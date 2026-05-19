@@ -284,7 +284,8 @@
     },
     "cleanData": "データクリーンアップ",
     "cleanTitle": "データクリーンアップ",
-    "cleanDescription": "現在のフィルタ条件に一致する{{count}}件のジョブデータ（合計 {{size}}）を削除します。ジョブ履歴は残ります。",
+    "cleanFilteredSummary": "フィルタ結果: {{count}}件 / 合計容量: {{size}}",
+    "cleanDescription": "このうち{{count}}件（合計 {{size}}）のデータを削除します。ジョブ履歴は残ります。",
     "cleanLockWarning": "ロック済みジョブが対象に含まれています。ロック済みのデータも削除されます。",
     "cleanConfirm": "削除する",
     "cleanComplete": "{{count}}件のデータを削除しました"
