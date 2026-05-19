@@ -88,7 +88,7 @@ function JobManagement({ navigate }) {
   const [lockWarned, setLockWarned] = useState(false)
   const [lockConfirm, setLockConfirm] = useState(null)
   const [sortBy, setSortBy] = useState('size')
-  const [filterDays, setFilterDays] = useState(0)
+  const [filterDays, setFilterDays] = useState(5)
   const [measuring, setMeasuring] = useState(false)
   const [measuredSize, setMeasuredSize] = useState(null)
 
@@ -203,14 +203,14 @@ function JobManagement({ navigate }) {
           {t('jobManagement.totalJobs', { count: filteredJobs.length })} / {t('jobManagement.totalSize', { size: formatSize(totalSize) })}
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <button className="btn btn-outline btn-sm" onClick={handleMeasure} disabled={measuring}>
-            {measuring ? t('common.loading') : t('jobManagement.measureSize')}
-          </button>
           {measuredSize !== null && (
             <span style={{ fontSize: '0.85rem', opacity: 0.8 }}>
               {t('jobManagement.measuredSize', { size: formatSize(measuredSize) })}
             </span>
           )}
+          <button className="btn btn-outline btn-sm" onClick={handleMeasure} disabled={measuring}>
+            {measuring ? t('common.loading') : t('jobManagement.measureSize')}
+          </button>
           <button className="btn btn-danger btn-sm" onClick={handleCleanClick}>
             {t('jobManagement.cleanData')}
           </button>
