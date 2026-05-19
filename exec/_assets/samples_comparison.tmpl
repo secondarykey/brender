@@ -26,7 +26,7 @@ scene.render.image_settings.file_format = '{{ .Format }}'
 {{ end }}
 
 for s in sample_list:
-    print(f"BRENDER_SAMPLES_START {s}")
+    print(f"BRENDER_SAMPLES_START {s}", flush=True)
 {{ if .IsCycles }}
     scene.cycles.samples = s
 {{ else if .IsEevee }}
@@ -38,6 +38,6 @@ for s in sample_list:
     start = time.time()
     bpy.ops.render.render(write_still=True)
     elapsed = time.time() - start
-    print(f"BRENDER_SAMPLES_DONE {s} {elapsed:.2f}")
+    print(f"BRENDER_SAMPLES_DONE {s} {elapsed:.2f}", flush=True)
 
-print("Blender quit")
+print("Blender quit", flush=True)
