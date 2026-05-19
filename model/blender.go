@@ -55,6 +55,14 @@ func AddBlenderInstall(path, version, name string) (*BlenderInstall, error) {
 	return b, nil
 }
 
+func UpdateBlenderVersion(id uint, version string) error {
+	res := db.Model(&BlenderInstall{}).Where("id = ?", id).Update("version", version)
+	if res.Error != nil {
+		return xerrors.Errorf("UpdateBlenderVersion error: %w", res.Error)
+	}
+	return nil
+}
+
 func RemoveBlenderInstall(id uint) error {
 	res := db.Delete(&BlenderInstall{}, id)
 	if res.Error != nil {

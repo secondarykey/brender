@@ -23,7 +23,7 @@ function MainLayout({ currentPage, onNavigate, children }) {
 
   const { t } = useTranslation()
   const { toast } = useToast()
-  const { error, clearError } = useMessage()
+  const { error, clearError, showError } = useMessage()
   const [queueCount, setQueueCount] = useState(0)
 
   useEffect(() => {
@@ -31,6 +31,16 @@ function MainLayout({ currentPage, onNavigate, children }) {
     QueueApi.list().then(list => setQueueCount((list || []).length)).catch(() => {})
     // イベント購読
     const off = onAppEvent('queue:changed', data => setQueueCount(Number(data) || 0))
+    return off
+  }, [])
+
+  useEffect(() => {
+    const off = onAppEvent('blender:warning', data => {
+      const warnings = Array.isArray(data) ? data : [data]
+      if (warnings.length > 0) {
+        showError(warnings.join('\n'))
+      }
+    })
     return off
   }, [])
 
@@ -49,7 +59,7 @@ function MainLayout({ currentPage, onNavigate, children }) {
       <TitleBar />
       {error && (
         <div className="app-message-bar">
-          <span className="app-message-text">{error}</span>
+          <span className="app-message-text" style={{ whiteSpace: 'pre-line' }}>{error}</span>
           <button className="app-message-close" onClick={clearError} aria-label="close">×</button>
         </div>
       )}

@@ -1,14 +1,19 @@
 package api
 
 import (
+	"fmt"
 	"os"
 	osexec "os/exec"
 	"path/filepath"
 
 	"github.com/ikascrew/brender/exec"
+	"github.com/ikascrew/brender/log"
 	"github.com/ikascrew/brender/model"
 	"golang.org/x/xerrors"
 )
+
+// BlenderWarningHook は起動時の Blender 検証で警告が発生したときに呼ばれるフック。
+var BlenderWarningHook func(warnings []string)
 
 func RegisterBlender(path string) (*model.BlenderInstall, error) {
 	if _, err := os.Stat(path); err != nil {
@@ -47,6 +52,50 @@ func DeleteBlender(id uint) error {
 
 func ReorderBlenders(ids []uint) error {
 	return model.ReorderBlenders(ids)
+}
+
+// VerifyBlenderInstalls は登録済み Blender のパス存在とバージョンを検証する。
+// パスが存在しない場合は警告、バージョンが変わっていた場合は DB を更新する。
+func VerifyBlenderInstalls() {
+	installs, err := model.ListBlenders()
+	if err != nil {
+		log.Error("VerifyBlenderInstalls: ListBlenders: %v", err)
+		return
+	}
+	if len(installs) == 0 {
+		return
+	}
+
+	var warnings []string
+	for _, inst := range installs {
+		if _, err := os.Stat(inst.Path); err != nil {
+			msg := fmt.Sprintf("%s (%s): パスが見つかりません", inst.Name, inst.Path)
+			log.Warn("VerifyBlenderInstalls: %s", msg)
+			warnings = append(warnings, msg)
+			continue
+		}
+
+		b, err := exec.NewBlender(inst.Path)
+		if err != nil {
+			log.Warn("VerifyBlenderInstalls: NewBlender(%s): %v", inst.Path, err)
+			continue
+		}
+		newVersion := b.Version()
+		if newVersion == "" || newVersion == "-" {
+			log.Warn("VerifyBlenderInstalls: バージョン取得失敗: %s", inst.Path)
+			continue
+		}
+		if newVersion != inst.Version {
+			log.Notice("VerifyBlenderInstalls: %s バージョン更新 %s → %s", inst.Name, inst.Version, newVersion)
+			if err := model.UpdateBlenderVersion(inst.ID, newVersion); err != nil {
+				log.Error("VerifyBlenderInstalls: UpdateBlenderVersion: %v", err)
+			}
+		}
+	}
+
+	if len(warnings) > 0 && BlenderWarningHook != nil {
+		BlenderWarningHook(warnings)
+	}
 }
 
 func GetScenes(installID uint, fileID string) ([]string, error) {

@@ -153,6 +153,12 @@ func run() error {
 	// リカバリされたキューのスケジューリングを開始
 	api.StartRecoveredQueues()
 
+	// 登録済み Blender のバージョン検証（バックグラウンド）
+	api.BlenderWarningHook = func(warnings []string) {
+		application.Get().Event.Emit("blender:warning", warnings)
+	}
+	go api.VerifyBlenderInstalls()
+
 	// 移行進捗イベントをフロントエンドへ通知
 	api.MigrationHook = func(projectID string, status string, pct float64) {
 		application.Get().Event.Emit("workdir:migrate", map[string]interface{}{
