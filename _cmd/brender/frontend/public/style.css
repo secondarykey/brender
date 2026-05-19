@@ -2014,12 +2014,14 @@ textarea.form-input {
 .dialog-prev {
   color: rgba(255,255,255,0.3);
   font-size: 0.8rem;
-  margin-left: 8px;
+  margin-left: auto;
+  white-space: nowrap;
 }
 .dialog-prev-changed {
   color: #f0944d;
   font-size: 0.8rem;
-  margin-left: 8px;
+  margin-left: auto;
+  white-space: nowrap;
 }
 .dialog-body p {
   display: flex;
