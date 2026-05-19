@@ -188,6 +188,7 @@
     "scene": "Scene",
     "sceneHint": "If not set: file default → .blend file default",
     "camera": "Camera",
+    "renderSettings": "Render Details",
     "renderEngine": "Render Engine",
     "enginePlaceholder": "Not set (e.g. CYCLES)",
     "engineHint": "If not set: the default engine in the .blend file will be used",

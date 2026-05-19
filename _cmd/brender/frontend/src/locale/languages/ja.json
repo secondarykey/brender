@@ -188,6 +188,7 @@
     "scene": "シーン",
     "sceneHint": "未設定の場合: ファイルのデフォルト → .blend ファイルのデフォルト の順で使用されます",
     "camera": "カメラ",
+    "renderSettings": "レンダリング詳細設定",
     "renderEngine": "レンダーエンジン",
     "enginePlaceholder": "未設定（例: CYCLES）",
     "engineHint": "未設定の場合: .blend ファイルのデフォルトエンジンが使用されます",
