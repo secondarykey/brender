@@ -1,9 +1,10 @@
 import { useTranslation } from 'react-i18next'
 
-const SORT_OPTIONS = ['display_order', 'name', 'created_at', 'processed_at', 'file_modified_at']
+const DEFAULT_OPTIONS = ['display_order', 'name', 'created_at', 'processed_at']
 
-export default function SortSelect({ value, onChange, dir = 'asc', onDirChange }) {
+export default function SortSelect({ value, onChange, dir = 'asc', onDirChange, options }) {
   const { t } = useTranslation()
+  const opts = options || DEFAULT_OPTIONS
   return (
     <>
       <select
@@ -12,7 +13,7 @@ export default function SortSelect({ value, onChange, dir = 'asc', onDirChange }
         onChange={e => onChange(e.target.value)}
         title={t('sort.label')}
       >
-        {SORT_OPTIONS.map(key => (
+        {opts.map(key => (
           <option key={key} value={key}>{t(`sort.${key}`)}</option>
         ))}
       </select>
