@@ -5,6 +5,7 @@
     "save": "Save",
     "saved": "Saved",
     "cancel": "Cancel",
+    "yes": "Yes",
     "delete": "Delete",
     "holdToConfirm": "Hold to confirm",
     "deleting": "Deleting...",
@@ -282,6 +283,8 @@
       "lockInclude": "Include locked",
       "lockOnly": "Locked only"
     },
+    "lockConfirmTitle": "Include Locked Jobs",
+    "lockConfirmMessage": "If you run a cleanup, locked jobs will also be included. Continue?",
     "cleanData": "Data Cleanup",
     "cleanTitle": "Data Cleanup",
     "cleanFilteredSummary": "Filtered: {{count}} jobs / Total size: {{size}}",

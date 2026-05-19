@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { QueueApi } from '../../lib/api'
 import { useMessage, useToast } from '../../lib/toast'
 import Dialog from '../../components/Dialog'
+import ConfirmDialog from '../../components/ConfirmDialog'
 import JobDetailDialog from '../../components/JobDetailDialog'
 import HoldButton from '../../components/HoldButton'
 import Pagination from '../../components/Pagination'
@@ -84,6 +85,8 @@ function JobManagement({ navigate }) {
   const [selected, setSelected] = useState(null)
   const [excludeStatuses, setExcludeStatuses] = useState(new Set([4, 5]))
   const [lockFilter, setLockFilter] = useState('hide')
+  const [lockWarned, setLockWarned] = useState(false)
+  const [lockConfirm, setLockConfirm] = useState(null)
   const [sortBy, setSortBy] = useState('size')
   const [filterDays, setFilterDays] = useState(0)
 
@@ -203,13 +206,21 @@ function JobManagement({ navigate }) {
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <button
             className={`btn btn-sm ${lockFilter === 'include' ? 'btn-outline-active' : 'btn-outline'}`}
-            onClick={() => { setLockFilter(v => v === 'include' ? 'hide' : 'include'); setPage(1) }}
+            onClick={() => {
+              if (lockFilter === 'include') { setLockFilter('hide'); setPage(1); return }
+              if (!lockWarned) { setLockConfirm('include'); return }
+              setLockFilter('include'); setPage(1)
+            }}
           >
             {t('jobManagement.statusFilter.lockInclude')}
           </button>
           <button
             className={`btn btn-sm ${lockFilter === 'only' ? 'btn-outline-active' : 'btn-outline'}`}
-            onClick={() => { setLockFilter(v => v === 'only' ? 'hide' : 'only'); setPage(1) }}
+            onClick={() => {
+              if (lockFilter === 'only') { setLockFilter('hide'); setPage(1); return }
+              if (!lockWarned) { setLockConfirm('only'); return }
+              setLockFilter('only'); setPage(1)
+            }}
           >
             {t('jobManagement.statusFilter.lockOnly')}
           </button>
@@ -324,6 +335,17 @@ function JobManagement({ navigate }) {
           <p>{t('jobManagement.cleanDescription', { count: cleanStats.count, size: formatSize(cleanStats.total_size) })}</p>
         )}
       </Dialog>
+
+      <ConfirmDialog
+        open={!!lockConfirm}
+        title={t('jobManagement.lockConfirmTitle')}
+        onConfirm={() => { setLockWarned(true); setLockFilter(lockConfirm); setPage(1); setLockConfirm(null) }}
+        onCancel={() => setLockConfirm(null)}
+        confirmLabel={t('common.yes')}
+        confirmClassName="btn btn-green"
+      >
+        <p>{t('jobManagement.lockConfirmMessage')}</p>
+      </ConfirmDialog>
     </div>
   )
 }

@@ -5,6 +5,7 @@
     "save": "保存",
     "saved": "保存しました",
     "cancel": "キャンセル",
+    "yes": "はい",
     "delete": "削除",
     "holdToConfirm": "押し続けてください",
     "deleting": "削除中...",
@@ -282,6 +283,8 @@
       "lockInclude": "ロックを含む",
       "lockOnly": "ロックのみ"
     },
+    "lockConfirmTitle": "ロック条件の追加",
+    "lockConfirmMessage": "クリーンアップをする場合、ロックも含まれるようになります。よろしいですか？",
     "cleanData": "データクリーンアップ",
     "cleanTitle": "データクリーンアップ",
     "cleanFilteredSummary": "フィルタ結果: {{count}}件 / 合計容量: {{size}}",
