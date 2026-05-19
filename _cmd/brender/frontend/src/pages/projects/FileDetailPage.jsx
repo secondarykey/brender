@@ -496,6 +496,10 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
   const [deleting, setDeleting]           = useState(false)
   const [confirm, setConfirm]             = useState(false)
   const [forceDel, setForceDel]           = useState(false)
+  const [missingScene, setMissingScene]       = useState('')
+  const [missingCamera, setMissingCamera]     = useState('')
+  const [missingEngine, setMissingEngine]     = useState('')
+  const [convertedEngine, setConvertedEngine] = useState(null)
 
   const fetchToolData = (installID) => {
     setToolLoading(true)
@@ -535,7 +539,59 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
   const handleSceneChange = (val) => {
     setScene(val)
     setCamera('')
+    setMissingScene('')
+    setMissingCamera('')
   }
+
+  useEffect(() => {
+    if (toolLoading || !toolData) return
+    const sceneList = toolData?.Scenes?.map(s => s.Name) || []
+    const cameraList = toolData?.Cameras || []
+    const engineList = toolData?.Engines || []
+
+    if (scene && sceneList.length > 0 && !sceneList.includes(scene)) {
+      setMissingScene(scene)
+      setScene('')
+      setCamera('')
+    } else {
+      setMissingScene('')
+    }
+
+    if (camera && cameraList.length > 0) {
+      const filtered = scene
+        ? cameraList.filter(c => c.Scenes && c.Scenes.includes(scene))
+        : cameraList
+      if (!filtered.some(c => c.Name === camera)) {
+        setMissingCamera(camera)
+        setCamera('')
+      } else {
+        setMissingCamera('')
+      }
+    } else {
+      setMissingCamera('')
+    }
+
+    if (engine && engineList.length > 0 && !engineList.includes(engine)) {
+      const keys = ['CYCLES', 'EEVEE', 'WORKBENCH']
+      const savedUpper = engine.toUpperCase()
+      const savedKey = keys.find(k => savedUpper.includes(k))
+      if (savedKey) {
+        const candidates = engineList.filter(e => e.toUpperCase().includes(savedKey))
+        if (candidates.length === 1) {
+          setConvertedEngine({ from: engine, to: candidates[0] })
+          setMissingEngine('')
+          setEngine(candidates[0])
+          return
+        }
+      }
+      setMissingEngine(engine)
+      setConvertedEngine(null)
+      setEngine('')
+    } else {
+      setMissingEngine('')
+      setConvertedEngine(null)
+    }
+  }, [toolLoading])
 
   const handleSave = async () => {
     if (!name.trim()) return
@@ -647,7 +703,7 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
                 <select
                   className="form-select"
                   value={engine}
-                  onChange={e => setEngine(e.target.value)}
+                  onChange={e => { setEngine(e.target.value); setMissingEngine(''); setConvertedEngine(null) }}
                   disabled={toolLoading}
                 >
                   <option value="">{t('common.notSet')}</option>
@@ -661,6 +717,8 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
                   placeholder={t('workspace.enginePlaceholder')}
                 />
               )}
+              {missingEngine && <span className="form-hint" style={{ color: '#e74c3c' }}>{t('workspace.engineMissing', { name: missingEngine })}</span>}
+              {convertedEngine && <span className="form-hint" style={{ color: '#e0a030' }}>{t('workspace.engineConverted', { from: convertedEngine.from, to: convertedEngine.to })}</span>}
               <label className="form-checkbox-label" style={{ marginTop: 6 }}>
                 <input type="checkbox" checked={engineFixed} onChange={e => setEngineFixed(e.target.checked)} />
                 <span style={{ marginLeft: 6 }}>{t('file.fixed')}</span>
@@ -692,6 +750,7 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
                   placeholder={t('common.notSetPlaceholder')}
                 />
               )}
+              {missingScene && <span className="form-hint" style={{ color: '#e74c3c' }}>{t('workspace.sceneMissing', { name: missingScene })}</span>}
               <label className="form-checkbox-label" style={{ marginTop: 6 }}>
                 <input type="checkbox" checked={sceneFixed} onChange={e => setSceneFixed(e.target.checked)} />
                 <span style={{ marginLeft: 6 }}>{t('file.fixed')}</span>
@@ -705,7 +764,7 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
               <select
                 className="form-select"
                 value={camera}
-                onChange={e => setCamera(e.target.value)}
+                onChange={e => { setCamera(e.target.value); setMissingCamera('') }}
                 disabled={toolLoading}
               >
                 <option value="">{t('common.notSet')}</option>
@@ -714,6 +773,7 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
                   .map(c => <option key={c.Name} value={c.Name}>{c.Name}</option>)
                 }
               </select>
+              {missingCamera && <span className="form-hint" style={{ color: '#e74c3c' }}>{t('workspace.cameraMissing', { name: missingCamera })}</span>}
               <label className="form-checkbox-label" style={{ marginTop: 6 }}>
                 <input type="checkbox" checked={cameraFixed} onChange={e => setCameraFixed(e.target.checked)} />
                 <span style={{ marginLeft: 6 }}>{t('file.fixed')}</span>

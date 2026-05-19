@@ -352,6 +352,62 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
     }
   }, [form?.blenderInstallID, detail?.workspace?.project_file_id])
 
+  // ── 保存値の存在チェック ─────────────────────────────────
+  const [missingScene, setMissingScene]     = useState('')
+  const [missingCamera, setMissingCamera]   = useState('')
+  const [missingEngine, setMissingEngine]   = useState('')
+  const [convertedEngine, setConvertedEngine] = useState(null) // { from, to }
+
+  useEffect(() => {
+    if (!form || toolLoading || enginesLoading) return
+    const sceneList = toolData?.Scenes?.map(s => s.Name) || []
+    const cameraList = toolData?.Cameras || []
+    const engineList = engines || []
+
+    if (form.scene && sceneList.length > 0 && !sceneList.includes(form.scene)) {
+      setMissingScene(form.scene)
+      setForm(prev => ({ ...prev, scene: '', camera: '' }))
+    } else {
+      setMissingScene('')
+    }
+
+    if (form.camera && cameraList.length > 0) {
+      const effectiveScene = form.scene || ''
+      const filtered = effectiveScene
+        ? cameraList.filter(c => c.Scenes && c.Scenes.includes(effectiveScene))
+        : cameraList
+      if (!filtered.some(c => c.Name === form.camera)) {
+        setMissingCamera(form.camera)
+        setForm(prev => ({ ...prev, camera: '' }))
+      } else {
+        setMissingCamera('')
+      }
+    } else {
+      setMissingCamera('')
+    }
+
+    if (form.engine && engineList.length > 0 && !engineList.includes(form.engine)) {
+      const keys = ['CYCLES', 'EEVEE', 'WORKBENCH']
+      const savedUpper = form.engine.toUpperCase()
+      const savedKey = keys.find(k => savedUpper.includes(k))
+      if (savedKey) {
+        const candidates = engineList.filter(e => e.toUpperCase().includes(savedKey))
+        if (candidates.length === 1) {
+          setConvertedEngine({ from: form.engine, to: candidates[0] })
+          setMissingEngine('')
+          setForm(prev => ({ ...prev, engine: candidates[0] }))
+          return
+        }
+      }
+      setMissingEngine(form.engine)
+      setConvertedEngine(null)
+      setForm(prev => ({ ...prev, engine: '' }))
+    } else {
+      setMissingEngine('')
+      setConvertedEngine(null)
+    }
+  }, [toolLoading, enginesLoading])
+
   // ── デフォルト値の導出 ───────────────────────────────────
   const fileRecord      = detail?.project_files?.find(f => f.id === detail?.workspace?.project_file_id)
   const fileBlenderID   = fileRecord?.blender_install_id || 0
@@ -608,7 +664,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
           {fileEngineFixed ? (
             <input className="form-input" value={fileEngine || sceneInfo?.Engine || t('common.notSet')} disabled style={{ opacity: 0.5 }} />
           ) : engines.length > 0 ? (
-            <select className="form-select" value={form.engine} onChange={e => set('engine', e.target.value)} disabled={enginesLoading}>
+            <select className="form-select" value={form.engine} onChange={e => { set('engine', e.target.value); setMissingEngine(''); setConvertedEngine(null) }} disabled={enginesLoading}>
               <option value="">{t('common.notSet')}</option>
               {engines.map(eng => <option key={eng} value={eng}>{eng}</option>)}
             </select>
@@ -618,6 +674,8 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
           {fileEngineFixed && (
             <span className="form-hint">{t('workspace.engineLockedByFile')}</span>
           )}
+          {missingEngine && <span className="form-hint" style={{ color: '#e74c3c' }}>{t('workspace.engineMissing', { name: missingEngine })}</span>}
+          {convertedEngine && <span className="form-hint" style={{ color: '#e0a030' }}>{t('workspace.engineConverted', { from: convertedEngine.from, to: convertedEngine.to })}</span>}
         </div>
         <div className="form-field" style={{ flex: '0 0 80px', minWidth: 0 }}>
           <label className="form-label">{t('workspace.samples')}</label>
@@ -645,13 +703,14 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
           {fileSceneFixed ? (
             <input className="form-input" value={fileScene || activeScene?.Name || t('common.notSet')} disabled style={{ opacity: 0.5 }} />
           ) : scenes.length > 0 ? (
-            <select className="form-select" value={form.scene} onChange={e => { set('scene', e.target.value); set('camera', '') }} disabled={toolLoading}>
+            <select className="form-select" value={form.scene} onChange={e => { set('scene', e.target.value); set('camera', ''); setMissingScene(''); setMissingCamera('') }} disabled={toolLoading}>
               <option value="">{t('common.notSet')}</option>
               {scenes.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           ) : (
             <input className="form-input" value={form.scene} onChange={e => set('scene', e.target.value)} placeholder={t('common.notSetPlaceholder')} />
           )}
+          {missingScene && <span className="form-hint" style={{ color: '#e74c3c' }}>{t('workspace.sceneMissing', { name: missingScene })}</span>}
         </div>
         <div className="form-field" style={{ flex: 1 }}>
           <label className="form-label">
@@ -667,7 +726,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
             <select
               className="form-select"
               value={form.camera}
-              onChange={e => set('camera', e.target.value)}
+              onChange={e => { set('camera', e.target.value); setMissingCamera('') }}
               disabled={toolLoading}
             >
               <option value="">{t('common.notSet')}</option>
@@ -677,6 +736,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
               }
             </select>
           )}
+          {missingCamera && <span className="form-hint" style={{ color: '#e74c3c' }}>{t('workspace.cameraMissing', { name: missingCamera })}</span>}
         </div>
       </div>
 
