@@ -283,6 +283,8 @@
       "lockInclude": "Include locked",
       "lockOnly": "Locked only"
     },
+    "measureSize": "Measure",
+    "measuredSize": "Actual: {{size}}",
     "lockConfirmTitle": "Include Locked Jobs",
     "lockConfirmMessage": "If you run a cleanup, locked jobs will also be included. Continue?",
     "cleanData": "Data Cleanup",

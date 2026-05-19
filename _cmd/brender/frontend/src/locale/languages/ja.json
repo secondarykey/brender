@@ -283,6 +283,8 @@
       "lockInclude": "ロックを含む",
       "lockOnly": "ロックのみ"
     },
+    "measureSize": "実測",
+    "measuredSize": "実測: {{size}}",
     "lockConfirmTitle": "ロック条件の追加",
     "lockConfirmMessage": "クリーンアップをする場合、ロックも含まれるようになります。よろしいですか？",
     "cleanData": "データクリーンアップ",

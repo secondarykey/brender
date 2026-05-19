@@ -154,6 +154,10 @@ func (s *Queue) CleanJobData(filter *model.CleanFilter) (int, error) {
 	return api.CleanJobData(filter)
 }
 
+func (s *Queue) MeasureFilteredDiskSize(filter *model.CleanFilter) (int64, error) {
+	return api.MeasureFilteredDiskSize(filter)
+}
+
 func (s *Queue) OpenLogWindow(jobID string) error {
 	title := "render.log"
 	if j, err := model.GetJob(jobID); err == nil && j != nil {

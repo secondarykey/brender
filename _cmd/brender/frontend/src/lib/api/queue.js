@@ -197,6 +197,13 @@ export const QueueApi = {
     isWails() ? svc().then(s => s.CleanJobData(filter))
               : serverCall('queue', 'clean_job_data', { filter }),
 
+  /** フィルタ条件に合致するジョブの実測ディスクサイズを取得
+   * @param {{ filter: { data_statuses: number[], days: number } }} args
+   */
+  measureFilteredDiskSize: ({ filter }) =>
+    isWails() ? svc().then(s => s.MeasureFilteredDiskSize(filter))
+              : serverCall('queue', 'measure_filtered_disk_size', { filter }),
+
   /** ミニモニターウィンドウを開く */
   openMiniMonitor: () =>
     isWails() ? svc().then(s => s.OpenMiniMonitor())

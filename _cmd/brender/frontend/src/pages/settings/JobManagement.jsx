@@ -89,6 +89,8 @@ function JobManagement({ navigate }) {
   const [lockConfirm, setLockConfirm] = useState(null)
   const [sortBy, setSortBy] = useState('size')
   const [filterDays, setFilterDays] = useState(0)
+  const [measuring, setMeasuring] = useState(false)
+  const [measuredSize, setMeasuredSize] = useState(null)
 
   const load = useCallback(() => {
     QueueApi.listJobs()
@@ -123,6 +125,8 @@ function JobManagement({ navigate }) {
     return result
   }, [jobs, excludeStatuses, lockFilter, sortBy, filterDays])
 
+  useEffect(() => { setMeasuredSize(null) }, [excludeStatuses, lockFilter, filterDays])
+
   const totalPages = Math.max(1, Math.ceil(filteredJobs.length / pageSize))
   const currentPage = Math.min(page, totalPages)
   const pageJobs = filteredJobs.slice((currentPage - 1) * pageSize, currentPage * pageSize)
@@ -146,6 +150,20 @@ function JobManagement({ navigate }) {
       return next
     })
     setPage(1)
+  }
+
+  const handleMeasure = async () => {
+    setMeasuring(true)
+    setMeasuredSize(null)
+    try {
+      const filter = buildCleanFilter(excludeStatuses, lockFilter, filterDays)
+      const size = await QueueApi.measureFilteredDiskSize({ filter })
+      setMeasuredSize(size)
+    } catch (err) {
+      showError(String(err))
+    } finally {
+      setMeasuring(false)
+    }
   }
 
   const handleCleanClick = async () => {
@@ -182,9 +200,19 @@ function JobManagement({ navigate }) {
         <div style={{ fontSize: '0.85rem', opacity: 0.7 }}>
           {t('jobManagement.totalJobs', { count: filteredJobs.length })} / {t('jobManagement.totalSize', { size: formatSize(totalSize) })}
         </div>
-        <button className="btn btn-danger btn-sm" onClick={handleCleanClick}>
-          {t('jobManagement.cleanData')}
-        </button>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <button className="btn btn-outline btn-sm" onClick={handleMeasure} disabled={measuring}>
+            {measuring ? t('common.loading') : t('jobManagement.measureSize')}
+          </button>
+          {measuredSize !== null && (
+            <span style={{ fontSize: '0.85rem', opacity: 0.8 }}>
+              {t('jobManagement.measuredSize', { size: formatSize(measuredSize) })}
+            </span>
+          )}
+          <button className="btn btn-danger btn-sm" onClick={handleCleanClick}>
+            {t('jobManagement.cleanData')}
+          </button>
+        </div>
       </div>
 
       <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 12, flexWrap: 'wrap' }}>

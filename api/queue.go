@@ -1587,3 +1587,33 @@ func CleanJobData(filter *model.CleanFilter) (int, error) {
 	return deleted, nil
 }
 
+// MeasureFilteredDiskSize はフィルタ条件に合致するジョブの OutputDir を実測して合計バイト数を返す。
+func MeasureFilteredDiskSize(filter *model.CleanFilter) (int64, error) {
+	jobs, err := model.ListCleanableJobs(filter)
+	if err != nil {
+		return 0, xerrors.Errorf("MeasureFilteredDiskSize: %w", err)
+	}
+	var total int64
+	for _, j := range jobs {
+		if j.OutputDir == "" {
+			continue
+		}
+		total += measureDirSize(j.OutputDir)
+	}
+	return total, nil
+}
+
+func measureDirSize(dir string) int64 {
+	var total int64
+	filepath.WalkDir(dir, func(_ string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return nil
+		}
+		if info, e := d.Info(); e == nil {
+			total += info.Size()
+		}
+		return nil
+	})
+	return total
+}
+
