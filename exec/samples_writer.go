@@ -10,6 +10,11 @@ import (
 	"time"
 )
 
+type sampleTiming struct {
+	samples int
+	elapsed float64
+}
+
 type SamplesComparisonWriter struct {
 	mu            sync.RWMutex
 	sampleList    []int
@@ -20,6 +25,8 @@ type SamplesComparisonWriter struct {
 	log2          string
 	status        int
 	buf           []byte
+	timings       []sampleTiming
+	expectedTime  time.Time
 }
 
 func NewSamplesComparisonWriter(sampleList []int) *SamplesComparisonWriter {
@@ -64,7 +71,9 @@ func (w *SamplesComparisonWriter) parseLine(line string) {
 			w.status = 1
 		}
 	case strings.HasPrefix(line, "BRENDER_SAMPLES_DONE "):
+		w.parseDone(line)
 		w.doneCount++
+		w.updateExpected()
 	case strings.Contains(line, "Blender quit"):
 		w.status = 3
 	default:
@@ -73,6 +82,46 @@ func (w *SamplesComparisonWriter) parseLine(line string) {
 			w.log2 = trimmed
 		}
 	}
+}
+
+func (w *SamplesComparisonWriter) parseDone(line string) {
+	parts := strings.Fields(line)
+	if len(parts) < 3 {
+		return
+	}
+	samples, err1 := strconv.Atoi(parts[1])
+	elapsed, err2 := strconv.ParseFloat(parts[2], 64)
+	if err1 != nil || err2 != nil {
+		return
+	}
+	w.timings = append(w.timings, sampleTiming{samples: samples, elapsed: elapsed})
+}
+
+func (w *SamplesComparisonWriter) updateExpected() {
+	if len(w.timings) == 0 || w.doneCount >= w.totalCount {
+		return
+	}
+
+	// 完了済みデータから「1サンプルあたりの時間」を算出
+	var totalElapsed float64
+	var totalSamples int
+	for _, t := range w.timings {
+		totalElapsed += t.elapsed
+		totalSamples += t.samples
+	}
+	if totalSamples == 0 {
+		return
+	}
+	timePerSample := totalElapsed / float64(totalSamples)
+
+	// 残りのサンプル数合計から予測時間を算出
+	var remainingSamples int
+	for i := w.doneCount; i < w.totalCount; i++ {
+		remainingSamples += w.sampleList[i]
+	}
+
+	remainingSec := timePerSample * float64(remainingSamples)
+	w.expectedTime = time.Now().Add(time.Duration(remainingSec * float64(time.Second)))
 }
 
 func (w *SamplesComparisonWriter) Result() ProcessingResult {
@@ -84,15 +133,25 @@ func (w *SamplesComparisonWriter) Result() ProcessingResult {
 		log1 = fmt.Sprintf("samples=%d", w.currentSample)
 	}
 
+	// 最新の完了タイミングがあれば表示
+	if len(w.timings) > 0 {
+		last := w.timings[len(w.timings)-1]
+		log1 = fmt.Sprintf("samples=%d (%.1fs)", last.samples, last.elapsed)
+		if w.currentSample > 0 && w.doneCount < w.totalCount {
+			log1 = fmt.Sprintf("samples=%d (prev: %d=%.1fs)", w.currentSample, last.samples, last.elapsed)
+		}
+	}
+
 	return ProcessingResult{
-		StartTime:  w.startTime,
-		NowFrame:   w.doneCount,
-		StartFrame: 0,
-		EndFrame:   w.totalCount,
-		FrameActive: w.status == 1,
-		Log1:       log1,
-		Log2:       w.log2,
-		Status:     w.status,
+		StartTime:    w.startTime,
+		NowFrame:     w.doneCount,
+		StartFrame:   0,
+		EndFrame:     w.totalCount,
+		FrameActive:  w.status == 1,
+		Log1:         log1,
+		Log2:         w.log2,
+		Status:       w.status,
+		ExpectedTime: w.expectedTime,
 	}
 }
 

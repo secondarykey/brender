@@ -69,6 +69,7 @@ function ProgressCell({ q }) {
       : isRunning
         ? `sample ${done}/${total} (${q.log1 || ''}) ${pctText}%`
         : `sample ${done}/${total}`
+    const eta = isRunning ? formatETA(q.expected_at, t) : null
     const logText = q.log2 || ''
     return (
       <td className="queue-progress-cell" style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
@@ -77,6 +78,7 @@ function ProgressCell({ q }) {
         </div>
         <div className="progress-meta">
           <span className="progress-frame">{label}</span>
+          {eta && <span className="progress-ave">{eta}</span>}
         </div>
         <div className="progress-log" title={logText}>{logText}</div>
       </td>
