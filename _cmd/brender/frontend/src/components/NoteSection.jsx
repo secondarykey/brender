@@ -8,7 +8,7 @@ function NoteSection({ value, onChange, style }) {
   return (
     <div className="note-section" style={style}>
       <button className="note-toggle" onClick={() => setOpen(v => !v)} type="button">
-        <span className={`note-toggle-arrow${open ? ' open' : ''}`}>▶</span>
+        <span className="note-toggle-arrow">{open ? '▼' : '▶'}</span>
         {t('common.note')}
         {!open && value && <span style={{ color: 'rgba(255,255,255,0.25)', marginLeft: 6 }}>…</span>}
       </button>

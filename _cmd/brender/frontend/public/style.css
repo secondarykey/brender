@@ -1283,8 +1283,7 @@ textarea.form-input {
   user-select: none;
 }
 .note-toggle:hover { color: rgba(255,255,255,0.7); }
-.note-toggle-arrow { font-size: 0.7rem; transition: transform 0.15s; }
-.note-toggle-arrow.open { transform: rotate(90deg); }
+.note-toggle-arrow { font-size: 0.7rem; }
 .note-body {
   margin-top: 8px;
 }
@@ -1325,14 +1324,16 @@ textarea.form-input {
 .form-collapsible > summary::-webkit-details-marker { display: none; }
 .form-collapsible > summary::before {
   content: "▶";
-  font-size: 10px;
-  transition: transform 0.15s;
+  font-size: 0.7rem;
 }
 .form-collapsible[open] > summary::before {
-  transform: rotate(90deg);
+  content: "▼";
 }
 .form-collapsible > .form-collapsible-body {
   padding: 4px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .form-error {
