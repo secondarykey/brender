@@ -278,6 +278,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
   const lastResolutionSpec = useRef(null) // OFF 直前の解像度を退避
   const savedForm    = useRef(null)
   const savedNote    = useRef('')
+  const renderSettingsRef = useRef(null)
 
   useEffect(() => {
     const start = detail.workspace.start ?? 0
@@ -363,10 +364,12 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
     const sceneList = toolData?.Scenes?.map(s => s.Name) || []
     const cameraList = toolData?.Cameras || []
     const engineList = engines || []
+    let hasWarning = false
 
     if (form.scene && sceneList.length > 0 && !sceneList.includes(form.scene)) {
       setMissingScene(form.scene)
       setForm(prev => ({ ...prev, scene: '', camera: '' }))
+      hasWarning = true
     } else {
       setMissingScene('')
     }
@@ -379,6 +382,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
       if (!filtered.some(c => c.Name === form.camera)) {
         setMissingCamera(form.camera)
         setForm(prev => ({ ...prev, camera: '' }))
+        hasWarning = true
       } else {
         setMissingCamera('')
       }
@@ -396,15 +400,22 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
           setConvertedEngine({ from: form.engine, to: candidates[0] })
           setMissingEngine('')
           setForm(prev => ({ ...prev, engine: candidates[0] }))
+          hasWarning = true
+          if (renderSettingsRef.current) renderSettingsRef.current.open = true
           return
         }
       }
       setMissingEngine(form.engine)
       setConvertedEngine(null)
       setForm(prev => ({ ...prev, engine: '' }))
+      hasWarning = true
     } else {
       setMissingEngine('')
       setConvertedEngine(null)
+    }
+
+    if (hasWarning && renderSettingsRef.current) {
+      renderSettingsRef.current.open = true
     }
   }, [toolLoading, enginesLoading])
 
@@ -649,7 +660,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
         </div>
       </div>
 
-      <details className="form-collapsible" open={!detail.workspace.auto_lock}>
+      <details className="form-collapsible" ref={renderSettingsRef} open={!detail.workspace.auto_lock}>
         <summary>{t('workspace.renderSettings')}</summary>
         <div className="form-collapsible-body">
       <div className="form-row" style={{ alignItems: 'flex-start' }}>
