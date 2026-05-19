@@ -2029,7 +2029,8 @@ textarea.form-input {
 }
 .dialog-label {
   color: rgba(255,255,255,0.4);
-  min-width: 72px;
+  min-width: 110px;
+  flex-shrink: 0;
 }
 .dialog-actions {
   display: flex;
