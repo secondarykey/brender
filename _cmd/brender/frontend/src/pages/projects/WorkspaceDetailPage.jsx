@@ -277,6 +277,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
   const lastFrameSpec      = useRef(null) // OFF 直前のフレーム値を退避
   const lastResolutionSpec = useRef(null) // OFF 直前の解像度を退避
   const savedForm    = useRef(null)
+  const savedNote    = useRef('')
 
   useEffect(() => {
     const start = detail.workspace.start ?? 0
@@ -301,7 +302,9 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
     }
     setForm(next)
     savedForm.current = next
-    setNote(detail.workspace.note || '')
+    const noteVal = detail.workspace.note || ''
+    setNote(noteVal)
+    savedNote.current = noteVal
     setSpecifyResolution(!isResolutionDefault(detail.workspace.resolution_x || 0, detail.workspace.resolution_y || 0))
     setSpecifyFrames(!isFrameDefault(start, end))
     lastResolutionSpec.current = null
@@ -441,6 +444,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
         autoLockKeep: form.autoLockKeep,
       })
       savedForm.current = { ...form, name: form.name.trim() }
+      savedNote.current = note
       showToast(t('common.saved'))
       onUpdated()
     } catch (err) {
@@ -529,7 +533,9 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
 
   if (!form) return null
 
-  const isDirty = savedForm.current === null || JSON.stringify(form) !== JSON.stringify(savedForm.current)
+  const isFormDirty = savedForm.current === null || JSON.stringify(form) !== JSON.stringify(savedForm.current)
+  const isNoteDirty = note !== savedNote.current
+  const isDirty = isFormDirty || isNoteDirty
 
   const blenderDefault = !fileBlenderFixed && form?.blenderInstallID === 0
     ? (blenders.find(b => b.id === fileBlenderID)?.name || blenders[0]?.name || null)
@@ -802,10 +808,10 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
           <button className="btn btn-run" onClick={handleTestEncode} disabled={testEnqueueing || workDirLocked}>
             {testEnqueueing ? t('common.enqueueing') : t('workspace.testRender')}
           </button>
-          <button className="btn btn-outline btn-sm" onClick={() => setSamplesDialogOpen(true)} disabled={workDirLocked}>
+          <button className="btn btn-outline btn-sm" onClick={() => setSamplesDialogOpen(true)} disabled={workDirLocked || isFormDirty}>
             {t('workspace.samplesComparison')}
           </button>
-          <button className="btn btn-run" onClick={handleRenderClick} disabled={resolvingRender || workDirLocked || isDirty}>
+          <button className="btn btn-run" onClick={handleRenderClick} disabled={resolvingRender || workDirLocked || isFormDirty}>
             {resolvingRender ? t('common.processing') : `▶ ${t('common.run')}`}
           </button>
           <button className="btn btn-green" onClick={handleSave} disabled={saving || !isDirty}>
