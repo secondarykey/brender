@@ -41,6 +41,13 @@ export function CleanJobData() {
 }
 
 /**
+ * @returns {$CancellablePromise<void>}
+ */
+export function CloseMiniMonitor() {
+    return $Call.ByID(2818214222);
+}
+
+/**
  * @param {string} id
  * @returns {$CancellablePromise<void>}
  */
@@ -234,6 +241,13 @@ export function LockJob(id) {
  */
 export function OpenLogWindow(jobID) {
     return $Call.ByID(673859361, jobID);
+}
+
+/**
+ * @returns {$CancellablePromise<void>}
+ */
+export function OpenMiniMonitor() {
+    return $Call.ByID(3062403308);
 }
 
 /**
