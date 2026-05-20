@@ -151,9 +151,13 @@ func KillRunningQueues() {
 }
 
 // StartRecoveredQueues はリカバリされた waiting キューのスケジューリングを開始する。
+// MaxConcurrentJobs の上限まで複数件を起動する。
 // QueueChangedHook 設定後に呼ぶこと。
 func StartRecoveredQueues() {
-	startNextWaiting()
+	max := getMaxConcurrentJobs()
+	for i := int64(0); i < max; i++ {
+		startNextWaiting()
+	}
 	notifyQueueChanged()
 }
 
