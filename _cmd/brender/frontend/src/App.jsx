@@ -53,7 +53,7 @@ function App() {
     WorkDirApi.list()
       .then(list => {
         const hasActive = (list || []).some(w => w.status === 'active')
-        if (!hasActive) setNav({ page: 'settings', params: { tab: 'envSettings' } })
+        if (!hasActive) setNav({ page: 'settings', params: { tab: 'directory' } })
       })
       .catch(() => {})
   }, [])

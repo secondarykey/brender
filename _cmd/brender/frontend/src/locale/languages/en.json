@@ -106,6 +106,8 @@
     "blender": "Blender",
     "video": "Video",
     "code": "Code",
+    "directory": "Directory",
+    "workDirs": "Work Directories",
     "jobManagement": "Job Management",
     "jobResult": "Result",
     "renderResults": "Render Results",
