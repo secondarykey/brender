@@ -312,9 +312,6 @@ function EnvironmentSettings() {
         <p className="empty-msg">{t('settings.workDirs.empty')}</p>
       ) : (
         <>
-          <p className="setting-desc" style={{ marginBottom: 8 }}>
-            {t('common.dragToReorder')}
-          </p>
           <table className="blender-table">
             <thead>
               <tr>
@@ -354,7 +351,8 @@ function EnvironmentSettings() {
         </>
       )}
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
+        <span className="setting-desc">{dirs.length > 0 ? t('common.dragToReorder') : ''}</span>
         <button className="btn btn-green" onClick={handleAdd}>
           {t('settings.workDirs.add')}
         </button>

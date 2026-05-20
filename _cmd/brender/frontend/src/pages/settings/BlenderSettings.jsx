@@ -144,9 +144,6 @@ function BlenderSettings() {
         <p className="empty-msg">{t('settings.noBlenders')}</p>
       ) : (
         <>
-          <p className="setting-desc" style={{ marginBottom: 8 }}>
-            {t('settings.reorderHint')}
-          </p>
           <table className="blender-table">
             <thead>
               <tr>
@@ -188,13 +185,14 @@ function BlenderSettings() {
         </>
       )}
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
+        <span className="setting-desc">{blenders.length > 0 ? t('settings.reorderHint') : ''}</span>
         <button className="btn btn-green" onClick={handleAdd} disabled={loading}>
           {loading ? t('common.registering') : t('settings.addBlender')}
         </button>
       </div>
 
-      <div className="form" style={{ maxWidth: 360, marginTop: 24 }}>
+      <div className="form" style={{ maxWidth: 360, marginTop: 32 }}>
         <div className="form-field">
           <label className="form-label">{t('settings.maxConcurrentJobs')}</label>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
