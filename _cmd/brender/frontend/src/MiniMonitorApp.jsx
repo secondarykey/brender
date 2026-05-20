@@ -67,7 +67,7 @@ function MiniMonitorApp() {
   useEffect(() => onAppEvent('queue:changed', load), [load])
 
   const running = items.find(q => q.status === 'running')
-  const waitingCount = items.filter(q => q.status === 'waiting' || q.status === 'recovering').length
+  const totalCount = items.length
 
   let pct = 0
   if (running && running.now_frame > 0 && running.frame_active) {
@@ -104,7 +104,7 @@ function MiniMonitorApp() {
             <div className="progress-bar-fill" style={{ width: `${pct.toFixed(2)}%` }} />
           </div>
           <div className="mini-monitor-info">
-            <span>{t('miniMonitor.remaining', { count: waitingCount })}</span>
+            <span>{t('miniMonitor.remaining', { count: totalCount })}</span>
             {timeText && <span className="mini-monitor-time" onClick={() => setShowRemaining(v => !v)}>{timeText}</span>}
           </div>
         </>
