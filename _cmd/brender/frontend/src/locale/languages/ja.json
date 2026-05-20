@@ -107,6 +107,8 @@
     "blender": "Blender",
     "video": "動画",
     "code": "コード",
+    "directory": "ディレクトリ設定",
+    "workDirs": "作業ディレクトリ",
     "jobManagement": "ジョブ管理",
     "jobResult": "実行結果",
     "renderResults": "レンダリング結果",
