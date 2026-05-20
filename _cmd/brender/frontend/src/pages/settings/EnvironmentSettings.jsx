@@ -308,12 +308,6 @@ function EnvironmentSettings() {
     <div>
       <h2 className="section-title">{t('settings.workDirs.title')}</h2>
 
-      <div className="toolbar">
-        <button className="btn btn-green" onClick={handleAdd}>
-          {t('settings.workDirs.add')}
-        </button>
-      </div>
-
       {dirs.length === 0 ? (
         <p className="empty-msg">{t('settings.workDirs.empty')}</p>
       ) : (
@@ -359,6 +353,12 @@ function EnvironmentSettings() {
           </table>
         </>
       )}
+
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
+        <button className="btn btn-green" onClick={handleAdd}>
+          {t('settings.workDirs.add')}
+        </button>
+      </div>
 
       {editing && (
         <EditDialog
