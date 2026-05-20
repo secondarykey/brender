@@ -1,11 +1,9 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import BasicSettings from './BasicSettings'
-import EnvironmentSettings from './EnvironmentSettings'
 import BlenderSettings from './BlenderSettings'
 import VideoSettings from './VideoSettings'
 import CodeSettings from './CodeSettings'
-import JobManagement from './JobManagement'
 
 function SettingsPage({ initialTab, navigate }) {
   const { t } = useTranslation()
@@ -13,10 +11,9 @@ function SettingsPage({ initialTab, navigate }) {
 
   const tabs = [
     { id: 'basic',       label: t('tabs.basic') },
-    { id: 'envSettings', label: t('tabs.envSettings') },
+    { id: 'blender',     label: t('tabs.blender') },
     { id: 'video',       label: t('tabs.video') },
     { id: 'code',        label: t('tabs.code') },
-    { id: 'jobManagement', label: t('tabs.jobManagement') },
   ]
 
   return (
@@ -33,16 +30,10 @@ function SettingsPage({ initialTab, navigate }) {
         ))}
       </div>
       <div className="tab-content">
-        {tab === 'basic'       && <BasicSettings />}
-        {tab === 'envSettings' && (
-          <>
-            <EnvironmentSettings />
-            <div style={{ marginTop: 12 }}><BlenderSettings /></div>
-          </>
-        )}
-        {tab === 'video'       && <VideoSettings />}
-        {tab === 'code'        && <CodeSettings />}
-        {tab === 'jobManagement' && <JobManagement navigate={navigate} />}
+        {tab === 'basic'   && <BasicSettings />}
+        {tab === 'blender' && <BlenderSettings />}
+        {tab === 'video'   && <VideoSettings />}
+        {tab === 'code'    && <CodeSettings />}
       </div>
     </div>
   )

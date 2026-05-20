@@ -51,6 +51,7 @@ function MainLayout({ currentPage, onNavigate, children }) {
 
   const bottomNav = [
     { id: 'minimonitor', label: t('menu.miniMonitor'), icon: '⊡' },
+    { id: 'directory', label: t('menu.directory'), icon: '📁' },
     { id: 'settings', label: t('menu.settings'), icon: '⚙' },
   ]
 

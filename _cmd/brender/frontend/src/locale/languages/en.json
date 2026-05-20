@@ -49,6 +49,7 @@
     "project": "Project",
     "queue": "Queue",
     "miniMonitor": "Mini Monitor",
+    "directory": "Directory",
     "settings": "Settings"
   },
   "title": {
@@ -106,7 +107,8 @@
     "blender": "Blender",
     "video": "Video",
     "code": "Code",
-    "jobManagement": "Job Management",
+    "workDirs": "Work Directories",
+    "dataManagement": "Data Management",
     "jobResult": "Result",
     "renderResults": "Render Results",
     "dataView": "Data"

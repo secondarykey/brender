@@ -302,7 +302,7 @@ function JobManagement({ navigate }) {
               {pageJobs.map(j => (
                 <tr key={j.id} className="row-clickable" onClick={() => setSelected(j)}>
                   <td>
-                    <button className="link-btn" onClick={e => { e.stopPropagation(); navigate && navigate('job', { job: j, initialTab: 'render', backPage: 'settings', backParams: { tab: 'jobManagement' } }) }}>
+                    <button className="link-btn" onClick={e => { e.stopPropagation(); navigate && navigate('job', { job: j, initialTab: 'render', backPage: 'directory', backParams: { tab: 'dataManagement' } }) }}>
                       {j.name || '—'}
                     </button>
                   </td>

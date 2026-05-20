@@ -153,7 +153,7 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged, navigate })
           } />
           {navigate && (
             <Row label={t('dialog.jobName')} value={
-              <button className="link-btn" onClick={() => { onClose(); navigate('job', { job, initialTab: 'detail', backPage: 'settings', backParams: { tab: 'jobManagement' } }) }}>{job.name || '—'}</button>
+              <button className="link-btn" onClick={() => { onClose(); navigate('job', { job, initialTab: 'detail', backPage: 'directory', backParams: { tab: 'dataManagement' } }) }}>{job.name || '—'}</button>
             } />
           )}
         </div>
