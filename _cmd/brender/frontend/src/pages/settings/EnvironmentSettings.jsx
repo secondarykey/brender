@@ -306,8 +306,6 @@ function EnvironmentSettings() {
 
   return (
     <div>
-      <h2 className="section-title">{t('settings.workDirs.title')}</h2>
-
       {dirs.length === 0 ? (
         <p className="empty-msg">{t('settings.workDirs.empty')}</p>
       ) : (
