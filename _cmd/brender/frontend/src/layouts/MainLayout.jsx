@@ -40,7 +40,6 @@ function MainLayout({ currentPage, onNavigate, children }) {
   ]
 
   const bottomNav = [
-    { id: 'minimonitor', label: t('menu.miniMonitor'), icon: '⊡' },
     { id: 'settings', label: t('menu.settings'), icon: '⚙' },
   ]
 
@@ -74,7 +73,7 @@ function MainLayout({ currentPage, onNavigate, children }) {
               key={item.id}
               {...item}
               active={currentPage === item.id}
-              onClick={() => item.id === 'minimonitor' ? QueueApi.openMiniMonitor() : onNavigate(item.id)}
+              onClick={() => onNavigate(item.id)}
             />
           ))}
         </nav>

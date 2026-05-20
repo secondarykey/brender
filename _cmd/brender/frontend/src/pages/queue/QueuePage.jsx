@@ -317,6 +317,13 @@ function QueuePage({ navigate }) {
         >
           {t('tabs.history')}
         </button>
+        <button
+          className="btn btn-outline btn-sm"
+          style={{ marginLeft: 'auto' }}
+          onClick={() => QueueApi.openMiniMonitor()}
+        >
+          {t('menu.miniMonitor')}
+        </button>
       </div>
 
       <div className="tab-content">
