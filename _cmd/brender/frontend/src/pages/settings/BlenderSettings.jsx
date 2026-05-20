@@ -182,13 +182,6 @@ function BlenderSettings() {
         </div>
       </div>
 
-      <div className="toolbar">
-        <button className="btn btn-green" onClick={handleAdd} disabled={loading}>
-          {loading ? t('common.registering') : t('settings.addBlender')}
-        </button>
-      </div>
-
-
       {blenders.length === 0 ? (
         <p className="empty-msg">{t('settings.noBlenders')}</p>
       ) : (
@@ -236,6 +229,12 @@ function BlenderSettings() {
           </table>
         </>
       )}
+
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
+        <button className="btn btn-green" onClick={handleAdd} disabled={loading}>
+          {loading ? t('common.registering') : t('settings.addBlender')}
+        </button>
+      </div>
 
       <ConfirmDialog
         open={!!confirm}
