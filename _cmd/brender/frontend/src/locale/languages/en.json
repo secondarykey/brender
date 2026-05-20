@@ -404,9 +404,7 @@
     "ffmpegArgs": "Extra arguments",
     "ffmpegArgsHint": "Additional arguments to pass to ffmpeg (optional)",
     "maxConcurrentJobs": "Max Concurrent Jobs",
-    "maxConcurrentJobsHint": "Maximum number of jobs to run simultaneously",
-    "renderOutputFormat": "Render Output Format",
-    "renderOutputFormatHint": "Default format used when no workspace-specific format is set",
+    "defaultOutputFormat": "Default Output Format",
     "systemLog": "System Log",
     "openSystemLog": "Open System Log",
     "logLevel": "Log Level"
