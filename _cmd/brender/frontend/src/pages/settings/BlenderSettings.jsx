@@ -140,48 +140,6 @@ function BlenderSettings() {
 
   return (
     <div>
-      <h2 className="section-title">{t('tabs.blender')}</h2>
-
-      <div className="form" style={{ maxWidth: 360, marginBottom: 24 }}>
-        <div className="form-field">
-          <label className="form-label">{t('settings.maxConcurrentJobs')}</label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <input
-              className="form-input"
-              type="number"
-              min={1}
-              max={16}
-              value={maxJobs}
-              onChange={e => setMaxJobs(Math.max(1, Number(e.target.value)))}
-              style={{ width: 80, textAlign: 'right' }}
-            />
-            <button className="btn btn-green btn-sm" onClick={handleMaxJobsSave} disabled={savingMaxJobs}>
-              {savingMaxJobs ? t('common.saving') : t('common.save')}
-            </button>
-          </div>
-          <span className="form-hint">{t('settings.maxConcurrentJobsHint')}</span>
-        </div>
-        <div className="form-field">
-          <label className="form-label">{t('settings.renderOutputFormat')}</label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <select
-              className="form-select"
-              style={{ width: 160 }}
-              value={outputFormat}
-              onChange={e => setOutputFormat(e.target.value)}
-            >
-              {imageFormats.map(f => (
-                <option key={f.code} value={f.code}>{f.label}</option>
-              ))}
-            </select>
-            <button className="btn btn-green btn-sm" onClick={handleOutputFormatSave} disabled={savingOutputFormat}>
-              {savingOutputFormat ? t('common.saving') : t('common.save')}
-            </button>
-          </div>
-          <span className="form-hint">{t('settings.renderOutputFormatHint')}</span>
-        </div>
-      </div>
-
       {blenders.length === 0 ? (
         <p className="empty-msg">{t('settings.noBlenders')}</p>
       ) : (
@@ -234,6 +192,46 @@ function BlenderSettings() {
         <button className="btn btn-green" onClick={handleAdd} disabled={loading}>
           {loading ? t('common.registering') : t('settings.addBlender')}
         </button>
+      </div>
+
+      <div className="form" style={{ maxWidth: 360, marginTop: 24 }}>
+        <div className="form-field">
+          <label className="form-label">{t('settings.maxConcurrentJobs')}</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <input
+              className="form-input"
+              type="number"
+              min={1}
+              max={16}
+              value={maxJobs}
+              onChange={e => setMaxJobs(Math.max(1, Number(e.target.value)))}
+              style={{ width: 80, textAlign: 'right' }}
+            />
+            <button className="btn btn-green btn-sm" onClick={handleMaxJobsSave} disabled={savingMaxJobs}>
+              {savingMaxJobs ? t('common.saving') : t('common.save')}
+            </button>
+          </div>
+          <span className="form-hint">{t('settings.maxConcurrentJobsHint')}</span>
+        </div>
+        <div className="form-field">
+          <label className="form-label">{t('settings.renderOutputFormat')}</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <select
+              className="form-select"
+              style={{ width: 160 }}
+              value={outputFormat}
+              onChange={e => setOutputFormat(e.target.value)}
+            >
+              {imageFormats.map(f => (
+                <option key={f.code} value={f.code}>{f.label}</option>
+              ))}
+            </select>
+            <button className="btn btn-green btn-sm" onClick={handleOutputFormatSave} disabled={savingOutputFormat}>
+              {savingOutputFormat ? t('common.saving') : t('common.save')}
+            </button>
+          </div>
+          <span className="form-hint">{t('settings.renderOutputFormatHint')}</span>
+        </div>
       </div>
 
       <ConfirmDialog
