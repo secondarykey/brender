@@ -1153,6 +1153,7 @@ body {
 textarea.form-input {
   height: auto;
   padding: 8px 10px;
+  font-family: inherit;
 }
 
 .form-select option { background: #1a1a1a; }
