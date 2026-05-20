@@ -399,9 +399,7 @@
     "ffmpegArgs": "追加引数",
     "ffmpegArgsHint": "ffmpeg に渡す追加の引数（省略可）",
     "maxConcurrentJobs": "最大同時実行数",
-    "maxConcurrentJobsHint": "同時に実行するジョブの最大数",
-    "renderOutputFormat": "レンダリング出力フォーマット",
-    "renderOutputFormatHint": "ワークスペース個別設定がない場合に使用されるデフォルトフォーマット",
+    "defaultOutputFormat": "デフォルト出力フォーマット",
     "systemLog": "システムログ",
     "openSystemLog": "システムログを開く",
     "logLevel": "ログレベル"

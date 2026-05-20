@@ -20,7 +20,6 @@ function BlenderSettings() {
   const [maxJobs, setMaxJobs] = useState(1)
   const [savingMaxJobs, setSavingMaxJobs] = useState(false)
   const [outputFormat, setOutputFormat] = useState('')
-  const [savingOutputFormat, setSavingOutputFormat] = useState(false)
   const [imageFormats, setImageFormats] = useState([])
 
   const load = () => {
@@ -40,27 +39,16 @@ function BlenderSettings() {
     CodesApi.getImageFormats().then(list => setImageFormats(list || [])).catch(() => {})
   }, [])
 
-  const handleMaxJobsSave = async () => {
+  const handleSettingsSave = async () => {
     setSavingMaxJobs(true)
     try {
       await EnvironmentApi.setMaxConcurrentJobs({ n: maxJobs })
-      showToast(t('common.saved'))
-    } catch (err) {
-      showError(String(err))
-    } finally {
-      setSavingMaxJobs(false)
-    }
-  }
-
-  const handleOutputFormatSave = async () => {
-    setSavingOutputFormat(true)
-    try {
       await EnvironmentApi.setOutputFormat({ format: outputFormat })
       showToast(t('common.saved'))
     } catch (err) {
       showError(String(err))
     } finally {
-      setSavingOutputFormat(false)
+      setSavingMaxJobs(false)
     }
   }
 
@@ -192,10 +180,10 @@ function BlenderSettings() {
         </button>
       </div>
 
-      <div className="form" style={{ maxWidth: 360, marginTop: 32 }}>
-        <div className="form-field">
-          <label className="form-label">{t('settings.maxConcurrentJobs')}</label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div className="form" style={{ maxWidth: 480, marginTop: 32 }}>
+        <div className="form-row">
+          <div className="form-field" style={{ flex: 1 }}>
+            <label className="form-label">{t('settings.maxConcurrentJobs')}</label>
             <input
               className="form-input"
               type="number"
@@ -205,15 +193,9 @@ function BlenderSettings() {
               onChange={e => setMaxJobs(Math.max(1, Number(e.target.value)))}
               style={{ width: 80, textAlign: 'right' }}
             />
-            <button className="btn btn-green btn-sm" onClick={handleMaxJobsSave} disabled={savingMaxJobs}>
-              {savingMaxJobs ? t('common.saving') : t('common.save')}
-            </button>
           </div>
-          <span className="form-hint">{t('settings.maxConcurrentJobsHint')}</span>
-        </div>
-        <div className="form-field">
-          <label className="form-label">{t('settings.renderOutputFormat')}</label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div className="form-field" style={{ flex: 1 }}>
+            <label className="form-label">{t('settings.defaultOutputFormat')}</label>
             <select
               className="form-select"
               style={{ width: 160 }}
@@ -224,11 +206,12 @@ function BlenderSettings() {
                 <option key={f.code} value={f.code}>{f.label}</option>
               ))}
             </select>
-            <button className="btn btn-green btn-sm" onClick={handleOutputFormatSave} disabled={savingOutputFormat}>
-              {savingOutputFormat ? t('common.saving') : t('common.save')}
-            </button>
           </div>
-          <span className="form-hint">{t('settings.renderOutputFormatHint')}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
+          <button className="btn btn-green btn-sm" onClick={handleSettingsSave} disabled={savingMaxJobs}>
+            {savingMaxJobs ? t('common.saving') : t('common.save')}
+          </button>
         </div>
       </div>
 
