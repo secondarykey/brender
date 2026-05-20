@@ -8,7 +8,6 @@ import WorkspaceDetailPage from './pages/projects/WorkspaceDetailPage'
 import JobPage from './pages/projects/JobPage'
 import QueuePage from './pages/queue/QueuePage'
 import SettingsPage from './pages/settings/SettingsPage'
-import DirectoryPage from './pages/directory/DirectoryPage'
 import { EnvironmentApi, WorkDirApi } from './lib/api'
 
 export function VideoPlayer({ path }) {
@@ -54,7 +53,7 @@ function App() {
     WorkDirApi.list()
       .then(list => {
         const hasActive = (list || []).some(w => w.status === 'active')
-        if (!hasActive) setNav({ page: 'directory', params: {} })
+        if (!hasActive) setNav({ page: 'settings', params: { tab: 'envSettings' } })
       })
       .catch(() => {})
   }, [])
@@ -115,8 +114,6 @@ function App() {
         )
       case 'queue':
         return <QueuePage key={queueKey} navigate={navigate} />
-      case 'directory':
-        return <DirectoryPage initialTab={p.tab} navigate={navigate} />
       case 'settings':
         return <SettingsPage initialTab={p.tab} navigate={navigate} />
       default:

@@ -118,13 +118,13 @@ function ProjectListPage({ navigate }) {
       {!hasWorkDir && (
         <div className="notice-banner">
           {t('project.rootNotSet')}
-          <button className="btn-link" onClick={() => navigate('directory')}>{t('project.configureInSettings')}</button>
+          <button className="btn-link" onClick={() => navigate('settings', { tab: 'envSettings' })}>{t('project.configureInSettings')}</button>
         </div>
       )}
       {hasWorkDir && !hasBlender && (
         <div className="notice-banner">
           {t('settings.noBlenderRegistered')}
-          <button className="btn-link" onClick={() => navigate('settings', { tab: 'blender' })}>{t('project.configureInSettings')}</button>
+          <button className="btn-link" onClick={() => navigate('settings', { tab: 'envSettings' })}>{t('project.configureInSettings')}</button>
         </div>
       )}
 

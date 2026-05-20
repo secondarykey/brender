@@ -49,7 +49,6 @@
     "project": "プロジェクト",
     "queue": "キュー",
     "miniMonitor": "ミニモニター",
-    "directory": "ディレクトリ管理",
     "settings": "設定"
   },
   "title": {
@@ -107,8 +106,7 @@
     "blender": "Blender",
     "video": "動画",
     "code": "コード",
-    "workDirs": "作業ディレクトリ",
-    "dataManagement": "データ管理",
+    "jobManagement": "ジョブ管理",
     "jobResult": "実行結果",
     "renderResults": "レンダリング結果",
     "dataView": "データ表示"
