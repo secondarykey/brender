@@ -866,7 +866,10 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
         )}
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+        <button className="btn btn-outline btn-sm" onClick={() => setSamplesDialogOpen(true)} disabled={workDirLocked || isFormDirty}>
+          {t('workspace.samplesComparison')}
+        </button>
         <button className="btn btn-outline btn-sm" onClick={() => setCopyConfirm(true)} disabled={copying}>
           {t('workspace.copy')}
         </button>
@@ -878,9 +881,6 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
           <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn btn-run" onClick={handleTestEncode} disabled={testEnqueueing || workDirLocked}>
             {testEnqueueing ? t('common.enqueueing') : t('workspace.testRender')}
-          </button>
-          <button className="btn btn-outline btn-sm" onClick={() => setSamplesDialogOpen(true)} disabled={workDirLocked || isFormDirty}>
-            {t('workspace.samplesComparison')}
           </button>
           <button className="btn btn-run" onClick={handleRenderClick} disabled={resolvingRender || workDirLocked || isFormDirty}>
             {resolvingRender ? t('common.processing') : `▶ ${t('common.run')}`}
