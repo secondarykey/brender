@@ -34,10 +34,11 @@ export function Cancel(id) {
 }
 
 /**
+ * @param {model$0.CleanFilter | null} filter
  * @returns {$CancellablePromise<number>}
  */
-export function CleanJobData() {
-    return $Call.ByID(1048288085);
+export function CleanJobData(filter) {
+    return $Call.ByID(1048288085, filter);
 }
 
 /**
@@ -106,10 +107,11 @@ export function Get(id) {
 }
 
 /**
+ * @param {model$0.CleanFilter | null} filter
  * @returns {$CancellablePromise<model$0.CleanableJobStats | null>}
  */
-export function GetCleanableJobStats() {
-    return $Call.ByID(3948659350).then(/** @type {($result: any) => any} */(($result) => {
+export function GetCleanableJobStats(filter) {
+    return $Call.ByID(3948659350, filter).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType3($result);
     }));
 }
@@ -236,6 +238,14 @@ export function LockJob(id) {
 }
 
 /**
+ * @param {model$0.CleanFilter | null} filter
+ * @returns {$CancellablePromise<number>}
+ */
+export function MeasureFilteredDiskSize(filter) {
+    return $Call.ByID(298852784, filter);
+}
+
+/**
  * @param {string} jobID
  * @returns {$CancellablePromise<void>}
  */
@@ -266,6 +276,19 @@ export function OpenMovieWindow(videoPath) {
 export function PreviewRender(projectID, workspaceID) {
     return $Call.ByID(2094811495, projectID, workspaceID).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType16($result);
+    }));
+}
+
+/**
+ * @param {string} projectID
+ * @param {string} workspaceID
+ * @param {number[]} sampleCounts
+ * @param {number} frame
+ * @returns {$CancellablePromise<model$0.Queue | null>}
+ */
+export function SamplesComparisonEnqueue(projectID, workspaceID, sampleCounts, frame) {
+    return $Call.ByID(873339169, projectID, workspaceID, sampleCounts, frame).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType1($result);
     }));
 }
 

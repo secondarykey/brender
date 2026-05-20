@@ -5,6 +5,7 @@
 export {
     AddDirResult,
     JobFileInfo,
+    PreviousRenderInfo,
     QueueItem,
     RenderPreview,
     TestRenderParams,

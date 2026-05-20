@@ -4,6 +4,7 @@
 
 export {
     BlenderInstall,
+    CleanFilter,
     CleanableJobStats,
     Environment,
     Job,

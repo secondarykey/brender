@@ -91,6 +91,48 @@ export class BlenderInstall {
 }
 
 /**
+ * CleanFilter はクリーンアップ対象のフィルタ条件。
+ */
+export class CleanFilter {
+    /**
+     * Creates a new CleanFilter instance.
+     * @param {Partial<CleanFilter>} [$$source = {}] - The source object to create the CleanFilter.
+     */
+    constructor($$source = {}) {
+        if (!("data_statuses" in $$source)) {
+            /**
+             * @member
+             * @type {number[]}
+             */
+            this["data_statuses"] = [];
+        }
+        if (!("days" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["days"] = 0;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new CleanFilter instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {CleanFilter}
+     */
+    static createFrom($$source = {}) {
+        const $$createField0_0 = $$createType0;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("data_statuses" in $$parsedSource) {
+            $$parsedSource["data_statuses"] = $$createField0_0($$parsedSource["data_statuses"]);
+        }
+        return new CleanFilter(/** @type {Partial<CleanFilter>} */($$parsedSource));
+    }
+}
+
+/**
  * CleanableJobStats はクリーンアップ対象のジョブ統計を返す。
  */
 export class CleanableJobStats {
@@ -421,6 +463,22 @@ export class Job {
              */
             this["data_status"] = 0;
         }
+        if (!("job_type" in $$source)) {
+            /**
+             * "" = 通常, "samples_comparison"
+             * @member
+             * @type {string}
+             */
+            this["job_type"] = "";
+        }
+        if (!("samples_list" in $$source)) {
+            /**
+             * カンマ区切りサンプル数
+             * @member
+             * @type {string}
+             */
+            this["samples_list"] = "";
+        }
         if (!("disk_size" in $$source)) {
             /**
              * 出力フォルダの容量（バイト）
@@ -580,8 +638,8 @@ export class ProjectDetail {
      * @returns {ProjectDetail}
      */
     static createFrom($$source = {}) {
-        const $$createField0_0 = $$createType1;
-        const $$createField1_0 = $$createType4;
+        const $$createField0_0 = $$createType2;
+        const $$createField1_0 = $$createType5;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("project" in $$parsedSource) {
             $$parsedSource["project"] = $$createField0_0($$parsedSource["project"]);
@@ -1150,8 +1208,8 @@ export class WorkspaceDetail {
      * @returns {WorkspaceDetail}
      */
     static createFrom($$source = {}) {
-        const $$createField0_0 = $$createType6;
-        const $$createField1_0 = $$createType4;
+        const $$createField0_0 = $$createType7;
+        const $$createField1_0 = $$createType5;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("workspace" in $$parsedSource) {
             $$parsedSource["workspace"] = $$createField0_0($$parsedSource["workspace"]);
@@ -1196,8 +1254,8 @@ export class WorkspacesByFile {
      * @returns {WorkspacesByFile}
      */
     static createFrom($$source = {}) {
-        const $$createField0_0 = $$createType3;
-        const $$createField1_0 = $$createType7;
+        const $$createField0_0 = $$createType4;
+        const $$createField1_0 = $$createType8;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("file" in $$parsedSource) {
             $$parsedSource["file"] = $$createField0_0($$parsedSource["file"]);
@@ -1210,11 +1268,12 @@ export class WorkspacesByFile {
 }
 
 // Private type creation functions
-const $$createType0 = Project.createFrom;
-const $$createType1 = $Create.Nullable($$createType0);
-const $$createType2 = ProjectFile.createFrom;
-const $$createType3 = $Create.Nullable($$createType2);
-const $$createType4 = $Create.Array($$createType3);
-const $$createType5 = Workspace.createFrom;
-const $$createType6 = $Create.Nullable($$createType5);
-const $$createType7 = $Create.Array($$createType6);
+const $$createType0 = $Create.Array($Create.Any);
+const $$createType1 = Project.createFrom;
+const $$createType2 = $Create.Nullable($$createType1);
+const $$createType3 = ProjectFile.createFrom;
+const $$createType4 = $Create.Nullable($$createType3);
+const $$createType5 = $Create.Array($$createType4);
+const $$createType6 = Workspace.createFrom;
+const $$createType7 = $Create.Nullable($$createType6);
+const $$createType8 = $Create.Array($$createType7);

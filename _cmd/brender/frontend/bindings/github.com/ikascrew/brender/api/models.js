@@ -115,6 +115,97 @@ export class JobFileInfo {
     }
 }
 
+export class PreviousRenderInfo {
+    /**
+     * Creates a new PreviousRenderInfo instance.
+     * @param {Partial<PreviousRenderInfo>} [$$source = {}] - The source object to create the PreviousRenderInfo.
+     */
+    constructor($$source = {}) {
+        if (!("scene" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["scene"] = "";
+        }
+        if (!("engine" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["engine"] = "";
+        }
+        if (!("start_frame" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["start_frame"] = 0;
+        }
+        if (!("end_frame" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["end_frame"] = 0;
+        }
+        if (!("frame_step" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["frame_step"] = 0;
+        }
+        if (!("samples" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["samples"] = 0;
+        }
+        if (!("resolution_x" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["resolution_x"] = 0;
+        }
+        if (!("resolution_y" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["resolution_y"] = 0;
+        }
+        if (!("camera" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["camera"] = "";
+        }
+        if (!("output_format" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["output_format"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new PreviousRenderInfo instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {PreviousRenderInfo}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new PreviousRenderInfo(/** @type {Partial<PreviousRenderInfo>} */($$parsedSource));
+    }
+}
+
 /**
  * QueueItem combines Queue (active state) with Job (parameters/names) for display.
  */
@@ -200,6 +291,13 @@ export class QueueItem {
              * @type {time$0.Time | null}
              */
             this["created_at"] = null;
+        }
+        if (!("job_type" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["job_type"] = "";
         }
         if (!("now_frame" in $$source)) {
             /**
@@ -409,6 +507,20 @@ export class RenderPreview {
              */
             this["output_format"] = "";
         }
+        if (!("job_type" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["job_type"] = "";
+        }
+        if (!("previous" in $$source)) {
+            /**
+             * @member
+             * @type {PreviousRenderInfo | null}
+             */
+            this["previous"] = null;
+        }
 
         Object.assign(this, $$source);
     }
@@ -419,7 +531,11 @@ export class RenderPreview {
      * @returns {RenderPreview}
      */
     static createFrom($$source = {}) {
+        const $$createField17_0 = $$createType2;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("previous" in $$parsedSource) {
+            $$parsedSource["previous"] = $$createField17_0($$parsedSource["previous"]);
+        }
         return new RenderPreview(/** @type {Partial<RenderPreview>} */($$parsedSource));
     }
 }
@@ -562,3 +678,5 @@ export class WorkspaceBatchSpec {
 
 // Private type creation functions
 const $$createType0 = $Create.Array($Create.Any);
+const $$createType1 = PreviousRenderInfo.createFrom;
+const $$createType2 = $Create.Nullable($$createType1);
