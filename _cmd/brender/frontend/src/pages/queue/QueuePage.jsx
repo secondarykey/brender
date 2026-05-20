@@ -69,7 +69,7 @@ function ProgressCell({ q }) {
 
   const aveText = isRunning && q.average_sec > 0 ? ` ${q.average_sec.toFixed(1)}${t('queue.secondsPerFrame')}` : ''
   const frameText = isWaiting ? `${q.start_frame}–${q.end_frame}f`
-                  : hasFrame  ? `${q.now_frame}(${q.start_frame}–${q.end_frame}f${aveText})`
+                  : hasFrame  ? `${q.now_frame}f (${q.start_frame}–${q.end_frame}${aveText})`
                   : isRunning ? `${t('queue.preparing')}${q.start_frame}–${q.end_frame}f)`
                   :             `${q.start_frame}–${q.end_frame}f`
 
