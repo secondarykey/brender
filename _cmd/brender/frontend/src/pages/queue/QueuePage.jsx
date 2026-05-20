@@ -67,11 +67,11 @@ function ProgressCell({ q }) {
     : 0
   const pctText = pct.toFixed(2)
 
+  const aveText = isRunning && q.average_sec > 0 ? ` ${q.average_sec.toFixed(1)}${t('queue.secondsPerFrame')}` : ''
   const frameText = isWaiting ? `${q.start_frame}–${q.end_frame}f`
-                  : hasFrame  ? `${q.now_frame} / ${q.end_frame}f (${pctText}%)`
+                  : hasFrame  ? `${q.now_frame}(${q.start_frame}–${q.end_frame}f${aveText})`
                   : isRunning ? `${t('queue.preparing')}${q.start_frame}–${q.end_frame}f)`
                   :             `${q.start_frame}–${q.end_frame}f`
-  const aveSec = isRunning && q.average_sec > 0 ? `${q.average_sec.toFixed(1)}${t('queue.secondsPerFrame')}` : ''
 
   const logText = q.log2 || ''
   return (
@@ -81,7 +81,6 @@ function ProgressCell({ q }) {
       </div>
       <div className="progress-meta">
         <span className="progress-frame">{frameText}</span>
-        <span className="progress-ave">{aveSec}</span>
       </div>
       <div className="progress-log" title={logText}>{logText}</div>
     </td>
