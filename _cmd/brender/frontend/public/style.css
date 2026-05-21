@@ -368,6 +368,33 @@ body {
   border-bottom-color: #4a7cdc;
 }
 
+/* ── Sub-tabs (pill style) ── */
+.sub-tab-nav {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.sub-tab-btn {
+  height: 28px;
+  padding: 0 14px;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 14px;
+  background: transparent;
+  color: rgba(255,255,255,0.45);
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.sub-tab-btn:hover { color: rgba(255,255,255,0.8); border-color: rgba(255,255,255,0.3); }
+
+.sub-tab-btn.active {
+  color: #fff;
+  background: rgba(74,124,220,0.2);
+  border-color: #4a7cdc;
+}
+
 /* ── Buttons ── */
 .btn {
   display: inline-flex;

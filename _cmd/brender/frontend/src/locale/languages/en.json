@@ -109,6 +109,7 @@
     "code": "Code",
     "directory": "Directory",
     "workDirs": "Work Directories",
+    "dataManagement": "Data Management",
     "jobManagement": "Job Management",
     "jobResult": "Result",
     "renderResults": "Render Results",

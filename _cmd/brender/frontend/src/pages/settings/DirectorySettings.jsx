@@ -9,16 +9,16 @@ function DirectorySettings({ initialSubTab, navigate }) {
 
   const subTabs = [
     { id: 'workDirs',       label: t('tabs.workDirs') },
-    { id: 'dataManagement', label: t('tabs.jobManagement') },
+    { id: 'dataManagement', label: t('tabs.dataManagement') },
   ]
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+      <div className="sub-tab-nav">
         {subTabs.map(st => (
           <button
             key={st.id}
-            className={`btn btn-sm ${subTab === st.id ? 'btn-outline-active' : 'btn-outline'}`}
+            className={`sub-tab-btn${subTab === st.id ? ' active' : ''}`}
             onClick={() => setSubTab(st.id)}
           >
             {st.label}
