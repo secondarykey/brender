@@ -1,0 +1,317 @@
+Third-Party Licenses
+====================
+
+Brender includes the following third-party dependencies.
+Each is used under its respective license terms.
+
+
+================================================================================
+MIT License
+================================================================================
+
+The following packages are licensed under the MIT License:
+
+  gorm.io/gorm
+    Copyright (c) 2013-present Jinzhu
+
+  github.com/wailsapp/wails/v3
+  github.com/wailsapp/wails/webview2
+    Copyright (c) 2018-Present Lea Anthony
+
+  github.com/anthonynsimon/bild
+    Copyright (c) 2016-2024 Anthony Simon
+
+  github.com/dustin/go-humanize
+    Copyright (c) 2005-2008 Dustin Sallings
+
+  github.com/glebarez/sqlite
+    Copyright (c) glebarez
+
+  github.com/mattn/go-isatty
+    Copyright (c) Yasuhiro MATSUMOTO
+
+  github.com/mattn/go-colorable
+    Copyright (c) 2016 Yasuhiro Matsumoto
+
+  github.com/jinzhu/inflection
+  github.com/jinzhu/now
+    Copyright (c) 2015 Jinzhu
+
+  github.com/go-ole/go-ole
+    Copyright (c) 2013-2017 Yasuhiro Matsumoto
+
+  github.com/Microsoft/go-winio
+    Copyright (c) 2015 Microsoft
+
+  github.com/bep/debounce
+    Copyright (c) 2016 Bjorn Erik Pedersen
+
+  github.com/leaanthony/go-ansi-parser
+    Copyright (c) 2021-Present Lea Anthony
+
+  github.com/leaanthony/u
+    Copyright (c) 2023-Present Lea Anthony
+
+  github.com/lmittmann/tint
+    Copyright (c) 2023 lmittmann
+
+  github.com/ncruces/go-strftime
+    Copyright (c) 2022 Nuno Cruces
+
+  github.com/rivo/uniseg
+    Copyright (c) 2019 Oliver Kuederle
+
+  github.com/samber/lo
+    Copyright (c) 2022-2025 Samuel Berthe
+
+  github.com/sergi/go-diff
+    Copyright (c) 2012-2016 The go-diff Authors
+
+  github.com/klauspost/cpuid/v2
+    Copyright (c) 2015 Klaus Post
+
+  github.com/adrg/xdg
+    Copyright (c) 2014 Adrian-George Bostan
+
+  github.com/kevinburke/ssh_config
+    Copyright (c) 2017 Kevin Burke
+
+  react, react-dom
+    Copyright (c) Meta Platforms, Inc. and affiliates
+
+  i18next, react-i18next
+    Copyright (c) 2022 i18next
+
+  @wailsio/runtime
+    Copyright (c) 2018-Present Lea Anthony
+
+  vite, @vitejs/plugin-react
+    Copyright (c) 2019-present Evan You & Vite Contributors
+
+MIT License Text:
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in
+  all copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
+
+
+================================================================================
+BSD 3-Clause License
+================================================================================
+
+The following packages are licensed under the BSD 3-Clause License:
+
+  golang.org/x/image, golang.org/x/term, golang.org/x/sys,
+  golang.org/x/crypto, golang.org/x/net, golang.org/x/text,
+  golang.org/x/tools, golang.org/x/exp
+    Copyright (c) 2009 The Go Authors. All rights reserved.
+
+  golang.org/x/xerrors
+    Copyright 2019 The Go Authors. All rights reserved.
+
+  github.com/google/uuid
+    Copyright (c) 2009, 2014 Google Inc. All rights reserved.
+
+  github.com/BurntSushi/graphics-go
+    Copyright (c) 2011 The Graphics-Go Authors. All rights reserved.
+
+  github.com/remyoudompheng/bigfft
+    Copyright (c) 2012 The Go Authors. All rights reserved.
+
+  modernc.org/sqlite
+    Copyright (c) 2017 The Sqlite Authors. All rights reserved.
+
+  modernc.org/libc
+    Copyright (c) 2017 The Libc Authors. All rights reserved.
+
+  modernc.org/mathutil
+  modernc.org/memory
+    Copyright (c) The modernc.org Authors. All rights reserved.
+
+  github.com/glebarez/go-sqlite
+    Copyright (c) 2017 The Sqlite Authors. All rights reserved.
+
+  github.com/ProtonMail/go-crypto
+    Copyright (c) 2009 The Go Authors. All rights reserved.
+
+  github.com/cloudflare/circl
+    Copyright (c) 2019 Cloudflare. All rights reserved.
+    Copyright (c) 2009 The Go Authors. All rights reserved.
+
+  dario.cat/mergo
+    Copyright (c) 2013 Dario Castane. All rights reserved.
+
+  github.com/go-git/gcfg
+    Copyright (c) 2012 Peter Suranyi.
+    Portions Copyright (c) 2009 The Go Authors.
+
+BSD 3-Clause License Text:
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+  1. Redistributions of source code must retain the above copyright notice,
+     this list of conditions and the following disclaimer.
+
+  2. Redistributions in binary form must reproduce the above copyright notice,
+     this list of conditions and the following disclaimer in the documentation
+     and/or other materials provided with the distribution.
+
+  3. Neither the name of the copyright holder nor the names of its
+     contributors may be used to endorse or promote products derived from
+     this software without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  POSSIBILITY OF SUCH DAMAGE.
+
+
+================================================================================
+BSD 2-Clause License
+================================================================================
+
+The following packages are licensed under the BSD 2-Clause License:
+
+  github.com/godbus/dbus/v5
+    Copyright (c) 2013, Georg Reinke, Google
+
+  github.com/emirpasic/gods
+    Copyright (c) 2015 Emir Pasic
+
+  github.com/pkg/browser
+    Copyright (c) 2014 Dave Cheney
+
+  gopkg.in/warnings.v0
+    Copyright (c) 2016 Peter Suranyi
+
+BSD 2-Clause License Text:
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+  1. Redistributions of source code must retain the above copyright notice,
+     this list of conditions and the following disclaimer.
+
+  2. Redistributions in binary form must reproduce the above copyright notice,
+     this list of conditions and the following disclaimer in the documentation
+     and/or other materials provided with the distribution.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  POSSIBILITY OF SUCH DAMAGE.
+
+
+================================================================================
+Apache License, Version 2.0
+================================================================================
+
+The following packages are licensed under the Apache License, Version 2.0:
+
+  github.com/ebitengine/purego
+    Copyright ebitengine contributors
+
+  github.com/go-git/go-git/v5
+    Copyright 2018 Sourced Technologies, S.L.
+
+  github.com/go-git/go-billy/v5
+    Copyright 2017 Sourced Technologies S.L.
+
+  github.com/golang/groupcache
+    Copyright The Go Authors
+
+  github.com/pjbgf/sha1cd
+    Copyright 2023 pjbgf
+
+  github.com/skeema/knownhosts
+    Copyright Skeema
+
+  github.com/xanzy/ssh-agent
+    Copyright xanzy
+
+Apache License, Version 2.0 Text:
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+
+
+================================================================================
+ISC License
+================================================================================
+
+The following packages are licensed under the ISC License:
+
+  github.com/coder/websocket
+    Copyright coder
+
+  github.com/jchv/go-winloader
+    Copyright jchv
+
+ISC License Text:
+
+  Permission to use, copy, modify, and/or distribute this software for any
+  purpose with or without fee is hereby granted, provided that the above
+  copyright notice and this permission notice appear in all copies.
+
+  THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+  REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+  AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+  LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+  OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+  PERFORMANCE OF THIS SOFTWARE.
+
+
+================================================================================
+BSD 3-Clause AND MPL-2.0 (Dual License)
+================================================================================
+
+The following package is dual-licensed under BSD 3-Clause and MPL-2.0:
+
+  github.com/cyphar/filepath-securejoin
+    Copyright (c) 2014-2015 Docker Inc & Go Authors.
+    Copyright (c) 2017-2024 SUSE LLC.
+
+  Some files are licensed under the BSD 3-Clause License (derived from Go)
+  and other files are licensed under the Mozilla Public License 2.0.
+  See SPDX-License-Identifier headers in individual source files.
+
+  MPL-2.0: https://www.mozilla.org/en-US/MPL/2.0/
