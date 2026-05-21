@@ -150,6 +150,7 @@ func OpenBlenderFile(installID uint, filePath string) error {
 		}
 	}
 	cmd := osexec.Command(blenderPath, filePath)
+	exec.HideConsole(cmd)
 	return cmd.Start()
 }
 

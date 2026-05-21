@@ -110,6 +110,132 @@ func ListJobs() ([]*Job, error) {
 	return list, nil
 }
 
+type JobFilter struct {
+	DataStatuses []int  `json:"data_statuses"`
+	Days         int    `json:"days"`
+	SortBy       string `json:"sort_by"`
+}
+
+type JobListResult struct {
+	Jobs      []*Job `json:"jobs"`
+	Total     int64  `json:"total"`
+	TotalSize int64  `json:"total_size"`
+}
+
+func applyJobFilter(filter *JobFilter) func(*gorm.DB) *gorm.DB {
+	return func(tx *gorm.DB) *gorm.DB {
+		if filter != nil && len(filter.DataStatuses) > 0 {
+			tx = tx.Where("jobs.data_status IN ?", filter.DataStatuses)
+		}
+		if filter != nil && filter.Days > 0 {
+			cutoff := time.Now().AddDate(0, 0, -filter.Days)
+			tx = tx.Where("jobs.completed_at <= ?", cutoff)
+		}
+		return tx
+	}
+}
+
+func jobSortOrder(filter *JobFilter) string {
+	if filter != nil && filter.SortBy == "size" {
+		return "jobs.disk_size desc"
+	}
+	return "jobs.enqueued_at desc"
+}
+
+func ListJobsPaged(filter *JobFilter, page, pageSize int) (*JobListResult, error) {
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = 20
+	}
+
+	var stats struct {
+		Count     int64 `gorm:"column:count"`
+		TotalSize int64 `gorm:"column:total_size"`
+	}
+	base := db.Model(&Job{}).Scopes(applyJobFilter(filter))
+	if res := base.Select("COUNT(*) as count, COALESCE(SUM(disk_size), 0) as total_size").Scan(&stats); res.Error != nil {
+		return nil, xerrors.Errorf("ListJobsPaged count: %w", res.Error)
+	}
+
+	var list []*Job
+	res := db.Select("jobs.*, project_files.name AS file_name").
+		Joins("LEFT JOIN project_files ON project_files.id = jobs.project_file_id").
+		Scopes(applyJobFilter(filter)).
+		Order(jobSortOrder(filter)).
+		Offset((page - 1) * pageSize).Limit(pageSize).
+		Find(&list)
+	if res.Error != nil {
+		return nil, xerrors.Errorf("ListJobsPaged: %w", res.Error)
+	}
+
+	return &JobListResult{
+		Jobs:      list,
+		Total:     stats.Count,
+		TotalSize: stats.TotalSize,
+	}, nil
+}
+
+type JobPagedResult struct {
+	Jobs  []*Job `json:"jobs"`
+	Total int64  `json:"total"`
+}
+
+func ListJobsByWorkspacePaged(projectID, workspaceID string, page, pageSize int) (*JobPagedResult, error) {
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = 20
+	}
+
+	var count int64
+	if res := db.Model(&Job{}).Where("project_id = ? AND workspace_id = ?", projectID, workspaceID).Count(&count); res.Error != nil {
+		return nil, xerrors.Errorf("ListJobsByWorkspacePaged count: %w", res.Error)
+	}
+
+	var list []*Job
+	res := db.Select("jobs.*, project_files.name AS file_name").
+		Joins("LEFT JOIN project_files ON project_files.id = jobs.project_file_id").
+		Where("jobs.project_id = ? AND jobs.workspace_id = ?", projectID, workspaceID).
+		Order("jobs.enqueued_at desc").
+		Offset((page - 1) * pageSize).Limit(pageSize).
+		Find(&list)
+	if res.Error != nil {
+		return nil, xerrors.Errorf("ListJobsByWorkspacePaged: %w", res.Error)
+	}
+
+	return &JobPagedResult{Jobs: list, Total: count}, nil
+}
+
+func ListJobsByProjectFilePaged(projectID, projectFileID string, page, pageSize int) (*JobPagedResult, error) {
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = 20
+	}
+
+	var count int64
+	if res := db.Model(&Job{}).Where("project_id = ? AND project_file_id = ?", projectID, projectFileID).Count(&count); res.Error != nil {
+		return nil, xerrors.Errorf("ListJobsByProjectFilePaged count: %w", res.Error)
+	}
+
+	var list []*Job
+	res := db.Select("jobs.*, project_files.name AS file_name").
+		Joins("LEFT JOIN project_files ON project_files.id = jobs.project_file_id").
+		Where("jobs.project_id = ? AND jobs.project_file_id = ?", projectID, projectFileID).
+		Order("jobs.enqueued_at desc").
+		Offset((page - 1) * pageSize).Limit(pageSize).
+		Find(&list)
+	if res.Error != nil {
+		return nil, xerrors.Errorf("ListJobsByProjectFilePaged: %w", res.Error)
+	}
+
+	return &JobPagedResult{Jobs: list, Total: count}, nil
+}
+
 func GetLatestCompletedJobByWorkspace(workspaceID string) (*Job, error) {
 	var j Job
 	res := db.Where("workspace_id = ? AND status = ? AND data_status = ?", workspaceID, JobCompleted, JobDataAvailable).

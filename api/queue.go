@@ -1197,6 +1197,10 @@ func ListJobs() ([]*model.Job, error) {
 	return model.ListJobs()
 }
 
+func ListJobsPaged(filter *model.JobFilter, page, pageSize int) (*model.JobListResult, error) {
+	return model.ListJobsPaged(filter, page, pageSize)
+}
+
 func UpdateJobMeta(id, name, note string) error {
 	return model.UpdateJobMeta(id, name, note)
 }
@@ -1396,8 +1400,16 @@ func ListJobsByWorkspace(projectID string, workspaceID string) ([]*model.Job, er
 	return model.ListJobsByWorkspace(projectID, workspaceID)
 }
 
+func ListJobsByWorkspacePaged(projectID, workspaceID string, page, pageSize int) (*model.JobPagedResult, error) {
+	return model.ListJobsByWorkspacePaged(projectID, workspaceID, page, pageSize)
+}
+
 func ListJobsByProjectFile(projectID string, projectFileID string) ([]*model.Job, error) {
 	return model.ListJobsByProjectFile(projectID, projectFileID)
+}
+
+func ListJobsByProjectFilePaged(projectID, projectFileID string, page, pageSize int) (*model.JobPagedResult, error) {
+	return model.ListJobsByProjectFilePaged(projectID, projectFileID, page, pageSize)
 }
 
 // ZipJobData は job の OutputDir 全体を ZIP 圧縮して savePath に書き出す。

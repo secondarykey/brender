@@ -75,6 +75,7 @@ function HistoryTab({ projectID, workspaceID, navigate, projectName, fileName, f
   const { t } = useTranslation()
   const { showToast } = useToast()
   const [jobs, setJobs]         = useState([])
+  const [total, setTotal]       = useState(0)
   const [page, setPage]         = useState(1)
   const [pageSize, setPageSize] = useState(HISTORY_PAGE_SIZE)
   const [bulkOpen, setBulkOpen]     = useState(false)
@@ -84,21 +85,24 @@ function HistoryTab({ projectID, workspaceID, navigate, projectName, fileName, f
   const [bulkBusy, setBulkBusy]     = useState(false)
   const [bulkError, setBulkError]   = useState('')
 
-  const load = useCallback(() => {
-    QueueApi.listJobsByWorkspace({ projectID, workspaceID })
-      .then(list => setJobs(list || []))
+  const load = useCallback((p, ps) => {
+    QueueApi.listJobsByWorkspacePaged({ projectID, workspaceID, page: p ?? page, pageSize: ps ?? pageSize })
+      .then(result => {
+        setJobs(result?.jobs || [])
+        setTotal(result?.total || 0)
+      })
       .catch(() => {})
-  }, [projectID, workspaceID])
+  }, [projectID, workspaceID, page, pageSize])
 
   useEffect(() => { load() }, [load, reloadTrigger])
 
-  useEffect(() => onAppEvent('queue:changed', load), [load])
+  useEffect(() => onAppEvent('queue:changed', () => load()), [load])
 
   const statusLabel = (s) => t(`status.${s || 'running'}`)
 
-  const totalPages  = Math.max(1, Math.ceil(jobs.length / pageSize))
+  const totalPages  = Math.max(1, Math.ceil(total / pageSize))
   const currentPage = Math.min(page, totalPages)
-  const pageJobs    = jobs.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  const pageJobs    = jobs
 
   const openJob = (j) => {
     navigate('job', {
@@ -132,7 +136,7 @@ function HistoryTab({ projectID, workspaceID, navigate, projectName, fileName, f
         </button>
       </div>
 
-      {jobs.length === 0
+      {total === 0
         ? <p className="empty-msg">{t('workspace.noHistory')}</p>
         : (
           <>
@@ -161,7 +165,7 @@ function HistoryTab({ projectID, workspaceID, navigate, projectName, fileName, f
                 </div>
               ))}
             </div>
-            <Pagination page={currentPage} totalPages={totalPages} onChange={p => setPage(p)} pageSize={pageSize} onPageSizeChange={p => { setPageSize(p); setPage(1) }} total={jobs.length} />
+            <Pagination page={currentPage} totalPages={totalPages} onChange={p => setPage(p)} pageSize={pageSize} onPageSizeChange={p => { setPageSize(p); setPage(1) }} total={total} />
           </>
         )
       }
