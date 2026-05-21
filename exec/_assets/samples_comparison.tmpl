@@ -1,0 +1,43 @@
+import bpy
+import time
+
+scene = bpy.data.scenes["{{ .Scene }}"]
+sample_list = [{{ .SamplesList }}]
+frame_number = {{ .Frame }}
+scene.frame_set(frame_number)
+
+{{ if .Camera }}
+target_cam = bpy.data.objects.get("{{ .Camera }}")
+if target_cam:
+    scene.camera = target_cam
+{{ end }}
+
+{{ if .HasResolution }}
+scene.render.resolution_x = {{ .ResolutionX }}
+scene.render.resolution_y = {{ .ResolutionY }}
+{{ end }}
+
+{{ if .Engine }}
+scene.render.engine = '{{ .Engine }}'
+{{ end }}
+
+{{ if .Format }}
+scene.render.image_settings.file_format = '{{ .Format }}'
+{{ end }}
+
+for s in sample_list:
+    print(f"BRENDER_SAMPLES_START {s}", flush=True)
+{{ if .IsCycles }}
+    scene.cycles.samples = s
+{{ else if .IsEevee }}
+    scene.eevee.taa_render_samples = s
+{{ else if .IsWorkbench }}
+    scene.display.render_aa = str(s)
+{{ end }}
+    scene.render.filepath = "{{ .OutputDir }}/frame_samples" + str(s).zfill(8)
+    start = time.time()
+    bpy.ops.render.render(write_still=True)
+    elapsed = time.time() - start
+    print(f"BRENDER_SAMPLES_DONE {s} {elapsed:.2f}", flush=True)
+
+print("Blender quit", flush=True)

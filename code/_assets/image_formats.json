@@ -1,0 +1,4 @@
+[
+  { "code": "PNG",  "label": "PNG",  "ext": "png", "blender_value": "PNG"  },
+  { "code": "JPEG", "label": "JPEG", "ext": "jpg", "blender_value": "JPEG" }
+]

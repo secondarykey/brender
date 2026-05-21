@@ -1,0 +1,49 @@
+import bpy
+
+def setCamera():
+
+    print("== Call setCamera()")
+
+    scene = bpy.data.scenes["{{ .Camera.Scene }}"]
+    target_cam = bpy.data.objects.get("{{ .Camera.Name }}")
+    scene.camera = target_cam
+    print("== set Camera [{{ .Camera.Name }}]")
+
+
+def setSamples():
+    print("== Call setSamples()")
+    scene = bpy.data.scenes["{{ .Samples.Scene }}"]
+{{ if .Samples.IsCycles }}
+    scene.cycles.samples = {{ .Samples.Value }}
+{{ else if .Samples.IsEevee }}
+    scene.eevee.taa_render_samples = {{ .Samples.Value }}
+{{ else if .Samples.IsWorkbench }}
+    scene.display.render_aa = '{{ .Samples.Value }}'
+{{ end }}
+    print("== samples set [{{.Samples.Value}}]")
+
+def setResolution():
+
+    print("== Call setResolution()")
+    scene = bpy.data.scenes["{{ .Resolution.Scene }}"]
+
+    scene.render.resolution_x = {{.Resolution.X}}
+    scene.render.resolution_y = {{.Resolution.Y}}
+
+    print("== set Resolution {{.Resolution.X}} {{.Resolution.Y}}")
+
+if __name__ == "__main__":
+
+    print("= Brender Run Script start")
+
+{{ if .Camera.Set }}
+    setCamera()
+{{ end }}
+{{ if .Samples.Set }}
+    setSamples()
+{{ end }}
+{{ if .Resolution.Set }}
+    setResolution()
+{{ end }}
+
+    print("= Brender Run Script end")

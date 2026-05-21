@@ -1,78 +1,25 @@
-# Blender
+# Brender
 
-Blenderでレンダリングをサーバサイドで実行する
+brender 
 
-# Version
+Blenderファイルを管理しながら、レンダリングを非同期実行するシステムです。
+端末のみでの実行ですが、サーバ実行を可能にして別端末で実行できるようにする予定です。
 
-Blender 3.5.1
+サーバモードではレンダリングを他の端末(サーバ)で実行することを可能にします。
+サーバモードでも利用方法は一緒になりますが、
+管理するBlenderファイルは相対パスで管理することになっており、
+ZIPファイルでアップロードして利用するような実行方式になります。
 
-## Settings
+## Caution
 
-## UI
+開発者はBlenderに関しては素人です。
+こういうのがあった方が使いやすいということがあれば言ってください。
 
-プロジェクト一覧
+## Why "Brender"?
 
-  ワークスペース一覧
-  バージョン一覧
-
-## Project
-
-Blenderファイルを準備
-フレームを設定（カメラを設定できるか）
-
-## プロジェクト内でどうするか？
-
-ワークススペースを作成し、画像を保存しておく 動画にしてあげる
-
-プロジェクトを作成してWebでアップロード
-ファイルのバージョンを日付にする
-  ワークスーペースに作成バージョンとフレーム、カメラを設定
-
-## サーバを作るのと、分散するのを同居させる
-
-特にローカル実行を行えるようにする
-ローカル実行の場合、アップロードの手間が省ける
-利用するサーバ選択するか？
-
-
-
-# コマンド
-
-カメラ切り替えってできんのかな？
-pythonで切り替える
-
-アップロードされたファイルで１フレーム出す
-
-projects/{ProjectID}/
-  contents/
-
-    blender ファイルの置き場所
-    zip展開？
-
-  thumbnails/
-    project.png
-    {workspace}.png
-
-//変更した場合にどうするか？
-
-  workspaces/
-    {workspace_id}
-      results/
-        *.png
-        render.mp4
-      logs/
-        日付.log
-        実ログとパースした値を残す
-
-実行するコマンド
-  /Applications/Blender.app/Contents/MacOS/Blender -b 1685151874333534000.blend -f 10
-  /Applications/Blender.app/Contents/MacOS/Blender -b 1685151874333534000.blend -a
-
-
-## ログについての解析
-
-## コマンドの実行結果をWebに表示
-
-Jenkins
-
-
+The name is pronounced "B-RENDA".
+In Japanese, "Renda" (連打) means "rapid-fire" or "repeatedly hitting a button."
+It represents the idea of managing and triggering renders at a rapid-fire pace!Why "Brender"?
+The name is pronounced "B-RENDA".
+In Japanese, "Renda" (連打) means "rapid-fire" or "repeatedly hitting a button."
+It represents the idea of managing and triggering renders at a rapid-fire pace!
