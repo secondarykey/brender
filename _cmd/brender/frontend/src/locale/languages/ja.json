@@ -108,6 +108,7 @@
     "code": "コード",
     "directory": "ディレクトリ設定",
     "workDirs": "作業ディレクトリ",
+    "dataManagement": "データ管理",
     "jobManagement": "ジョブ管理",
     "jobResult": "実行結果",
     "renderResults": "レンダリング結果",
