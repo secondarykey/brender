@@ -12,6 +12,7 @@ import (
 func runCommand(ctx context.Context, w, ew io.Writer, name string, args ...string) (int, chan error, error) {
 
 	cmd := exec.CommandContext(ctx, name, args...)
+	setSysProcAttr(cmd)
 
 	cmd.Stdout = w
 	cmd.Stderr = ew
