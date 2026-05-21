@@ -232,33 +232,37 @@ function HistoryTab({ navigate }) {
   const { t } = useTranslation()
   const { showError } = useMessage()
   const [jobs, setJobs]         = useState([])
+  const [total, setTotal]       = useState(0)
   const [selected, setSelected] = useState(null)
   const [page, setPage]         = useState(1)
   const [pageSize, setPageSize] = useState(PAGE_SIZE)
 
-  const load = useCallback(() => {
-    QueueApi.listJobs()
-      .then(list => {
-        const items = list || []
+  const load = useCallback((p, ps) => {
+    const pg = p ?? page
+    const sz = ps ?? pageSize
+    QueueApi.listJobsPaged({ filter: {}, page: pg, pageSize: sz })
+      .then(result => {
+        const items = result?.jobs || []
         setJobs(items)
+        setTotal(result?.total || 0)
         setSelected(prev => prev ? (items.find(j => j.id === prev.id) ?? prev) : null)
       })
       .catch(err => showError(String(err)))
-  }, [])
+  }, [page, pageSize])
 
   useEffect(() => { load() }, [load])
 
-  useEffect(() => onAppEvent('queue:changed', load), [load])
+  useEffect(() => onAppEvent('queue:changed', () => load()), [load])
 
-  const totalPages  = Math.max(1, Math.ceil(jobs.length / pageSize))
+  const totalPages  = Math.max(1, Math.ceil(total / pageSize))
   const currentPage = Math.min(page, totalPages)
-  const pageJobs    = jobs.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  const pageJobs    = jobs
 
   const handlePageChange = (p) => { setPage(p); setSelected(null) }
 
   return (
     <>
-      {jobs.length === 0 ? (
+      {total === 0 ? (
         <p className="empty-msg">{t('queue.noHistory')}</p>
       ) : (
         <>
@@ -312,7 +316,7 @@ function HistoryTab({ navigate }) {
               ))}
             </tbody>
           </table>
-          <Pagination page={currentPage} totalPages={totalPages} onChange={handlePageChange} pageSize={pageSize} onPageSizeChange={p => { setPageSize(p); setPage(1) }} total={jobs.length} />
+          <Pagination page={currentPage} totalPages={totalPages} onChange={handlePageChange} pageSize={pageSize} onPageSizeChange={p => { setPageSize(p); setPage(1) }} total={total} />
         </>
       )}
       <JobDetailDialog job={selected} onClose={() => setSelected(null)} onDeleted={() => { setSelected(null); load() }}

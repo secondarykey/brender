@@ -360,26 +360,30 @@ const HISTORY_PAGE_SIZE = 5
 function HistoryTab({ projectID, fileID, navigate, projectName, fileName }) {
   const { t } = useTranslation()
   const [jobs, setJobs]         = useState([])
+  const [total, setTotal]       = useState(0)
   const [page, setPage]         = useState(1)
   const [pageSize, setPageSize] = useState(HISTORY_PAGE_SIZE)
 
-  const load = useCallback(() => {
-    QueueApi.listJobsByProjectFile({ projectID, fileID })
-      .then(list => setJobs(list || []))
+  const load = useCallback((p, ps) => {
+    QueueApi.listJobsByProjectFilePaged({ projectID, fileID, page: p ?? page, pageSize: ps ?? pageSize })
+      .then(result => {
+        setJobs(result?.jobs || [])
+        setTotal(result?.total || 0)
+      })
       .catch(() => {})
-  }, [projectID, fileID])
+  }, [projectID, fileID, page, pageSize])
 
   useEffect(() => { load() }, [load])
 
-  useEffect(() => onAppEvent('queue:changed', load), [load])
+  useEffect(() => onAppEvent('queue:changed', () => load()), [load])
 
   const statusLabel = (s) => t(`status.${s || 'running'}`)
 
-  const totalPages  = Math.max(1, Math.ceil(jobs.length / pageSize))
+  const totalPages  = Math.max(1, Math.ceil(total / pageSize))
   const currentPage = Math.min(page, totalPages)
-  const pageJobs    = jobs.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  const pageJobs    = jobs
 
-  if (jobs.length === 0) {
+  if (total === 0) {
     return <p className="empty-msg">{t('workspace.noHistory')}</p>
   }
 
@@ -419,7 +423,7 @@ function HistoryTab({ projectID, fileID, navigate, projectName, fileName }) {
           </div>
         ))}
       </div>
-      <Pagination page={currentPage} totalPages={totalPages} onChange={p => setPage(p)} pageSize={pageSize} onPageSizeChange={p => { setPageSize(p); setPage(1) }} total={jobs.length} />
+      <Pagination page={currentPage} totalPages={totalPages} onChange={p => setPage(p)} pageSize={pageSize} onPageSizeChange={p => { setPageSize(p); setPage(1) }} total={total} />
     </>
   )
 }

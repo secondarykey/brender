@@ -524,6 +524,137 @@ export class Job {
     }
 }
 
+export class JobFilter {
+    /**
+     * Creates a new JobFilter instance.
+     * @param {Partial<JobFilter>} [$$source = {}] - The source object to create the JobFilter.
+     */
+    constructor($$source = {}) {
+        if (!("data_statuses" in $$source)) {
+            /**
+             * @member
+             * @type {number[]}
+             */
+            this["data_statuses"] = [];
+        }
+        if (!("days" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["days"] = 0;
+        }
+        if (!("sort_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["sort_by"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new JobFilter instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {JobFilter}
+     */
+    static createFrom($$source = {}) {
+        const $$createField0_0 = $$createType0;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("data_statuses" in $$parsedSource) {
+            $$parsedSource["data_statuses"] = $$createField0_0($$parsedSource["data_statuses"]);
+        }
+        return new JobFilter(/** @type {Partial<JobFilter>} */($$parsedSource));
+    }
+}
+
+export class JobListResult {
+    /**
+     * Creates a new JobListResult instance.
+     * @param {Partial<JobListResult>} [$$source = {}] - The source object to create the JobListResult.
+     */
+    constructor($$source = {}) {
+        if (!("jobs" in $$source)) {
+            /**
+             * @member
+             * @type {(Job | null)[]}
+             */
+            this["jobs"] = [];
+        }
+        if (!("total" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["total"] = 0;
+        }
+        if (!("total_size" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["total_size"] = 0;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new JobListResult instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {JobListResult}
+     */
+    static createFrom($$source = {}) {
+        const $$createField0_0 = $$createType3;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("jobs" in $$parsedSource) {
+            $$parsedSource["jobs"] = $$createField0_0($$parsedSource["jobs"]);
+        }
+        return new JobListResult(/** @type {Partial<JobListResult>} */($$parsedSource));
+    }
+}
+
+export class JobPagedResult {
+    /**
+     * Creates a new JobPagedResult instance.
+     * @param {Partial<JobPagedResult>} [$$source = {}] - The source object to create the JobPagedResult.
+     */
+    constructor($$source = {}) {
+        if (!("jobs" in $$source)) {
+            /**
+             * @member
+             * @type {(Job | null)[]}
+             */
+            this["jobs"] = [];
+        }
+        if (!("total" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["total"] = 0;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new JobPagedResult instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {JobPagedResult}
+     */
+    static createFrom($$source = {}) {
+        const $$createField0_0 = $$createType3;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("jobs" in $$parsedSource) {
+            $$parsedSource["jobs"] = $$createField0_0($$parsedSource["jobs"]);
+        }
+        return new JobPagedResult(/** @type {Partial<JobPagedResult>} */($$parsedSource));
+    }
+}
+
 export class Project {
     /**
      * Creates a new Project instance.
@@ -638,8 +769,8 @@ export class ProjectDetail {
      * @returns {ProjectDetail}
      */
     static createFrom($$source = {}) {
-        const $$createField0_0 = $$createType2;
-        const $$createField1_0 = $$createType5;
+        const $$createField0_0 = $$createType5;
+        const $$createField1_0 = $$createType8;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("project" in $$parsedSource) {
             $$parsedSource["project"] = $$createField0_0($$parsedSource["project"]);
@@ -1208,8 +1339,8 @@ export class WorkspaceDetail {
      * @returns {WorkspaceDetail}
      */
     static createFrom($$source = {}) {
-        const $$createField0_0 = $$createType7;
-        const $$createField1_0 = $$createType5;
+        const $$createField0_0 = $$createType10;
+        const $$createField1_0 = $$createType8;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("workspace" in $$parsedSource) {
             $$parsedSource["workspace"] = $$createField0_0($$parsedSource["workspace"]);
@@ -1254,8 +1385,8 @@ export class WorkspacesByFile {
      * @returns {WorkspacesByFile}
      */
     static createFrom($$source = {}) {
-        const $$createField0_0 = $$createType4;
-        const $$createField1_0 = $$createType8;
+        const $$createField0_0 = $$createType7;
+        const $$createField1_0 = $$createType11;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("file" in $$parsedSource) {
             $$parsedSource["file"] = $$createField0_0($$parsedSource["file"]);
@@ -1269,11 +1400,14 @@ export class WorkspacesByFile {
 
 // Private type creation functions
 const $$createType0 = $Create.Array($Create.Any);
-const $$createType1 = Project.createFrom;
+const $$createType1 = Job.createFrom;
 const $$createType2 = $Create.Nullable($$createType1);
-const $$createType3 = ProjectFile.createFrom;
-const $$createType4 = $Create.Nullable($$createType3);
-const $$createType5 = $Create.Array($$createType4);
-const $$createType6 = Workspace.createFrom;
+const $$createType3 = $Create.Array($$createType2);
+const $$createType4 = Project.createFrom;
+const $$createType5 = $Create.Nullable($$createType4);
+const $$createType6 = ProjectFile.createFrom;
 const $$createType7 = $Create.Nullable($$createType6);
 const $$createType8 = $Create.Array($$createType7);
+const $$createType9 = Workspace.createFrom;
+const $$createType10 = $Create.Nullable($$createType9);
+const $$createType11 = $Create.Array($$createType10);
