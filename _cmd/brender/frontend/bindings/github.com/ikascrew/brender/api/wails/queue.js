@@ -220,12 +220,50 @@ export function ListJobsByProjectFile(projectID, fileID) {
 
 /**
  * @param {string} projectID
+ * @param {string} fileID
+ * @param {number} page
+ * @param {number} pageSize
+ * @returns {$CancellablePromise<model$0.JobPagedResult | null>}
+ */
+export function ListJobsByProjectFilePaged(projectID, fileID, page, pageSize) {
+    return $Call.ByID(1288114456, projectID, fileID, page, pageSize).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType16($result);
+    }));
+}
+
+/**
+ * @param {string} projectID
  * @param {string} workspaceID
  * @returns {$CancellablePromise<(model$0.Job | null)[]>}
  */
 export function ListJobsByWorkspace(projectID, workspaceID) {
     return $Call.ByID(1990300201, projectID, workspaceID).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType14($result);
+    }));
+}
+
+/**
+ * @param {string} projectID
+ * @param {string} workspaceID
+ * @param {number} page
+ * @param {number} pageSize
+ * @returns {$CancellablePromise<model$0.JobPagedResult | null>}
+ */
+export function ListJobsByWorkspacePaged(projectID, workspaceID, page, pageSize) {
+    return $Call.ByID(3022983018, projectID, workspaceID, page, pageSize).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType16($result);
+    }));
+}
+
+/**
+ * @param {model$0.JobFilter | null} filter
+ * @param {number} page
+ * @param {number} pageSize
+ * @returns {$CancellablePromise<model$0.JobListResult | null>}
+ */
+export function ListJobsPaged(filter, page, pageSize) {
+    return $Call.ByID(119962030, filter, page, pageSize).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType18($result);
     }));
 }
 
@@ -275,7 +313,7 @@ export function OpenMovieWindow(videoPath) {
  */
 export function PreviewRender(projectID, workspaceID) {
     return $Call.ByID(2094811495, projectID, workspaceID).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType16($result);
+        return $$createType20($result);
     }));
 }
 
@@ -357,5 +395,9 @@ const $$createType11 = $Create.Nullable($$createType10);
 const $$createType12 = $Create.Array($$createType11);
 const $$createType13 = $Create.Array($Create.Any);
 const $$createType14 = $Create.Array($$createType5);
-const $$createType15 = api$0.RenderPreview.createFrom;
+const $$createType15 = model$0.JobPagedResult.createFrom;
 const $$createType16 = $Create.Nullable($$createType15);
+const $$createType17 = model$0.JobListResult.createFrom;
+const $$createType18 = $Create.Nullable($$createType17);
+const $$createType19 = api$0.RenderPreview.createFrom;
+const $$createType20 = $Create.Nullable($$createType19);

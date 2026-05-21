@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { QueueApi } from '../../lib/api'
 import { useMessage, useToast } from '../../lib/toast'
@@ -71,11 +71,28 @@ function buildCleanFilter(excludeStatuses, lockFilter, filterDays) {
 
 const PAGE_SIZE = 20
 
+function buildJobFilter(excludeStatuses, lockFilter, filterDays, sortBy) {
+  const statuses = []
+  for (const g of DATA_STATUS_GROUPS) {
+    if (g.statuses.every(s => excludeStatuses.has(s))) continue
+    for (const s of g.statuses) {
+      if (excludeStatuses.has(s)) continue
+      const isLocked = s % 2 === 1
+      if (lockFilter === 'hide' && isLocked) continue
+      if (lockFilter === 'only' && !isLocked) continue
+      statuses.push(s)
+    }
+  }
+  return { data_statuses: statuses, days: filterDays, sort_by: sortBy }
+}
+
 function JobManagement({ navigate }) {
   const { t } = useTranslation()
   const { showError } = useMessage()
   const { showToast } = useToast()
   const [jobs, setJobs] = useState([])
+  const [total, setTotal] = useState(0)
+  const [totalSize, setTotalSize] = useState(0)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(PAGE_SIZE)
   const [cleanConfirm, setCleanConfirm] = useState(false)
@@ -92,51 +109,26 @@ function JobManagement({ navigate }) {
   const [measuring, setMeasuring] = useState(false)
   const [measuredSize, setMeasuredSize] = useState(null)
 
-  const load = useCallback(() => {
-    QueueApi.listJobs()
-      .then(list => setJobs(list || []))
+  const load = useCallback((p, ps) => {
+    const filter = buildJobFilter(excludeStatuses, lockFilter, filterDays, sortBy)
+    QueueApi.listJobsPaged({ filter, page: p ?? page, pageSize: ps ?? pageSize })
+      .then(result => {
+        setJobs(result?.jobs || [])
+        setTotal(result?.total || 0)
+        setTotalSize(result?.total_size || 0)
+      })
       .catch(err => showError(String(err)))
-  }, [])
+  }, [excludeStatuses, lockFilter, filterDays, sortBy, page, pageSize])
 
   useEffect(() => { load() }, [load])
 
-  const filteredJobs = useMemo(() => {
-    let result = jobs.filter(j => {
-      if (excludeStatuses.has(j.data_status)) return false
-      const isLocked = j.data_status % 2 === 1
-      if (lockFilter === 'hide' && isLocked) return false
-      if (lockFilter === 'only' && !isLocked) return false
-      if (filterDays > 0 && j.completed_at) {
-        const cutoff = new Date()
-        cutoff.setDate(cutoff.getDate() - filterDays)
-        if (new Date(j.completed_at) > cutoff) return false
-      }
-      return true
-    })
-    if (sortBy === 'size') {
-      result = [...result].sort((a, b) => (b.disk_size || 0) - (a.disk_size || 0))
-    } else if (sortBy === 'date') {
-      result = [...result].sort((a, b) => {
-        const da = a.completed_at ? new Date(a.completed_at).getTime() : 0
-        const db = b.completed_at ? new Date(b.completed_at).getTime() : 0
-        return db - da
-      })
-    }
-    return result
-  }, [jobs, excludeStatuses, lockFilter, sortBy, filterDays])
-
   useEffect(() => { setMeasuredSize(null) }, [excludeStatuses, lockFilter, filterDays])
 
-  const totalPages = Math.max(1, Math.ceil(filteredJobs.length / pageSize))
+  const totalPages = Math.max(1, Math.ceil(total / pageSize))
   const currentPage = Math.min(page, totalPages)
-  const pageJobs = filteredJobs.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  const pageJobs = jobs
 
   const DELETED_STATUSES = [4, 5]
-
-  const totalSize = useMemo(() =>
-    filteredJobs.reduce((sum, j) => DELETED_STATUSES.includes(j.data_status) ? sum : sum + (j.disk_size || 0), 0),
-    [filteredJobs]
-  )
 
   const lockedIncluded = lockFilter !== 'hide'
 
@@ -200,7 +192,7 @@ function JobManagement({ navigate }) {
     <div style={{ padding: '16px 0' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <div style={{ fontSize: '0.85rem', opacity: 0.7 }}>
-          {t('jobManagement.totalJobs', { count: filteredJobs.length })} / {t('jobManagement.totalSize', { size: formatSize(totalSize) })}
+          {t('jobManagement.totalJobs', { count: total })} / {t('jobManagement.totalSize', { size: formatSize(totalSize) })}
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           {measuredSize !== null && (
@@ -284,7 +276,7 @@ function JobManagement({ navigate }) {
         </div>
       </div>
 
-      {filteredJobs.length === 0 ? (
+      {total === 0 ? (
         <p className="empty-msg">{t('jobManagement.noJobs')}</p>
       ) : (
         <>
@@ -316,7 +308,7 @@ function JobManagement({ navigate }) {
               ))}
             </tbody>
           </table>
-          <Pagination page={currentPage} totalPages={totalPages} onChange={p => setPage(p)} pageSize={pageSize} onPageSizeChange={p => { setPageSize(p); setPage(1) }} total={filteredJobs.length} />
+          <Pagination page={currentPage} totalPages={totalPages} onChange={p => setPage(p)} pageSize={pageSize} onPageSizeChange={p => { setPageSize(p); setPage(1) }} total={total} />
         </>
       )}
 
@@ -354,7 +346,7 @@ function JobManagement({ navigate }) {
         }
       >
         <div style={{ fontSize: '0.85rem', opacity: 0.7, marginBottom: 12 }}>
-          {t('jobManagement.cleanFilteredSummary', { count: filteredJobs.length, size: formatSize(totalSize) })}
+          {t('jobManagement.cleanFilteredSummary', { count: total, size: formatSize(totalSize) })}
         </div>
         {lockedIncluded && (
           <div style={{ background: 'rgba(255, 165, 0, 0.15)', border: '1px solid rgba(255, 165, 0, 0.4)', borderRadius: 4, padding: '8px 12px', marginBottom: 12, fontSize: '0.85rem', color: '#f0a030' }}>

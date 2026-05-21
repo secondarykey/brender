@@ -57,6 +57,14 @@ export const QueueApi = {
     isWails() ? svc().then(s => s.ListJobs())
               : serverCall('queue', 'list_jobs'),
 
+  /** ジョブ履歴をページング付きで取得
+   * @param {{ filter: { data_statuses?: number[], days?: number, sort_by?: string }, page: number, pageSize: number }} args
+   * @returns {Promise<{ jobs: Job[], total: number, total_size: number }>}
+   */
+  listJobsPaged: ({ filter, page, pageSize }) =>
+    isWails() ? svc().then(s => s.ListJobsPaged(filter, page, pageSize))
+              : serverCall('queue', 'list_jobs_paged', { filter, page, page_size: pageSize }),
+
   /** ワークスペース別ジョブ履歴を取得
    * @param {{ projectID: string, workspaceID: string }} args
    */
@@ -64,12 +72,28 @@ export const QueueApi = {
     isWails() ? svc().then(s => s.ListJobsByWorkspace(projectID, workspaceID))
               : serverCall('queue', 'list_jobs_by_workspace', { project_id: projectID, workspace_id: workspaceID }),
 
+  /** ワークスペース別ジョブ履歴をページング付きで取得
+   * @param {{ projectID: string, workspaceID: string, page: number, pageSize: number }} args
+   * @returns {Promise<{ jobs: Job[], total: number }>}
+   */
+  listJobsByWorkspacePaged: ({ projectID, workspaceID, page, pageSize }) =>
+    isWails() ? svc().then(s => s.ListJobsByWorkspacePaged(projectID, workspaceID, page, pageSize))
+              : serverCall('queue', 'list_jobs_by_workspace_paged', { project_id: projectID, workspace_id: workspaceID, page, page_size: pageSize }),
+
   /** ファイル別ジョブ履歴を取得
    * @param {{ projectID: string, fileID: number }} args
    */
   listJobsByProjectFile: ({ projectID, fileID }) =>
     isWails() ? svc().then(s => s.ListJobsByProjectFile(projectID, fileID))
               : serverCall('queue', 'list_jobs_by_project_file', { project_id: projectID, file_id: fileID }),
+
+  /** ファイル別ジョブ履歴をページング付きで取得
+   * @param {{ projectID: string, fileID: string, page: number, pageSize: number }} args
+   * @returns {Promise<{ jobs: Job[], total: number }>}
+   */
+  listJobsByProjectFilePaged: ({ projectID, fileID, page, pageSize }) =>
+    isWails() ? svc().then(s => s.ListJobsByProjectFilePaged(projectID, fileID, page, pageSize))
+              : serverCall('queue', 'list_jobs_by_project_file_paged', { project_id: projectID, file_id: fileID, page, page_size: pageSize }),
 
   /** ジョブ単体を取得
    * @param {{ id: string }} args
