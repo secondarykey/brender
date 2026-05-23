@@ -27,6 +27,7 @@ function TagSettings() {
   const [editingTagID, setEditingTagID] = useState(null)
   const [editingTagName, setEditingTagName] = useState('')
   const [newTagInputs, setNewTagInputs] = useState({})
+  const [addingTagCatID, setAddingTagCatID] = useState(null)
 
   const load = () => {
     setLoading(true)
@@ -223,44 +224,52 @@ function TagSettings() {
                 {t('common.delete')}
               </button>
             </div>
-            {catTags.length > 0 && (
-              <div className="tag-settings-tag-list">
-                {catTags.map(tag => (
-                  <span key={tag.id} className="tag-settings-tag-item" style={{ backgroundColor: tagColor(tag) }}>
-                    {editingTagID === tag.id ? (
-                      <input
-                        className="tag-settings-tag-name-input"
-                        value={editingTagName}
-                        onChange={e => setEditingTagName(e.target.value)}
-                        onBlur={() => handleUpdateTag(tag)}
-                        onKeyDown={e => { if (e.key === 'Enter') handleUpdateTag(tag); if (e.key === 'Escape') setEditingTagID(null) }}
-                        autoFocus
-                      />
-                    ) : (
-                      <span
-                        className="tag-settings-tag-name"
-                        onDoubleClick={() => { setEditingTagID(tag.id); setEditingTagName(tag.name) }}
-                        title={t('tag.rename')}
-                      >{tag.name}</span>
-                    )}
-                    <button onClick={() => openTagMerge(tag)} title={t('tag.mergeTag')} disabled={tags.length < 2}>⇄</button>
-                    <button onClick={() => { setDeleteTarget(tag); setDeleteType('tag') }}>×</button>
-                  </span>
-                ))}
-              </div>
-            )}
-            <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
-              <input
-                className="form-input"
-                placeholder={t('tag.newTag')}
-                value={newTagInputs[cat.id] || ''}
-                onChange={e => setNewTagInputs(prev => ({ ...prev, [cat.id]: e.target.value }))}
-                onKeyDown={e => { if (e.key === 'Enter') handleCreateTag(cat.id) }}
-                style={{ flex: 1, height: 26, fontSize: '0.8rem' }}
-              />
-              <button className="btn btn-green btn-sm" onClick={() => handleCreateTag(cat.id)} disabled={!(newTagInputs[cat.id] || '').trim()} style={{ height: 26, fontSize: '0.75rem' }}>
-                +
-              </button>
+            <div className="tag-settings-tag-list">
+              {catTags.map(tag => (
+                <span key={tag.id} className="tag-settings-tag-item" style={{ backgroundColor: tagColor(tag) }}>
+                  {editingTagID === tag.id ? (
+                    <input
+                      className="tag-settings-tag-name-input"
+                      value={editingTagName}
+                      onChange={e => setEditingTagName(e.target.value)}
+                      onBlur={() => handleUpdateTag(tag)}
+                      onKeyDown={e => { if (e.key === 'Enter') handleUpdateTag(tag); if (e.key === 'Escape') setEditingTagID(null) }}
+                      autoFocus
+                    />
+                  ) : (
+                    <span
+                      className="tag-settings-tag-name"
+                      onDoubleClick={() => { setEditingTagID(tag.id); setEditingTagName(tag.name) }}
+                      title={t('tag.rename')}
+                    >{tag.name}</span>
+                  )}
+                  <button onClick={() => openTagMerge(tag)} title={t('tag.mergeTag')} disabled={tags.length < 2}>⇄</button>
+                  <button onClick={() => { setDeleteTarget(tag); setDeleteType('tag') }}>×</button>
+                </span>
+              ))}
+              {addingTagCatID === cat.id ? (
+                <span className="tag-settings-tag-item tag-settings-tag-add-input" style={{ backgroundColor: cat.color || '#555' }}>
+                  <input
+                    className="tag-settings-tag-name-input"
+                    placeholder={t('tag.newTag')}
+                    value={newTagInputs[cat.id] || ''}
+                    onChange={e => setNewTagInputs(prev => ({ ...prev, [cat.id]: e.target.value }))}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') { handleCreateTag(cat.id); }
+                      if (e.key === 'Escape') { setAddingTagCatID(null); setNewTagInputs(prev => ({ ...prev, [cat.id]: '' })) }
+                    }}
+                    onBlur={() => { if (!(newTagInputs[cat.id] || '').trim()) { setAddingTagCatID(null) } }}
+                    autoFocus
+                  />
+                </span>
+              ) : (
+                <span
+                  className="tag-settings-tag-item tag-settings-tag-add"
+                  onClick={() => setAddingTagCatID(cat.id)}
+                >
+                  + {t('tag.newTag')}
+                </span>
+              )}
             </div>
           </div>
         )

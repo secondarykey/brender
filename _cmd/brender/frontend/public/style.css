@@ -2643,6 +2643,16 @@ textarea.form-input {
   text-decoration: underline;
   text-decoration-style: dotted;
 }
+.tag-settings-tag-add {
+  background: rgba(255,255,255,0.08) !important;
+  color: rgba(255,255,255,0.4);
+  cursor: pointer;
+  border: 1px dashed rgba(255,255,255,0.2);
+}
+.tag-settings-tag-add:hover {
+  background: rgba(255,255,255,0.14) !important;
+  color: rgba(255,255,255,0.7);
+}
 .tag-settings-tag-name-input {
   background: rgba(0,0,0,0.3);
   border: 1px solid rgba(255,255,255,0.3);
