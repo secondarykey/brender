@@ -519,7 +519,7 @@
     "categoryColor": "色",
     "merge": "統合",
     "mergeInto": "統合先...",
-    "mergeConfirm": "カテゴリ「{{source}}」を「{{target}}」に統合しますか？すべてのタグが移動されます。",
+    "mergeConfirm": "「{{source}}」のタグはすべて「{{target}}」に移動されます。このカテゴリはなくなります。",
     "assignCategory": "カテゴリを割り当て",
     "confirmDeleteCategory": "カテゴリを削除しますか？",
     "deleteCategoryWarning": "このカテゴリのタグは未分類になります。",

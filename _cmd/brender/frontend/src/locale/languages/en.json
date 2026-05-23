@@ -519,7 +519,7 @@
     "categoryColor": "Color",
     "merge": "Merge",
     "mergeInto": "Merge into...",
-    "mergeConfirm": "Merge category \"{{source}}\" into \"{{target}}\"? All tags will be moved.",
+    "mergeConfirm": "All tags in \"{{source}}\" will be moved to \"{{target}}\". This category will be removed.",
     "assignCategory": "Assign Category",
     "confirmDeleteCategory": "Delete this category?",
     "deleteCategoryWarning": "Tags in this category will become uncategorized.",
