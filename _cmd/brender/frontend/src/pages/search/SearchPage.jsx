@@ -62,11 +62,21 @@ function SearchPage({ navigate }) {
     })
   }, [files])
 
-  const toggleTag = (tagID) => {
+  const toggleTag = (tagID, e) => {
     setPage(1)
-    setSelectedTagIDs(prev =>
-      prev.includes(tagID) ? prev.filter(id => id !== tagID) : [...prev, tagID]
-    )
+    const tag = allTags.find(t => t.id === tagID)
+    const isMulti = e?.ctrlKey || e?.metaKey
+    setSelectedTagIDs(prev => {
+      if (prev.includes(tagID)) {
+        return prev.filter(id => id !== tagID)
+      }
+      if (isMulti || !tag?.category_id) {
+        return [...prev, tagID]
+      }
+      // Single select within category: remove other tags in same category
+      const sameCatIDs = new Set((grouped[tag.category_id] || []).map(t => t.id))
+      return [...prev.filter(id => !sameCatIDs.has(id)), tagID]
+    })
   }
 
   const clearFilters = () => {
@@ -116,7 +126,7 @@ function SearchPage({ navigate }) {
                       key={tag.id}
                       className={`search-filter-tag${selectedTagIDs.includes(tag.id) ? ' selected' : ''}`}
                       style={selectedTagIDs.includes(tag.id) ? { backgroundColor: tagColor(tag), color: '#fff' } : {}}
-                      onClick={() => toggleTag(tag.id)}
+                      onClick={e => toggleTag(tag.id, e)}
                     >
                       <span className="search-filter-tag-dot" style={{ backgroundColor: tagColor(tag) }} />
                       {tag.name}
@@ -137,7 +147,7 @@ function SearchPage({ navigate }) {
                     key={tag.id}
                     className={`search-filter-tag${selectedTagIDs.includes(tag.id) ? ' selected' : ''}`}
                     style={selectedTagIDs.includes(tag.id) ? { backgroundColor: tagColor(tag), color: '#fff' } : {}}
-                    onClick={() => toggleTag(tag.id)}
+                    onClick={e => toggleTag(tag.id, e)}
                   >
                     <span className="search-filter-tag-dot" style={{ backgroundColor: tagColor(tag) }} />
                     {tag.name}
