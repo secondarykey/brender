@@ -204,6 +204,48 @@ function TagSettings() {
 
   return (
     <div style={{ padding: 16, maxWidth: 700 }}>
+      {/* Uncategorized (top in settings) */}
+      {uncategorized.length > 0 && (
+        <div className="tag-settings-category" style={{ borderLeft: '3px solid rgba(255,255,255,0.15)' }}>
+          <div className="tag-settings-category-header">
+            <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)' }}>{t('tag.uncategorized')}</span>
+          </div>
+          <div className="tag-settings-tag-list">
+            {uncategorized.map(tag => (
+              <span key={tag.id} className="tag-settings-tag-item" style={{ backgroundColor: tagColor(tag) }}>
+                {editingTagID === tag.id ? (
+                  <input
+                    className="tag-settings-tag-name-input"
+                    value={editingTagName}
+                    onChange={e => setEditingTagName(e.target.value)}
+                    onBlur={() => handleUpdateTag(tag)}
+                    onKeyDown={e => { if (e.key === 'Enter') handleUpdateTag(tag); if (e.key === 'Escape') setEditingTagID(null) }}
+                    autoFocus
+                  />
+                ) : (
+                  <span
+                    className="tag-settings-tag-name"
+                    onDoubleClick={() => { setEditingTagID(tag.id); setEditingTagName(tag.name) }}
+                    title={t('tag.rename')}
+                  >{tag.name}</span>
+                )}
+                <select
+                  className="form-select"
+                  value=""
+                  onChange={e => handleSetTagCategory(tag.id, Number(e.target.value))}
+                  style={{ height: 22, fontSize: '0.7rem', padding: '0 4px', marginLeft: 4, width: 'auto', background: 'rgba(0,0,0,0.3)', border: 'none', color: 'rgba(255,255,255,0.7)' }}
+                >
+                  <option value="">{t('tag.assignCategory')}</option>
+                  {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+                <button onClick={() => openTagMerge(tag)} title={t('tag.mergeTag')} disabled={tags.length < 2}>⇄</button>
+                <button onClick={() => { setDeleteTarget(tag); setDeleteType('tag') }}>×</button>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Categories */}
       {categories.map((cat, index) => {
         const catTags = grouped[cat.id] || []
@@ -307,48 +349,6 @@ function TagSettings() {
           </div>
         )
       })}
-
-      {/* Uncategorized */}
-      {uncategorized.length > 0 && (
-        <div className="tag-settings-category" style={{ borderLeft: '3px solid rgba(255,255,255,0.15)' }}>
-          <div className="tag-settings-category-header">
-            <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)' }}>{t('tag.uncategorized')}</span>
-          </div>
-          <div className="tag-settings-tag-list">
-            {uncategorized.map(tag => (
-              <span key={tag.id} className="tag-settings-tag-item" style={{ backgroundColor: tagColor(tag) }}>
-                {editingTagID === tag.id ? (
-                  <input
-                    className="tag-settings-tag-name-input"
-                    value={editingTagName}
-                    onChange={e => setEditingTagName(e.target.value)}
-                    onBlur={() => handleUpdateTag(tag)}
-                    onKeyDown={e => { if (e.key === 'Enter') handleUpdateTag(tag); if (e.key === 'Escape') setEditingTagID(null) }}
-                    autoFocus
-                  />
-                ) : (
-                  <span
-                    className="tag-settings-tag-name"
-                    onDoubleClick={() => { setEditingTagID(tag.id); setEditingTagName(tag.name) }}
-                    title={t('tag.rename')}
-                  >{tag.name}</span>
-                )}
-                <select
-                  className="form-select"
-                  value=""
-                  onChange={e => handleSetTagCategory(tag.id, Number(e.target.value))}
-                  style={{ height: 22, fontSize: '0.7rem', padding: '0 4px', marginLeft: 4, width: 'auto', background: 'rgba(0,0,0,0.3)', border: 'none', color: 'rgba(255,255,255,0.7)' }}
-                >
-                  <option value="">{t('tag.assignCategory')}</option>
-                  {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-                <button onClick={() => openTagMerge(tag)} title={t('tag.mergeTag')} disabled={tags.length < 2}>⇄</button>
-                <button onClick={() => { setDeleteTarget(tag); setDeleteType('tag') }}>×</button>
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
 
       {tags.length === 0 && categories.length === 0 && (
         <div style={{ color: 'rgba(255,255,255,0.3)', textAlign: 'center', padding: 40 }}>
