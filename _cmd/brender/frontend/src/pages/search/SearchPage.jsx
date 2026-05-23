@@ -176,6 +176,11 @@ function SearchPage({ navigate }) {
               onClick={() => { setViewMode('card'); localStorage.setItem('viewMode:search', 'card') }}
               title={t('workspace.cardView')}
             >⊞</button>
+            <button
+              className={`file-view-btn${viewMode === 'card-sm' ? ' active' : ''}`}
+              onClick={() => { setViewMode('card-sm'); localStorage.setItem('viewMode:search', 'card-sm') }}
+              title={t('workspace.smallCardView')}
+            >▦</button>
           </div>
 
           <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px' }}>
@@ -208,7 +213,7 @@ function SearchPage({ navigate }) {
                 )
               })
             ) : (
-              <div className="file-tile-grid">
+              <div className={`file-tile-grid${viewMode === 'card-sm' ? ' file-tile-grid--sm' : ''}`}>
                 {files.map(f => {
                   const thumb = thumbnails[f.id]
                   return (
