@@ -536,10 +536,9 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
       setEngineFixed(f?.engine_fixed || false)
       fetchToolData(installID)
     })
-    console.log('[SettingsTab] fetching tags for fileID=', fileID)
     TagApi.getFileTags({ projectFileID: fileID })
-      .then(tags => { console.log('[SettingsTab] getFileTags result:', tags); setFileTags(tags || []) })
-      .catch(e => { console.error('[SettingsTab] getFileTags error:', e); setFileTags([]) })
+      .then(tags => setFileTags(tags || []))
+      .catch(() => setFileTags([]))
   }, [fileID])
 
   const handleBlenderChange = (installID) => {
@@ -794,15 +793,6 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
 
           <NoteSection value={note} onChange={setNote} />
 
-          <div className="form-field" style={{ marginTop: 12 }}>
-            <label className="form-label">{t('tag.tags')}</label>
-            <TagInput
-              projectFileID={fileID}
-              tags={fileTags}
-              onTagsChanged={setFileTags}
-            />
-          </div>
-
           <div className="form-actions">
             <button className="btn btn-danger" onClick={() => { setForceDel(false); setConfirm(true) }}>{t('common.delete')}</button>
             <button className="btn btn-green" onClick={handleSave} disabled={saving}>
@@ -833,6 +823,14 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
 
       <div className="ws-detail-right">
         <ThumbnailPanel projectID={projectID} fileID={fileID} />
+        <div style={{ marginTop: 20 }}>
+          <h3 className="ws-detail-section-title">{t('tag.tags')}</h3>
+          <TagInput
+            projectFileID={fileID}
+            tags={fileTags}
+            onTagsChanged={setFileTags}
+          />
+        </div>
       </div>
     </div>
   )

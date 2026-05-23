@@ -23,10 +23,9 @@ function TagInput({ projectFileID, tags, onTagsChanged }) {
   const containerRef = useRef(null)
 
   useEffect(() => {
-    console.log('[TagInput] mount/tags changed, fetching allTags. projectFileID=', projectFileID)
     TagApi.listTags()
-      .then(list => { console.log('[TagInput] listTags result:', list); setAllTags(list || []) })
-      .catch(e => console.error('[TagInput] listTags error:', e))
+      .then(list => setAllTags(list || []))
+      .catch(() => {})
   }, [tags])
 
   useEffect(() => {
@@ -62,13 +61,9 @@ function TagInput({ projectFileID, tags, onTagsChanged }) {
   const assignOne = async (text) => {
     const trimmed = text.trim()
     if (!trimmed) return null
-    console.log('[TagInput] assignOne called:', trimmed, 'fileID=', projectFileID)
     try {
-      const result = await TagApi.assignTagByInput({ projectFileID, input: trimmed })
-      console.log('[TagInput] assignTagByInput result:', result)
-      return result
-    } catch (e) {
-      console.error('[TagInput] assignOne error:', e)
+      return await TagApi.assignTagByInput({ projectFileID, input: trimmed })
+    } catch {
       return null
     }
   }
@@ -99,13 +94,12 @@ function TagInput({ projectFileID, tags, onTagsChanged }) {
       if (onTagsChanged) {
         onTagsChanged((tags || []).filter(t => t.id !== tagID))
       }
-    } catch (e) {
-      console.error('TagInput remove error:', e)
+    } catch {
+      // ignore
     }
   }
 
   const handleKeyDown = (e) => {
-    console.log('[TagInput] keyDown:', e.key, 'input=', input, 'activeIdx=', activeIdx)
     if (e.key === 'Enter') {
       e.preventDefault()
       if (activeIdx >= 0 && activeIdx < suggestions.length) {
