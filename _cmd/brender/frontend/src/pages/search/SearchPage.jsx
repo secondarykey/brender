@@ -18,6 +18,7 @@ function SearchPage({ navigate }) {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
   const [thumbnails, setThumbnails] = useState({})
+  const [viewMode, setViewMode] = useState(() => localStorage.getItem('viewMode:search') || 'card')
 
   const loadMeta = useCallback(() => {
     Promise.all([
@@ -156,12 +157,25 @@ function SearchPage({ navigate }) {
 
         {/* Results */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
+          <div style={{ display: 'flex', alignItems: 'center', padding: '8px 16px', gap: 4 }}>
+            <button
+              className={`file-view-btn${viewMode === 'list' ? ' active' : ''}`}
+              onClick={() => { setViewMode('list'); localStorage.setItem('viewMode:search', 'list') }}
+              title={t('workspace.listView')}
+            >☰</button>
+            <button
+              className={`file-view-btn${viewMode === 'card' ? ' active' : ''}`}
+              onClick={() => { setViewMode('card'); localStorage.setItem('viewMode:search', 'card') }}
+              title={t('workspace.cardView')}
+            >⊞</button>
+          </div>
+
           <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px' }}>
             {files.length === 0 ? (
               <div style={{ textAlign: 'center', padding: 40, color: 'rgba(255,255,255,0.3)' }}>
                 {selectedTagIDs.length > 0 ? t('tag.noResults') : t('tag.allFiles')}
               </div>
-            ) : (
+            ) : viewMode === 'list' ? (
               files.map(f => {
                 const thumb = thumbnails[f.id]
                 return (
@@ -185,6 +199,37 @@ function SearchPage({ navigate }) {
                   </div>
                 )
               })
+            ) : (
+              <div className="file-tile-grid">
+                {files.map(f => {
+                  const thumb = thumbnails[f.id]
+                  return (
+                    <div
+                      key={f.id}
+                      className="file-tile"
+                      onClick={() => navigate('file', {
+                        projectID: f.project_id,
+                        projectName: f.project_name,
+                        fileID: f.id,
+                        fileName: f.name,
+                      })}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <div className="file-tile-thumb">
+                        {thumb ? (
+                          <img src={thumb} alt="" />
+                        ) : (
+                          <span className="file-tile-thumb-placeholder">{f.name}</span>
+                        )}
+                      </div>
+                      <div className="file-tile-info">
+                        <div className="file-tile-name" title={f.name}>{f.name}</div>
+                        <div className="search-result-project">{f.project_name}</div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
             )}
           </div>
 
