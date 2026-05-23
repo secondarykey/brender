@@ -16,14 +16,22 @@ function TagSettings() {
 
   const [newCatName, setNewCatName] = useState('')
   const [showNewCatDialog, setShowNewCatDialog] = useState(false)
+
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleteType, setDeleteType] = useState('')
   const [deleting, setDeleting] = useState(false)
 
+  // Category edit dialog
+  const [editCat, setEditCat] = useState(null)
+  const [editCatName, setEditCatName] = useState('')
+  const [editCatColor, setEditCatColor] = useState('')
+  const [editCatMergeID, setEditCatMergeID] = useState('')
+  const [mergingCat, setMergingCat] = useState(false)
+
+  // Tag merge dialog
   const [mergeSource, setMergeSource] = useState(null)
   const [mergeTargetID, setMergeTargetID] = useState('')
   const [merging, setMerging] = useState(false)
-  const [mergeType, setMergeType] = useState('category')
 
   const [editingTagID, setEditingTagID] = useState(null)
   const [editingTagName, setEditingTagName] = useState('')
@@ -93,12 +101,39 @@ function TagSettings() {
     }
   }
 
-  const handleUpdateCategory = async (cat, name, color) => {
+  const openEditCat = (cat) => {
+    setEditCat(cat)
+    setEditCatName(cat.name)
+    setEditCatColor(cat.color || '#555555')
+    setEditCatMergeID('')
+  }
+
+  const handleSaveCategory = async () => {
+    if (!editCat) return
+    const name = editCatName.trim()
+    if (!name) return
     try {
-      await TagApi.updateCategory({ id: cat.id, name: name.trim(), color })
+      await TagApi.updateCategory({ id: editCat.id, name, color: editCatColor })
+      showToast(t('common.saved'))
+      setEditCat(null)
       load()
     } catch (e) {
       showError(String(e))
+    }
+  }
+
+  const handleMergeCatInDialog = async () => {
+    if (!editCat || !editCatMergeID) return
+    setMergingCat(true)
+    try {
+      await TagApi.mergeCategories({ sourceID: editCat.id, targetID: Number(editCatMergeID) })
+      showToast(t('common.saved'))
+      setEditCat(null)
+      load()
+    } catch (e) {
+      showError(String(e))
+    } finally {
+      setMergingCat(false)
     }
   }
 
@@ -120,15 +155,11 @@ function TagSettings() {
     }
   }
 
-  const handleMergeConfirm = async () => {
+  const handleMergeTagConfirm = async () => {
     if (!mergeTargetID) return
     setMerging(true)
     try {
-      if (mergeType === 'category') {
-        await TagApi.mergeCategories({ sourceID: mergeSource.id, targetID: Number(mergeTargetID) })
-      } else {
-        await TagApi.mergeTags({ sourceID: mergeSource.id, targetID: Number(mergeTargetID) })
-      }
+      await TagApi.mergeTags({ sourceID: mergeSource.id, targetID: Number(mergeTargetID) })
       showToast(t('common.saved'))
       load()
     } catch (e) {
@@ -159,7 +190,6 @@ function TagSettings() {
 
   const openTagMerge = (tag) => {
     setMergeSource(tag)
-    setMergeType('tag')
     const others = tags.filter(t => t.id !== tag.id)
     setMergeTargetID(others.length > 0 ? String(others[0].id) : '')
   }
@@ -262,42 +292,12 @@ function TagSettings() {
           >
             <div className="tag-settings-category-header">
               <span className="drag-handle" title={t('common.dragToReorder')}>≡</span>
-              <input
-                type="color"
-                className="tag-settings-color-input"
-                value={cat.color || '#555555'}
-                onChange={e => handleUpdateCategory(cat, cat.name, e.target.value)}
-              />
-              <input
-                className="form-input"
-                value={cat.name}
-                onChange={e => {
-                  setCategories(prev => prev.map(c => c.id === cat.id ? { ...c, name: e.target.value } : c))
-                }}
-                onBlur={e => {
-                  const val = e.target.value.trim()
-                  if (val && val !== cat.name) handleUpdateCategory(cat, val, cat.color)
-                }}
-                style={{ flex: 1, height: 28, fontSize: '0.85rem' }}
-              />
-              <button
-                className="btn btn-outline btn-sm"
-                onClick={() => {
-                  setMergeSource(cat)
-                  setMergeType('category')
-                  const others = categories.filter(c => c.id !== cat.id)
-                  setMergeTargetID(others.length > 0 ? String(others[0].id) : '')
-                }}
-                disabled={categories.length < 2}
-              >
-                {t('tag.merge')}
-              </button>
-              <button
-                className="btn btn-danger btn-sm"
-                onClick={() => { setDeleteTarget(cat); setDeleteType('category') }}
-              >
-                {t('common.delete')}
-              </button>
+              <span className="tag-settings-cat-color-dot" style={{ backgroundColor: cat.color || '#555' }} />
+              <span
+                className="tag-settings-cat-name"
+                onClick={() => openEditCat(cat)}
+                title={t('common.edit')}
+              >{cat.name}</span>
             </div>
             <div className="tag-settings-tag-list">
               {catTags.map(tag => (
@@ -356,7 +356,7 @@ function TagSettings() {
         </div>
       )}
 
-      {/* Delete dialog */}
+      {/* Delete dialog (tag only now) */}
       <ConfirmDialog
         open={deleteTarget !== null}
         title={deleteType === 'category' ? t('tag.confirmDeleteCategory') : t('tag.confirmDeleteTag')}
@@ -371,10 +371,10 @@ function TagSettings() {
         </p>
       </ConfirmDialog>
 
-      {/* Merge dialog */}
+      {/* Tag merge dialog */}
       <Dialog
         open={mergeSource !== null}
-        title={mergeType === 'category' ? t('tag.merge') : t('tag.mergeTag')}
+        title={t('tag.mergeTag')}
         onClose={() => setMergeSource(null)}
         closeOnBackdrop={!merging}
         actions={
@@ -382,30 +382,13 @@ function TagSettings() {
             <button className="btn btn-ghost" onClick={() => setMergeSource(null)} disabled={merging}>
               {t('common.cancel')}
             </button>
-            <button className="btn btn-outline" onClick={handleMergeConfirm} disabled={merging || !mergeTargetID}>
+            <button className="btn btn-outline" onClick={handleMergeTagConfirm} disabled={merging || !mergeTargetID}>
               {merging ? t('common.processing') : t('tag.merge')}
             </button>
           </>
         }
       >
-        {mergeSource && mergeType === 'category' && (
-          <>
-            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem', marginBottom: 12 }}>
-              {t('tag.mergeConfirm', { source: mergeSource.name, target: categories.find(c => String(c.id) === mergeTargetID)?.name || '' })}
-            </p>
-            <select
-              className="form-select"
-              value={mergeTargetID}
-              onChange={e => setMergeTargetID(e.target.value)}
-              style={{ width: '100%' }}
-            >
-              {categories.filter(c => c.id !== mergeSource.id).map(c => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-          </>
-        )}
-        {mergeSource && mergeType === 'tag' && (
+        {mergeSource && (
           <>
             <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem', marginBottom: 12 }}>
               {t('tag.mergeTagConfirm', { source: mergeSource.name, target: tags.find(tg => String(tg.id) === mergeTargetID)?.name || '' })}
@@ -421,6 +404,93 @@ function TagSettings() {
               ))}
             </select>
           </>
+        )}
+      </Dialog>
+
+      {/* Category edit dialog */}
+      <Dialog
+        open={editCat !== null}
+        title={t('tag.editCategory')}
+        onClose={() => setEditCat(null)}
+        closeOnBackdrop={!mergingCat}
+        actions={
+          <>
+            <button
+              className="btn btn-danger"
+              onClick={() => { setDeleteTarget(editCat); setDeleteType('category'); setEditCat(null) }}
+              disabled={mergingCat}
+            >
+              {t('common.delete')}
+            </button>
+            <div style={{ flex: 1 }} />
+            <button className="btn btn-ghost" onClick={() => setEditCat(null)} disabled={mergingCat}>
+              {t('common.cancel')}
+            </button>
+            <button className="btn btn-green" onClick={handleSaveCategory} disabled={!editCatName.trim() || mergingCat}>
+              {t('common.save')}
+            </button>
+          </>
+        }
+      >
+        {editCat && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {/* Name & Color */}
+            <div className="form-field">
+              <label className="form-label">{t('tag.categoryName')}</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input
+                  type="color"
+                  className="tag-settings-color-input"
+                  value={editCatColor}
+                  onChange={e => setEditCatColor(e.target.value)}
+                  style={{ width: 36, height: 36 }}
+                />
+                <input
+                  className="form-input"
+                  value={editCatName}
+                  onChange={e => setEditCatName(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && editCatName.trim()) handleSaveCategory() }}
+                  style={{ flex: 1, width: '100%' }}
+                  autoFocus
+                />
+              </div>
+            </div>
+
+            {/* Merge */}
+            {categories.length >= 2 && (
+              <div className="form-field">
+                <label className="form-label">{t('tag.merge')}</label>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <select
+                    className="form-select"
+                    value={editCatMergeID}
+                    onChange={e => setEditCatMergeID(e.target.value)}
+                    style={{ flex: 1 }}
+                  >
+                    <option value="">{t('tag.mergeInto')}</option>
+                    {categories.filter(c => c.id !== editCat.id).map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                  <button
+                    className="btn btn-outline btn-sm"
+                    onClick={handleMergeCatInDialog}
+                    disabled={!editCatMergeID || mergingCat}
+                  >
+                    {mergingCat ? t('common.processing') : t('tag.merge')}
+                  </button>
+                </div>
+                {editCatMergeID && (
+                  <p className="form-hint" style={{ marginTop: 4 }}>
+                    {t('tag.mergeConfirm', {
+                      source: editCat.name,
+                      target: categories.find(c => String(c.id) === editCatMergeID)?.name || ''
+                    })}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
         )}
       </Dialog>
 

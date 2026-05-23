@@ -531,6 +531,7 @@
     "mergeTagConfirm": "Merge tag \"{{source}}\" into \"{{target}}\"? All file associations will be transferred.",
     "confirmMergeTag": "Merge this tag?",
     "newTag": "New tag",
-    "tagExists": "A tag with the same name already exists"
+    "tagExists": "A tag with the same name already exists",
+    "editCategory": "Edit Category"
   }
 }

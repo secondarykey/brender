@@ -2605,6 +2605,22 @@ textarea.form-input {
   gap: 8px;
   margin-bottom: 8px;
 }
+.tag-settings-cat-color-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.tag-settings-cat-name {
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.85);
+}
+.tag-settings-cat-name:hover {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  color: #fff;
+}
 .tag-settings-color-input {
   width: 28px;
   height: 28px;
