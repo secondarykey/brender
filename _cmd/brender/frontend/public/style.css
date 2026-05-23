@@ -2599,6 +2599,10 @@ textarea.form-input {
   border-top: 2px solid #4a7cdc;
   background: rgba(74, 124, 220, 0.08);
 }
+.tag-settings-category.tag-drag-over {
+  border: 2px solid #27ae60;
+  background: rgba(39, 174, 96, 0.08);
+}
 .tag-settings-category-header {
   display: flex;
   align-items: center;
@@ -2644,7 +2648,10 @@ textarea.form-input {
   border-radius: 12px;
   font-size: 0.8rem;
   color: #fff;
-  cursor: default;
+  cursor: grab;
+}
+.tag-settings-tag-item:active {
+  cursor: grabbing;
 }
 .tag-settings-tag-item button {
   background: none;

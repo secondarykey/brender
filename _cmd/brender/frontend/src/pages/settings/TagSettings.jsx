@@ -38,23 +38,57 @@ function TagSettings() {
   const [newTagInputs, setNewTagInputs] = useState({})
   const [addingTagCatID, setAddingTagCatID] = useState(null)
 
+  // Category reorder drag
   const dragIndex = useRef(null)
   const [dragOver, setDragOver] = useState(null)
 
+  // Tag drag between categories
+  const dragTagID = useRef(null)
+  const [tagDragOver, setTagDragOver] = useState(null) // category id or 'uncategorized'
+
   const handleDragStart = (e, index) => {
     dragIndex.current = index
+    dragTagID.current = null
     e.dataTransfer.effectAllowed = 'move'
     e.dataTransfer.setData('text/plain', index)
+  }
+  const handleTagDragStart = (e, tagID) => {
+    dragTagID.current = tagID
+    dragIndex.current = null
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', tagID)
+    e.stopPropagation()
   }
   const handleDragOver = (e, index) => {
     e.preventDefault()
     e.dataTransfer.dropEffect = 'move'
-    setDragOver(index)
+    if (dragTagID.current) {
+      setTagDragOver(index)
+    } else {
+      setDragOver(index)
+    }
   }
-  const handleDragLeave = () => setDragOver(null)
+  const handleCatDragOver = (e, catID) => {
+    if (!dragTagID.current) return
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setTagDragOver(catID)
+    e.stopPropagation()
+  }
+  const handleDragLeave = () => { setDragOver(null); setTagDragOver(null) }
   const handleDrop = async (e, dropIndex) => {
     e.preventDefault()
     setDragOver(null)
+    setTagDragOver(null)
+    // Tag drop on category (by index)
+    if (dragTagID.current) {
+      const catID = categories[dropIndex]?.id || 0
+      const tagID = dragTagID.current
+      dragTagID.current = null
+      await handleSetTagCategory(tagID, catID)
+      return
+    }
+    // Category reorder
     const from = dragIndex.current
     dragIndex.current = null
     if (from === null || from === dropIndex) return
@@ -69,9 +103,19 @@ function TagSettings() {
       load()
     }
   }
+  const handleDropOnUncategorized = async (e) => {
+    e.preventDefault()
+    setTagDragOver(null)
+    if (!dragTagID.current) return
+    const tagID = dragTagID.current
+    dragTagID.current = null
+    await handleSetTagCategory(tagID, 0)
+  }
   const handleDragEnd = () => {
     dragIndex.current = null
+    dragTagID.current = null
     setDragOver(null)
+    setTagDragOver(null)
   }
 
   const load = () => {
@@ -234,47 +278,49 @@ function TagSettings() {
 
   return (
     <div style={{ padding: 16, maxWidth: 700 }}>
-      {/* Uncategorized (top in settings) */}
-      {uncategorized.length > 0 && (
-        <div className="tag-settings-category" style={{ borderLeft: '3px solid rgba(255,255,255,0.15)' }}>
-          <div className="tag-settings-category-header">
-            <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)' }}>{t('tag.uncategorized')}</span>
-          </div>
-          <div className="tag-settings-tag-list">
-            {uncategorized.map(tag => (
-              <span key={tag.id} className="tag-settings-tag-item" style={{ backgroundColor: tagColor(tag) }}>
-                {editingTagID === tag.id ? (
-                  <input
-                    className="tag-settings-tag-name-input"
-                    value={editingTagName}
-                    onChange={e => setEditingTagName(e.target.value)}
-                    onBlur={() => handleUpdateTag(tag)}
-                    onKeyDown={e => { if (e.key === 'Enter') handleUpdateTag(tag); if (e.key === 'Escape') setEditingTagID(null) }}
-                    autoFocus
-                  />
-                ) : (
-                  <span
-                    className="tag-settings-tag-name"
-                    onDoubleClick={() => { setEditingTagID(tag.id); setEditingTagName(tag.name) }}
-                    title={t('tag.rename')}
-                  >{tag.name}</span>
-                )}
-                <select
-                  className="form-select"
-                  value=""
-                  onChange={e => handleSetTagCategory(tag.id, Number(e.target.value))}
-                  style={{ height: 22, fontSize: '0.7rem', padding: '0 4px', marginLeft: 4, width: 'auto', background: 'rgba(0,0,0,0.3)', border: 'none', color: 'rgba(255,255,255,0.7)' }}
-                >
-                  <option value="">{t('tag.assignCategory')}</option>
-                  {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-                <button onClick={() => openTagMerge(tag)} title={t('tag.mergeTag')} disabled={tags.length < 2}>⇄</button>
-                <button onClick={() => { setDeleteTarget(tag); setDeleteType('tag') }}>×</button>
-              </span>
-            ))}
-          </div>
+      {/* Uncategorized (top in settings) — also drop target for tags */}
+      <div
+        className={`tag-settings-category${tagDragOver === 'uncategorized' ? ' drag-over' : ''}`}
+        style={{ borderLeft: '3px solid rgba(255,255,255,0.15)', display: uncategorized.length > 0 || dragTagID.current ? undefined : 'none' }}
+        onDragOver={e => { if (dragTagID.current) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setTagDragOver('uncategorized') } }}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDropOnUncategorized}
+      >
+        <div className="tag-settings-category-header">
+          <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)' }}>{t('tag.uncategorized')}</span>
         </div>
-      )}
+        <div className="tag-settings-tag-list">
+          {uncategorized.map(tag => (
+            <span
+              key={tag.id}
+              className="tag-settings-tag-item"
+              style={{ backgroundColor: tagColor(tag) }}
+              draggable
+              onDragStart={e => handleTagDragStart(e, tag.id)}
+              onDragEnd={handleDragEnd}
+            >
+              {editingTagID === tag.id ? (
+                <input
+                  className="tag-settings-tag-name-input"
+                  value={editingTagName}
+                  onChange={e => setEditingTagName(e.target.value)}
+                  onBlur={() => handleUpdateTag(tag)}
+                  onKeyDown={e => { if (e.key === 'Enter') handleUpdateTag(tag); if (e.key === 'Escape') setEditingTagID(null) }}
+                  autoFocus
+                />
+              ) : (
+                <span
+                  className="tag-settings-tag-name"
+                  onDoubleClick={() => { setEditingTagID(tag.id); setEditingTagName(tag.name) }}
+                  title={t('tag.rename')}
+                >{tag.name}</span>
+              )}
+              <button onClick={() => openTagMerge(tag)} title={t('tag.mergeTag')} disabled={tags.length < 2}>⇄</button>
+              <button onClick={() => { setDeleteTarget(tag); setDeleteType('tag') }}>×</button>
+            </span>
+          ))}
+        </div>
+      </div>
 
       {/* Categories */}
       {categories.map((cat, index) => {
@@ -282,12 +328,23 @@ function TagSettings() {
         return (
           <div
             key={cat.id}
-            className={`tag-settings-category${dragOver === index ? ' drag-over' : ''}`}
-            draggable
+            className={`tag-settings-category${dragOver === index ? ' drag-over' : ''}${tagDragOver === cat.id ? ' tag-drag-over' : ''}`}
+            draggable={!dragTagID.current}
             onDragStart={e => handleDragStart(e, index)}
-            onDragOver={e => handleDragOver(e, index)}
+            onDragOver={e => { handleDragOver(e, index); handleCatDragOver(e, cat.id) }}
             onDragLeave={handleDragLeave}
-            onDrop={e => handleDrop(e, index)}
+            onDrop={e => {
+              if (dragTagID.current) {
+                e.preventDefault()
+                e.stopPropagation()
+                setTagDragOver(null)
+                const tagID = dragTagID.current
+                dragTagID.current = null
+                handleSetTagCategory(tagID, cat.id)
+              } else {
+                handleDrop(e, index)
+              }
+            }}
             onDragEnd={handleDragEnd}
           >
             <div className="tag-settings-category-header">
@@ -301,7 +358,14 @@ function TagSettings() {
             </div>
             <div className="tag-settings-tag-list">
               {catTags.map(tag => (
-                <span key={tag.id} className="tag-settings-tag-item" style={{ backgroundColor: tagColor(tag) }}>
+                <span
+                  key={tag.id}
+                  className="tag-settings-tag-item"
+                  style={{ backgroundColor: tagColor(tag) }}
+                  draggable
+                  onDragStart={e => handleTagDragStart(e, tag.id)}
+                  onDragEnd={handleDragEnd}
+                >
                   {editingTagID === tag.id ? (
                     <input
                       className="tag-settings-tag-name-input"
