@@ -22,6 +22,10 @@ function TagSettings() {
   const [mergeSource, setMergeSource] = useState(null)
   const [mergeTargetID, setMergeTargetID] = useState('')
   const [merging, setMerging] = useState(false)
+  const [mergeType, setMergeType] = useState('category')
+
+  const [editingTagID, setEditingTagID] = useState(null)
+  const [editingTagName, setEditingTagName] = useState('')
 
   const load = () => {
     setLoading(true)
@@ -80,7 +84,11 @@ function TagSettings() {
     if (!mergeTargetID) return
     setMerging(true)
     try {
-      await TagApi.mergeCategories({ sourceID: mergeSource.id, targetID: Number(mergeTargetID) })
+      if (mergeType === 'category') {
+        await TagApi.mergeCategories({ sourceID: mergeSource.id, targetID: Number(mergeTargetID) })
+      } else {
+        await TagApi.mergeTags({ sourceID: mergeSource.id, targetID: Number(mergeTargetID) })
+      }
       showToast(t('common.saved'))
       load()
     } catch (e) {
@@ -90,6 +98,30 @@ function TagSettings() {
       setMergeSource(null)
       setMergeTargetID('')
     }
+  }
+
+  const handleUpdateTag = async (tag) => {
+    const name = editingTagName.trim()
+    if (!name || name === tag.name) {
+      setEditingTagID(null)
+      return
+    }
+    try {
+      await TagApi.updateTag({ id: tag.id, name, categoryID: tag.category_id || 0, color: tag.color || '' })
+      showToast(t('common.saved'))
+      load()
+    } catch (e) {
+      showError(String(e))
+    } finally {
+      setEditingTagID(null)
+    }
+  }
+
+  const openTagMerge = (tag) => {
+    setMergeSource(tag)
+    setMergeType('tag')
+    const others = tags.filter(t => t.id !== tag.id)
+    setMergeTargetID(others.length > 0 ? String(others[0].id) : '')
   }
 
   const handleSetTagCategory = async (tagID, categoryID) => {
@@ -161,6 +193,7 @@ function TagSettings() {
                 className="btn btn-outline btn-sm"
                 onClick={() => {
                   setMergeSource(cat)
+                  setMergeType('category')
                   const others = categories.filter(c => c.id !== cat.id)
                   setMergeTargetID(others.length > 0 ? String(others[0].id) : '')
                 }}
@@ -179,7 +212,23 @@ function TagSettings() {
               <div className="tag-settings-tag-list">
                 {catTags.map(tag => (
                   <span key={tag.id} className="tag-settings-tag-item" style={{ backgroundColor: tagColor(tag) }}>
-                    {tag.name}
+                    {editingTagID === tag.id ? (
+                      <input
+                        className="tag-settings-tag-name-input"
+                        value={editingTagName}
+                        onChange={e => setEditingTagName(e.target.value)}
+                        onBlur={() => handleUpdateTag(tag)}
+                        onKeyDown={e => { if (e.key === 'Enter') handleUpdateTag(tag); if (e.key === 'Escape') setEditingTagID(null) }}
+                        autoFocus
+                      />
+                    ) : (
+                      <span
+                        className="tag-settings-tag-name"
+                        onDoubleClick={() => { setEditingTagID(tag.id); setEditingTagName(tag.name) }}
+                        title={t('tag.rename')}
+                      >{tag.name}</span>
+                    )}
+                    <button onClick={() => openTagMerge(tag)} title={t('tag.mergeTag')} disabled={tags.length < 2}>⇄</button>
                     <button onClick={() => { setDeleteTarget(tag); setDeleteType('tag') }}>×</button>
                   </span>
                 ))}
@@ -198,7 +247,22 @@ function TagSettings() {
           <div className="tag-settings-tag-list">
             {uncategorized.map(tag => (
               <span key={tag.id} className="tag-settings-tag-item" style={{ backgroundColor: tagColor(tag) }}>
-                {tag.name}
+                {editingTagID === tag.id ? (
+                  <input
+                    className="tag-settings-tag-name-input"
+                    value={editingTagName}
+                    onChange={e => setEditingTagName(e.target.value)}
+                    onBlur={() => handleUpdateTag(tag)}
+                    onKeyDown={e => { if (e.key === 'Enter') handleUpdateTag(tag); if (e.key === 'Escape') setEditingTagID(null) }}
+                    autoFocus
+                  />
+                ) : (
+                  <span
+                    className="tag-settings-tag-name"
+                    onDoubleClick={() => { setEditingTagID(tag.id); setEditingTagName(tag.name) }}
+                    title={t('tag.rename')}
+                  >{tag.name}</span>
+                )}
                 <select
                   className="form-select"
                   value=""
@@ -208,6 +272,7 @@ function TagSettings() {
                   <option value="">{t('tag.assignCategory')}</option>
                   {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
+                <button onClick={() => openTagMerge(tag)} title={t('tag.mergeTag')} disabled={tags.length < 2}>⇄</button>
                 <button onClick={() => { setDeleteTarget(tag); setDeleteType('tag') }}>×</button>
               </span>
             ))}
@@ -239,7 +304,7 @@ function TagSettings() {
       {/* Merge dialog */}
       <Dialog
         open={mergeSource !== null}
-        title={t('tag.merge')}
+        title={mergeType === 'category' ? t('tag.merge') : t('tag.mergeTag')}
         onClose={() => setMergeSource(null)}
         closeOnBackdrop={!merging}
         actions={
@@ -253,7 +318,7 @@ function TagSettings() {
           </>
         }
       >
-        {mergeSource && (
+        {mergeSource && mergeType === 'category' && (
           <>
             <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem', marginBottom: 12 }}>
               {t('tag.mergeConfirm', { source: mergeSource.name, target: categories.find(c => String(c.id) === mergeTargetID)?.name || '' })}
@@ -266,6 +331,23 @@ function TagSettings() {
             >
               {categories.filter(c => c.id !== mergeSource.id).map(c => (
                 <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </>
+        )}
+        {mergeSource && mergeType === 'tag' && (
+          <>
+            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem', marginBottom: 12 }}>
+              {t('tag.mergeTagConfirm', { source: mergeSource.name, target: tags.find(tg => String(tg.id) === mergeTargetID)?.name || '' })}
+            </p>
+            <select
+              className="form-select"
+              value={mergeTargetID}
+              onChange={e => setMergeTargetID(e.target.value)}
+              style={{ width: '100%' }}
+            >
+              {tags.filter(tg => tg.id !== mergeSource.id).map(tg => (
+                <option key={tg.id} value={tg.id}>{tg.category_name ? `${tg.category_name}:${tg.name}` : tg.name}</option>
               ))}
             </select>
           </>

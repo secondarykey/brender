@@ -53,6 +53,13 @@ func MergeTagCategories(sourceID, targetID uint) error {
 	return model.MergeTagCategories(sourceID, targetID)
 }
 
+func MergeTags(sourceID, targetID uint) error {
+	if sourceID == targetID {
+		return xerrors.New("cannot merge a tag into itself")
+	}
+	return model.MergeTags(sourceID, targetID)
+}
+
 // ── Tag ──────────────────────────────────────────────────
 
 func ListTags() ([]*model.TagWithCategory, error) {

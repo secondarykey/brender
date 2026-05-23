@@ -2631,3 +2631,20 @@ textarea.form-input {
 .tag-settings-tag-item button:hover {
   color: #fff;
 }
+.tag-settings-tag-name {
+  cursor: pointer;
+}
+.tag-settings-tag-name:hover {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+}
+.tag-settings-tag-name-input {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 4px;
+  color: #fff;
+  font-size: 0.8rem;
+  padding: 1px 4px;
+  width: 80px;
+  outline: none;
+}

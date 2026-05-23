@@ -118,6 +118,34 @@ func MergeTagCategories(sourceID, targetID uint) error {
 	})
 }
 
+func MergeTags(sourceID, targetID uint) error {
+	return db.Transaction(func(tx *gorm.DB) error {
+		var sourceRefs []ProjectFileTag
+		if res := tx.Where("tag_id = ?", sourceID).Find(&sourceRefs); res.Error != nil {
+			return xerrors.Errorf("MergeTags find refs: %w", res.Error)
+		}
+		for _, ref := range sourceRefs {
+			var existing ProjectFileTag
+			res := tx.Where("project_file_id = ? AND tag_id = ?", ref.ProjectFileID, targetID).First(&existing)
+			if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+				if res := tx.Model(&ProjectFileTag{}).Where("project_file_id = ? AND tag_id = ?", ref.ProjectFileID, sourceID).Update("tag_id", targetID); res.Error != nil {
+					return xerrors.Errorf("MergeTags move ref: %w", res.Error)
+				}
+			} else if res.Error != nil {
+				return xerrors.Errorf("MergeTags check dup: %w", res.Error)
+			} else {
+				if res := tx.Where("project_file_id = ? AND tag_id = ?", ref.ProjectFileID, sourceID).Delete(&ProjectFileTag{}); res.Error != nil {
+					return xerrors.Errorf("MergeTags delete dup: %w", res.Error)
+				}
+			}
+		}
+		if res := tx.Delete(&Tag{}, "id = ?", sourceID); res.Error != nil {
+			return xerrors.Errorf("MergeTags delete: %w", res.Error)
+		}
+		return nil
+	})
+}
+
 // ── Tag CRUD ─────────────────────────────────────────────
 
 func ListTags() ([]*TagWithCategory, error) {

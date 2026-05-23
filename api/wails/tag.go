@@ -31,6 +31,10 @@ func (t *Tag) MergeCategories(sourceID, targetID uint) error {
 	return api.MergeTagCategories(sourceID, targetID)
 }
 
+func (t *Tag) MergeTags(sourceID, targetID uint) error {
+	return api.MergeTags(sourceID, targetID)
+}
+
 // ── Tag ──────────────────────────────────────────────────
 
 func (t *Tag) ListTags() ([]*model.TagWithCategory, error) {

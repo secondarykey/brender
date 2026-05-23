@@ -525,6 +525,10 @@
     "confirmDeleteTag": "Delete this tag?",
     "deleteTagWarning": "This tag will be removed from all files.",
     "noTags": "No tags",
-    "tagCount": "{{count}} files"
+    "tagCount": "{{count}} files",
+    "rename": "Rename",
+    "mergeTag": "Merge Tag",
+    "mergeTagConfirm": "Merge tag \"{{source}}\" into \"{{target}}\"? All file associations will be transferred.",
+    "confirmMergeTag": "Merge this tag?"
   }
 }

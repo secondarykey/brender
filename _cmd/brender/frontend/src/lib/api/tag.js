@@ -47,6 +47,10 @@ export const TagApi = {
     isWails() ? svc().then(s => s.SetTagCategory(tagID, categoryID || 0))
               : serverCall('tag', 'set_tag_category', { tag_id: tagID, category_id: categoryID }),
 
+  mergeTags: ({ sourceID, targetID }) =>
+    isWails() ? svc().then(s => s.MergeTags(sourceID, targetID))
+              : serverCall('tag', 'merge_tags', { source_id: sourceID, target_id: targetID }),
+
   // ── File tagging ───────────────────────────────────────
 
   addTagToFile: ({ projectFileID, tagID }) =>
