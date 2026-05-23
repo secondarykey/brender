@@ -18,6 +18,7 @@ function TagInput({ projectFileID, tags, onTagsChanged }) {
   const [suggestions, setSuggestions] = useState([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [activeIdx, setActiveIdx] = useState(-1)
+  const [pendingDeleteID, setPendingDeleteID] = useState(null)
   const inputRef = useRef(null)
   const containerRef = useRef(null)
 
@@ -121,14 +122,20 @@ function TagInput({ projectFileID, tags, onTagsChanged }) {
     } else if (e.key === 'Escape') {
       setShowSuggestions(false)
     } else if (e.key === 'Backspace' && !input && tags && tags.length > 0) {
-      removeTag(tags[tags.length - 1].id)
+      const lastTag = tags[tags.length - 1]
+      if (pendingDeleteID === lastTag.id) {
+        removeTag(lastTag.id)
+        setPendingDeleteID(null)
+      } else {
+        setPendingDeleteID(lastTag.id)
+      }
     }
   }
 
   return (
     <div className="tag-input-container" ref={containerRef}>
       {(tags || []).map(tag => (
-        <span key={tag.id} className="tag-chip" style={{ backgroundColor: tagColor(tag) }}>
+        <span key={tag.id} className={`tag-chip${pendingDeleteID === tag.id ? ' tag-chip-pending' : ''}`} style={{ backgroundColor: tagColor(tag) }}>
           <span className="tag-chip-label">{tagLabel(tag)}</span>
           <button className="tag-chip-remove" onClick={() => removeTag(tag.id)}>×</button>
         </span>
@@ -140,6 +147,7 @@ function TagInput({ projectFileID, tags, onTagsChanged }) {
           value={input}
           onChange={e => {
             const val = e.target.value
+            if (pendingDeleteID) setPendingDeleteID(null)
             if (val.includes(',')) {
               assignTag(val)
             } else {

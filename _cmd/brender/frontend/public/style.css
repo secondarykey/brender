@@ -2438,6 +2438,11 @@ textarea.form-input {
   white-space: nowrap;
   line-height: 1.4;
 }
+.tag-chip-pending {
+  opacity: 0.5;
+  outline: 2px solid rgba(255,255,255,0.7);
+  outline-offset: -1px;
+}
 .tag-chip-label {
   max-width: 160px;
   overflow: hidden;
