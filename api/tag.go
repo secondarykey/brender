@@ -46,6 +46,10 @@ func DeleteTagCategory(id uint) error {
 	return model.DeleteTagCategory(id)
 }
 
+func ReorderTagCategories(ids []uint) error {
+	return model.ReorderTagCategories(ids)
+}
+
 func MergeTagCategories(sourceID, targetID uint) error {
 	if sourceID == targetID {
 		return xerrors.New("cannot merge a category into itself")

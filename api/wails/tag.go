@@ -27,6 +27,10 @@ func (t *Tag) DeleteCategory(id uint) error {
 	return api.DeleteTagCategory(id)
 }
 
+func (t *Tag) ReorderCategories(ids []uint) error {
+	return api.ReorderTagCategories(ids)
+}
+
 func (t *Tag) MergeCategories(sourceID, targetID uint) error {
 	return api.MergeTagCategories(sourceID, targetID)
 }

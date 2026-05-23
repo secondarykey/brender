@@ -2593,6 +2593,11 @@ textarea.form-input {
   padding: 12px;
   background: rgba(255,255,255,0.03);
   border-radius: 8px;
+  border: 2px solid transparent;
+}
+.tag-settings-category.drag-over {
+  border-top: 2px solid #4a7cdc;
+  background: rgba(74, 124, 220, 0.08);
 }
 .tag-settings-category-header {
   display: flex;

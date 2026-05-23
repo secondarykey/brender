@@ -8,9 +8,10 @@ import (
 )
 
 type TagCategory struct {
-	ID    uint   `gorm:"primaryKey" json:"id"`
-	Name  string `gorm:"uniqueIndex" json:"name"`
-	Color string `json:"color"`
+	ID           uint   `gorm:"primaryKey" json:"id"`
+	Name         string `gorm:"uniqueIndex" json:"name"`
+	Color        string `json:"color"`
+	DisplayOrder int    `gorm:"default:99999" json:"display_order"`
 	MetaFields
 }
 
@@ -45,10 +46,19 @@ type TagUsageCount struct {
 
 func ListTagCategories() ([]*TagCategory, error) {
 	var cats []*TagCategory
-	if res := db.Order("name asc").Find(&cats); res.Error != nil {
+	if res := db.Order("display_order asc, name asc").Find(&cats); res.Error != nil {
 		return nil, xerrors.Errorf("ListTagCategories: %w", res.Error)
 	}
 	return cats, nil
+}
+
+func ReorderTagCategories(ids []uint) error {
+	for i, id := range ids {
+		if res := db.Model(&TagCategory{}).Where("id = ?", id).Update("display_order", i); res.Error != nil {
+			return xerrors.Errorf("ReorderTagCategories: %w", res.Error)
+		}
+	}
+	return nil
 }
 
 func GetTagCategory(id uint) (*TagCategory, error) {

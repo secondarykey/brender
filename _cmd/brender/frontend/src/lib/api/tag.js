@@ -21,6 +21,10 @@ export const TagApi = {
     isWails() ? svc().then(s => s.DeleteCategory(id))
               : serverCall('tag', 'delete_category', { id }),
 
+  reorderCategories: ({ ids }) =>
+    isWails() ? svc().then(s => s.ReorderCategories(ids))
+              : serverCall('tag', 'reorder_categories', { ids }),
+
   mergeCategories: ({ sourceID, targetID }) =>
     isWails() ? svc().then(s => s.MergeCategories(sourceID, targetID))
               : serverCall('tag', 'merge_categories', { source_id: sourceID, target_id: targetID }),

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TagApi } from '../../lib/api'
 import { useToast, useMessage } from '../../lib/toast'
@@ -29,6 +29,42 @@ function TagSettings() {
   const [editingTagName, setEditingTagName] = useState('')
   const [newTagInputs, setNewTagInputs] = useState({})
   const [addingTagCatID, setAddingTagCatID] = useState(null)
+
+  const dragIndex = useRef(null)
+  const [dragOver, setDragOver] = useState(null)
+
+  const handleDragStart = (e, index) => {
+    dragIndex.current = index
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', index)
+  }
+  const handleDragOver = (e, index) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDragOver(index)
+  }
+  const handleDragLeave = () => setDragOver(null)
+  const handleDrop = async (e, dropIndex) => {
+    e.preventDefault()
+    setDragOver(null)
+    const from = dragIndex.current
+    dragIndex.current = null
+    if (from === null || from === dropIndex) return
+    const newList = [...categories]
+    const [moved] = newList.splice(from, 1)
+    newList.splice(dropIndex, 0, moved)
+    setCategories(newList)
+    try {
+      await TagApi.reorderCategories({ ids: newList.map(c => c.id) })
+    } catch (e) {
+      showError(String(e))
+      load()
+    }
+  }
+  const handleDragEnd = () => {
+    dragIndex.current = null
+    setDragOver(null)
+  }
 
   const load = () => {
     setLoading(true)
@@ -169,11 +205,21 @@ function TagSettings() {
   return (
     <div style={{ padding: 16, maxWidth: 700 }}>
       {/* Categories */}
-      {categories.map(cat => {
+      {categories.map((cat, index) => {
         const catTags = grouped[cat.id] || []
         return (
-          <div key={cat.id} className="tag-settings-category">
+          <div
+            key={cat.id}
+            className={`tag-settings-category${dragOver === index ? ' drag-over' : ''}`}
+            draggable
+            onDragStart={e => handleDragStart(e, index)}
+            onDragOver={e => handleDragOver(e, index)}
+            onDragLeave={handleDragLeave}
+            onDrop={e => handleDrop(e, index)}
+            onDragEnd={handleDragEnd}
+          >
             <div className="tag-settings-category-header">
+              <span className="drag-handle" title={t('common.dragToReorder')}>≡</span>
               <input
                 type="color"
                 className="tag-settings-color-input"
