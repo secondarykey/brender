@@ -15,6 +15,7 @@ function TagSettings() {
   const [loading, setLoading] = useState(true)
 
   const [newCatName, setNewCatName] = useState('')
+  const [newCatColor, setNewCatColor] = useState('#4a7cdc')
   const [showNewCatDialog, setShowNewCatDialog] = useState(false)
 
   const [deleteTarget, setDeleteTarget] = useState(null)
@@ -166,7 +167,7 @@ function TagSettings() {
     const name = newCatName.trim()
     if (!name) return
     try {
-      await TagApi.createCategory({ name })
+      await TagApi.createCategory({ name, color: newCatColor })
       setNewCatName('')
       setShowNewCatDialog(false)
       showToast(t('common.saved'))
@@ -581,7 +582,7 @@ function TagSettings() {
 
       {/* New category fab */}
       <div className="list-fab">
-        <button className="btn btn-green" onClick={() => { setNewCatName(''); setShowNewCatDialog(true) }}>
+        <button className="btn btn-green" onClick={() => { setNewCatName(''); setNewCatColor('#4a7cdc'); setShowNewCatDialog(true) }}>
           + {t('tag.newCategory')}
         </button>
       </div>
@@ -602,15 +603,24 @@ function TagSettings() {
           </>
         }
       >
-        <input
-          className="form-input"
-          placeholder={t('tag.categoryName')}
-          value={newCatName}
-          onChange={e => setNewCatName(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter' && newCatName.trim()) handleCreateCategory() }}
-          style={{ width: '100%' }}
-          autoFocus
-        />
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input
+            type="color"
+            className="tag-settings-color-input"
+            value={newCatColor}
+            onChange={e => setNewCatColor(e.target.value)}
+            style={{ width: 36, height: 36 }}
+          />
+          <input
+            className="form-input"
+            placeholder={t('tag.categoryName')}
+            value={newCatName}
+            onChange={e => setNewCatName(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && newCatName.trim()) handleCreateCategory() }}
+            style={{ flex: 1, width: '100%' }}
+            autoFocus
+          />
+        </div>
       </Dialog>
     </div>
   )
