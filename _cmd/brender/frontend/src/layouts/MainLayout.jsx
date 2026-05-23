@@ -46,6 +46,7 @@ function MainLayout({ currentPage, onNavigate, children }) {
 
   const topNav = [
     { id: 'projects', label: t('menu.project'), icon: '▦' },
+    { id: 'search',   label: t('menu.search'),  icon: '⌕' },
     { id: 'queue',    label: t('menu.queue'),    icon: '⏱', badge: queueCount },
   ]
 

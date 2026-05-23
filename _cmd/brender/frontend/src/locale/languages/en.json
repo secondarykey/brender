@@ -47,6 +47,7 @@
   },
   "menu": {
     "project": "Project",
+    "search": "Search",
     "queue": "Queue",
     "miniMonitor": "Mini Monitor",
     "settings": "Settings"
@@ -107,6 +108,7 @@
     "blender": "Blender",
     "video": "Video",
     "code": "Code",
+    "tag": "Tag",
     "directory": "Directory",
     "workDirs": "Work Directories",
     "dataManagement": "Data Management",
@@ -502,5 +504,27 @@
     "fileNotModifiedWarning": "The file has not been modified since the last render. Run again with the same file?",
     "identicalRenderWarning": "Settings are identical to the last render. Did you forget to update the file?",
     "previousValue": "Previous"
+  },
+  "tag": {
+    "addTag": "Add tag...",
+    "tags": "Tags",
+    "allFiles": "All Files",
+    "noResults": "No files match the selected tags",
+    "tagCloud": "Tag Cloud",
+    "categories": "Categories",
+    "uncategorized": "Uncategorized",
+    "newCategory": "New Category",
+    "categoryName": "Category Name",
+    "categoryColor": "Color",
+    "merge": "Merge",
+    "mergeInto": "Merge into...",
+    "mergeConfirm": "Merge category \"{{source}}\" into \"{{target}}\"? All tags will be moved.",
+    "assignCategory": "Assign Category",
+    "confirmDeleteCategory": "Delete this category?",
+    "deleteCategoryWarning": "Tags in this category will become uncategorized.",
+    "confirmDeleteTag": "Delete this tag?",
+    "deleteTagWarning": "This tag will be removed from all files.",
+    "noTags": "No tags",
+    "tagCount": "{{count}} files"
   }
 }

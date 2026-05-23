@@ -2410,3 +2410,224 @@ textarea.form-input {
   border-color: #4a7cdc;
   color: #4a7cdc;
 }
+
+/* ── Tag Input ────────────────────────────────────────── */
+.tag-input-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  background: #1e1e1e;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px;
+  padding: 6px 8px;
+  min-height: 36px;
+  cursor: text;
+}
+.tag-input-container:focus-within {
+  border-color: #4a7cdc;
+}
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  color: #fff;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+.tag-chip-label {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tag-chip-remove {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.6);
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0 2px;
+  line-height: 1;
+}
+.tag-chip-remove:hover {
+  color: #fff;
+}
+.tag-input-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 80px;
+}
+.tag-input-field {
+  background: none;
+  border: none;
+  outline: none;
+  color: rgba(255,255,255,0.85);
+  font-size: 0.85rem;
+  width: 100%;
+  padding: 2px 0;
+}
+.tag-input-field::placeholder {
+  color: rgba(255,255,255,0.3);
+}
+.tag-autocomplete {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #2a2a2a;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px;
+  margin-top: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+.tag-autocomplete-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.8);
+  cursor: pointer;
+}
+.tag-autocomplete-item:hover,
+.tag-autocomplete-item.active {
+  background: rgba(74,124,220,0.2);
+}
+.tag-autocomplete-chip {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Search Page ──────────────────────────────────────── */
+.search-filter-panel {
+  padding: 16px;
+}
+.search-filter-group {
+  margin-bottom: 16px;
+}
+.search-filter-group-title {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.search-filter-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.7);
+  background: rgba(255,255,255,0.08);
+  border: 1px solid transparent;
+  cursor: pointer;
+  margin: 2px;
+  transition: all 0.15s;
+}
+.search-filter-tag:hover {
+  background: rgba(255,255,255,0.12);
+}
+.search-filter-tag.selected {
+  border-color: currentColor;
+  color: #fff;
+}
+.search-filter-tag-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.search-result-item:hover {
+  background: rgba(255,255,255,0.04);
+}
+.search-result-info {
+  flex: 1;
+  min-width: 0;
+}
+.search-result-name {
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.search-result-project {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.4);
+  margin-top: 2px;
+}
+.search-result-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+/* ── Tag Settings ─────────────────────────────────────── */
+.tag-settings-category {
+  margin-bottom: 20px;
+  padding: 12px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 8px;
+}
+.tag-settings-category-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.tag-settings-color-input {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 4px;
+  padding: 0;
+  cursor: pointer;
+  background: none;
+}
+.tag-settings-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.tag-settings-tag-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  color: #fff;
+  cursor: default;
+}
+.tag-settings-tag-item button {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.5);
+  cursor: pointer;
+  padding: 0 2px;
+  font-size: 0.8rem;
+}
+.tag-settings-tag-item button:hover {
+  color: #fff;
+}

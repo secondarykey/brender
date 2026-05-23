@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
-import { WorkspaceApi, QueueApi, ProjectApi, BlenderApi, WorkDirApi } from '../../lib/api'
+import { WorkspaceApi, QueueApi, ProjectApi, BlenderApi, WorkDirApi, TagApi } from '../../lib/api'
 import { useToast, useMessage } from '../../lib/toast'
 import { onAppEvent } from '../../lib/appEvents'
 import { formatDateShort } from '../../lib/dateFormat'
@@ -12,6 +12,7 @@ import ConfirmDialog from '../../components/ConfirmDialog'
 import Breadcrumb from '../../components/Breadcrumb'
 import NoteSection from '../../components/NoteSection'
 import WorkspaceCreateDialog from '../../components/WorkspaceCreateDialog'
+import TagInput from '../../components/TagInput'
 
 
 // ── ワークスペースカード（サムネイル表示） ──────────────────
@@ -505,6 +506,7 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
   const [missingCamera, setMissingCamera]     = useState('')
   const [missingEngine, setMissingEngine]     = useState('')
   const [convertedEngine, setConvertedEngine] = useState(null)
+  const [fileTags, setFileTags]             = useState([])
 
   const fetchToolData = (installID) => {
     setToolLoading(true)
@@ -534,6 +536,9 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
       setEngineFixed(f?.engine_fixed || false)
       fetchToolData(installID)
     })
+    TagApi.getFileTags({ projectFileID: fileID })
+      .then(tags => setFileTags(tags || []))
+      .catch(() => setFileTags([]))
   }, [fileID])
 
   const handleBlenderChange = (installID) => {
@@ -787,6 +792,15 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
           </div>
 
           <NoteSection value={note} onChange={setNote} />
+
+          <div className="form-field" style={{ marginTop: 12 }}>
+            <label className="form-label">{t('tag.tags')}</label>
+            <TagInput
+              projectFileID={fileID}
+              tags={fileTags}
+              onTagsChanged={setFileTags}
+            />
+          </div>
 
           <div className="form-actions">
             <button className="btn btn-danger" onClick={() => { setForceDel(false); setConfirm(true) }}>{t('common.delete')}</button>

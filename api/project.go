@@ -138,6 +138,9 @@ func DeleteProjectFile(fileID string, force bool) error {
 			}
 		}
 	}
+	if err := model.DeleteTagsByFile(fileID); err != nil {
+		return xerrors.Errorf("DeleteProjectFile tags: %w", err)
+	}
 	if err := model.DeleteJobsByProjectFile(fileID); err != nil {
 		return xerrors.Errorf("DeleteProjectFile jobs: %w", err)
 	}
@@ -173,6 +176,9 @@ func DeleteProject(id string, force bool) error {
 				slog.Warn("DeleteProject: remove project dir (no jobs)", "error", err)
 			}
 		}
+	}
+	if err := model.DeleteTagsByProject(id); err != nil {
+		return xerrors.Errorf("DeleteProject tags: %w", err)
 	}
 	if err := model.DeleteJobsByProject(id); err != nil {
 		return xerrors.Errorf("DeleteProject jobs: %w", err)

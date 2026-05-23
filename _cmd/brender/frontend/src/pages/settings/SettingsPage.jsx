@@ -5,6 +5,7 @@ import BlenderSettings from './BlenderSettings'
 import DirectorySettings from './DirectorySettings'
 import VideoSettings from './VideoSettings'
 import CodeSettings from './CodeSettings'
+import TagSettings from './TagSettings'
 
 function SettingsPage({ initialTab, navigate }) {
   const { t } = useTranslation()
@@ -16,6 +17,7 @@ function SettingsPage({ initialTab, navigate }) {
     { id: 'directory',   label: t('tabs.directory') },
     { id: 'video',       label: t('tabs.video') },
     { id: 'code',        label: t('tabs.code') },
+    { id: 'tag',         label: t('tabs.tag') },
   ]
 
   return (
@@ -37,6 +39,7 @@ function SettingsPage({ initialTab, navigate }) {
         {tab === 'directory' && <DirectorySettings navigate={navigate} />}
         {tab === 'video'     && <VideoSettings />}
         {tab === 'code'      && <CodeSettings />}
+        {tab === 'tag'       && <TagSettings />}
       </div>
     </div>
   )

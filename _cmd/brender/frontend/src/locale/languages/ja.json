@@ -47,6 +47,7 @@
   },
   "menu": {
     "project": "プロジェクト",
+    "search": "検索",
     "queue": "キュー",
     "miniMonitor": "ミニモニター",
     "settings": "設定"
@@ -107,6 +108,7 @@
     "blender": "Blender",
     "video": "動画",
     "code": "コード",
+    "tag": "タグ",
     "directory": "ディレクトリ設定",
     "workDirs": "作業ディレクトリ",
     "dataManagement": "データ管理",
@@ -502,5 +504,27 @@
     "fileNotModifiedWarning": "前回の実行からファイルが更新されていません。同じファイルで再実行しますか？",
     "identicalRenderWarning": "前回と完全に同じ設定です。ファイルを更新し忘れていませんか？",
     "previousValue": "前回"
+  },
+  "tag": {
+    "addTag": "タグを追加...",
+    "tags": "タグ",
+    "allFiles": "全ファイル",
+    "noResults": "選択したタグに一致するファイルがありません",
+    "tagCloud": "タグクラウド",
+    "categories": "カテゴリ",
+    "uncategorized": "未分類",
+    "newCategory": "新しいカテゴリ",
+    "categoryName": "カテゴリ名",
+    "categoryColor": "色",
+    "merge": "統合",
+    "mergeInto": "統合先...",
+    "mergeConfirm": "カテゴリ「{{source}}」を「{{target}}」に統合しますか？すべてのタグが移動されます。",
+    "assignCategory": "カテゴリを割り当て",
+    "confirmDeleteCategory": "カテゴリを削除しますか？",
+    "deleteCategoryWarning": "このカテゴリのタグは未分類になります。",
+    "confirmDeleteTag": "タグを削除しますか？",
+    "deleteTagWarning": "このタグはすべてのファイルから削除されます。",
+    "noTags": "タグがありません",
+    "tagCount": "{{count}}件"
   }
 }

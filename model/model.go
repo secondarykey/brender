@@ -67,6 +67,9 @@ func Init(dsn string) error {
 	db.AutoMigrate(&Workspace{})
 	db.AutoMigrate(&Job{})
 	db.AutoMigrate(&Queue{})
+	db.AutoMigrate(&TagCategory{})
+	db.AutoMigrate(&Tag{})
+	db.AutoMigrate(&ProjectFileTag{})
 
 	return nil
 }
