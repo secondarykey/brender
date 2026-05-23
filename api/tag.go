@@ -181,14 +181,14 @@ type FileSearchResponse struct {
 	Total int64                     `json:"total"`
 }
 
-func SearchFiles(tagIDs []uint, page, pageSize int, sort, dir string) (*FileSearchResponse, error) {
+func SearchFiles(tagIDs []uint, page, pageSize int, sort, dir string, untagged bool) (*FileSearchResponse, error) {
 	if page < 1 {
 		page = 1
 	}
 	if pageSize < 1 {
 		pageSize = 20
 	}
-	files, total, err := model.SearchFilesByTags(tagIDs, page, pageSize, sort, dir)
+	files, total, err := model.SearchFilesByTags(tagIDs, page, pageSize, sort, dir, untagged)
 	if err != nil {
 		return nil, err
 	}

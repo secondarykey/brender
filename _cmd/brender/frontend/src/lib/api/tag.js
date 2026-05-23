@@ -75,9 +75,9 @@ export const TagApi = {
 
   // ── Search ─────────────────────────────────────────────
 
-  searchFiles: ({ tagIDs, page, pageSize, sort, dir }) =>
-    isWails() ? svc().then(s => s.SearchFiles(tagIDs || [], page || 1, pageSize || 20, sort || '', dir || ''))
-              : serverCall('tag', 'search_files', { tag_ids: tagIDs, page, page_size: pageSize, sort, dir }),
+  searchFiles: ({ tagIDs, page, pageSize, sort, dir, untagged }) =>
+    isWails() ? svc().then(s => s.SearchFiles(tagIDs || [], page || 1, pageSize || 20, sort || '', dir || '', !!untagged))
+              : serverCall('tag', 'search_files', { tag_ids: tagIDs, page, page_size: pageSize, sort, dir, untagged: !!untagged }),
 
   listTagUsageCounts: () =>
     isWails() ? svc().then(s => s.ListTagUsageCounts())

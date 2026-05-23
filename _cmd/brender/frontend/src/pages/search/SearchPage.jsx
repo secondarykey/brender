@@ -12,6 +12,7 @@ function SearchPage({ navigate }) {
   const [categories, setCategories] = useState([])
   const [tagCounts, setTagCounts] = useState({})
   const [selectedTagIDs, setSelectedTagIDs] = useState([])
+  const [untagged, setUntagged] = useState(false)
 
   const [files, setFiles] = useState([])
   const [total, setTotal] = useState(0)
@@ -37,13 +38,13 @@ function SearchPage({ navigate }) {
   useEffect(() => { loadMeta() }, [loadMeta])
 
   const search = useCallback(() => {
-    TagApi.searchFiles({ tagIDs: selectedTagIDs, page, pageSize })
+    TagApi.searchFiles({ tagIDs: selectedTagIDs, page, pageSize, untagged })
       .then(res => {
         setFiles(res?.files || [])
         setTotal(res?.total || 0)
       })
       .catch(e => showError(String(e)))
-  }, [selectedTagIDs, page, pageSize])
+  }, [selectedTagIDs, page, pageSize, untagged])
 
   useEffect(() => { search() }, [search])
 
@@ -64,6 +65,7 @@ function SearchPage({ navigate }) {
 
   const toggleTag = (tagID, e) => {
     setPage(1)
+    setUntagged(false)
     const tag = allTags.find(t => t.id === tagID)
     const isMulti = e?.ctrlKey || e?.metaKey
     setSelectedTagIDs(prev => {
@@ -79,8 +81,15 @@ function SearchPage({ navigate }) {
     })
   }
 
+  const toggleUntagged = () => {
+    setPage(1)
+    setSelectedTagIDs([])
+    setUntagged(prev => !prev)
+  }
+
   const clearFilters = () => {
     setSelectedTagIDs([])
+    setUntagged(false)
     setPage(1)
   }
 
@@ -106,7 +115,7 @@ function SearchPage({ navigate }) {
         <div className="search-filter-panel" style={{ width: 240, flexShrink: 0, overflowY: 'auto', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>{t('tag.tags')}</span>
-            <button className="btn btn-ghost btn-sm" onClick={clearFilters} style={{ fontSize: '0.75rem' }} disabled={selectedTagIDs.length === 0}>
+            <button className="btn btn-ghost btn-sm" onClick={clearFilters} style={{ fontSize: '0.75rem' }} disabled={selectedTagIDs.length === 0 && !untagged}>
               {t('common.reset')}
             </button>
           </div>
@@ -157,6 +166,16 @@ function SearchPage({ navigate }) {
               </div>
             </div>
           )}
+
+          <div className="search-filter-group" style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+            <button
+              className={`search-filter-tag${untagged ? ' selected' : ''}`}
+              style={untagged ? { backgroundColor: '#888', color: '#fff' } : {}}
+              onClick={toggleUntagged}
+            >
+              {t('tag.untagged')}
+            </button>
+          </div>
 
           {allTags.length === 0 && (
             <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.85rem' }}>{t('tag.noTags')}</div>

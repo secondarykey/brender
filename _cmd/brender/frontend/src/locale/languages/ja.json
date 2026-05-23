@@ -534,6 +534,7 @@
     "confirmMergeTag": "タグを統合しますか？",
     "newTag": "新しいタグ",
     "tagExists": "同じ名前のタグがすでに存在します",
-    "editCategory": "カテゴリの編集"
+    "editCategory": "カテゴリの編集",
+    "untagged": "タグなし"
   }
 }
