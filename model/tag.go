@@ -16,7 +16,7 @@ type TagCategory struct {
 
 type Tag struct {
 	ID         uint   `gorm:"primaryKey" json:"id"`
-	Name       string `gorm:"uniqueIndex" json:"name"`
+	Name       string `json:"name"`
 	CategoryID *uint  `json:"category_id"`
 	Color      string `json:"color"`
 	MetaFields
@@ -108,8 +108,33 @@ func DeleteTagCategory(id uint) error {
 
 func MergeTagCategories(sourceID, targetID uint) error {
 	return db.Transaction(func(tx *gorm.DB) error {
-		if res := tx.Model(&Tag{}).Where("category_id = ?", sourceID).Update("category_id", targetID); res.Error != nil {
-			return xerrors.Errorf("MergeTagCategories move: %w", res.Error)
+		var sourceTags []Tag
+		if res := tx.Where("category_id = ?", sourceID).Find(&sourceTags); res.Error != nil {
+			return xerrors.Errorf("MergeTagCategories find: %w", res.Error)
+		}
+		for _, st := range sourceTags {
+			var targetTag Tag
+			res := tx.Where("name = ? AND category_id = ?", st.Name, targetID).First(&targetTag)
+			if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+				if res := tx.Model(&Tag{}).Where("id = ?", st.ID).Update("category_id", targetID); res.Error != nil {
+					return xerrors.Errorf("MergeTagCategories move: %w", res.Error)
+				}
+			} else if res.Error != nil {
+				return xerrors.Errorf("MergeTagCategories lookup: %w", res.Error)
+			} else {
+				var refs []ProjectFileTag
+				tx.Where("tag_id = ?", st.ID).Find(&refs)
+				for _, ref := range refs {
+					var existing ProjectFileTag
+					r := tx.Where("project_file_id = ? AND tag_id = ?", ref.ProjectFileID, targetTag.ID).First(&existing)
+					if errors.Is(r.Error, gorm.ErrRecordNotFound) {
+						tx.Model(&ProjectFileTag{}).Where("project_file_id = ? AND tag_id = ?", ref.ProjectFileID, st.ID).Update("tag_id", targetTag.ID)
+					} else {
+						tx.Where("project_file_id = ? AND tag_id = ?", ref.ProjectFileID, st.ID).Delete(&ProjectFileTag{})
+					}
+				}
+				tx.Delete(&Tag{}, "id = ?", st.ID)
+			}
 		}
 		if res := tx.Delete(&TagCategory{}, "id = ?", sourceID); res.Error != nil {
 			return xerrors.Errorf("MergeTagCategories delete: %w", res.Error)
@@ -188,7 +213,31 @@ func GetTagByName(name string) (*Tag, error) {
 	return &t, nil
 }
 
+func GetTagByNameAndCategory(name string, categoryID *uint) (*Tag, error) {
+	var t Tag
+	var res *gorm.DB
+	if categoryID != nil {
+		res = db.Where("name = ? AND category_id = ?", name, *categoryID).First(&t)
+	} else {
+		res = db.Where("name = ? AND category_id IS NULL", name).First(&t)
+	}
+	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if res.Error != nil {
+		return nil, xerrors.Errorf("GetTagByNameAndCategory: %w", res.Error)
+	}
+	return &t, nil
+}
+
 func CreateTag(name string, categoryID *uint, color string) (*Tag, error) {
+	existing, err := GetTagByNameAndCategory(name, categoryID)
+	if err != nil {
+		return nil, err
+	}
+	if existing != nil {
+		return nil, xerrors.New("tag already exists")
+	}
 	t := &Tag{Name: name, CategoryID: categoryID, Color: color}
 	if res := db.Create(t); res.Error != nil {
 		return nil, xerrors.Errorf("CreateTag: %w", res.Error)
@@ -201,6 +250,17 @@ func UpdateTag(id uint, name string, categoryID *uint, color string) (*Tag, erro
 	if res := db.First(&t, "id = ?", id); res.Error != nil {
 		return nil, xerrors.Errorf("UpdateTag find: %w", res.Error)
 	}
+	nameChanged := t.Name != name
+	catChanged := !uintPtrEqual(t.CategoryID, categoryID)
+	if nameChanged || catChanged {
+		existing, err := GetTagByNameAndCategory(name, categoryID)
+		if err != nil {
+			return nil, err
+		}
+		if existing != nil && existing.ID != id {
+			return nil, xerrors.New("tag already exists")
+		}
+	}
 	t.Name = name
 	t.CategoryID = categoryID
 	t.Color = color
@@ -208,6 +268,16 @@ func UpdateTag(id uint, name string, categoryID *uint, color string) (*Tag, erro
 		return nil, xerrors.Errorf("UpdateTag save: %w", res.Error)
 	}
 	return &t, nil
+}
+
+func uintPtrEqual(a, b *uint) bool {
+	if a == nil && b == nil {
+		return true
+	}
+	if a == nil || b == nil {
+		return false
+	}
+	return *a == *b
 }
 
 func DeleteTag(id uint) error {
@@ -221,6 +291,20 @@ func DeleteTag(id uint) error {
 }
 
 func SetTagCategory(tagID uint, categoryID *uint) error {
+	tag, err := GetTag(tagID)
+	if err != nil {
+		return err
+	}
+	if tag == nil {
+		return xerrors.New("tag not found")
+	}
+	existing, err := GetTagByNameAndCategory(tag.Name, categoryID)
+	if err != nil {
+		return err
+	}
+	if existing != nil && existing.ID != tagID {
+		return xerrors.New("tag already exists in target category")
+	}
 	if res := db.Model(&Tag{}).Where("id = ?", tagID).Update("category_id", categoryID); res.Error != nil {
 		return xerrors.Errorf("SetTagCategory: %w", res.Error)
 	}

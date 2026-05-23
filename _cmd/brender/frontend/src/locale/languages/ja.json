@@ -529,6 +529,8 @@
     "rename": "名前変更",
     "mergeTag": "タグを統合",
     "mergeTagConfirm": "タグ「{{source}}」を「{{target}}」に統合しますか？すべてのファイルの紐付けが移動されます。",
-    "confirmMergeTag": "タグを統合しますか？"
+    "confirmMergeTag": "タグを統合しますか？",
+    "newTag": "新しいタグ",
+    "tagExists": "同じ名前のタグがすでに存在します"
   }
 }

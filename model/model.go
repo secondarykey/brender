@@ -71,6 +71,9 @@ func Init(dsn string) error {
 	db.AutoMigrate(&Tag{})
 	db.AutoMigrate(&ProjectFileTag{})
 
+	db.Exec("DROP INDEX IF EXISTS idx_tags_name")
+	db.Exec("DROP INDEX IF EXISTS uni_tags_name")
+
 	return nil
 }
 

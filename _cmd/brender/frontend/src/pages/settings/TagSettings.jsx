@@ -26,6 +26,7 @@ function TagSettings() {
 
   const [editingTagID, setEditingTagID] = useState(null)
   const [editingTagName, setEditingTagName] = useState('')
+  const [newTagInputs, setNewTagInputs] = useState({})
 
   const load = () => {
     setLoading(true)
@@ -122,6 +123,20 @@ function TagSettings() {
     setMergeType('tag')
     const others = tags.filter(t => t.id !== tag.id)
     setMergeTargetID(others.length > 0 ? String(others[0].id) : '')
+  }
+
+  const handleCreateTag = async (categoryID) => {
+    const key = categoryID || 0
+    const name = (newTagInputs[key] || '').trim()
+    if (!name) return
+    try {
+      await TagApi.createTag({ name, categoryID: categoryID || 0 })
+      setNewTagInputs(prev => ({ ...prev, [key]: '' }))
+      showToast(t('common.saved'))
+      load()
+    } catch (e) {
+      showError(String(e))
+    }
   }
 
   const handleSetTagCategory = async (tagID, categoryID) => {
@@ -234,6 +249,19 @@ function TagSettings() {
                 ))}
               </div>
             )}
+            <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+              <input
+                className="form-input"
+                placeholder={t('tag.newTag')}
+                value={newTagInputs[cat.id] || ''}
+                onChange={e => setNewTagInputs(prev => ({ ...prev, [cat.id]: e.target.value }))}
+                onKeyDown={e => { if (e.key === 'Enter') handleCreateTag(cat.id) }}
+                style={{ flex: 1, height: 26, fontSize: '0.8rem' }}
+              />
+              <button className="btn btn-green btn-sm" onClick={() => handleCreateTag(cat.id)} disabled={!(newTagInputs[cat.id] || '').trim()} style={{ height: 26, fontSize: '0.75rem' }}>
+                +
+              </button>
+            </div>
           </div>
         )
       })}

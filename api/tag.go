@@ -140,7 +140,7 @@ func AssignTagByInput(projectFileID, input string) (*model.TagWithCategory, erro
 		categoryID = &cat.ID
 	}
 
-	tag, err := model.GetTagByName(tagName)
+	tag, err := model.GetTagByNameAndCategory(tagName, categoryID)
 	if err != nil {
 		return nil, xerrors.Errorf("AssignTagByInput tag lookup: %w", err)
 	}
@@ -149,11 +149,6 @@ func AssignTagByInput(projectFileID, input string) (*model.TagWithCategory, erro
 		if err != nil {
 			return nil, xerrors.Errorf("AssignTagByInput tag create: %w", err)
 		}
-	} else if categoryID != nil && tag.CategoryID == nil {
-		if err := model.SetTagCategory(tag.ID, categoryID); err != nil {
-			return nil, xerrors.Errorf("AssignTagByInput set category: %w", err)
-		}
-		tag.CategoryID = categoryID
 	}
 
 	if err := model.AddTagToFile(projectFileID, tag.ID); err != nil {
