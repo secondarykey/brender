@@ -506,7 +506,7 @@
     "previousValue": "Previous"
   },
   "tag": {
-    "addTag": "Add tag...",
+    "addTag": "Tag (Enter or comma to add)",
     "tags": "Tags",
     "allFiles": "All Files",
     "noResults": "No files match the selected tags",

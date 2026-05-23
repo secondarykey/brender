@@ -58,23 +58,37 @@ function TagInput({ projectFileID, tags, onTagsChanged }) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const assignTag = async (text) => {
+  const assignOne = async (text) => {
     const trimmed = text.trim()
-    if (!trimmed) return
-    console.log('[TagInput] assignTag called:', trimmed, 'fileID=', projectFileID)
+    if (!trimmed) return null
+    console.log('[TagInput] assignOne called:', trimmed, 'fileID=', projectFileID)
     try {
       const result = await TagApi.assignTagByInput({ projectFileID, input: trimmed })
       console.log('[TagInput] assignTagByInput result:', result)
-      setInput('')
-      setShowSuggestions(false)
-      if (onTagsChanged) {
-        const current = tags || []
-        if (!current.some(t => t.id === result.id)) {
-          onTagsChanged([...current, result])
-        }
-      }
+      return result
     } catch (e) {
-      console.error('[TagInput] assignTag error:', e)
+      console.error('[TagInput] assignOne error:', e)
+      return null
+    }
+  }
+
+  const assignTag = async (text) => {
+    const parts = text.split(',').map(s => s.trim()).filter(Boolean)
+    if (parts.length === 0) return
+    const results = []
+    for (const part of parts) {
+      const result = await assignOne(part)
+      if (result) results.push(result)
+    }
+    setInput('')
+    setShowSuggestions(false)
+    if (onTagsChanged && results.length > 0) {
+      const current = tags || []
+      const newTags = [...current]
+      for (const r of results) {
+        if (!newTags.some(t => t.id === r.id)) newTags.push(r)
+      }
+      onTagsChanged(newTags)
     }
   }
 
@@ -124,7 +138,14 @@ function TagInput({ projectFileID, tags, onTagsChanged }) {
           ref={inputRef}
           className="tag-input-field"
           value={input}
-          onChange={e => setInput(e.target.value)}
+          onChange={e => {
+            const val = e.target.value
+            if (val.includes(',')) {
+              assignTag(val)
+            } else {
+              setInput(val)
+            }
+          }}
           onKeyDown={handleKeyDown}
           onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true) }}
           placeholder={(!tags || tags.length === 0) ? t('tag.addTag') : ''}

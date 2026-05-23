@@ -506,7 +506,7 @@
     "previousValue": "前回"
   },
   "tag": {
-    "addTag": "タグを追加...",
+    "addTag": "タグ（Enterまたはカンマで決定）",
     "tags": "タグ",
     "allFiles": "全ファイル",
     "noResults": "選択したタグに一致するファイルがありません",
