@@ -96,11 +96,9 @@ function SearchPage({ navigate }) {
         <div className="search-filter-panel" style={{ width: 240, flexShrink: 0, overflowY: 'auto', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>{t('tag.tags')}</span>
-            {selectedTagIDs.length > 0 && (
-              <button className="btn btn-ghost btn-sm" onClick={clearFilters} style={{ fontSize: '0.75rem' }}>
-                {t('common.reload')}
-              </button>
-            )}
+            <button className="btn btn-ghost btn-sm" onClick={clearFilters} style={{ fontSize: '0.75rem' }} disabled={selectedTagIDs.length === 0}>
+              {t('common.reset')}
+            </button>
           </div>
 
           {categories.map(cat => {
