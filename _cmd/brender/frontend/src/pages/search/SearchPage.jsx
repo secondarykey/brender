@@ -16,7 +16,7 @@ function SearchPage({ navigate }) {
   const [files, setFiles] = useState([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(20)
+  const [pageSize, setPageSize] = useState(() => Number(localStorage.getItem('pageSize:search')) || 20)
   const [thumbnails, setThumbnails] = useState({})
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('viewMode:search') || 'card')
 
@@ -247,7 +247,7 @@ function SearchPage({ navigate }) {
               totalPages={totalPages}
               onChange={setPage}
               pageSize={pageSize}
-              onPageSizeChange={(s) => { setPageSize(s); setPage(1) }}
+              onPageSizeChange={(s) => { setPageSize(s); setPage(1); localStorage.setItem('pageSize:search', s) }}
               total={total}
             />
           </div>
