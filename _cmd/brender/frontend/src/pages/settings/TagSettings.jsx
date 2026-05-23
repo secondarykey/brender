@@ -187,21 +187,13 @@ function TagSettings() {
     if (!editCat) return
     const name = editCatName.trim()
     if (!name) return
-    try {
-      await TagApi.updateCategory({ id: editCat.id, name, color: editCatColor })
-      showToast(t('common.saved'))
-      setEditCat(null)
-      load()
-    } catch (e) {
-      showError(String(e))
-    }
-  }
-
-  const handleMergeCatInDialog = async () => {
-    if (!editCat || !editCatMergeID) return
     setMergingCat(true)
     try {
-      await TagApi.mergeCategories({ sourceID: editCat.id, targetID: Number(editCatMergeID) })
+      if (editCatMergeID) {
+        await TagApi.mergeCategories({ sourceID: editCat.id, targetID: Number(editCatMergeID) })
+      } else {
+        await TagApi.updateCategory({ id: editCat.id, name, color: editCatColor })
+      }
       showToast(t('common.saved'))
       setEditCat(null)
       load()
@@ -562,28 +554,19 @@ function TagSettings() {
             {categories.length >= 2 && (
               <div className="form-field">
                 <label className="form-label">{t('tag.merge')}</label>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <select
-                    className="form-select"
-                    value={editCatMergeID}
-                    onChange={e => setEditCatMergeID(e.target.value)}
-                    style={{ flex: 1 }}
-                  >
-                    <option value="">{t('tag.mergeInto')}</option>
-                    {categories.filter(c => c.id !== editCat.id).map(c => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
-                  <button
-                    className="btn btn-outline btn-sm"
-                    onClick={handleMergeCatInDialog}
-                    disabled={!editCatMergeID || mergingCat}
-                  >
-                    {mergingCat ? t('common.processing') : t('tag.merge')}
-                  </button>
-                </div>
+                <select
+                  className="form-select"
+                  value={editCatMergeID}
+                  onChange={e => setEditCatMergeID(e.target.value)}
+                  style={{ width: '100%' }}
+                >
+                  <option value="">{t('tag.mergeInto')}</option>
+                  {categories.filter(c => c.id !== editCat.id).map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
                 {editCatMergeID && (
-                  <p className="form-hint" style={{ marginTop: 4 }}>
+                  <p style={{ marginTop: 8, padding: '8px 10px', borderRadius: 4, backgroundColor: 'rgba(241, 196, 15, 0.12)', border: '1px solid rgba(241, 196, 15, 0.3)', color: '#f1c40f', fontSize: '0.85rem' }}>
                     {t('tag.mergeConfirm', {
                       source: editCat.name,
                       target: categories.find(c => String(c.id) === editCatMergeID)?.name || ''
