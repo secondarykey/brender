@@ -6,6 +6,7 @@ import { onAppEvent } from '../../lib/appEvents'
 import JobDetailDialog from '../../components/JobDetailDialog'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import Pagination from '../../components/Pagination'
+import { formatDate, formatDateFull } from '../../lib/dateFormat'
 
 function StatusBadge({ status }) {
   const { t } = useTranslation()
@@ -26,11 +27,6 @@ function duration(startedAt, completedAt, t) {
   if (sec < 60) return `${sec}${t('time.seconds')}`
   if (sec < 3600) return `${Math.floor(sec / 60)}${t('time.minutes')}${sec % 60}${t('time.seconds')}`
   return `${Math.floor(sec / 3600)}${t('time.hours')}${Math.floor((sec % 3600) / 60)}${t('time.minutes')}`
-}
-
-function formatDate(iso) {
-  if (!iso) return '—'
-  return new Date(iso).toLocaleString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })
 }
 
 function formatETA(iso, t) {
@@ -309,8 +305,8 @@ function HistoryTab({ navigate }) {
                   <td className="col-c frames-cell">{j.start_frame}–{j.end_frame}</td>
                   <td className="col-r num-cell">{j.samples > 0 ? j.samples : '—'}</td>
                   <td className="col-c num-cell">{(j.resolution_x > 0 && j.resolution_y > 0) ? `${j.resolution_x}×${j.resolution_y}` : '—'}</td>
-                  <td className="col-c date-cell">{formatDate(j.started_at)}</td>
-                  <td className="col-c date-cell">{formatDate(j.completed_at)}</td>
+                  <td className="col-c date-cell">{formatDateFull(j.started_at)}</td>
+                  <td className="col-c date-cell">{formatDateFull(j.completed_at)}</td>
                   <td className="duration-cell">{duration(j.started_at, j.completed_at, t)}</td>
                 </tr>
               ))}

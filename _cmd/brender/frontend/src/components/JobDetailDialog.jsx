@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { QueueApi } from '../lib/api'
 import Dialog from './Dialog'
 import ConfirmDialog from './ConfirmDialog'
+import { formatDateFull as fmt } from '../lib/dateFormat'
 
 // data_status: 0=なし 1=なしロック 2=あり 3=ありロック 4=削除 5=削除ロック
 function dataStatusClass(s) {
@@ -38,14 +39,6 @@ function formatBytes(bytes) {
   const i = Math.min(Math.floor(Math.log2(bytes) / 10), units.length - 1)
   const val = bytes / Math.pow(1024, i)
   return `${i === 0 ? val : val.toFixed(2)} ${units[i]}`
-}
-
-function fmt(iso) {
-  if (!iso) return '—'
-  return new Date(iso).toLocaleString('ja-JP', {
-    month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', second: '2-digit',
-  })
 }
 
 function duration(startedAt, completedAt, t) {

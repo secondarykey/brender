@@ -4,6 +4,7 @@ import { Dialogs } from '@wailsio/runtime'
 import { WorkspaceApi, BlenderApi, QueueApi, ProjectApi, WorkDirApi, CodesApi, EnvironmentApi } from '../../lib/api'
 import { useToast, useMessage } from '../../lib/toast'
 import { onAppEvent } from '../../lib/appEvents'
+import { formatDateShort } from '../../lib/dateFormat'
 import Pagination from '../../components/Pagination'
 import Dialog from '../../components/Dialog'
 import ConfirmDialog from '../../components/ConfirmDialog'
@@ -152,7 +153,7 @@ function HistoryTab({ projectID, workspaceID, navigate, projectName, fileName, f
                       {j.samples > 0 && <span>{j.samples}smp</span>}
                       {(j.resolution_x > 0 && j.resolution_y > 0) && <span>{j.resolution_x}×{j.resolution_y}</span>}
                       {j.enqueued_at && (
-                        <span>{new Date(j.enqueued_at).toLocaleString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+                        <span>{formatDateShort(j.enqueued_at)}</span>
                       )}
                     </div>
                     <span className={`status-badge status-${j.status || 'running'}`}>{statusLabel(j.status)}</span>

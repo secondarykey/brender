@@ -4,6 +4,7 @@ import { Dialogs } from '@wailsio/runtime'
 import { WorkspaceApi, QueueApi, ProjectApi, BlenderApi, WorkDirApi } from '../../lib/api'
 import { useToast, useMessage } from '../../lib/toast'
 import { onAppEvent } from '../../lib/appEvents'
+import { formatDateShort } from '../../lib/dateFormat'
 import Pagination from '../../components/Pagination'
 import SortSelect from '../../components/SortSelect'
 import Dialog from '../../components/Dialog'
@@ -409,7 +410,7 @@ function HistoryTab({ projectID, fileID, navigate, projectName, fileName }) {
                   {j.engine && <span>{j.engine}</span>}
                   {j.camera && <span>{j.camera}</span>}
                   {j.enqueued_at && (
-                    <span>{new Date(j.enqueued_at).toLocaleString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+                    <span>{formatDateShort(j.enqueued_at)}</span>
                   )}
                 </div>
               </div>

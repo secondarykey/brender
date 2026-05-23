@@ -7,6 +7,7 @@ import { useToast, useMessage } from '../../lib/toast'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import Dialog from '../../components/Dialog'
 import Breadcrumb from '../../components/Breadcrumb'
+import { formatDate as fmt, formatDateFull, formatDateShort } from '../../lib/dateFormat'
 
 const VIDEO_EXTS = new Set(['.mp4', '.mov', '.avi', '.mkv', '.webm', '.m4v'])
 const IMAGE_EXTS = new Set(['.png', '.jpg', '.jpeg', '.exr', '.tiff', '.tif', '.bmp', '.hdr', '.webp', '.tga'])
@@ -52,14 +53,6 @@ function formatBytes(bytes) {
   const i = Math.min(Math.floor(Math.log2(bytes) / 10), units.length - 1)
   const val = bytes / Math.pow(1024, i)
   return `${i === 0 ? val : val.toFixed(2)} ${units[i]}`
-}
-
-function fmt(iso) {
-  if (!iso) return '—'
-  return new Date(iso).toLocaleString('ja-JP', {
-    month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', second: '2-digit',
-  })
 }
 
 function duration(startedAt, completedAt, t) {
@@ -211,9 +204,9 @@ function DetailTab({ job, onDeleted, onDataStatusChanged }) {
             </div>
 
             <div className="job-detail-section">
-              <Row label={t('dialog.enrolledAt')}  value={fmt(job.enqueued_at)} />
-              <Row label={t('dialog.startedAt')}   value={fmt(job.started_at)} />
-              <Row label={t('dialog.completedAt')} value={fmt(job.completed_at)} />
+              <Row label={t('dialog.enrolledAt')}  value={formatDateFull(job.enqueued_at)} />
+              <Row label={t('dialog.startedAt')}   value={formatDateFull(job.started_at)} />
+              <Row label={t('dialog.completedAt')} value={formatDateFull(job.completed_at)} />
               <Row label={t('dialog.duration')}    value={duration(job.started_at, job.completed_at, t)} />
             </div>
 
@@ -704,7 +697,7 @@ function DataViewTab({ job }) {
                 </td>
                 <td>{f.is_dir ? '📁 ' : canPlay ? '▶ ' : ''}{f.name}</td>
                 <td style={{ textAlign: 'right' }}>{f.is_dir ? '—' : formatBytes(f.size)}</td>
-                <td className="date-cell">{new Date(f.mod_time).toLocaleString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })}</td>
+                <td className="date-cell">{fmt(f.mod_time)}</td>
               </tr>
             )
           })}
