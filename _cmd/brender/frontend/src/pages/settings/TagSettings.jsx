@@ -46,6 +46,35 @@ function TagSettings() {
   const dragTagID = useRef(null)
   const [tagDragOver, setTagDragOver] = useState(null) // category id or 'uncategorized'
 
+  // Auto-scroll during drag
+  const scrollRAF = useRef(null)
+  const containerRef = useRef(null)
+
+  const startAutoScroll = (clientY) => {
+    cancelAnimationFrame(scrollRAF.current)
+    const el = containerRef.current?.closest('.tab-content') || containerRef.current?.parentElement
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    const edgeZone = 60
+    let speed = 0
+    if (clientY < rect.top + edgeZone) {
+      speed = -Math.max(4, (edgeZone - (clientY - rect.top)) * 0.4)
+    } else if (clientY > rect.bottom - edgeZone) {
+      speed = Math.max(4, (edgeZone - (rect.bottom - clientY)) * 0.4)
+    }
+    if (speed !== 0) {
+      const tick = () => {
+        el.scrollTop += speed
+        scrollRAF.current = requestAnimationFrame(tick)
+      }
+      scrollRAF.current = requestAnimationFrame(tick)
+    }
+  }
+  const stopAutoScroll = () => {
+    cancelAnimationFrame(scrollRAF.current)
+    scrollRAF.current = null
+  }
+
   const handleDragStart = (e, index) => {
     dragIndex.current = index
     dragTagID.current = null
@@ -106,6 +135,7 @@ function TagSettings() {
   const handleDropOnUncategorized = async (e) => {
     e.preventDefault()
     setTagDragOver(null)
+    stopAutoScroll()
     if (!dragTagID.current) return
     const tagID = dragTagID.current
     dragTagID.current = null
@@ -116,6 +146,7 @@ function TagSettings() {
     dragTagID.current = null
     setDragOver(null)
     setTagDragOver(null)
+    stopAutoScroll()
   }
 
   const load = () => {
@@ -277,7 +308,11 @@ function TagSettings() {
   if (loading) return <div style={{ padding: 16, color: 'rgba(255,255,255,0.4)' }}>{t('common.loading')}</div>
 
   return (
-    <div style={{ padding: 16, maxWidth: 700 }}>
+    <div
+      ref={containerRef}
+      style={{ padding: 16, maxWidth: 700 }}
+      onDragOver={e => { if (dragTagID.current || dragIndex.current !== null) startAutoScroll(e.clientY) }}
+    >
       {/* Uncategorized (top in settings) — also drop target for tags */}
       <div
         className={`tag-settings-category${tagDragOver === 'uncategorized' ? ' drag-over' : ''}`}
@@ -334,6 +369,7 @@ function TagSettings() {
             onDragOver={e => { handleDragOver(e, index); handleCatDragOver(e, cat.id) }}
             onDragLeave={handleDragLeave}
             onDrop={e => {
+              stopAutoScroll()
               if (dragTagID.current) {
                 e.preventDefault()
                 e.stopPropagation()
