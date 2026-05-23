@@ -265,8 +265,7 @@ function TagSettings() {
 
   const openTagMerge = (tag) => {
     setMergeSource(tag)
-    const others = tags.filter(t => t.id !== tag.id)
-    setMergeTargetID(others.length > 0 ? String(others[0].id) : '')
+    setMergeTargetID('')
   }
 
   const handleCreateTag = async (categoryID) => {
@@ -490,19 +489,22 @@ function TagSettings() {
       >
         {mergeSource && (
           <>
-            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem', marginBottom: 12 }}>
-              {t('tag.mergeTagConfirm', { source: mergeSource.name, target: tags.find(tg => String(tg.id) === mergeTargetID)?.name || '' })}
-            </p>
             <select
               className="form-select"
               value={mergeTargetID}
               onChange={e => setMergeTargetID(e.target.value)}
               style={{ width: '100%' }}
             >
+              <option value="">{t('tag.mergeInto')}</option>
               {tags.filter(tg => tg.id !== mergeSource.id).map(tg => (
                 <option key={tg.id} value={tg.id}>{tg.category_name ? `${tg.category_name}:${tg.name}` : tg.name}</option>
               ))}
             </select>
+            {mergeTargetID && (
+              <p style={{ marginTop: 10, padding: '8px 10px', borderRadius: 4, backgroundColor: 'rgba(241, 196, 15, 0.12)', border: '1px solid rgba(241, 196, 15, 0.3)', color: '#f1c40f', fontSize: '0.85rem' }}>
+                {t('tag.mergeTagWarning', { source: mergeSource.name, target: tags.find(tg => String(tg.id) === mergeTargetID)?.name || '' })}
+              </p>
+            )}
           </>
         )}
       </Dialog>

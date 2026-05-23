@@ -530,6 +530,7 @@
     "rename": "Rename",
     "mergeTag": "Merge Tag",
     "mergeTagConfirm": "Merge tag \"{{source}}\" into \"{{target}}\"? All file associations will be transferred.",
+    "mergeTagWarning": "All items tagged \"{{source}}\" will be changed to \"{{target}}\".",
     "confirmMergeTag": "Merge this tag?",
     "newTag": "New tag",
     "tagExists": "A tag with the same name already exists",
