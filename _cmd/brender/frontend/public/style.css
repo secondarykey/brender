@@ -600,6 +600,18 @@ body {
 
 .breadcrumb-sep { color: rgba(255,255,255,0.25); }
 
+.back-to-list {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.4);
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 0;
+  margin-top: 2px;
+  transition: color 0.15s;
+}
+.back-to-list:hover { color: rgba(255,255,255,0.8); }
+
 /* ── Detail sections ── */
 .detail-section {
   margin-bottom: 36px;

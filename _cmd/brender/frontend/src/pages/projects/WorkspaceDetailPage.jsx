@@ -1088,13 +1088,16 @@ function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspa
 
   return (
     <div className="page">
-      <div className="page-header">
+      <div className="page-header" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
         <Breadcrumb items={[
           { label: t('breadcrumb.projects'), onClick: () => navigate('projects') },
           { label: projectName, onClick: () => navigate('project', { id: projectID, initialTab: 'settings' }) },
           effectiveFileName && { label: effectiveFileName, onClick: () => navigate('file', { projectID, projectName, fileID: effectiveFileID, fileName: effectiveFileName, initialTab: 'settings' }) },
           { label: detail.workspace.name, suffix: wsStale ? <span className="stale-mark-inline" title={t('file.fileChangedTooltip')} style={{ marginLeft: 6 }}>!</span> : null },
         ].filter(Boolean)} />
+        <button className="back-to-list" onClick={() => navigate('file', { projectID, projectName, fileID: effectiveFileID, fileName: effectiveFileName, initialTab: 'workspace' })}>
+          {t('breadcrumb.backToWorkspaceList')}
+        </button>
       </div>
 
       {workDirStatus === 'lock' && (

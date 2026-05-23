@@ -859,12 +859,15 @@ function FileDetailPage({ projectID, projectName, fileID, fileName, initialTab, 
 
   return (
     <div className="page">
-      <div className="page-header">
+      <div className="page-header" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
         <Breadcrumb items={[
           { label: t('breadcrumb.projects'), onClick: () => navigate('projects') },
           { label: projectName, onClick: () => navigate('project', { id: projectID, initialTab: 'settings' }) },
           { label: currentFileName },
         ]} />
+        <button className="back-to-list" onClick={() => navigate('project', { id: projectID, initialTab: 'workspace' })}>
+          {t('breadcrumb.backToFileList')}
+        </button>
       </div>
 
       {workDirStatus === 'lock' && (
