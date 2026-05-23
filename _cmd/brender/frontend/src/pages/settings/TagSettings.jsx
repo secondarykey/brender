@@ -15,6 +15,7 @@ function TagSettings() {
   const [loading, setLoading] = useState(true)
 
   const [newCatName, setNewCatName] = useState('')
+  const [showNewCatDialog, setShowNewCatDialog] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deleteType, setDeleteType] = useState('')
   const [deleting, setDeleting] = useState(false)
@@ -48,6 +49,7 @@ function TagSettings() {
     try {
       await TagApi.createCategory({ name })
       setNewCatName('')
+      setShowNewCatDialog(false)
       showToast(t('common.saved'))
       load()
     } catch (e) {
@@ -166,21 +168,6 @@ function TagSettings() {
 
   return (
     <div style={{ padding: 16, maxWidth: 700 }}>
-      {/* Category creation */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-        <input
-          className="form-input"
-          placeholder={t('tag.newCategory')}
-          value={newCatName}
-          onChange={e => setNewCatName(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') handleCreateCategory() }}
-          style={{ flex: 1 }}
-        />
-        <button className="btn btn-green btn-sm" onClick={handleCreateCategory} disabled={!newCatName.trim()}>
-          {t('common.create')}
-        </button>
-      </div>
-
       {/* Categories */}
       {categories.map(cat => {
         const catTags = grouped[cat.id] || []
@@ -389,6 +376,40 @@ function TagSettings() {
             </select>
           </>
         )}
+      </Dialog>
+
+      {/* New category fab */}
+      <div className="list-fab">
+        <button className="btn btn-green" onClick={() => { setNewCatName(''); setShowNewCatDialog(true) }}>
+          + {t('tag.newCategory')}
+        </button>
+      </div>
+
+      {/* New category dialog */}
+      <Dialog
+        open={showNewCatDialog}
+        title={t('tag.newCategory')}
+        onClose={() => setShowNewCatDialog(false)}
+        actions={
+          <>
+            <button className="btn btn-ghost" onClick={() => setShowNewCatDialog(false)}>
+              {t('common.cancel')}
+            </button>
+            <button className="btn btn-green" onClick={handleCreateCategory} disabled={!newCatName.trim()}>
+              {t('common.create')}
+            </button>
+          </>
+        }
+      >
+        <input
+          className="form-input"
+          placeholder={t('tag.categoryName')}
+          value={newCatName}
+          onChange={e => setNewCatName(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter' && newCatName.trim()) handleCreateCategory() }}
+          style={{ width: '100%' }}
+          autoFocus
+        />
       </Dialog>
     </div>
   )
