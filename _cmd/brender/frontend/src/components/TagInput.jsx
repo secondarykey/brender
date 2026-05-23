@@ -22,7 +22,10 @@ function TagInput({ projectFileID, tags, onTagsChanged }) {
   const containerRef = useRef(null)
 
   useEffect(() => {
-    TagApi.listTags().then(list => setAllTags(list || [])).catch(() => {})
+    console.log('[TagInput] mount/tags changed, fetching allTags. projectFileID=', projectFileID)
+    TagApi.listTags()
+      .then(list => { console.log('[TagInput] listTags result:', list); setAllTags(list || []) })
+      .catch(e => console.error('[TagInput] listTags error:', e))
   }, [tags])
 
   useEffect(() => {
@@ -58,8 +61,10 @@ function TagInput({ projectFileID, tags, onTagsChanged }) {
   const assignTag = async (text) => {
     const trimmed = text.trim()
     if (!trimmed) return
+    console.log('[TagInput] assignTag called:', trimmed, 'fileID=', projectFileID)
     try {
       const result = await TagApi.assignTagByInput({ projectFileID, input: trimmed })
+      console.log('[TagInput] assignTagByInput result:', result)
       setInput('')
       setShowSuggestions(false)
       if (onTagsChanged) {
@@ -69,7 +74,7 @@ function TagInput({ projectFileID, tags, onTagsChanged }) {
         }
       }
     } catch (e) {
-      console.error('TagInput assign error:', e)
+      console.error('[TagInput] assignTag error:', e)
     }
   }
 
@@ -85,6 +90,7 @@ function TagInput({ projectFileID, tags, onTagsChanged }) {
   }
 
   const handleKeyDown = (e) => {
+    console.log('[TagInput] keyDown:', e.key, 'input=', input, 'activeIdx=', activeIdx)
     if (e.key === 'Enter') {
       e.preventDefault()
       if (activeIdx >= 0 && activeIdx < suggestions.length) {

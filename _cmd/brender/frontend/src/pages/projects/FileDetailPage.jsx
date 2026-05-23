@@ -536,9 +536,10 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
       setEngineFixed(f?.engine_fixed || false)
       fetchToolData(installID)
     })
+    console.log('[SettingsTab] fetching tags for fileID=', fileID)
     TagApi.getFileTags({ projectFileID: fileID })
-      .then(tags => setFileTags(tags || []))
-      .catch(() => setFileTags([]))
+      .then(tags => { console.log('[SettingsTab] getFileTags result:', tags); setFileTags(tags || []) })
+      .catch(e => { console.error('[SettingsTab] getFileTags error:', e); setFileTags([]) })
   }, [fileID])
 
   const handleBlenderChange = (installID) => {
