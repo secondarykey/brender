@@ -17,7 +17,12 @@ function SystemSettings() {
 
   return (
     <div>
-      <h2 className="section-title">Brender {version}</h2>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 12 }}>
+        <h2 className="section-title" style={{ marginBottom: 0 }}>Brender {version}</h2>
+        <button className="btn btn-sm" onClick={() => EnvironmentApi.openSystemLogWindow()}>
+          {t('settings.openSystemLog')}
+        </button>
+      </div>
 
       {licenses && (
         <>
