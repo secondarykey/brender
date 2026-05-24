@@ -536,6 +536,8 @@
     "tagExists": "A tag with the same name already exists",
     "editCategory": "Edit Category",
     "untagged": "Untagged",
-    "searchByName": "Search by file or project name"
+    "searchByName": "Search by file or project name",
+    "editTag": "Edit Tag",
+    "tagName": "Tag Name"
   }
 }

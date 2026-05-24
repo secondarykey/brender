@@ -536,6 +536,8 @@
     "tagExists": "同じ名前のタグがすでに存在します",
     "editCategory": "カテゴリの編集",
     "untagged": "タグなし",
-    "searchByName": "ファイル名・プロジェクト名で検索"
+    "searchByName": "ファイル名・プロジェクト名で検索",
+    "editTag": "タグの編集",
+    "tagName": "タグ名"
   }
 }

@@ -2653,6 +2653,12 @@ textarea.form-input {
 .tag-settings-tag-item:active {
   cursor: grabbing;
 }
+.tag-settings-tag-clickable {
+  cursor: pointer;
+}
+.tag-settings-tag-clickable:hover {
+  filter: brightness(1.2);
+}
 .tag-settings-tag-item button {
   background: none;
   border: none;

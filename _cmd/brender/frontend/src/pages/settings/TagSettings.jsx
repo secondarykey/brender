@@ -29,13 +29,13 @@ function TagSettings() {
   const [editCatMergeID, setEditCatMergeID] = useState('')
   const [mergingCat, setMergingCat] = useState(false)
 
-  // Tag merge dialog
-  const [mergeSource, setMergeSource] = useState(null)
-  const [mergeTargetID, setMergeTargetID] = useState('')
-  const [merging, setMerging] = useState(false)
 
-  const [editingTagID, setEditingTagID] = useState(null)
-  const [editingTagName, setEditingTagName] = useState('')
+  // Tag edit dialog
+  const [editTag, setEditTag] = useState(null)
+  const [editTagName, setEditTagName] = useState('')
+  const [editTagMergeID, setEditTagMergeID] = useState('')
+  const [savingTag, setSavingTag] = useState(false)
+
   const [newTagInputs, setNewTagInputs] = useState({})
   const [addingTagCatID, setAddingTagCatID] = useState(null)
 
@@ -223,42 +223,31 @@ function TagSettings() {
     }
   }
 
-  const handleMergeTagConfirm = async () => {
-    if (!mergeTargetID) return
-    setMerging(true)
+  const openEditTag = (tag) => {
+    setEditTag(tag)
+    setEditTagName(tag.name)
+    setEditTagMergeID('')
+  }
+
+  const handleSaveTag = async () => {
+    if (!editTag) return
+    const name = editTagName.trim()
+    if (!name) return
+    setSavingTag(true)
     try {
-      await TagApi.mergeTags({ sourceID: mergeSource.id, targetID: Number(mergeTargetID) })
+      if (editTagMergeID) {
+        await TagApi.mergeTags({ sourceID: editTag.id, targetID: Number(editTagMergeID) })
+      } else if (name !== editTag.name) {
+        await TagApi.updateTag({ id: editTag.id, name, categoryID: editTag.category_id || 0, color: editTag.color || '' })
+      }
       showToast(t('common.saved'))
+      setEditTag(null)
       load()
     } catch (e) {
       showError(String(e))
     } finally {
-      setMerging(false)
-      setMergeSource(null)
-      setMergeTargetID('')
+      setSavingTag(false)
     }
-  }
-
-  const handleUpdateTag = async (tag) => {
-    const name = editingTagName.trim()
-    if (!name || name === tag.name) {
-      setEditingTagID(null)
-      return
-    }
-    try {
-      await TagApi.updateTag({ id: tag.id, name, categoryID: tag.category_id || 0, color: tag.color || '' })
-      showToast(t('common.saved'))
-      load()
-    } catch (e) {
-      showError(String(e))
-    } finally {
-      setEditingTagID(null)
-    }
-  }
-
-  const openTagMerge = (tag) => {
-    setMergeSource(tag)
-    setMergeTargetID('')
   }
 
   const handleCreateTag = async (categoryID) => {
@@ -320,30 +309,14 @@ function TagSettings() {
           {uncategorized.map(tag => (
             <span
               key={tag.id}
-              className="tag-settings-tag-item"
+              className="tag-settings-tag-item tag-settings-tag-clickable"
               style={{ backgroundColor: tagColor(tag) }}
               draggable
               onDragStart={e => handleTagDragStart(e, tag.id)}
               onDragEnd={handleDragEnd}
+              onClick={() => openEditTag(tag)}
             >
-              {editingTagID === tag.id ? (
-                <input
-                  className="tag-settings-tag-name-input"
-                  value={editingTagName}
-                  onChange={e => setEditingTagName(e.target.value)}
-                  onBlur={() => handleUpdateTag(tag)}
-                  onKeyDown={e => { if (e.key === 'Enter') handleUpdateTag(tag); if (e.key === 'Escape') setEditingTagID(null) }}
-                  autoFocus
-                />
-              ) : (
-                <span
-                  className="tag-settings-tag-name"
-                  onDoubleClick={() => { setEditingTagID(tag.id); setEditingTagName(tag.name) }}
-                  title={t('tag.rename')}
-                >{tag.name}</span>
-              )}
-              <button onClick={() => openTagMerge(tag)} title={t('tag.mergeTag')} disabled={tags.length < 2}>⇄</button>
-              <button onClick={() => { setDeleteTarget(tag); setDeleteType('tag') }}>×</button>
+              <span className="tag-settings-tag-name">{tag.name}</span>
             </span>
           ))}
         </div>
@@ -388,30 +361,14 @@ function TagSettings() {
               {catTags.map(tag => (
                 <span
                   key={tag.id}
-                  className="tag-settings-tag-item"
+                  className="tag-settings-tag-item tag-settings-tag-clickable"
                   style={{ backgroundColor: tagColor(tag) }}
                   draggable
                   onDragStart={e => handleTagDragStart(e, tag.id)}
                   onDragEnd={handleDragEnd}
+                  onClick={() => openEditTag(tag)}
                 >
-                  {editingTagID === tag.id ? (
-                    <input
-                      className="tag-settings-tag-name-input"
-                      value={editingTagName}
-                      onChange={e => setEditingTagName(e.target.value)}
-                      onBlur={() => handleUpdateTag(tag)}
-                      onKeyDown={e => { if (e.key === 'Enter') handleUpdateTag(tag); if (e.key === 'Escape') setEditingTagID(null) }}
-                      autoFocus
-                    />
-                  ) : (
-                    <span
-                      className="tag-settings-tag-name"
-                      onDoubleClick={() => { setEditingTagID(tag.id); setEditingTagName(tag.name) }}
-                      title={t('tag.rename')}
-                    >{tag.name}</span>
-                  )}
-                  <button onClick={() => openTagMerge(tag)} title={t('tag.mergeTag')} disabled={tags.length < 2}>⇄</button>
-                  <button onClick={() => { setDeleteTarget(tag); setDeleteType('tag') }}>×</button>
+                  <span className="tag-settings-tag-name">{tag.name}</span>
                 </span>
               ))}
               {addingTagCatID === cat.id ? (
@@ -463,42 +420,67 @@ function TagSettings() {
         </p>
       </ConfirmDialog>
 
-      {/* Tag merge dialog */}
+      {/* Tag edit dialog */}
       <Dialog
-        open={mergeSource !== null}
-        title={t('tag.mergeTag')}
-        onClose={() => setMergeSource(null)}
-        closeOnBackdrop={!merging}
+        open={editTag !== null}
+        title={t('tag.editTag')}
+        onClose={() => setEditTag(null)}
+        closeOnBackdrop={!savingTag}
         actions={
           <>
-            <button className="btn btn-ghost" onClick={() => setMergeSource(null)} disabled={merging}>
+            <button
+              className="btn btn-danger"
+              onClick={() => { setDeleteTarget(editTag); setDeleteType('tag'); setEditTag(null) }}
+              disabled={savingTag}
+            >
+              {t('common.delete')}
+            </button>
+            <div style={{ flex: 1 }} />
+            <button className="btn btn-ghost" onClick={() => setEditTag(null)} disabled={savingTag}>
               {t('common.cancel')}
             </button>
-            <button className="btn btn-outline" onClick={handleMergeTagConfirm} disabled={merging || !mergeTargetID}>
-              {merging ? t('common.processing') : t('tag.merge')}
+            <button className="btn btn-green" onClick={handleSaveTag} disabled={!editTagName.trim() || savingTag}>
+              {savingTag ? t('common.processing') : t('common.save')}
             </button>
           </>
         }
       >
-        {mergeSource && (
-          <>
-            <select
-              className="form-select"
-              value={mergeTargetID}
-              onChange={e => setMergeTargetID(e.target.value)}
-              style={{ width: '100%' }}
-            >
-              <option value="">{t('tag.mergeInto')}</option>
-              {tags.filter(tg => tg.id !== mergeSource.id).map(tg => (
-                <option key={tg.id} value={tg.id}>{tg.category_name ? `${tg.category_name}:${tg.name}` : tg.name}</option>
-              ))}
-            </select>
-            {mergeTargetID && (
-              <p style={{ marginTop: 10, padding: '8px 10px', borderRadius: 4, backgroundColor: 'rgba(241, 196, 15, 0.12)', border: '1px solid rgba(241, 196, 15, 0.3)', color: '#f1c40f', fontSize: '0.85rem' }}>
-                {t('tag.mergeTagWarning', { source: mergeSource.name, target: tags.find(tg => String(tg.id) === mergeTargetID)?.name || '' })}
-              </p>
+        {editTag && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div className="form-field">
+              <label className="form-label">{t('tag.tagName')}</label>
+              <input
+                className="form-input"
+                value={editTagName}
+                onChange={e => setEditTagName(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && editTagName.trim()) handleSaveTag() }}
+                style={{ width: '100%' }}
+                autoFocus
+              />
+            </div>
+
+            {tags.length >= 2 && (
+              <div className="form-field">
+                <label className="form-label">{t('tag.merge')}</label>
+                <select
+                  className="form-select"
+                  value={editTagMergeID}
+                  onChange={e => setEditTagMergeID(e.target.value)}
+                  style={{ width: '100%' }}
+                >
+                  <option value="">{t('tag.mergeInto')}</option>
+                  {tags.filter(tg => tg.id !== editTag.id).map(tg => (
+                    <option key={tg.id} value={tg.id}>{tg.category_name ? `${tg.category_name}:${tg.name}` : tg.name}</option>
+                  ))}
+                </select>
+                {editTagMergeID && (
+                  <p style={{ marginTop: 8, padding: '8px 10px', borderRadius: 4, backgroundColor: 'rgba(241, 196, 15, 0.12)', border: '1px solid rgba(241, 196, 15, 0.3)', color: '#f1c40f', fontSize: '0.85rem' }}>
+                    {t('tag.mergeTagWarning', { source: editTag.name, target: tags.find(tg => String(tg.id) === editTagMergeID)?.name || '' })}
+                  </p>
+                )}
+              </div>
             )}
-          </>
+          </div>
         )}
       </Dialog>
 
