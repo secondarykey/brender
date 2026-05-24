@@ -49,4 +49,14 @@ export const EnvironmentApi = {
   openSystemLogWindow: () =>
     isWails() ? svc().then(s => s.OpenSystemLogWindow())
               : Promise.resolve(),
+
+  /** バージョン情報を取得 */
+  getVersion: () =>
+    isWails() ? svc().then(s => s.GetVersion())
+              : serverCall('environment', 'get_version'),
+
+  /** ライセンス情報を取得 */
+  getLicenses: () =>
+    isWails() ? svc().then(s => s.GetLicenses())
+              : serverCall('environment', 'get_licenses'),
 }

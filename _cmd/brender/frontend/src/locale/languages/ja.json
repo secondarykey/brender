@@ -110,6 +110,7 @@
     "video": "動画",
     "code": "コード",
     "tag": "タグ",
+    "system": "システム",
     "directory": "ディレクトリ設定",
     "workDirs": "作業ディレクトリ",
     "dataManagement": "データ管理",
@@ -538,5 +539,9 @@
     "tagExists": "同じ名前のタグがすでに存在します",
     "editCategory": "カテゴリの編集",
     "untagged": "タグなし"
+  },
+  "system": {
+    "license": "ライセンス",
+    "thirdPartyLicenses": "サードパーティライセンス"
   }
 }

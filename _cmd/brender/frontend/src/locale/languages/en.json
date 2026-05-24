@@ -110,6 +110,7 @@
     "video": "Video",
     "code": "Code",
     "tag": "Tag",
+    "system": "System",
     "directory": "Directory",
     "workDirs": "Work Directories",
     "dataManagement": "Data Management",
@@ -538,5 +539,9 @@
     "tagExists": "A tag with the same name already exists",
     "editCategory": "Edit Category",
     "untagged": "Untagged"
+  },
+  "system": {
+    "license": "License",
+    "thirdPartyLicenses": "Third-Party Licenses"
   }
 }

@@ -6,6 +6,7 @@ import DirectorySettings from './DirectorySettings'
 import VideoSettings from './VideoSettings'
 import CodeSettings from './CodeSettings'
 import TagSettings from './TagSettings'
+import SystemSettings from './SystemSettings'
 
 function SettingsPage({ initialTab, navigate }) {
   const { t } = useTranslation()
@@ -18,6 +19,7 @@ function SettingsPage({ initialTab, navigate }) {
     { id: 'video',       label: t('tabs.video') },
     { id: 'code',        label: t('tabs.code') },
     { id: 'tag',         label: t('tabs.tag') },
+    { id: 'system',      label: t('tabs.system') },
   ]
 
   return (
@@ -40,6 +42,7 @@ function SettingsPage({ initialTab, navigate }) {
         {tab === 'video'     && <VideoSettings />}
         {tab === 'code'      && <CodeSettings />}
         {tab === 'tag'       && <TagSettings />}
+        {tab === 'system'    && <SystemSettings />}
       </div>
     </div>
   )

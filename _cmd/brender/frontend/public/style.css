@@ -2703,3 +2703,21 @@ textarea.form-input {
   width: 80px;
   outline: none;
 }
+
+/* ── System / License ── */
+.license-text {
+  background: #111;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  padding: 16px;
+  font-family: "Consolas", "Monaco", "Courier New", monospace;
+  font-size: 0.75rem;
+  line-height: 1.6;
+  color: rgba(255,255,255,0.7);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 400px;
+  overflow-y: auto;
+  user-select: text;
+  -webkit-user-select: text;
+}

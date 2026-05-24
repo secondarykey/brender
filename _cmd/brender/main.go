@@ -116,7 +116,9 @@ func run() error {
 		},
 	})
 
+	wails.AppVersion = strings.TrimSpace(appVersion)
 	dev := app.Env.Info().Debug
+	wails.DevMode = dev
 	if dev {
 		log.SetLevel(slog.LevelInfo)
 		//ログをInfoに落とす
