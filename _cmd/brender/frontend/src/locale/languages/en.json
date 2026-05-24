@@ -365,6 +365,7 @@
   "settings": {
     "language": "Language",
     "selectFolder": "Select Folder",
+    "selectFile": "Select File",
     "selectDirectory": "Select Directory",
     "workDirs": {
       "title": "Work Directories",
