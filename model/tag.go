@@ -363,11 +363,16 @@ type FileSearchResult struct {
 	ProjectName string `json:"project_name"`
 }
 
-func SearchFilesByTags(tagIDs []uint, page, pageSize int, sort, dir string, untagged bool) ([]*FileSearchResult, int64, error) {
+func SearchFilesByTags(tagIDs []uint, page, pageSize int, sort, dir string, untagged bool, keyword string) ([]*FileSearchResult, int64, error) {
 	query := db.Model(&ProjectFile{}).
 		Select("project_files.*, projects.name as project_name").
 		Joins("INNER JOIN projects ON projects.id = project_files.project_id").
 		Where("project_files.deleted_at IS NULL AND projects.deleted_at IS NULL")
+
+	if keyword != "" {
+		like := "%" + keyword + "%"
+		query = query.Where("(project_files.name LIKE ? OR projects.name LIKE ?)", like, like)
+	}
 
 	if untagged {
 		query = query.Where("project_files.id NOT IN (?)",
