@@ -544,6 +544,8 @@
     "license": "License",
     "thirdPartyLicenses": "Third-Party Licenses",
     "untagged": "Untagged",
-    "searchByName": "Search by file or project name"
+    "searchByName": "Search by file or project name",
+    "editTag": "Edit Tag",
+    "tagName": "Tag Name"
   }
 }
