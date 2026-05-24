@@ -225,7 +225,7 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: 24px 24px;
+  padding: 12px 24px;
 }
 
 /* ── Page ── */
@@ -323,7 +323,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 4px;
 }
 
 .page-header .page-title { margin-bottom: 0; }
@@ -345,7 +345,7 @@ body {
   display: flex;
   gap: 4px;
   border-bottom: 1px solid rgba(255,255,255,0.12);
-  margin-bottom: 24px;
+  margin-bottom: 12px;
 }
 
 .tab-btn {
@@ -607,7 +607,7 @@ body {
   cursor: pointer;
   font-size: 0.75rem;
   padding: 0;
-  margin-top: 2px;
+  margin-top: 8px;
   transition: color 0.15s;
 }
 .back-to-list:hover { color: rgba(255,255,255,0.8); }
@@ -681,7 +681,7 @@ body {
 
 /* ── Workspace tab ── */
 .workspace {
-  padding-top: 20px;
+  padding-top: 12px;
 }
 
 .ws-files-header {

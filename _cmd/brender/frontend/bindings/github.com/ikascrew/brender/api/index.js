@@ -4,6 +4,7 @@
 
 export {
     AddDirResult,
+    FileSearchResponse,
     JobFileInfo,
     PreviousRenderInfo,
     QueueItem,
