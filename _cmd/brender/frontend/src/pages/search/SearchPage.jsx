@@ -13,6 +13,8 @@ function SearchPage({ navigate }) {
   const [tagCounts, setTagCounts] = useState({})
   const [selectedTagIDs, setSelectedTagIDs] = useState([])
   const [untagged, setUntagged] = useState(false)
+  const [keyword, setKeyword] = useState('')
+  const [keywordInput, setKeywordInput] = useState('')
 
   const [files, setFiles] = useState([])
   const [total, setTotal] = useState(0)
@@ -38,13 +40,13 @@ function SearchPage({ navigate }) {
   useEffect(() => { loadMeta() }, [loadMeta])
 
   const search = useCallback(() => {
-    TagApi.searchFiles({ tagIDs: selectedTagIDs, page, pageSize, untagged })
+    TagApi.searchFiles({ tagIDs: selectedTagIDs, page, pageSize, untagged, keyword })
       .then(res => {
         setFiles(res?.files || [])
         setTotal(res?.total || 0)
       })
       .catch(e => showError(String(e)))
-  }, [selectedTagIDs, page, pageSize, untagged])
+  }, [selectedTagIDs, page, pageSize, untagged, keyword])
 
   useEffect(() => { search() }, [search])
 
@@ -90,6 +92,8 @@ function SearchPage({ navigate }) {
   const clearFilters = () => {
     setSelectedTagIDs([])
     setUntagged(false)
+    setKeyword('')
+    setKeywordInput('')
     setPage(1)
   }
 
@@ -115,7 +119,7 @@ function SearchPage({ navigate }) {
         <div className="search-filter-panel" style={{ width: 240, flexShrink: 0, overflowY: 'auto', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>{t('tag.tags')}</span>
-            <button className="btn btn-ghost btn-sm" onClick={clearFilters} style={{ fontSize: '0.75rem' }} disabled={selectedTagIDs.length === 0 && !untagged}>
+            <button className="btn btn-ghost btn-sm" onClick={clearFilters} style={{ fontSize: '0.75rem' }} disabled={selectedTagIDs.length === 0 && !untagged && !keyword}>
               {t('common.reset')}
             </button>
           </div>
@@ -184,22 +188,32 @@ function SearchPage({ navigate }) {
 
         {/* Results */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
-          <div style={{ display: 'flex', alignItems: 'center', padding: '8px 16px', gap: 4 }}>
-            <button
-              className={`file-view-btn${viewMode === 'list' ? ' active' : ''}`}
-              onClick={() => { setViewMode('list'); localStorage.setItem('viewMode:search', 'list') }}
-              title={t('workspace.listView')}
-            >☰</button>
-            <button
-              className={`file-view-btn${viewMode === 'card' ? ' active' : ''}`}
-              onClick={() => { setViewMode('card'); localStorage.setItem('viewMode:search', 'card') }}
-              title={t('workspace.cardView')}
-            >⊞</button>
-            <button
-              className={`file-view-btn${viewMode === 'card-sm' ? ' active' : ''}`}
-              onClick={() => { setViewMode('card-sm'); localStorage.setItem('viewMode:search', 'card-sm') }}
-              title={t('workspace.smallCardView')}
-            >▦</button>
+          <div style={{ display: 'flex', alignItems: 'center', padding: '8px 16px', gap: 8 }}>
+            <input
+              className="form-input"
+              placeholder={t('tag.searchByName')}
+              value={keywordInput}
+              onChange={e => setKeywordInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { setKeyword(keywordInput.trim()); setPage(1) } }}
+              style={{ flex: 1, height: 30, fontSize: '0.85rem' }}
+            />
+            <div style={{ display: 'flex', gap: 4 }}>
+              <button
+                className={`file-view-btn${viewMode === 'list' ? ' active' : ''}`}
+                onClick={() => { setViewMode('list'); localStorage.setItem('viewMode:search', 'list') }}
+                title={t('workspace.listView')}
+              >☰</button>
+              <button
+                className={`file-view-btn${viewMode === 'card' ? ' active' : ''}`}
+                onClick={() => { setViewMode('card'); localStorage.setItem('viewMode:search', 'card') }}
+                title={t('workspace.cardView')}
+              >⊞</button>
+              <button
+                className={`file-view-btn${viewMode === 'card-sm' ? ' active' : ''}`}
+                onClick={() => { setViewMode('card-sm'); localStorage.setItem('viewMode:search', 'card-sm') }}
+                title={t('workspace.smallCardView')}
+              >▦</button>
+            </div>
           </div>
 
           <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px' }}>

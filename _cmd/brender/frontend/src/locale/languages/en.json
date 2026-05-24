@@ -542,6 +542,8 @@
   },
   "system": {
     "license": "License",
-    "thirdPartyLicenses": "Third-Party Licenses"
+    "thirdPartyLicenses": "Third-Party Licenses",
+    "untagged": "Untagged",
+    "searchByName": "Search by file or project name"
   }
 }

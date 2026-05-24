@@ -542,6 +542,8 @@
   },
   "system": {
     "license": "ライセンス",
-    "thirdPartyLicenses": "サードパーティライセンス"
+    "thirdPartyLicenses": "サードパーティライセンス",
+    "untagged": "タグなし",
+    "searchByName": "ファイル名・プロジェクト名で検索"
   }
 }
