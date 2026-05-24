@@ -20,3 +20,8 @@ export {
     WorkDir,
     Workspace
 };
+
+export {
+    LicenseInfo,
+    VersionInfo
+} from "./models.js";

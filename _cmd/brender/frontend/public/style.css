@@ -2716,7 +2716,7 @@ textarea.form-input {
   color: rgba(255,255,255,0.7);
   white-space: pre-wrap;
   word-break: break-word;
-  max-height: 200px;
+  max-height: 280px;
   overflow-y: auto;
   user-select: text;
   -webkit-user-select: text;
