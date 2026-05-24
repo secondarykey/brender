@@ -109,6 +109,13 @@ body {
   opacity: 0.7;
 }
 
+.titlebar-dev-version {
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.4);
+  margin-top: 6px;
+  pointer-events: none;
+}
+
 .titlebar-controls {
   display: flex;
   align-items: center;
