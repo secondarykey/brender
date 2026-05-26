@@ -9,6 +9,9 @@ import (
 	"golang.org/x/xerrors"
 )
 
+// MovieCreatedHook は動画作成完了時に呼ばれる。jobID, path, error を受け取る。
+var MovieCreatedHook func(jobID string, path string, errMsg string)
+
 func CreateMovie(projectID string, fileID string, workspaceID string, jobID string, fps int, outext string, extraArgs string) (string, chan error, error) {
 
 	baseDir, err := GetProjectBaseDir(projectID)
