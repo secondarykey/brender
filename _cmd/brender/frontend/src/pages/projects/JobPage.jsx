@@ -8,6 +8,8 @@ import ConfirmDialog from '../../components/ConfirmDialog'
 import Dialog from '../../components/Dialog'
 import Breadcrumb from '../../components/Breadcrumb'
 import { formatDate as fmt, formatDateFull, formatDateShort } from '../../lib/dateFormat'
+import { isWails } from '../../lib/api/_client'
+import MoviePlayer from '../../components/MoviePlayer'
 
 const VIDEO_EXTS = new Set(['.mp4', '.mov', '.avi', '.mkv', '.webm', '.m4v'])
 const IMAGE_EXTS = new Set(['.png', '.jpg', '.jpeg', '.exr', '.tiff', '.tif', '.bmp', '.hdr', '.webp', '.tga'])
@@ -252,6 +254,7 @@ function RenderResultTab({ job }) {
   const [movieOutext, setMovieOutext]       = useState('mp4')
   const [movieExtraArgs, setMovieExtraArgs] = useState('')
   const [videoFormats, setVideoFormats]     = useState([])
+  const [moviePlayerPath, setMoviePlayerPath] = useState('')
   const playingRef = useRef(false)
   const loopRef    = useRef(false)
 
@@ -364,8 +367,14 @@ function RenderResultTab({ job }) {
     }
   }
 
-  const handlePlayMovie = () => {
-    if (moviePath) QueueApi.openMovieWindow({ path: moviePath })
+  const handlePlayMovie = (path) => {
+    const p = path || moviePath
+    if (!p) return
+    if (isWails()) {
+      QueueApi.openMovieWindow({ path: p })
+    } else {
+      setMoviePlayerPath(p)
+    }
   }
 
   const filename = images[index] ? images[index].replace(/\\/g, '/').split('/').pop() : ''
@@ -410,7 +419,7 @@ function RenderResultTab({ job }) {
             onClick={toggleLoop} disabled={images.length <= 1} title={t('common.loop')}
           >⟳ {t('common.loop')}</button>
           {moviePath && (
-            <button className="btn btn-sm" onClick={handlePlayMovie}>
+            <button className="btn btn-sm" onClick={() => handlePlayMovie()}>
               {t('viewer.playMovie')}
             </button>
           )}
@@ -479,6 +488,16 @@ function RenderResultTab({ job }) {
           />
 
         </div>
+      </Dialog>
+
+      <Dialog
+        open={!!moviePlayerPath}
+        title={moviePlayerPath ? moviePlayerPath.replace(/\\/g, '/').split('/').pop() : ''}
+        onClose={() => setMoviePlayerPath('')}
+        wide
+        bodyClassName="movie-player-dialog-body"
+      >
+        {moviePlayerPath && <MoviePlayer moviePath={moviePlayerPath} />}
       </Dialog>
     </div>
   )
@@ -683,7 +702,7 @@ function DataViewTab({ job }) {
               <tr
                 key={f.name}
                 className={`${f.is_dir ? 'job-data-row-dir' : ''} ${canPlay ? 'job-data-row-video' : ''} ${isSelected ? 'job-data-row-selected' : ''}`.trim()}
-                onClick={canPlay ? () => QueueApi.openMovieWindow({ path: f.path }) : undefined}
+                onClick={canPlay ? () => handlePlayMovie(f.path) : undefined}
                 title={canPlay ? t('viewer.playMovie') : undefined}
               >
                 <td style={{ textAlign: 'center' }} onClick={e => e.stopPropagation()}>
