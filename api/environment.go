@@ -43,6 +43,22 @@ func SetOutputFormat(format string) error {
 	return model.SetEnvironment(env)
 }
 
+func SetServer(enabled bool, port int) error {
+	if port < 1 || port > 65535 {
+		port = 8080
+	}
+	env, err := model.GetEnv()
+	if err != nil {
+		return xerrors.Errorf("GetEnv error: %w", err)
+	}
+	if env == nil {
+		env = &model.Environment{}
+	}
+	env.Server = enabled
+	env.ServerPort = port
+	return model.SetEnvironment(env)
+}
+
 func SetMaxConcurrentJobs(n int) error {
 	if n < 1 {
 		n = 1

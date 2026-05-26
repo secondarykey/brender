@@ -419,6 +419,10 @@
     "ffmpegArgsHint": "Additional arguments to pass to ffmpeg (optional)",
     "maxConcurrentJobs": "Max Concurrent Jobs",
     "defaultOutputFormat": "Default Output Format",
+    "serverMode": "Server Mode",
+    "serverModeDesc": "When enabled, an HTTP server starts alongside the app so other users can access it via a web browser.",
+    "serverPort": "Port",
+    "serverRestartRequired": "Restart the app to apply this setting",
     "systemLog": "System Log",
     "openSystemLog": "Open System Log",
     "logLevel": "Log Level"

@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/ikascrew/brender/api"
+	"github.com/ikascrew/brender/api/rest"
 	"github.com/ikascrew/brender/api/wails"
 	"github.com/ikascrew/brender/log"
 	"github.com/ikascrew/brender/model"
@@ -180,8 +181,63 @@ func run() error {
 		})
 	}
 
+	// サーバモードの起動
+	var restServer *rest.Server
+	if env, err := model.GetEnv(); err == nil && env != nil && env.Server {
+		port := env.ServerPort
+		if port < 1 || port > 65535 {
+			port = 8080
+		}
+		rest.SetVersionInfo(strings.TrimSpace(appVersion), dev)
+		restServer = rest.NewServer(assets, port)
+		broker := restServer.Broker()
+
+		origQueueHook := api.QueueChangedHook
+		api.QueueChangedHook = func(count int64) {
+			if origQueueHook != nil {
+				origQueueHook(count)
+			}
+			broker.Emit("queue:changed", count)
+		}
+
+		origMigrationHook := api.MigrationHook
+		api.MigrationHook = func(projectID string, status string, pct float64) {
+			if origMigrationHook != nil {
+				origMigrationHook(projectID, status, pct)
+			}
+			broker.Emit("workdir:migrate", map[string]interface{}{
+				"project_id": projectID,
+				"status":     status,
+				"pct":        pct,
+			})
+		}
+
+		origChangeDirHook := api.WorkDirChangeDirHook
+		api.WorkDirChangeDirHook = func(workDirID uint, status string, pct float64) {
+			if origChangeDirHook != nil {
+				origChangeDirHook(workDirID, status, pct)
+			}
+			broker.Emit("workdir:changedir", map[string]interface{}{
+				"work_dir_id": workDirID,
+				"status":      status,
+				"pct":         pct,
+			})
+		}
+
+		if err := restServer.Start(); err != nil {
+			log.Error("Failed to start HTTP server: %v", err)
+		} else {
+			log.Notice("= HTTP Server started on port %d", port)
+		}
+	}
+
 	if err := app.Run(); err != nil {
 		return xerrors.Errorf("app.Run() error: %w", err)
 	}
+
+	if restServer != nil {
+		restServer.Shutdown(context.Background())
+	}
+
 	return nil
 }

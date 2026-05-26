@@ -419,6 +419,10 @@
     "ffmpegArgsHint": "ffmpeg に渡す追加の引数（省略可）",
     "maxConcurrentJobs": "最大同時実行数",
     "defaultOutputFormat": "デフォルト出力フォーマット",
+    "serverMode": "サーバモード",
+    "serverModeDesc": "有効にすると、アプリ起動時に HTTP サーバを同時に起動し、他のユーザがブラウザでアクセスできるようになります。",
+    "serverPort": "ポート番号",
+    "serverRestartRequired": "設定の反映にはアプリの再起動が必要です",
     "systemLog": "システムログ",
     "openSystemLog": "システムログを開く",
     "logLevel": "ログレベル"
