@@ -2764,3 +2764,17 @@ html[data-theme="light"] {
 html[data-theme="light"] .movie-info-overlay {
   color: rgba(255, 255, 255, 0.88);
 }
+
+/* ── Light theme: status badges ── */
+html[data-theme="light"] .status-recovering  { background: rgba(209,89,4,0.15);   color: #8b3e00; }
+html[data-theme="light"] .status-running     { background: rgba(74,124,220,0.18); color: #1a4aaa; }
+html[data-theme="light"] .status-completed   { background: rgba(39,174,96,0.18);  color: #1a6e3a; }
+html[data-theme="light"] .status-error       { background: rgba(231,76,60,0.18);  color: #a01a10; }
+html[data-theme="light"] .status-interrupted { background: rgba(155,89,182,0.18); color: #5a1e88; }
+
+/* ── Light theme: data status badges ── */
+html[data-theme="light"] .data-status-available { background: rgba(39,160,80,0.18);  color: #1a6e3a; }
+html[data-theme="light"] .data-status-deleted   { background: rgba(180,80,20,0.18);  color: #7a3000; }
+html[data-theme="light"] .data-status-corrupted { background: rgba(160,40,40,0.2);   color: #7a1010; }
+html[data-theme="light"] .data-status-modified  { background: rgba(190,110,20,0.18); color: #7a4a00; }
+html[data-theme="light"] .data-status-locked    { background: rgba(170,140,10,0.2);  color: #6a5200; }
