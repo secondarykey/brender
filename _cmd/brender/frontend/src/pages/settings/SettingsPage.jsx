@@ -14,15 +14,18 @@ function SettingsPage({ initialTab, navigate }) {
   const { t } = useTranslation()
   const [tab, setTab] = useState(initialTab || 'basic')
 
+  const wails = isWails()
   const tabs = [
     { id: 'basic',       label: t('tabs.basic') },
-    { id: 'blender',     label: t('tabs.blender') },
-    { id: 'directory',   label: t('tabs.directory') },
-    { id: 'video',       label: t('tabs.video') },
-    { id: 'code',        label: t('tabs.code') },
-    { id: 'tag',         label: t('tabs.tag') },
-    ...(isWails() ? [{ id: 'server', label: t('tabs.server') }] : []),
-    { id: 'system',      label: t('tabs.system') },
+    ...(wails ? [
+      { id: 'blender',     label: t('tabs.blender') },
+      { id: 'directory',   label: t('tabs.directory') },
+      { id: 'video',       label: t('tabs.video') },
+      { id: 'code',        label: t('tabs.code') },
+      { id: 'tag',         label: t('tabs.tag') },
+      { id: 'server',      label: t('tabs.server') },
+      { id: 'system',      label: t('tabs.system') },
+    ] : []),
   ]
 
   return (
