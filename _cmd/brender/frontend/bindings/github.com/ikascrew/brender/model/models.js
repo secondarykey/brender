@@ -190,6 +190,20 @@ export class Environment {
              */
             this["server"] = false;
         }
+        if (!("server_host" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["server_host"] = "";
+        }
+        if (!("server_port" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["server_port"] = 0;
+        }
         if (!("output_format" in $$source)) {
             /**
              * レンダリング出力フォーマット（"PNG" / "JPEG"）。空なら "PNG"
