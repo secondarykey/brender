@@ -1588,6 +1588,8 @@ textarea.form-input {
 
 /* ジョブ詳細ダイアログ */
 .dialog-wide { width: 560px; max-width: 90vw; }
+.movie-player-dialog-body { padding: 0; aspect-ratio: 16/9; min-height: 360px; }
+.dialog:has(.movie-player-dialog-body) { width: 80vw; max-width: 1280px; }
 .job-detail-body { display: flex; flex-direction: column; gap: 16px; }
 .job-detail-section {
   display: flex;
