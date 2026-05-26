@@ -7,6 +7,7 @@ import JobDetailDialog from '../../components/JobDetailDialog'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import Pagination from '../../components/Pagination'
 import { formatDate, formatDateFull } from '../../lib/dateFormat'
+import { isWails } from '../../lib/api/_client'
 
 function StatusBadge({ status }) {
   const { t } = useTranslation()
@@ -344,13 +345,15 @@ function QueuePage({ navigate }) {
         >
           {t('tabs.history')}
         </button>
-        <button
-          className="btn btn-outline btn-sm"
-          style={{ marginLeft: 'auto' }}
-          onClick={() => QueueApi.openMiniMonitor()}
-        >
-          {t('menu.miniMonitor')}
-        </button>
+        {isWails() && (
+          <button
+            className="btn btn-outline btn-sm"
+            style={{ marginLeft: 'auto' }}
+            onClick={() => QueueApi.openMiniMonitor()}
+          >
+            {t('menu.miniMonitor')}
+          </button>
+        )}
       </div>
 
       <div className="tab-content">
