@@ -151,10 +151,11 @@ export function ReorderCategories(ids) {
  * @param {string} sort
  * @param {string} dir
  * @param {boolean} untagged
+ * @param {string} keyword
  * @returns {$CancellablePromise<api$0.FileSearchResponse | null>}
  */
-export function SearchFiles(tagIDs, page, pageSize, sort, dir, untagged) {
-    return $Call.ByID(2666950391, tagIDs, page, pageSize, sort, dir, untagged).then(/** @type {($result: any) => any} */(($result) => {
+export function SearchFiles(tagIDs, page, pageSize, sort, dir, untagged, keyword) {
+    return $Call.ByID(2666950391, tagIDs, page, pageSize, sort, dir, untagged, keyword).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType12($result);
     }));
 }
