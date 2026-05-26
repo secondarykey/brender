@@ -32,7 +32,8 @@ func NewServer(assets fs.FS, port int) *Server {
 		distFS = assets
 	}
 
-	mux.Handle("/", spaHandler(http.FileServerFS(distFS)))
+	fileServer := http.FileServerFS(distFS)
+	mux.Handle("/", spaHandler(fileServer, distFS))
 
 	// ローカル動画ファイル配信
 	mux.HandleFunc("GET /_movie", func(w http.ResponseWriter, r *http.Request) {
@@ -47,7 +48,7 @@ func NewServer(assets fs.FS, port int) *Server {
 	s := &Server{
 		httpServer: &http.Server{
 			Addr:    fmt.Sprintf(":%d", port),
-			Handler: mux,
+			Handler: requestLogger(mux),
 		},
 		broker:  broker,
 		handler: handler,
@@ -77,12 +78,34 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	return s.httpServer.Shutdown(ctx)
 }
 
-func spaHandler(fileServer http.Handler) http.Handler {
+func spaHandler(fileServer http.Handler, fsys fs.FS) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		path := r.URL.Path
-		if path != "/" && !strings.Contains(path, ".") {
-			r.URL.Path = "/"
+		path := strings.TrimPrefix(r.URL.Path, "/")
+
+		if path == "" {
+			fileServer.ServeHTTP(w, r)
+			return
 		}
+
+		// ファイルが実在すればそのまま配信
+		if f, err := fsys.Open(path); err == nil {
+			f.Close()
+			fileServer.ServeHTTP(w, r)
+			return
+		}
+
+		// 存在しないパスは index.html にフォールバック（SPA ルーティング）
+		r.URL.Path = "/"
 		fileServer.ServeHTTP(w, r)
+	})
+}
+
+func requestLogger(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// API と SSE のログは各ハンドラ内で出力するため静的ファイルのみここでログ
+		if !strings.HasPrefix(r.URL.Path, "/api/") && r.URL.Path != "/events" {
+			slog.Debug("HTTP", "method", r.Method, "path", r.URL.Path)
+		}
+		next.ServeHTTP(w, r)
 	})
 }
