@@ -413,11 +413,6 @@ function HistoryTab({ projectID, fileID, navigate, projectName, fileName }) {
               </div>
               <span className={`status-badge status-${j.status || 'running'}`}>{statusLabel(j.status)}</span>
             </div>
-            {j.status === 'error' && j.error_msg && (
-              <div className="queue-history-error">
-                {j.error_msg.slice(0, 80)}{j.error_msg.length > 80 ? '...' : ''}
-              </div>
-            )}
           </div>
         ))}
       </div>
