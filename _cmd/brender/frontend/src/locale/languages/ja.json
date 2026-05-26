@@ -367,6 +367,12 @@
   },
   "settings": {
     "language": "言語",
+    "theme": "テーマ",
+    "themes": {
+      "system": "システム設定に準拠",
+      "dark": "ダークモード",
+      "light": "ライトモード"
+    },
     "selectFolder": "フォルダを選択",
     "selectFile": "ファイルを選択",
     "selectDirectory": "ディレクトリを選択",

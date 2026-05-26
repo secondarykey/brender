@@ -4,6 +4,9 @@ import LogViewerApp from './LogViewerApp'
 import MovieViewerApp from './MovieViewerApp'
 import MiniMonitorApp from './MiniMonitorApp'
 import './languages'
+import { initTheme } from './lib/theme'
+
+initTheme()
 
 const params = new URLSearchParams(window.location.search)
 const isLogWindow = params.has('log') || params.has('syslog')

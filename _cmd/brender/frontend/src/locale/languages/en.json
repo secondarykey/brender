@@ -367,6 +367,12 @@
   },
   "settings": {
     "language": "Language",
+    "theme": "Theme",
+    "themes": {
+      "system": "System Default",
+      "dark": "Dark",
+      "light": "Light"
+    },
     "selectFolder": "Select Folder",
     "selectFile": "Select File",
     "selectDirectory": "Select Directory",
