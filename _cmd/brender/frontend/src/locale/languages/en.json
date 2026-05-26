@@ -41,12 +41,14 @@
     "dragToReorder": "Drag to reorder",
     "error": "Error: ",
     "reload": "Reload",
+    "reset": "Reset",
     "edit": "Edit",
     "note": "Note",
     "notePlaceholder": "Enter notes..."
   },
   "menu": {
     "project": "Project",
+    "search": "Search",
     "queue": "Queue",
     "miniMonitor": "Mini Monitor",
     "settings": "Settings"
@@ -107,6 +109,8 @@
     "blender": "Blender",
     "video": "Video",
     "code": "Code",
+    "tag": "Tag",
+    "system": "System",
     "directory": "Directory",
     "workDirs": "Work Directories",
     "dataManagement": "Data Management",
@@ -118,7 +122,9 @@
   "breadcrumb": {
     "projects": "Project List",
     "job": "Job",
-    "jobResult": "Result"
+    "jobResult": "Result",
+    "backToFileList": "← Files",
+    "backToWorkspaceList": "← Workspaces"
   },
   "project": {
     "register": {
@@ -361,7 +367,14 @@
   },
   "settings": {
     "language": "Language",
+    "theme": "Theme",
+    "themes": {
+      "system": "System Default",
+      "dark": "Dark",
+      "light": "Light"
+    },
     "selectFolder": "Select Folder",
+    "selectFile": "Select File",
     "selectDirectory": "Select Directory",
     "workDirs": {
       "title": "Work Directories",
@@ -502,5 +515,43 @@
     "fileNotModifiedWarning": "The file has not been modified since the last render. Run again with the same file?",
     "identicalRenderWarning": "Settings are identical to the last render. Did you forget to update the file?",
     "previousValue": "Previous"
+  },
+  "tag": {
+    "addTag": "Tag (Enter or comma to add)",
+    "tags": "Tags",
+    "allFiles": "All Files",
+    "noResults": "No files match the selected tags",
+    "tagCloud": "Tag Cloud",
+    "categories": "Categories",
+    "uncategorized": "Uncategorized",
+    "newCategory": "New Category",
+    "categoryName": "Category Name",
+    "categoryColor": "Color",
+    "merge": "Merge",
+    "mergeInto": "Merge into...",
+    "mergeConfirm": "All tags in \"{{source}}\" will be moved to \"{{target}}\". This category will be removed.",
+    "assignCategory": "Assign Category",
+    "confirmDeleteCategory": "Delete this category?",
+    "deleteCategoryWarning": "Tags in this category will become uncategorized.",
+    "confirmDeleteTag": "Delete this tag?",
+    "deleteTagWarning": "This tag will be removed from all files.",
+    "noTags": "No tags",
+    "tagCount": "{{count}} files",
+    "rename": "Rename",
+    "mergeTag": "Merge Tag",
+    "mergeTagConfirm": "Merge tag \"{{source}}\" into \"{{target}}\"? All file associations will be transferred.",
+    "mergeTagWarning": "All items tagged \"{{source}}\" will be changed to \"{{target}}\".",
+    "confirmMergeTag": "Merge this tag?",
+    "newTag": "New tag",
+    "tagExists": "A tag with the same name already exists",
+    "editCategory": "Edit Category",
+    "untagged": "Untagged",
+    "searchByName": "Search by file or project name",
+    "editTag": "Edit Tag",
+    "tagName": "Tag Name"
+  },
+  "system": {
+    "license": "License",
+    "thirdPartyLicenses": "Third-Party Licenses"
   }
 }

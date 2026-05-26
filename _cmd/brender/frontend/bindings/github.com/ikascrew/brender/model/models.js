@@ -269,6 +269,178 @@ export class Environment {
     }
 }
 
+export class FileSearchResult {
+    /**
+     * Creates a new FileSearchResult instance.
+     * @param {Partial<FileSearchResult>} [$$source = {}] - The source object to create the FileSearchResult.
+     */
+    constructor($$source = {}) {
+        if (!("id" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["id"] = "";
+        }
+        if (!("project_id" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["project_id"] = "";
+        }
+        if (!("path" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["path"] = "";
+        }
+        if (!("name" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["name"] = "";
+        }
+        if (!("note" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["note"] = "";
+        }
+        if (!("blender_install_id" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["blender_install_id"] = 0;
+        }
+        if (!("blender_fixed" in $$source)) {
+            /**
+             * true = ワークスペースで変更不可
+             * @member
+             * @type {boolean}
+             */
+            this["blender_fixed"] = false;
+        }
+        if (!("scene" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["scene"] = "";
+        }
+        if (!("scene_fixed" in $$source)) {
+            /**
+             * true = ワークスペースで変更不可
+             * @member
+             * @type {boolean}
+             */
+            this["scene_fixed"] = false;
+        }
+        if (!("camera" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["camera"] = "";
+        }
+        if (!("camera_fixed" in $$source)) {
+            /**
+             * true = ワークスペースで変更不可
+             * @member
+             * @type {boolean}
+             */
+            this["camera_fixed"] = false;
+        }
+        if (!("engine" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["engine"] = "";
+        }
+        if (!("engine_fixed" in $$source)) {
+            /**
+             * true = ワークスペースで変更不可
+             * @member
+             * @type {boolean}
+             */
+            this["engine_fixed"] = false;
+        }
+        if (!("file_modified_at" in $$source)) {
+            /**
+             * @member
+             * @type {time$0.Time | null}
+             */
+            this["file_modified_at"] = null;
+        }
+        if (!("file_exists" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["file_exists"] = false;
+        }
+        if (!("display_order" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["display_order"] = 0;
+        }
+        if (!("processed_at" in $$source)) {
+            /**
+             * @member
+             * @type {time$0.Time | null}
+             */
+            this["processed_at"] = null;
+        }
+        if (!("created_at" in $$source)) {
+            /**
+             * @member
+             * @type {time$0.Time | null}
+             */
+            this["created_at"] = null;
+        }
+        if (!("updated_at" in $$source)) {
+            /**
+             * @member
+             * @type {time$0.Time | null}
+             */
+            this["updated_at"] = null;
+        }
+        if (!("deleted_at" in $$source)) {
+            /**
+             * @member
+             * @type {gorm$0.DeletedAt}
+             */
+            this["deleted_at"] = null;
+        }
+        if (!("project_name" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["project_name"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new FileSearchResult instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {FileSearchResult}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new FileSearchResult(/** @type {Partial<FileSearchResult>} */($$parsedSource));
+    }
+}
+
 /**
  * Job はレンダリング実行の完了済み履歴レコード。
  * Queue と同じ UUID v7 の ID を持つ。
@@ -1019,6 +1191,244 @@ export class Queue {
     static createFrom($$source = {}) {
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         return new Queue(/** @type {Partial<Queue>} */($$parsedSource));
+    }
+}
+
+export class Tag {
+    /**
+     * Creates a new Tag instance.
+     * @param {Partial<Tag>} [$$source = {}] - The source object to create the Tag.
+     */
+    constructor($$source = {}) {
+        if (!("id" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["id"] = 0;
+        }
+        if (!("name" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["name"] = "";
+        }
+        if (!("category_id" in $$source)) {
+            /**
+             * @member
+             * @type {number | null}
+             */
+            this["category_id"] = null;
+        }
+        if (!("color" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["color"] = "";
+        }
+        if (!("created_at" in $$source)) {
+            /**
+             * @member
+             * @type {time$0.Time | null}
+             */
+            this["created_at"] = null;
+        }
+        if (!("updated_at" in $$source)) {
+            /**
+             * @member
+             * @type {time$0.Time | null}
+             */
+            this["updated_at"] = null;
+        }
+        if (!("deleted_at" in $$source)) {
+            /**
+             * @member
+             * @type {gorm$0.DeletedAt}
+             */
+            this["deleted_at"] = null;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new Tag instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {Tag}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new Tag(/** @type {Partial<Tag>} */($$parsedSource));
+    }
+}
+
+export class TagCategory {
+    /**
+     * Creates a new TagCategory instance.
+     * @param {Partial<TagCategory>} [$$source = {}] - The source object to create the TagCategory.
+     */
+    constructor($$source = {}) {
+        if (!("id" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["id"] = 0;
+        }
+        if (!("name" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["name"] = "";
+        }
+        if (!("color" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["color"] = "";
+        }
+        if (!("display_order" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["display_order"] = 0;
+        }
+        if (!("created_at" in $$source)) {
+            /**
+             * @member
+             * @type {time$0.Time | null}
+             */
+            this["created_at"] = null;
+        }
+        if (!("updated_at" in $$source)) {
+            /**
+             * @member
+             * @type {time$0.Time | null}
+             */
+            this["updated_at"] = null;
+        }
+        if (!("deleted_at" in $$source)) {
+            /**
+             * @member
+             * @type {gorm$0.DeletedAt}
+             */
+            this["deleted_at"] = null;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new TagCategory instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {TagCategory}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new TagCategory(/** @type {Partial<TagCategory>} */($$parsedSource));
+    }
+}
+
+export class TagUsageCount {
+    /**
+     * Creates a new TagUsageCount instance.
+     * @param {Partial<TagUsageCount>} [$$source = {}] - The source object to create the TagUsageCount.
+     */
+    constructor($$source = {}) {
+        if (!("tag_id" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["tag_id"] = 0;
+        }
+        if (!("count" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["count"] = 0;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new TagUsageCount instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {TagUsageCount}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new TagUsageCount(/** @type {Partial<TagUsageCount>} */($$parsedSource));
+    }
+}
+
+export class TagWithCategory {
+    /**
+     * Creates a new TagWithCategory instance.
+     * @param {Partial<TagWithCategory>} [$$source = {}] - The source object to create the TagWithCategory.
+     */
+    constructor($$source = {}) {
+        if (!("id" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["id"] = 0;
+        }
+        if (!("name" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["name"] = "";
+        }
+        if (!("category_id" in $$source)) {
+            /**
+             * @member
+             * @type {number | null}
+             */
+            this["category_id"] = null;
+        }
+        if (!("color" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["color"] = "";
+        }
+        if (!("category_name" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["category_name"] = "";
+        }
+        if (!("category_color" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["category_color"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new TagWithCategory instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {TagWithCategory}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new TagWithCategory(/** @type {Partial<TagWithCategory>} */($$parsedSource));
     }
 }
 

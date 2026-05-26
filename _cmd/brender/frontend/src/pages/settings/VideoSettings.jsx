@@ -69,7 +69,7 @@ function VideoSettings() {
               } catch (_) {}
             }}
           >
-            {t('settings.selectFolder')}
+            {t('settings.selectFile')}
           </button>
           {cmd && (
             <button className="btn btn-ghost btn-sm" onClick={() => setCmd('')}>

@@ -41,12 +41,14 @@
     "dragToReorder": "ドラッグで並び替え",
     "error": "エラー: ",
     "reload": "再読み込み",
+    "reset": "リセット",
     "edit": "編集",
     "note": "ノート",
     "notePlaceholder": "メモを入力..."
   },
   "menu": {
     "project": "プロジェクト",
+    "search": "検索",
     "queue": "キュー",
     "miniMonitor": "ミニモニター",
     "settings": "設定"
@@ -107,6 +109,8 @@
     "blender": "Blender",
     "video": "動画",
     "code": "コード",
+    "tag": "タグ",
+    "system": "システム",
     "directory": "ディレクトリ設定",
     "workDirs": "作業ディレクトリ",
     "dataManagement": "データ管理",
@@ -118,7 +122,9 @@
   "breadcrumb": {
     "projects": "プロジェクト一覧",
     "job": "ジョブ",
-    "jobResult": "実行結果"
+    "jobResult": "実行結果",
+    "backToFileList": "← ファイル一覧",
+    "backToWorkspaceList": "← ワークスペース一覧"
   },
   "project": {
     "register": {
@@ -361,7 +367,14 @@
   },
   "settings": {
     "language": "言語",
+    "theme": "テーマ",
+    "themes": {
+      "system": "システム設定に準拠",
+      "dark": "ダークモード",
+      "light": "ライトモード"
+    },
     "selectFolder": "フォルダを選択",
+    "selectFile": "ファイルを選択",
     "selectDirectory": "ディレクトリを選択",
     "workDirs": {
       "title": "作業ディレクトリ",
@@ -502,5 +515,43 @@
     "fileNotModifiedWarning": "前回の実行からファイルが更新されていません。同じファイルで再実行しますか？",
     "identicalRenderWarning": "前回と完全に同じ設定です。ファイルを更新し忘れていませんか？",
     "previousValue": "前回"
+  },
+  "tag": {
+    "addTag": "タグ（Enterまたはカンマで決定）",
+    "tags": "タグ",
+    "allFiles": "全ファイル",
+    "noResults": "選択したタグに一致するファイルがありません",
+    "tagCloud": "タグクラウド",
+    "categories": "カテゴリ",
+    "uncategorized": "未分類",
+    "newCategory": "新しいカテゴリ",
+    "categoryName": "カテゴリ名",
+    "categoryColor": "色",
+    "merge": "統合",
+    "mergeInto": "統合先...",
+    "mergeConfirm": "「{{source}}」のタグはすべて「{{target}}」に移動されます。このカテゴリはなくなります。",
+    "assignCategory": "カテゴリを割り当て",
+    "confirmDeleteCategory": "カテゴリを削除しますか？",
+    "deleteCategoryWarning": "このカテゴリのタグは未分類になります。",
+    "confirmDeleteTag": "タグを削除しますか？",
+    "deleteTagWarning": "このタグはすべてのファイルから削除されます。",
+    "noTags": "タグがありません",
+    "tagCount": "{{count}}件",
+    "rename": "名前変更",
+    "mergeTag": "タグを統合",
+    "mergeTagConfirm": "タグ「{{source}}」を「{{target}}」に統合しますか？すべてのファイルの紐付けが移動されます。",
+    "mergeTagWarning": "「{{source}}」に設定されているものがすべて「{{target}}」になります。",
+    "confirmMergeTag": "タグを統合しますか？",
+    "newTag": "新しいタグ",
+    "tagExists": "同じ名前のタグがすでに存在します",
+    "editCategory": "カテゴリの編集",
+    "untagged": "タグなし",
+    "searchByName": "ファイル名・プロジェクト名で検索",
+    "editTag": "タグの編集",
+    "tagName": "タグ名"
+  },
+  "system": {
+    "license": "ライセンス",
+    "thirdPartyLicenses": "サードパーティライセンス"
   }
 }

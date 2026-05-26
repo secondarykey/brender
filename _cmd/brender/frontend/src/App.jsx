@@ -8,6 +8,7 @@ import WorkspaceDetailPage from './pages/projects/WorkspaceDetailPage'
 import JobPage from './pages/projects/JobPage'
 import QueuePage from './pages/queue/QueuePage'
 import SettingsPage from './pages/settings/SettingsPage'
+import SearchPage from './pages/search/SearchPage'
 import { EnvironmentApi, WorkDirApi } from './lib/api'
 
 export function VideoPlayer({ path }) {
@@ -112,6 +113,8 @@ function App() {
             initialTab={p.initialTab}
           />
         )
+      case 'search':
+        return <SearchPage navigate={navigate} />
       case 'queue':
         return <QueuePage key={queueKey} navigate={navigate} />
       case 'settings':

@@ -10,12 +10,25 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 // @ts-ignore: Unused imports
 import * as model$0 from "../../model/models.js";
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
+import * as $models from "./models.js";
+
 /**
  * @returns {$CancellablePromise<model$0.Environment | null>}
  */
 export function Get() {
     return $Call.ByID(868116245).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType1($result);
+    }));
+}
+
+/**
+ * @returns {$CancellablePromise<$models.LicenseInfo>}
+ */
+export function GetLicenses() {
+    return $Call.ByID(1561641605).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType2($result);
     }));
 }
 
@@ -33,7 +46,7 @@ export function GetLogLevel() {
  */
 export function GetLogLevels() {
     return $Call.ByID(3814594414).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType2($result);
+        return $$createType3($result);
     }));
 }
 
@@ -43,6 +56,15 @@ export function GetLogLevels() {
  */
 export function GetSystemLog() {
     return $Call.ByID(1191007214);
+}
+
+/**
+ * @returns {$CancellablePromise<$models.VersionInfo>}
+ */
+export function GetVersion() {
+    return $Call.ByID(325055367).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType4($result);
+    }));
 }
 
 /**
@@ -93,4 +115,6 @@ export function SetOutputFormat(format) {
 // Private type creation functions
 const $$createType0 = model$0.Environment.createFrom;
 const $$createType1 = $Create.Nullable($$createType0);
-const $$createType2 = $Create.Array($Create.Any);
+const $$createType2 = $models.LicenseInfo.createFrom;
+const $$createType3 = $Create.Array($Create.Any);
+const $$createType4 = $models.VersionInfo.createFrom;

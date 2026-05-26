@@ -106,6 +106,7 @@ func run() error {
 			application.NewService(wails.NewQueue()),
 			application.NewService(wails.NewWorkDir()),
 			application.NewService(wails.NewCodes()),
+			application.NewService(wails.NewTag()),
 		},
 		Assets: application.AssetOptions{
 			Handler: &movieAwareHandler{fallback: application.AssetFileServerFS(assets)},
@@ -115,7 +116,9 @@ func run() error {
 		},
 	})
 
+	wails.AppVersion = strings.TrimSpace(appVersion)
 	dev := app.Env.Info().Debug
+	wails.DevMode = dev
 	if dev {
 		log.SetLevel(slog.LevelInfo)
 		//ログをInfoに落とす

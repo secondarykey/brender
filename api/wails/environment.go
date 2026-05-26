@@ -4,11 +4,15 @@ import (
 	"log/slog"
 	"os"
 
+	brender "github.com/ikascrew/brender"
 	"github.com/ikascrew/brender/api"
 	"github.com/ikascrew/brender/log"
 	"github.com/ikascrew/brender/model"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
+
+var AppVersion string
+var DevMode bool
 
 type Environment struct{}
 
@@ -19,6 +23,30 @@ func NewEnvironment() *Environment {
 
 func (s *Environment) Get() (*model.Environment, error) {
 	return api.GetEnvironment()
+}
+
+type VersionInfo struct {
+	Version string `json:"version"`
+	Dev     bool   `json:"dev"`
+}
+
+func (s *Environment) GetVersion() VersionInfo {
+	return VersionInfo{
+		Version: AppVersion,
+		Dev:     DevMode,
+	}
+}
+
+type LicenseInfo struct {
+	App        string `json:"app"`
+	ThirdParty string `json:"thirdParty"`
+}
+
+func (s *Environment) GetLicenses() LicenseInfo {
+	return LicenseInfo{
+		App:        brender.AppLicense,
+		ThirdParty: brender.ThirdPartyLicenses,
+	}
 }
 
 func (s *Environment) SetFfmpeg(cmd string, fps int, outExt string, args string) error {

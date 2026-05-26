@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
-import { WorkspaceApi, QueueApi, ProjectApi, BlenderApi, WorkDirApi } from '../../lib/api'
+import { WorkspaceApi, QueueApi, ProjectApi, BlenderApi, WorkDirApi, TagApi } from '../../lib/api'
 import { useToast, useMessage } from '../../lib/toast'
 import { onAppEvent } from '../../lib/appEvents'
+import { formatDateFull, formatDuration } from '../../lib/dateFormat'
 import Pagination from '../../components/Pagination'
 import SortSelect from '../../components/SortSelect'
 import Dialog from '../../components/Dialog'
@@ -11,6 +12,7 @@ import ConfirmDialog from '../../components/ConfirmDialog'
 import Breadcrumb from '../../components/Breadcrumb'
 import NoteSection from '../../components/NoteSection'
 import WorkspaceCreateDialog from '../../components/WorkspaceCreateDialog'
+import TagInput from '../../components/TagInput'
 
 
 // ── ワークスペースカード（サムネイル表示） ──────────────────
@@ -405,21 +407,12 @@ function HistoryTab({ projectID, fileID, navigate, projectName, fileName }) {
               <div>
                 <span className="queue-history-name">{j.name || j.workspace_name}</span>
                 <div className="queue-history-detail" style={{ marginTop: 4 }}>
-                  <span>{j.start_frame}–{j.end_frame}f</span>
-                  {j.engine && <span>{j.engine}</span>}
-                  {j.camera && <span>{j.camera}</span>}
-                  {j.enqueued_at && (
-                    <span>{new Date(j.enqueued_at).toLocaleString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
-                  )}
+                  {j.started_at && <span>{formatDateFull(j.started_at)}</span>}
+                  {j.started_at && j.completed_at && <span>{formatDuration(j.started_at, j.completed_at, t)}</span>}
                 </div>
               </div>
               <span className={`status-badge status-${j.status || 'running'}`}>{statusLabel(j.status)}</span>
             </div>
-            {j.status === 'error' && j.error_msg && (
-              <div className="queue-history-error">
-                {j.error_msg.slice(0, 80)}{j.error_msg.length > 80 ? '...' : ''}
-              </div>
-            )}
           </div>
         ))}
       </div>
@@ -504,6 +497,7 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
   const [missingCamera, setMissingCamera]     = useState('')
   const [missingEngine, setMissingEngine]     = useState('')
   const [convertedEngine, setConvertedEngine] = useState(null)
+  const [fileTags, setFileTags]             = useState([])
 
   const fetchToolData = (installID) => {
     setToolLoading(true)
@@ -533,6 +527,9 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
       setEngineFixed(f?.engine_fixed || false)
       fetchToolData(installID)
     })
+    TagApi.getFileTags({ projectFileID: fileID })
+      .then(tags => setFileTags(tags || []))
+      .catch(() => setFileTags([]))
   }, [fileID])
 
   const handleBlenderChange = (installID) => {
@@ -817,6 +814,14 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
 
       <div className="ws-detail-right">
         <ThumbnailPanel projectID={projectID} fileID={fileID} />
+        <div style={{ marginTop: 20 }}>
+          <h3 className="ws-detail-section-title">{t('tag.tags')}</h3>
+          <TagInput
+            projectFileID={fileID}
+            tags={fileTags}
+            onTagsChanged={setFileTags}
+          />
+        </div>
       </div>
     </div>
   )
@@ -845,12 +850,15 @@ function FileDetailPage({ projectID, projectName, fileID, fileName, initialTab, 
 
   return (
     <div className="page">
-      <div className="page-header">
+      <div className="page-header" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
         <Breadcrumb items={[
           { label: t('breadcrumb.projects'), onClick: () => navigate('projects') },
           { label: projectName, onClick: () => navigate('project', { id: projectID, initialTab: 'settings' }) },
           { label: currentFileName },
         ]} />
+        <button className="back-to-list" onClick={() => navigate('project', { id: projectID, initialTab: 'workspace' })}>
+          {t('breadcrumb.backToFileList')}
+        </button>
       </div>
 
       {workDirStatus === 'lock' && (

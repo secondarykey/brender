@@ -542,15 +542,69 @@ return off  // useEffect cleanup
 - **ダイアログ内のエラー** はグローバルバーではなく `Dialog`/`ConfirmDialog` の `message` prop に渡し、ダイアログ上部に表示する。
 - `LogViewerApp` / `MovieViewerApp` は `MainLayout` を持たない独立 Wails ウィンドウのため、グローバルバー対象外（ローカルにインライン表示）。
 
+## テーマシステム (`src/lib/theme.js`)
+
+アプリはダーク / ライト / システム設定準拠の 3 モードをサポートする。
+
+### 設定・保存
+- localStorage キー: `brender-theme`（値: `'system'` | `'dark'` | `'light'`、未設定は `'system'`）
+- `system` モードは `window.matchMedia('(prefers-color-scheme: light)')` で OS 設定を自動追従
+- アプリ起動時に `main.jsx` 内の `initTheme()` が `html` 要素への属性付与を行う
+
+### テーマ適用の仕組み
+- ライトモード: `document.documentElement.setAttribute('data-theme', 'light')`
+- ダークモード（デフォルト）: `data-theme` 属性なし
+
+### `useTheme` フック
+```js
+import { useTheme } from '../../lib/theme'
+const { preference, changeTheme } = useTheme()
+// preference: 'system' | 'dark' | 'light'
+// changeTheme('light')  → localStorage 保存 + 即時適用
+```
+
+### 設定画面
+設定 → 「基本設定」タブ → 言語セレクトの下にテーマセレクト。i18n キーは `settings.theme` / `settings.themes.{system|dark|light}`。
+
+---
+
 ## CSS Conventions (`frontend/public/style.css`)
 
-### カラーパレット（黒系）
-- 本体背景: `#1a1a1a`
-- サイドバー/タイトルバー: `#111111`
-- 入力・セレクト背景: `#1e1e1e`
-- アクセント（青）: `#4a7cdc`
-- 実行ボタン（オレンジ）: `#d15904` / hover `#e86a10`
-- エラー赤: `#c0392b`
+### カラー変数システム
+
+CSS Custom Properties でダーク/ライトを切り替える。**色をハードコードせず変数を使うこと。**
+
+| 変数 | ダーク | ライト | 用途 |
+|---|---|---|---|
+| `--fg` | `255, 255, 255` | `0, 0, 0` | 前景 RGB チャンネル（rgba の第1引数に使う） |
+| `--bg` | `#1a1a1a` | `#f2f2f2` | メイン背景 |
+| `--bg-panel` | `#111111` | `#e4e4e4` | サイドバー・タイトルバー |
+| `--bg-deep` | `#111` | `#d0d0d0` | サムネイル・画像ビューア等の深い背景 |
+| `--bg-card` | `#222` | `#eaeaea` | カード・タイル背景 |
+| `--bg-input` | `#1e1e1e` | `#ffffff` | フォーム入力・セレクト・ダイアログ |
+| `--bg-popup` | `#2a2a2a` | `#f8f8f8` | ポップアップ・オートコンプリート |
+| `--bg-overlay` | `rgba(26,26,26,0.78)` | `rgba(240,240,240,0.88)` | ワークスペース一覧のオーバーレイ |
+| `--bg-log-btn` | `rgba(30,30,30,0.92)` | `rgba(235,235,235,0.95)` | ログビューア浮遊ボタン |
+
+**前景色の使い方:**
+```css
+/* ✅ 正しい */
+color: rgba(var(--fg), 0.87);
+border: 1px solid rgba(var(--fg), 0.12);
+background: rgba(var(--fg), 0.06);
+
+/* ❌ ハードコード禁止 */
+color: rgba(255,255,255,0.87);
+background: #1a1a1a;
+```
+
+**アクセントカラー（テーマ非依存・固定値）:**
+- 青（ナビ・フォーカス）: `#4a7cdc`
+- 緑（保存・完了）: `#27ae60`
+- 赤（削除・エラー）: `#c0392b`
+- オレンジ（実行ボタン）: `#d15904` / hover `#e86a10`
+
+**例外:** `.movie-info-overlay` はビデオ背景が常に黒のため `rgba(255,255,255,0.88)` をライトモードでも維持（`html[data-theme="light"]` で明示的に上書き）。
 
 ### レイアウトルール
 - `.page:has(.tab-nav)` → flex column, overflow hidden; `.tab-content` → flex:1, min-height:0, overflow-y:auto (タブコンテンツのみスクロール、ヘッダ固定)

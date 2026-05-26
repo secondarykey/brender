@@ -1,9 +1,12 @@
 import { useTranslation } from 'react-i18next'
 import { LANGUAGES } from '../../languages'
-import { EnvironmentApi } from '../../lib/api'
+import { useTheme } from '../../lib/theme'
+
+const THEME_OPTIONS = ['system', 'dark', 'light']
 
 function BasicSettings() {
   const { t, i18n } = useTranslation()
+  const { preference, changeTheme } = useTheme()
 
   return (
     <div>
@@ -21,11 +24,18 @@ function BasicSettings() {
         </select>
       </div>
 
-      <h2 className="section-title" style={{ marginTop: 24 }}>{t('settings.systemLog')}</h2>
+      <h2 className="section-title" style={{ marginTop: 24 }}>{t('settings.theme')}</h2>
       <div className="setting-row">
-        <button className="btn" onClick={() => EnvironmentApi.openSystemLogWindow()}>
-          {t('settings.openSystemLog')}
-        </button>
+        <select
+          className="form-select"
+          style={{ width: 200 }}
+          value={preference}
+          onChange={e => changeTheme(e.target.value)}
+        >
+          {THEME_OPTIONS.map(opt => (
+            <option key={opt} value={opt}>{t(`settings.themes.${opt}`)}</option>
+          ))}
+        </select>
       </div>
     </div>
   )

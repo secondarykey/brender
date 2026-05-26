@@ -8,6 +8,9 @@ import { Create as $Create } from "@wailsio/runtime";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
+import * as model$0 from "../model/models.js";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
 import * as time$0 from "../../../../time/models.js";
 
 export class AddDirResult {
@@ -53,6 +56,45 @@ export class AddDirResult {
             $$parsedSource["errors"] = $$createField2_0($$parsedSource["errors"]);
         }
         return new AddDirResult(/** @type {Partial<AddDirResult>} */($$parsedSource));
+    }
+}
+
+export class FileSearchResponse {
+    /**
+     * Creates a new FileSearchResponse instance.
+     * @param {Partial<FileSearchResponse>} [$$source = {}] - The source object to create the FileSearchResponse.
+     */
+    constructor($$source = {}) {
+        if (!("files" in $$source)) {
+            /**
+             * @member
+             * @type {(model$0.FileSearchResult | null)[]}
+             */
+            this["files"] = [];
+        }
+        if (!("total" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["total"] = 0;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new FileSearchResponse instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {FileSearchResponse}
+     */
+    static createFrom($$source = {}) {
+        const $$createField0_0 = $$createType3;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("files" in $$parsedSource) {
+            $$parsedSource["files"] = $$createField0_0($$parsedSource["files"]);
+        }
+        return new FileSearchResponse(/** @type {Partial<FileSearchResponse>} */($$parsedSource));
     }
 }
 
@@ -531,7 +573,7 @@ export class RenderPreview {
      * @returns {RenderPreview}
      */
     static createFrom($$source = {}) {
-        const $$createField17_0 = $$createType2;
+        const $$createField17_0 = $$createType5;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("previous" in $$parsedSource) {
             $$parsedSource["previous"] = $$createField17_0($$parsedSource["previous"]);
@@ -678,5 +720,8 @@ export class WorkspaceBatchSpec {
 
 // Private type creation functions
 const $$createType0 = $Create.Array($Create.Any);
-const $$createType1 = PreviousRenderInfo.createFrom;
+const $$createType1 = model$0.FileSearchResult.createFrom;
 const $$createType2 = $Create.Nullable($$createType1);
+const $$createType3 = $Create.Array($$createType2);
+const $$createType4 = PreviousRenderInfo.createFrom;
+const $$createType5 = $Create.Nullable($$createType4);

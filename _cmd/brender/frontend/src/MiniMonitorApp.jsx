@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { QueueApi } from './lib/api'
 import { onAppEvent } from './lib/appEvents'
+import { formatDate as formatFinishTime } from './lib/dateFormat'
 
 function subFramePct(q) {
   const sample = Math.max(0, q.now_sample - 1)
@@ -21,11 +22,6 @@ function formatRemaining(iso, t) {
   if (diffSec < 60) return `${diffSec}${t('time.seconds')}`
   if (diffSec < 3600) return `${Math.floor(diffSec / 60)}${t('time.minutes')}${diffSec % 60}${t('time.seconds')}`
   return `${Math.floor(diffSec / 3600)}${t('time.hours')}${Math.floor((diffSec % 3600) / 60)}${t('time.minutes')}`
-}
-
-function formatFinishTime(iso) {
-  if (!iso) return null
-  return new Date(iso).toLocaleString()
 }
 
 function MiniMonitorApp() {

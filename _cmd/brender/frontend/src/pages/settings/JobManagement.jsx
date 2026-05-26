@@ -7,6 +7,7 @@ import ConfirmDialog from '../../components/ConfirmDialog'
 import JobDetailDialog from '../../components/JobDetailDialog'
 import HoldButton from '../../components/HoldButton'
 import Pagination from '../../components/Pagination'
+import { formatDateFull as formatDate } from '../../lib/dateFormat'
 
 const DATA_STATUS_LABELS = {
   0: 'none',
@@ -47,11 +48,6 @@ function formatSize(bytes) {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
   if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`
-}
-
-function formatDate(iso) {
-  if (!iso) return '—'
-  return new Date(iso).toLocaleString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
 
 function buildCleanFilter(excludeStatuses, lockFilter, filterDays) {

@@ -4,6 +4,7 @@ import { Dialogs } from '@wailsio/runtime'
 import { WorkspaceApi, BlenderApi, QueueApi, ProjectApi, WorkDirApi, CodesApi, EnvironmentApi } from '../../lib/api'
 import { useToast, useMessage } from '../../lib/toast'
 import { onAppEvent } from '../../lib/appEvents'
+import { formatDateShort } from '../../lib/dateFormat'
 import Pagination from '../../components/Pagination'
 import Dialog from '../../components/Dialog'
 import ConfirmDialog from '../../components/ConfirmDialog'
@@ -152,16 +153,11 @@ function HistoryTab({ projectID, workspaceID, navigate, projectName, fileName, f
                       {j.samples > 0 && <span>{j.samples}smp</span>}
                       {(j.resolution_x > 0 && j.resolution_y > 0) && <span>{j.resolution_x}×{j.resolution_y}</span>}
                       {j.enqueued_at && (
-                        <span>{new Date(j.enqueued_at).toLocaleString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+                        <span>{formatDateShort(j.enqueued_at)}</span>
                       )}
                     </div>
                     <span className={`status-badge status-${j.status || 'running'}`}>{statusLabel(j.status)}</span>
                   </div>
-                  {j.status === 'error' && j.error_msg && (
-                    <div className="queue-history-error">
-                      {j.error_msg.slice(0, 80)}{j.error_msg.length > 80 ? '...' : ''}
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
@@ -1087,13 +1083,16 @@ function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspa
 
   return (
     <div className="page">
-      <div className="page-header">
+      <div className="page-header" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
         <Breadcrumb items={[
           { label: t('breadcrumb.projects'), onClick: () => navigate('projects') },
           { label: projectName, onClick: () => navigate('project', { id: projectID, initialTab: 'settings' }) },
           effectiveFileName && { label: effectiveFileName, onClick: () => navigate('file', { projectID, projectName, fileID: effectiveFileID, fileName: effectiveFileName, initialTab: 'settings' }) },
           { label: detail.workspace.name, suffix: wsStale ? <span className="stale-mark-inline" title={t('file.fileChangedTooltip')} style={{ marginLeft: 6 }}>!</span> : null },
         ].filter(Boolean)} />
+        <button className="back-to-list" onClick={() => navigate('file', { projectID, projectName, fileID: effectiveFileID, fileName: effectiveFileName, initialTab: 'workspace' })}>
+          {t('breadcrumb.backToWorkspaceList')}
+        </button>
       </div>
 
       {workDirStatus === 'lock' && (
