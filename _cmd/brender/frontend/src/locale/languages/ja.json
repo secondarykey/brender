@@ -539,14 +539,13 @@
     "newTag": "新しいタグ",
     "tagExists": "同じ名前のタグがすでに存在します",
     "editCategory": "カテゴリの編集",
-    "untagged": "タグなし"
-  },
-  "system": {
-    "license": "ライセンス",
-    "thirdPartyLicenses": "サードパーティライセンス",
     "untagged": "タグなし",
     "searchByName": "ファイル名・プロジェクト名で検索",
     "editTag": "タグの編集",
     "tagName": "タグ名"
+  },
+  "system": {
+    "license": "ライセンス",
+    "thirdPartyLicenses": "サードパーティライセンス"
   }
 }
