@@ -275,11 +275,8 @@ function RenderResultTab({ job }) {
     }
     // 動画ファイルは data_status に関係なく常に検索する
     // （画像を削除しても動画だけ残っている場合に再生可能にするため）
-    QueueApi.listJobFiles({ id: job.id })
-      .then(files => {
-        const movie = (files || []).find(f => !f.is_dir && isVideoFile(f.name))
-        if (movie) setMoviePath(movie.path)
-      })
+    QueueApi.getJobMoviePath({ id: job.id })
+      .then(path => { if (path) setMoviePath(path) })
       .catch(() => {})
   }, [job])
 

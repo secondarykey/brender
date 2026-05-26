@@ -137,6 +137,13 @@ export const QueueApi = {
     isWails() ? svc().then(s => s.ListJobFiles(id))
               : serverCall('queue', 'list_job_files', { id }),
 
+  /** ジョブの動画ファイルパスを取得（存在しない場合は空文字）
+   * @param {{ id: string }} args
+   */
+  getJobMoviePath: ({ id }) =>
+    isWails() ? svc().then(s => s.GetJobMoviePath(id))
+              : serverCall('queue', 'get_job_movie_path', { id }),
+
   /** 画像ファイルを base64 データ URI として取得
    * @param {{ path: string }} args
    */
