@@ -20,7 +20,7 @@ type Server struct {
 	handler    *Handler
 }
 
-func NewServer(assets fs.FS, port int) *Server {
+func NewServer(assets fs.FS, host string, port int) *Server {
 	handler := NewHandler()
 	broker := NewSSEBroker()
 
@@ -63,7 +63,7 @@ func NewServer(assets fs.FS, port int) *Server {
 
 	s := &Server{
 		httpServer: &http.Server{
-			Addr:    fmt.Sprintf(":%d", port),
+			Addr:    fmt.Sprintf("%s:%d", host, port),
 			Handler: requestLogger(mux),
 		},
 		broker:  broker,

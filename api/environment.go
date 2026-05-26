@@ -43,7 +43,7 @@ func SetOutputFormat(format string) error {
 	return model.SetEnvironment(env)
 }
 
-func SetServer(enabled bool, port int) error {
+func SetServer(enabled bool, host string, port int) error {
 	if port < 1 || port > 65535 {
 		port = 8080
 	}
@@ -55,6 +55,7 @@ func SetServer(enabled bool, port int) error {
 		env = &model.Environment{}
 	}
 	env.Server = enabled
+	env.ServerHost = host
 	env.ServerPort = port
 	return model.SetEnvironment(env)
 }

@@ -184,12 +184,13 @@ func run() error {
 	// サーバモードの起動
 	var restServer *rest.Server
 	if env, err := model.GetEnv(); err == nil && env != nil && env.Server {
+		host := env.ServerHost
 		port := env.ServerPort
 		if port < 1 || port > 65535 {
 			port = 8080
 		}
 		rest.SetVersionInfo(strings.TrimSpace(appVersion), dev)
-		restServer = rest.NewServer(assets, port)
+		restServer = rest.NewServer(assets, host, port)
 		broker := restServer.Broker()
 
 		origQueueHook := api.QueueChangedHook

@@ -9,8 +9,9 @@ import (
 
 type Environment struct {
 	ID         uint `gorm:"primaryKey" json:"id"`
-	Server     bool `json:"server"`
-	ServerPort int  `gorm:"default:8080" json:"server_port"`
+	Server     bool   `json:"server"`
+	ServerHost string `json:"server_host"`
+	ServerPort int    `gorm:"default:8080" json:"server_port"`
 	OutputFormat       string `json:"output_format"`        // レンダリング出力フォーマット（"PNG" / "JPEG"）。空なら "PNG"
 	FfmpegCmd          string `json:"ffmpeg_cmd"`
 	FfmpegFPS          int    `json:"ffmpeg_fps"`

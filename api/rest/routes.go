@@ -39,13 +39,14 @@ func (h *Handler) registerEnvironment() {
 
 	h.register("environment", "set_server", func(body json.RawMessage) (any, error) {
 		var p struct {
-			Enabled bool `json:"enabled"`
-			Port    int  `json:"port"`
+			Enabled bool   `json:"enabled"`
+			Host    string `json:"host"`
+			Port    int    `json:"port"`
 		}
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return nil, api.SetServer(p.Enabled, p.Port)
+		return nil, api.SetServer(p.Enabled, p.Host, p.Port)
 	})
 
 	h.register("environment", "set_ffmpeg", func(body json.RawMessage) (any, error) {

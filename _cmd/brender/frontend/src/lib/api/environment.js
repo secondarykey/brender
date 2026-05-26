@@ -36,9 +36,9 @@ export const EnvironmentApi = {
               : serverCall('environment', 'set_log_level', { level }),
 
   /** サーバモードの設定を保存 */
-  setServer: ({ enabled, port }) =>
-    isWails() ? svc().then(s => s.SetServer(enabled, port))
-              : serverCall('environment', 'set_server', { enabled, port }),
+  setServer: ({ enabled, host, port }) =>
+    isWails() ? svc().then(s => s.SetServer(enabled, host, port))
+              : serverCall('environment', 'set_server', { enabled, host, port }),
 
   /** レンダリング出力フォーマットを設定（"PNG" / "JPEG"） */
   setOutputFormat: ({ format }) =>
