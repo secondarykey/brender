@@ -138,12 +138,11 @@ function SearchPage({ navigate }) {
                     <button
                       key={tag.id}
                       className={`search-filter-tag${selectedTagIDs.includes(tag.id) ? ' selected' : ''}`}
-                      style={selectedTagIDs.includes(tag.id) ? { backgroundColor: tagColor(tag), color: '#fff' } : {}}
+                      style={{ backgroundColor: tagColor(tag), color: '#fff' }}
                       onClick={e => toggleTag(tag.id, e)}
                     >
-                      <span className="search-filter-tag-dot" style={{ backgroundColor: tagColor(tag) }} />
                       {tag.name}
-                      {tagCounts[tag.id] > 0 && <span style={{ opacity: 0.6, marginLeft: 2, fontSize: '0.7rem' }}>{tagCounts[tag.id]}</span>}
+                      {tagCounts[tag.id] > 0 && <span style={{ opacity: 0.7, marginLeft: 2, fontSize: '0.7rem' }}>{tagCounts[tag.id]}</span>}
                     </button>
                   ))}
                 </div>
@@ -159,12 +158,11 @@ function SearchPage({ navigate }) {
                   <button
                     key={tag.id}
                     className={`search-filter-tag${selectedTagIDs.includes(tag.id) ? ' selected' : ''}`}
-                    style={selectedTagIDs.includes(tag.id) ? { backgroundColor: tagColor(tag), color: '#fff' } : {}}
+                    style={{ backgroundColor: tagColor(tag), color: '#fff' }}
                     onClick={e => toggleTag(tag.id, e)}
                   >
-                    <span className="search-filter-tag-dot" style={{ backgroundColor: tagColor(tag) }} />
                     {tag.name}
-                    {tagCounts[tag.id] > 0 && <span style={{ opacity: 0.6, marginLeft: 2, fontSize: '0.7rem' }}>{tagCounts[tag.id]}</span>}
+                    {tagCounts[tag.id] > 0 && <span style={{ opacity: 0.7, marginLeft: 2, fontSize: '0.7rem' }}>{tagCounts[tag.id]}</span>}
                   </button>
                 ))}
               </div>
