@@ -1353,14 +1353,18 @@ type JobFileInfo struct {
 func ListJobFiles(id string) ([]*JobFileInfo, error) {
 	j, err := model.GetJob(id)
 	if err != nil {
+		log.Printf("[ListJobFiles] GetJob error: %v", err)
 		return nil, xerrors.Errorf("ListJobFiles GetJob: %w", err)
 	}
+	log.Printf("[ListJobFiles] job=%s outputDir=%q dataStatus=%d", id, j.OutputDir, j.DataStatus)
 	if j.OutputDir == "" {
+		log.Printf("[ListJobFiles] outputDir is empty, returning nil")
 		return nil, nil
 	}
 	entries, err := os.ReadDir(j.OutputDir)
 	if err != nil {
 		if os.IsNotExist(err) {
+			log.Printf("[ListJobFiles] dir not found: %s", j.OutputDir)
 			return nil, nil
 		}
 		return nil, xerrors.Errorf("ListJobFiles ReadDir: %w", err)
@@ -1371,6 +1375,7 @@ func ListJobFiles(id string) ([]*JobFileInfo, error) {
 		if err != nil {
 			continue
 		}
+		log.Printf("[ListJobFiles] file: %s (isDir=%v, size=%d)", e.Name(), e.IsDir(), info.Size())
 		list = append(list, &JobFileInfo{
 			Name:    e.Name(),
 			Path:    filepath.Join(j.OutputDir, e.Name()),
@@ -1379,6 +1384,7 @@ func ListJobFiles(id string) ([]*JobFileInfo, error) {
 			IsDir:   e.IsDir(),
 		})
 	}
+	log.Printf("[ListJobFiles] returning %d files", len(list))
 	return list, nil
 }
 
