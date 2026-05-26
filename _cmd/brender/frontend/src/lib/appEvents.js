@@ -13,7 +13,7 @@
  *   }, [])
  */
 
-const isWails = () => Boolean(window._wails)
+const isWails = () => Boolean(window._wails) && !window.__brender_server_mode
 
 // ── SSE シングルトン管理 ──────────────────────────────────
 // Web モード時に複数コンポーネントが onAppEvent を呼んでも

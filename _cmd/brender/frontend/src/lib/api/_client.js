@@ -11,7 +11,7 @@
  *   エラー時は throw するため、呼び出し側は Wails モードと同じ try/catch で扱える。
  */
 
-export const isWails = () => Boolean(window._wails)
+export const isWails = () => Boolean(window._wails) && !window.__brender_server_mode
 
 /**
  * @param {string} service  - サービス名 (例: 'blender')

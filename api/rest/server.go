@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io/fs"
@@ -8,6 +9,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/ikascrew/brender/log"
 )
@@ -92,31 +94,49 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	return s.httpServer.Shutdown(ctx)
 }
 
+// serverModeScript は index.html の <head> 内に注入されるスクリプト。
+// @wailsio/runtime がバンドルに含まれていると window._wails がセットされるため、
+// サーバモードであることを別フラグで明示する。
+const serverModeScript = `<script>window.__brender_server_mode=true</script>`
+
 func spaHandler(fileServer http.Handler, fsys fs.FS) http.Handler {
+	var indexOnce sync.Once
+	var indexHTML []byte
+
+	loadIndex := func() {
+		raw, err := fs.ReadFile(fsys, "index.html")
+		if err != nil {
+			log.Error("failed to read index.html: %v", err)
+			return
+		}
+		indexHTML = bytes.Replace(raw, []byte("<head>"), []byte("<head>"+serverModeScript), 1)
+	}
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := strings.TrimPrefix(r.URL.Path, "/")
 
-		if path == "" {
-			fileServer.ServeHTTP(w, r)
-			return
+		// 実ファイルが存在すればそのまま配信
+		if path != "" {
+			if f, err := fsys.Open(path); err == nil {
+				f.Close()
+				fileServer.ServeHTTP(w, r)
+				return
+			}
 		}
 
-		// ファイルが実在すればそのまま配信
-		if f, err := fsys.Open(path); err == nil {
-			f.Close()
-			fileServer.ServeHTTP(w, r)
+		// index.html を返す（サーバモードフラグ注入済み）
+		indexOnce.Do(loadIndex)
+		if indexHTML == nil {
+			http.Error(w, "index.html not found", http.StatusInternalServerError)
 			return
 		}
-
-		// 存在しないパスは index.html にフォールバック（SPA ルーティング）
-		r.URL.Path = "/"
-		fileServer.ServeHTTP(w, r)
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Write(indexHTML)
 	})
 }
 
 func requestLogger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// API と SSE のログは各ハンドラ内で出力するため静的ファイルのみここでログ
 		if !strings.HasPrefix(r.URL.Path, "/api/") && r.URL.Path != "/events" {
 			log.Debug("HTTP %s %s", r.Method, r.URL.Path)
 		}
