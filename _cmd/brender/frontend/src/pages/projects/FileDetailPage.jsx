@@ -13,6 +13,7 @@ import Breadcrumb from '../../components/Breadcrumb'
 import NoteSection from '../../components/NoteSection'
 import WorkspaceCreateDialog from '../../components/WorkspaceCreateDialog'
 import TagInput from '../../components/TagInput'
+import { isWails } from '../../lib/api/_client'
 
 
 // ── ワークスペースカード（サムネイル表示） ──────────────────
@@ -650,23 +651,25 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
                 value={name}
                 onChange={e => setName(e.target.value)}
               />
-              <button
-                className="btn btn-run btn-sm"
-                style={{ marginTop: 6, alignSelf: 'flex-start' }}
-                disabled={openingFile || !filePath}
-                onClick={async () => {
-                  setOpeningFile(true)
-                  try {
-                    await BlenderApi.openFile({ installID: blenderInstallID || 0, filePath })
-                  } catch (e) {
-                    showError(e?.message ?? String(e))
-                  } finally {
-                    setOpeningFile(false)
-                  }
-                }}
-              >
-                {openingFile ? '...' : t('common.open')}
-              </button>
+              {isWails() && (
+                <button
+                  className="btn btn-run btn-sm"
+                  style={{ marginTop: 6, alignSelf: 'flex-start' }}
+                  disabled={openingFile || !filePath}
+                  onClick={async () => {
+                    setOpeningFile(true)
+                    try {
+                      await BlenderApi.openFile({ installID: blenderInstallID || 0, filePath })
+                    } catch (e) {
+                      showError(e?.message ?? String(e))
+                    } finally {
+                      setOpeningFile(false)
+                    }
+                  }}
+                >
+                  {openingFile ? '...' : t('common.open')}
+                </button>
+              )}
             </div>
             <div className="form-field" style={{ flex: 1 }}>
               <label className="form-label" style={{ whiteSpace: 'nowrap' }}>

@@ -5,6 +5,7 @@ import { WorkspaceApi, ProjectApi, BlenderApi } from '../../../lib/api'
 import { onAppEvent } from '../../../lib/appEvents'
 import { useToast, useMessage } from '../../../lib/toast'
 import SortSelect from '../../../components/SortSelect'
+import { isWails } from '../../../lib/api/_client'
 
 // ── サムネイルタイル ──────────────────────────────────────
 function FileCard({ projectID, g, navigate, projectName, thumbnailMode, onSetThumbnail }) {
@@ -191,7 +192,7 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
                 }
               }}
             >
-              {!thumbnailMode && (
+              {!thumbnailMode && isWails() && (
                 <button
                   className="btn btn-run btn-sm file-item-open-btn"
                   onClick={e => handleOpenFile(e, g.file)}
