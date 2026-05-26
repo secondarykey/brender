@@ -274,12 +274,15 @@ function RenderResultTab({ job }) {
       setLoadingList(false)
     }
     // 動画ファイルは data_status に関係なく検索（画像削除後も動画だけ残っていれば再生可能）
+    console.log('[RenderResultTab] calling listJobFiles for job', job.id)
     QueueApi.listJobFiles({ id: job.id })
       .then(files => {
+        console.log('[RenderResultTab] listJobFiles result:', files)
         const movie = (files || []).find(f => !f.is_dir && isVideoFile(f.name))
+        console.log('[RenderResultTab] movie found:', movie)
         if (movie) setMoviePath(movie.path)
       })
-      .catch(() => {})
+      .catch(err => { console.error('[RenderResultTab] listJobFiles error:', err) })
   }, [job])
 
   useEffect(() => {
@@ -413,7 +416,7 @@ function RenderResultTab({ job }) {
         </div>
       </div>
 
-      <div className="dialog-actions" style={{ justifyContent: 'space-between', visibility: images.length > 0 ? 'visible' : 'hidden', marginTop: 8 }}>
+      <div className="dialog-actions" style={{ justifyContent: 'space-between', visibility: images.length > 0 || moviePath ? 'visible' : 'hidden', marginTop: 8 }}>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn btn-sm btn-ghost" onClick={handleTogglePlay} disabled={images.length <= 1}>
             {playing ? t('viewer.stop') : t('viewer.play')}
