@@ -533,10 +533,17 @@ func (h *Handler) registerWorkspace() {
 		if err != nil {
 			return nil, err
 		}
-		if err := <-ch; err != nil {
-			return nil, err
-		}
-		return path, nil
+		// Wails 版と同じく非同期で完了を待ち、フック経由で通知する
+		go func() {
+			errMsg := ""
+			if err := <-ch; err != nil {
+				errMsg = err.Error()
+			}
+			if api.MovieCreatedHook != nil {
+				api.MovieCreatedHook(p.JobID, path, errMsg)
+			}
+		}()
+		return nil, nil
 	})
 }
 

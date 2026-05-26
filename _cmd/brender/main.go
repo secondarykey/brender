@@ -173,6 +173,15 @@ func run() error {
 		})
 	}
 
+	// 動画作成完了イベントをフロントエンドへ通知
+	api.MovieCreatedHook = func(jobID string, path string, errMsg string) {
+		application.Get().Event.Emit("movie:created", map[string]interface{}{
+			"job_id": jobID,
+			"path":   path,
+			"error":  errMsg,
+		})
+	}
+
 	// パス変更進捗イベントをフロントエンドへ通知
 	api.WorkDirChangeDirHook = func(workDirID uint, status string, pct float64) {
 		application.Get().Event.Emit("workdir:changedir", map[string]interface{}{
@@ -223,6 +232,18 @@ func run() error {
 				"work_dir_id": workDirID,
 				"status":      status,
 				"pct":         pct,
+			})
+		}
+
+		origMovieHook := api.MovieCreatedHook
+		api.MovieCreatedHook = func(jobID string, path string, errMsg string) {
+			if origMovieHook != nil {
+				origMovieHook(jobID, path, errMsg)
+			}
+			broker.Emit("movie:created", map[string]interface{}{
+				"job_id": jobID,
+				"path":   path,
+				"error":  errMsg,
 			})
 		}
 

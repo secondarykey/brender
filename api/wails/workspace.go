@@ -3,7 +3,6 @@ package wails
 import (
 	"github.com/ikascrew/brender/api"
 	"github.com/ikascrew/brender/model"
-	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 type Workspace struct{}
@@ -49,28 +48,24 @@ func (s *Workspace) SetThumbnail(projectID string, fileID string, workspaceID st
 	return api.SetWorkspaceThumbnail(projectID, fileID, workspaceID, imagePath)
 }
 
-// movieCreatedEvent は movie:created イベントのペイロード。
-type movieCreatedEvent struct {
-	JobID string `json:"job_id"`
-	Path  string `json:"path"`
-	Error string `json:"error"`
-}
-
 // CreateMovie は ffmpeg による動画作成を goroutine で開始し即返す。
-// ffmpeg プロセス完了後（成功・失敗とも）に "movie:created" イベントを emit する。
+// ffmpeg プロセス完了後（成功・失敗とも）に api.MovieCreatedHook 経由で通知する。
 // 入力拡張子はジョブの OutputExt から自動取得するため、呼び出し元での指定は不要。
 func (s *Workspace) CreateMovie(projectID string, fileID string, workspaceID string, jobID string, fps int, outext string, extraArgs string) {
 	go func() {
 		path, ch, err := api.CreateMovie(projectID, fileID, workspaceID, jobID, fps, outext, extraArgs)
 		if err != nil {
-			application.Get().Event.Emit("movie:created", movieCreatedEvent{JobID: jobID, Error: err.Error()})
+			if api.MovieCreatedHook != nil {
+				api.MovieCreatedHook(jobID, "", err.Error())
+			}
 			return
 		}
-		err = <-ch
-		ev := movieCreatedEvent{JobID: jobID, Path: path}
-		if err != nil {
-			ev.Error = err.Error()
+		errMsg := ""
+		if err := <-ch; err != nil {
+			errMsg = err.Error()
 		}
-		application.Get().Event.Emit("movie:created", ev)
+		if api.MovieCreatedHook != nil {
+			api.MovieCreatedHook(jobID, path, errMsg)
+		}
 	}()
 }
