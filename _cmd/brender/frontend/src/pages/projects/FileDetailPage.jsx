@@ -4,7 +4,7 @@ import { Dialogs } from '@wailsio/runtime'
 import { WorkspaceApi, QueueApi, ProjectApi, BlenderApi, WorkDirApi } from '../../lib/api'
 import { useToast, useMessage } from '../../lib/toast'
 import { onAppEvent } from '../../lib/appEvents'
-import { formatDateShort, formatDuration } from '../../lib/dateFormat'
+import { formatDateFull, formatDuration } from '../../lib/dateFormat'
 import Pagination from '../../components/Pagination'
 import SortSelect from '../../components/SortSelect'
 import Dialog from '../../components/Dialog'
@@ -406,7 +406,7 @@ function HistoryTab({ projectID, fileID, navigate, projectName, fileName }) {
               <div>
                 <span className="queue-history-name">{j.name || j.workspace_name}</span>
                 <div className="queue-history-detail" style={{ marginTop: 4 }}>
-                  {j.started_at && <span>{formatDateShort(j.started_at)}</span>}
+                  {j.started_at && <span>{formatDateFull(j.started_at)}</span>}
                   {j.started_at && j.completed_at && <span>{formatDuration(j.started_at, j.completed_at, t)}</span>}
                 </div>
               </div>
