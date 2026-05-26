@@ -1382,40 +1382,6 @@ func ListJobFiles(id string) ([]*JobFileInfo, error) {
 	return list, nil
 }
 
-// videoExts は動画として認識する拡張子セット。
-var videoExts = map[string]bool{
-	".mp4": true, ".mov": true, ".avi": true, ".mkv": true, ".webm": true, ".m4v": true,
-}
-
-// GetJobMoviePath はジョブの出力ディレクトリ内にある動画ファイルのパスを返す。
-// 見つからない場合は空文字を返す。data_status に依存しない。
-func GetJobMoviePath(id string) (string, error) {
-	j, err := model.GetJob(id)
-	if err != nil {
-		return "", xerrors.Errorf("GetJobMoviePath GetJob: %w", err)
-	}
-	if j.OutputDir == "" {
-		return "", nil
-	}
-	entries, err := os.ReadDir(j.OutputDir)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return "", nil
-		}
-		return "", xerrors.Errorf("GetJobMoviePath ReadDir: %w", err)
-	}
-	for _, e := range entries {
-		if e.IsDir() {
-			continue
-		}
-		ext := strings.ToLower(filepath.Ext(e.Name()))
-		if videoExts[ext] {
-			return filepath.Join(j.OutputDir, e.Name()), nil
-		}
-	}
-	return "", nil
-}
-
 // GetImageBase64 は指定パスの画像を base64 データ URI として返す。
 func GetImageBase64(path string) (string, error) {
 	data, err := os.ReadFile(path)
