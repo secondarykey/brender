@@ -8,7 +8,7 @@ import ConfirmDialog from './ConfirmDialog'
 function TitleBar() {
   const { t } = useTranslation()
   const [isMac, setIsMac] = useState(false)
-  const [confirmClose, setConfirmClose] = useState(false)
+  const [closeReason, setCloseReason] = useState(null)
   const [devVersion, setDevVersion] = useState('')
 
   useEffect(() => {
@@ -25,14 +25,28 @@ function TitleBar() {
   }, [])
 
   const handleClose = async () => {
+    const reasons = []
     try {
       const queues = await QueueApi.list()
-      if (queues && queues.length > 0) {
-        setConfirmClose(true)
-        return
-      }
+      if (queues && queues.length > 0) reasons.push('queue')
     } catch (_) {}
+    try {
+      const env = await EnvironmentApi.get()
+      if (env && env.server) reasons.push('server')
+    } catch (_) {}
+    if (reasons.length > 0) {
+      setCloseReason(reasons)
+      return
+    }
     Window.Close()
+  }
+
+  const closeWarning = () => {
+    if (!closeReason) return ''
+    const msgs = []
+    if (closeReason.includes('queue')) msgs.push(t('title.queueRunningWarning'))
+    if (closeReason.includes('server')) msgs.push(t('title.serverRunningWarning'))
+    return msgs.join('\n')
   }
 
   return (
@@ -49,18 +63,18 @@ function TitleBar() {
         )}
       </div>
       <ConfirmDialog
-        open={confirmClose}
+        open={!!closeReason}
         title={t('title.confirmClose')}
         onConfirm={async () => {
           try { await QueueApi.killRunning() } catch (_) {}
           Window.Close()
         }}
-        onCancel={() => setConfirmClose(false)}
+        onCancel={() => setCloseReason(null)}
         confirmLabel={t('title.closeAnyway')}
         confirmClassName="btn btn-danger"
         hold
       >
-        <p>{t('title.queueRunningWarning')}</p>
+        <p style={{ whiteSpace: 'pre-line' }}>{closeWarning()}</p>
       </ConfirmDialog>
     </>
   )

@@ -61,7 +61,8 @@
     "download": "Download log",
     "confirmClose": "Close Application",
     "closeAnyway": "Close",
-    "queueRunningWarning": "There are running or waiting queues. Jobs will be interrupted but automatically re-queued on next startup."
+    "queueRunningWarning": "There are running or waiting queues. Jobs will be interrupted but automatically re-queued on next startup.",
+    "serverRunningWarning": "Server mode is active. Closing the app will disconnect all browser sessions."
   },
   "status": {
     "waiting": "Waiting",

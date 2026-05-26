@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/ikascrew/brender/api"
 	"github.com/ikascrew/brender/api/rest"
@@ -237,7 +238,9 @@ func run() error {
 	}
 
 	if restServer != nil {
-		restServer.Shutdown(context.Background())
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		restServer.Shutdown(ctx)
 	}
 
 	return nil
