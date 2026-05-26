@@ -28,8 +28,14 @@ func NewServer(assets fs.FS, port int) *Server {
 	mux.Handle("GET /events", broker.Handler())
 
 	// Wails ランタイムのスタブ — ブラウザモードでは不要だが、
-	// ビルド済み JS が @wailsio/runtime 経由でリクエストするため空モジュールを返す
+	// ビルド済み JS が @wailsio/runtime 経由でリクエストするためスタブを返す。
+	// POST（IPC 呼び出し）には空 JSON、GET（スクリプト読み込み）には空 JS を返す。
 	mux.HandleFunc("/wails/", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			w.Header().Set("Content-Type", "application/json")
+			w.Write([]byte("{}\n"))
+			return
+		}
 		w.Header().Set("Content-Type", "application/javascript")
 		w.Write([]byte("// wails runtime stub for server mode\n"))
 	})
