@@ -26,9 +26,16 @@ func NewServer(assets fs.FS, port int) *Server {
 	mux.Handle("POST /api/{service}/{method}", handler)
 	mux.Handle("GET /events", broker.Handler())
 
+	// Wails ランタイムのスタブ — ブラウザモードでは不要だが、
+	// ビルド済み JS が @wailsio/runtime 経由でリクエストするため空モジュールを返す
+	mux.HandleFunc("/wails/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/javascript")
+		w.Write([]byte("// wails runtime stub for server mode\n"))
+	})
+
 	distFS, err := fs.Sub(assets, "frontend/dist")
 	if err != nil {
-		slog.Error("failed to get frontend/dist sub-filesystem", "error", err)
+		slog.Error(fmt.Sprintf("failed to get frontend/dist sub-filesystem: %v", err))
 		distFS = assets
 	}
 
@@ -104,7 +111,7 @@ func requestLogger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// API と SSE のログは各ハンドラ内で出力するため静的ファイルのみここでログ
 		if !strings.HasPrefix(r.URL.Path, "/api/") && r.URL.Path != "/events" {
-			slog.Debug("HTTP", "method", r.Method, "path", r.URL.Path)
+			slog.Debug(fmt.Sprintf("HTTP %s %s", r.Method, r.URL.Path))
 		}
 		next.ServeHTTP(w, r)
 	})

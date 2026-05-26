@@ -37,7 +37,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	fn, ok := h.routes[key]
 	if !ok {
-		slog.Warn("REST 404", "endpoint", key, "elapsed", time.Since(start))
+		slog.Info(fmt.Sprintf("REST 404 %s", key))
 		writeJSON(w, http.StatusNotFound, map[string]string{
 			"error": fmt.Sprintf("unknown endpoint: %s/%s", service, method),
 		})
@@ -46,7 +46,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		slog.Warn("REST read body error", "endpoint", key, "error", err)
+		slog.Warn(fmt.Sprintf("REST %s read body error: %v", key, err))
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "failed to read body"})
 		return
 	}
@@ -57,12 +57,12 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	data, err := fn(json.RawMessage(body))
 	elapsed := time.Since(start)
 	if err != nil {
-		slog.Warn("REST error", "endpoint", key, "error", err, "elapsed", elapsed)
+		slog.Warn(fmt.Sprintf("REST %s error: %v (%s)", key, err, elapsed))
 		writeJSON(w, http.StatusOK, map[string]any{"error": err.Error()})
 		return
 	}
 
-	slog.Info("REST", "endpoint", key, "elapsed", elapsed)
+	slog.Info(fmt.Sprintf("REST %s (%s)", key, elapsed))
 	writeJSON(w, http.StatusOK, map[string]any{"data": data})
 }
 
