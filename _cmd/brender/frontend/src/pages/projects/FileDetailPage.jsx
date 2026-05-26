@@ -4,7 +4,7 @@ import { Dialogs } from '@wailsio/runtime'
 import { WorkspaceApi, QueueApi, ProjectApi, BlenderApi, WorkDirApi, TagApi } from '../../lib/api'
 import { useToast, useMessage } from '../../lib/toast'
 import { onAppEvent } from '../../lib/appEvents'
-import { formatDateShort } from '../../lib/dateFormat'
+import { formatDateShort, formatDuration } from '../../lib/dateFormat'
 import Pagination from '../../components/Pagination'
 import SortSelect from '../../components/SortSelect'
 import Dialog from '../../components/Dialog'
@@ -407,12 +407,8 @@ function HistoryTab({ projectID, fileID, navigate, projectName, fileName }) {
               <div>
                 <span className="queue-history-name">{j.name || j.workspace_name}</span>
                 <div className="queue-history-detail" style={{ marginTop: 4 }}>
-                  <span>{j.start_frame}–{j.end_frame}f</span>
-                  {j.engine && <span>{j.engine}</span>}
-                  {j.camera && <span>{j.camera}</span>}
-                  {j.enqueued_at && (
-                    <span>{formatDateShort(j.enqueued_at)}</span>
-                  )}
+                  {j.started_at && <span>{formatDateShort(j.started_at)}</span>}
+                  {j.started_at && j.completed_at && <span>{formatDuration(j.started_at, j.completed_at, t)}</span>}
                 </div>
               </div>
               <span className={`status-badge status-${j.status || 'running'}`}>{statusLabel(j.status)}</span>
