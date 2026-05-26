@@ -4,6 +4,7 @@ import { onAppEvent } from '../lib/appEvents'
 import TitleBar from '../components/TitleBar'
 import { useTranslation } from "react-i18next"
 import { useToast, useMessage } from '../lib/toast'
+import { isWails } from '../lib/api/_client'
 
 
 function NavItem({ label, icon, active, onClick, badge }) {
@@ -56,7 +57,7 @@ function MainLayout({ currentPage, onNavigate, children }) {
 
   return (
     <div className="app-frame">
-      <TitleBar />
+      {isWails() && <TitleBar />}
       {error && (
         <div className="app-message-bar">
           <span className="app-message-text" style={{ whiteSpace: 'pre-line' }}>{error}</span>
