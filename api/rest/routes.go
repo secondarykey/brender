@@ -747,6 +747,16 @@ func (h *Handler) registerQueue() {
 		return api.ListJobFiles(p.ID)
 	})
 
+	h.register("queue", "get_job_movie_path", func(body json.RawMessage) (any, error) {
+		var p struct {
+			ID string `json:"id"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return api.GetJobMoviePath(p.ID)
+	})
+
 	h.register("queue", "get_image_base64", func(body json.RawMessage) (any, error) {
 		var p struct {
 			Path string `json:"path"`
