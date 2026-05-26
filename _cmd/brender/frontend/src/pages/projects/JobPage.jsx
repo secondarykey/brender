@@ -264,12 +264,17 @@ function RenderResultTab({ job }) {
   useEffect(() => {
     if (!job) return
     stopPlay()
-    setLoadingList(true); setImages([]); setIndex(0); setImgSrc('')
+    setLoadingList(true); setImages([]); setIndex(0); setImgSrc(''); setMoviePath('')
     const hasData = [2, 3, 6, 7, 8, 9].includes(job.data_status)
-    if (!hasData) { setLoadingList(false); return }
-    QueueApi.listJobImages({ id: job.id })
-      .then(list => { setImages(list || []); setLoadingList(false) })
-      .catch(err => { showError(String(err)); setLoadingList(false) })
+    if (hasData) {
+      QueueApi.listJobImages({ id: job.id })
+        .then(list => { setImages(list || []); setLoadingList(false) })
+        .catch(err => { showError(String(err)); setLoadingList(false) })
+    } else {
+      setLoadingList(false)
+    }
+    // 動画ファイルは data_status に関係なく常に検索する
+    // （画像を削除しても動画だけ残っている場合に再生可能にするため）
     QueueApi.listJobFiles({ id: job.id })
       .then(files => {
         const movie = (files || []).find(f => !f.is_dir && isVideoFile(f.name))
