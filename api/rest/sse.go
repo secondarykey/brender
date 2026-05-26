@@ -3,9 +3,10 @@ package rest
 import (
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"sync"
+
+	"github.com/ikascrew/brender/log"
 )
 
 type sseEvent struct {
@@ -68,7 +69,7 @@ func (b *SSEBroker) Handler() http.HandlerFunc {
 			case ev := <-ch:
 				data, err := json.Marshal(ev)
 				if err != nil {
-					slog.Warn("SSE marshal error", "error", err)
+					log.Warn("SSE marshal error: %v", err)
 					continue
 				}
 				fmt.Fprintf(w, "data: %s\n\n", data)

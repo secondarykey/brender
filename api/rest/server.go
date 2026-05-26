@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
-	"log/slog"
 	"net"
 	"net/http"
 	"path/filepath"
 	"strings"
+
+	"github.com/ikascrew/brender/log"
 )
 
 type Server struct {
@@ -35,7 +36,7 @@ func NewServer(assets fs.FS, port int) *Server {
 
 	distFS, err := fs.Sub(assets, "frontend/dist")
 	if err != nil {
-		slog.Error(fmt.Sprintf("failed to get frontend/dist sub-filesystem: %v", err))
+		log.Error("failed to get frontend/dist sub-filesystem: %v", err)
 		distFS = assets
 	}
 
@@ -72,10 +73,10 @@ func (s *Server) Start() error {
 	if err != nil {
 		return fmt.Errorf("server listen error: %w", err)
 	}
-	slog.Info("HTTP server started", "addr", ln.Addr().String())
+	log.Info("HTTP server started on %s", ln.Addr().String())
 	go func() {
 		if err := s.httpServer.Serve(ln); err != nil && err != http.ErrServerClosed {
-			slog.Error("HTTP server error", "error", err)
+			log.Error("HTTP server error: %v", err)
 		}
 	}()
 	return nil
@@ -111,7 +112,7 @@ func requestLogger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// API と SSE のログは各ハンドラ内で出力するため静的ファイルのみここでログ
 		if !strings.HasPrefix(r.URL.Path, "/api/") && r.URL.Path != "/events" {
-			slog.Debug(fmt.Sprintf("HTTP %s %s", r.Method, r.URL.Path))
+			log.Debug("HTTP %s %s", r.Method, r.URL.Path)
 		}
 		next.ServeHTTP(w, r)
 	})

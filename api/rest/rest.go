@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log/slog"
 	"net/http"
 	"time"
+
+	"github.com/ikascrew/brender/log"
 )
 
 type handlerFunc func(body json.RawMessage) (any, error)
@@ -37,7 +38,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	fn, ok := h.routes[key]
 	if !ok {
-		slog.Info(fmt.Sprintf("REST 404 %s", key))
+		log.Info("REST 404 %s", key)
 		writeJSON(w, http.StatusNotFound, map[string]string{
 			"error": fmt.Sprintf("unknown endpoint: %s/%s", service, method),
 		})
@@ -46,7 +47,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		slog.Warn(fmt.Sprintf("REST %s read body error: %v", key, err))
+		log.Warn("REST %s read body error: %v", key, err)
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "failed to read body"})
 		return
 	}
@@ -57,12 +58,12 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	data, err := fn(json.RawMessage(body))
 	elapsed := time.Since(start)
 	if err != nil {
-		slog.Warn(fmt.Sprintf("REST %s error: %v (%s)", key, err, elapsed))
+		log.Warn("REST %s error: %v (%s)", key, err, elapsed)
 		writeJSON(w, http.StatusOK, map[string]any{"error": err.Error()})
 		return
 	}
 
-	slog.Info(fmt.Sprintf("REST %s (%s)", key, elapsed))
+	log.Info("REST %s (%s)", key, elapsed)
 	writeJSON(w, http.StatusOK, map[string]any{"data": data})
 }
 
