@@ -416,7 +416,7 @@ function RenderResultTab({ job }) {
         </div>
       </div>
 
-      <div className="dialog-actions" style={{ justifyContent: 'space-between', visibility: images.length > 0 ? 'visible' : 'hidden', marginTop: 8 }}>
+      <div className="dialog-actions" style={{ justifyContent: 'space-between', visibility: images.length > 0 || moviePath ? 'visible' : 'hidden', marginTop: 8 }}>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn btn-sm btn-ghost" onClick={handleTogglePlay} disabled={images.length <= 1}>
             {playing ? t('viewer.stop') : t('viewer.play')}
