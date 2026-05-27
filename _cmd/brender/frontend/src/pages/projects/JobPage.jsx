@@ -18,6 +18,10 @@ function isVideoFile(name) {
   const ext = name.lastIndexOf('.')
   return ext !== -1 && VIDEO_EXTS.has(name.slice(ext).toLowerCase())
 }
+function isImageFile(name) {
+  const ext = name.lastIndexOf('.')
+  return ext !== -1 && IMAGE_EXTS.has(name.slice(ext).toLowerCase())
+}
 
 // ── ユーティリティ ────────────────────────────────────────
 function dataStatusClass(s) {
@@ -521,6 +525,9 @@ function DataViewTab({ job }) {
   const [deleting, setDeleting]         = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [moviePlayerPath, setMoviePlayerPath] = useState('')
+  const [previewImgSrc, setPreviewImgSrc] = useState('')
+  const [previewImgName, setPreviewImgName] = useState('')
+  const [previewLoading, setPreviewLoading] = useState(false)
 
   const handlePlayMovie = (path) => {
     if (!path) return
@@ -529,6 +536,15 @@ function DataViewTab({ job }) {
     } else {
       setMoviePlayerPath(path)
     }
+  }
+
+  const handlePreviewImage = (path, name) => {
+    setPreviewImgName(name)
+    setPreviewImgSrc('')
+    setPreviewLoading(true)
+    QueueApi.getImageBase64({ path })
+      .then(src => { setPreviewImgSrc(src); setPreviewLoading(false) })
+      .catch(err => { showError(String(err)); setPreviewLoading(false); setPreviewImgName('') })
   }
 
   useEffect(() => {
@@ -714,13 +730,21 @@ function DataViewTab({ job }) {
         <tbody>
           {files.map(f => {
             const canPlay = !f.is_dir && isVideoFile(f.name)
+            const canView = !f.is_dir && isImageFile(f.name)
             const isSelected = !f.is_dir && selected.has(f.path)
+            const rowClick = canPlay ? () => handlePlayMovie(f.path)
+                           : canView ? () => handlePreviewImage(f.path, f.name)
+                           : undefined
+            const rowTitle = canPlay ? t('viewer.playMovie')
+                           : canView ? f.name
+                           : undefined
             return (
               <tr
                 key={f.name}
-                className={`${f.is_dir ? 'job-data-row-dir' : ''} ${canPlay ? 'job-data-row-video' : ''} ${isSelected ? 'job-data-row-selected' : ''}`.trim()}
-                onClick={canPlay ? () => handlePlayMovie(f.path) : undefined}
-                title={canPlay ? t('viewer.playMovie') : undefined}
+                className={`${f.is_dir ? 'job-data-row-dir' : ''} ${canPlay ? 'job-data-row-video' : ''} ${canView ? 'job-data-row-image' : ''} ${isSelected ? 'job-data-row-selected' : ''}`.trim()}
+                onClick={rowClick}
+                title={rowTitle}
+                style={canView ? { cursor: 'pointer' } : undefined}
               >
                 <td style={{ textAlign: 'center' }} onClick={e => e.stopPropagation()}>
                   {!f.is_dir && (
@@ -731,7 +755,7 @@ function DataViewTab({ job }) {
                     />
                   )}
                 </td>
-                <td>{f.is_dir ? '📁 ' : canPlay ? '▶ ' : ''}{f.name}</td>
+                <td>{f.is_dir ? '📁 ' : canPlay ? '▶ ' : canView ? '🖼 ' : ''}{f.name}</td>
                 <td style={{ textAlign: 'right' }}>{f.is_dir ? '—' : formatBytes(f.size)}</td>
                 <td className="date-cell">{fmt(f.mod_time)}</td>
               </tr>
@@ -755,6 +779,17 @@ function DataViewTab({ job }) {
         <Dialog open={true} title={t('viewer.playMovie')} onClose={() => setMoviePlayerPath('')} wide>
           <div className="movie-player-dialog-body">
             <MoviePlayer moviePath={moviePlayerPath} />
+          </div>
+        </Dialog>
+      )}
+
+      {previewImgName && (
+        <Dialog open={true} title={previewImgName} onClose={() => { setPreviewImgName(''); setPreviewImgSrc('') }} wide>
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
+            {previewLoading
+              ? <span>{t('common.loading')}</span>
+              : previewImgSrc && <img src={previewImgSrc} alt={previewImgName} style={{ maxWidth: '100%', maxHeight: '70vh' }} />
+            }
           </div>
         </Dialog>
       )}
