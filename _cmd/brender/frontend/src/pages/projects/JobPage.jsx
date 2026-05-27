@@ -520,6 +520,16 @@ function DataViewTab({ job }) {
   const [downloading, setDownloading]   = useState(false)
   const [deleting, setDeleting]         = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [moviePlayerPath, setMoviePlayerPath] = useState('')
+
+  const handlePlayMovie = (path) => {
+    if (!path) return
+    if (isWails()) {
+      QueueApi.openMovieWindow({ path })
+    } else {
+      setMoviePlayerPath(path)
+    }
+  }
 
   useEffect(() => {
     if (!job) return
@@ -740,6 +750,14 @@ function DataViewTab({ job }) {
       >
         <p>{t('common.confirmDeleteFiles')}</p>
       </ConfirmDialog>
+
+      {moviePlayerPath && (
+        <Dialog open={true} title={t('viewer.playMovie')} onClose={() => setMoviePlayerPath('')} wide>
+          <div className="movie-player-dialog-body">
+            <MoviePlayer moviePath={moviePlayerPath} />
+          </div>
+        </Dialog>
+      )}
     </div>
   )
 }
