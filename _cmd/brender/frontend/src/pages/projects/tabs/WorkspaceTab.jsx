@@ -47,7 +47,7 @@ function FileCard({ projectID, g, navigate, projectName, thumbnailMode, onSetThu
 
   return (
     <div
-      className={`file-tile${thumbnailMode ? ' file-tile-thumb-select' : ''}`}
+      className={`file-tile${thumbnailMode ? ' file-tile-thumb-select' : ''}${g.file.packed === false ? ' file-tile-not-packed' : ''}`}
       title={fileName}
       onClick={handleClick}
     >
@@ -232,6 +232,9 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
               )}
               <div className="file-item-info">
                 <span className={`ws-file-name${g.file.file_exists === false ? ' file-missing' : ''}`}>{g.file.name || g.file.path.split(/[/\\]/).pop()}</span>
+                {g.file.packed === false && (
+                  <span className="file-item-pack-warning">{t('file.notPacked')}</span>
+                )}
                 <span className="ws-file-path">{g.file.path}</span>
               </div>
               <div className="file-item-meta">
