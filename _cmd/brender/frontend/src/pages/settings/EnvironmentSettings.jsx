@@ -368,6 +368,7 @@ function EnvironmentSettings() {
 
   return (
     <div>
+      <h3 style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: 12 }}>{t('settings.workDirs.title')}</h3>
       {dirs.length === 0 ? (
         <p className="empty-msg">{t('settings.workDirs.empty')}</p>
       ) : (
