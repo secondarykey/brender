@@ -51,7 +51,7 @@ const (
 	SceneFlag   = "SCENES"
 	CameraFlag  = "CAMERA"
 	SamplesFlag = "SAMPLES"
-	SamplesFlag = "PACK"
+	PackFlag    = "PACK"
 	StartFlag   = "START"
 	StartStart  = "START"
 	EndFlag     = "END"
@@ -347,10 +347,5 @@ func parseCamera(line string) *CameraTool {
 }
 
 func parsePack(line string) bool {
-
-	pack := false
-	if strings.TrimSpace(line) == "True" {
-		pack = true
-	}
-	return true
+	return strings.TrimSpace(line) == "True"
 }

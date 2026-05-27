@@ -41,6 +41,7 @@ func GetFile(fileID string) (*model.ProjectFile, error) {
 
 // UploadProjectFile はアップロードされたファイルを保存し、ProjectFile を登録する。
 // 保存先: {workDir}/{projectID}/{fileID}/{fileID}.blend
+// 登録後に非同期でPackチェックを行い、Pack済みならサムネイル自動生成を開始する。
 func UploadProjectFile(projectID string, filename string, r io.Reader) (*model.ProjectFile, error) {
 	baseDir, err := GetProjectBaseDir(projectID)
 	if err != nil {
@@ -76,12 +77,29 @@ func UploadProjectFile(projectID string, filename string, r io.Reader) (*model.P
 		slog.Error("UploadProjectFile: UpdateProjectFileProcessedAt", "error", err)
 	}
 	touchProjectProcessedAt(projectID)
-	go func() {
-		if err := CreateThumbnailWorkspace(projectID, f); err != nil {
-			slog.Error("thumbnail workspace creation failed", "fileID", f.ID, "error", err)
-		}
-	}()
+	// 非同期でPackチェック → Pack済みならサムネイル自動生成
+	go checkPackAndThumbnail(projectID, f)
 	return f, nil
+}
+
+// checkPackAndThumbnail はツール実行でPack状態を検査し、DB に保存する。
+// Pack 済みの場合はサムネイル自動生成を開始する。
+func checkPackAndThumbnail(projectID string, f *model.ProjectFile) {
+	tool, err := GetToolData(0, f.ID)
+	if err != nil {
+		slog.Error("checkPackAndThumbnail: GetToolData", "fileID", f.ID, "error", err)
+		return
+	}
+	if err := model.UpdateProjectFilePacked(f.ID, tool.Pack); err != nil {
+		slog.Error("checkPackAndThumbnail: UpdateProjectFilePacked", "fileID", f.ID, "error", err)
+	}
+	if tool.Pack {
+		if err := CreateThumbnailWorkspace(projectID, f); err != nil {
+			slog.Error("checkPackAndThumbnail: thumbnail creation failed", "fileID", f.ID, "error", err)
+		}
+	} else {
+		slog.Warn("uploaded file is not packed", "fileID", f.ID, "name", f.Name)
+	}
 }
 
 func AddProjectFile(projectID, path string) (*model.ProjectFile, error) {

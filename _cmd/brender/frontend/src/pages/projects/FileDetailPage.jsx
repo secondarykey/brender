@@ -643,6 +643,9 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
     <div className="ws-detail-split">
       <div className="ws-detail-left">
         <div className="form workspace" style={{ maxWidth: 640 }}>
+          {toolData && toolData.Pack === false && (
+            <div className="pack-warning-bar">{t('file.notPacked')}</div>
+          )}
           <div className="form-row">
             <div className="form-field" style={{ flex: 2 }}>
               <label className="form-label">{t('file.displayName')} <span className="required">*</span></label>
