@@ -177,7 +177,8 @@
     "engineFixed": "Fixed",
     "engineFixedHint": "When enabled, the engine cannot be changed in workspaces",
     "fileChanged": "Modified",
-    "fileChangedTooltip": "File has been modified since the last render"
+    "fileChangedTooltip": "File has been modified since the last render",
+    "notPacked": "This file contains external references. It cannot render correctly in server mode. In Blender, use File → External Data → Pack All Into .blend."
   },
   "workspace": {
     "name": "Workspace Name",

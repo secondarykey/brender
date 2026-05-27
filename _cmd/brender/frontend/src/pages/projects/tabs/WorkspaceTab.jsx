@@ -59,6 +59,9 @@ function FileCard({ projectID, g, navigate, projectName, thumbnailMode, onSetThu
       </div>
       <div className="file-tile-info">
         <div className={`file-tile-name${g.file.file_exists === false ? ' file-missing' : ''}`} title={fileName}>{fileName}</div>
+        {g.file.packed === false && (
+          <div className="file-tile-pack-warning" title={t('file.notPacked')}>{t('file.notPacked')}</div>
+        )}
       </div>
     </div>
   )

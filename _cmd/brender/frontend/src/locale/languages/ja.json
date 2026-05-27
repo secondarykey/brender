@@ -177,7 +177,8 @@
     "engineFixed": "固定",
     "engineFixedHint": "有効にすると、ワークスペースでエンジンを変更できなくなります",
     "fileChanged": "更新あり",
-    "fileChangedTooltip": "レンダリング後にファイルが更新されています"
+    "fileChangedTooltip": "レンダリング後にファイルが更新されています",
+    "notPacked": "外部参照が含まれています。サーバモードでは正常にレンダリングできません。Blender で「ファイル→外部データ→すべてパック」を実行してください。"
   },
   "workspace": {
     "name": "ワークスペース名",

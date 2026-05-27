@@ -36,6 +36,7 @@ type ProjectFile struct {
 	CameraFixed      bool       `json:"camera_fixed"`   // true = ワークスペースで変更不可
 	Engine           string     `json:"engine"`
 	EngineFixed      bool       `json:"engine_fixed"`   // true = ワークスペースで変更不可
+	Packed           *bool      `json:"packed"`          // nil=未検査, true=パック済み, false=未パック
 	FileModifiedAt   *time.Time `gorm:"-" json:"file_modified_at"`
 	FileExists       bool       `gorm:"-" json:"file_exists"`
 	DisplayOrder     int        `gorm:"default:99999" json:"display_order"`
@@ -230,6 +231,13 @@ func UpdateProjectProcessedAt(id string, t *time.Time) error {
 func UpdateProjectFileProcessedAt(id string, t *time.Time) error {
 	if res := db.Model(&ProjectFile{}).Where("id = ?", id).Update("processed_at", t); res.Error != nil {
 		return xerrors.Errorf("UpdateProjectFileProcessedAt: %w", res.Error)
+	}
+	return nil
+}
+
+func UpdateProjectFilePacked(id string, packed bool) error {
+	if res := db.Model(&ProjectFile{}).Where("id = ?", id).Update("packed", packed); res.Error != nil {
+		return xerrors.Errorf("UpdateProjectFilePacked: %w", res.Error)
 	}
 	return nil
 }

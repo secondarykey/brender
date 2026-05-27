@@ -179,7 +179,15 @@ func GetToolData(installID uint, fileID string) (*exec.Tool, error) {
 	if file == nil {
 		return nil, xerrors.Errorf("project file not found: %s", fileID)
 	}
-	return exec.RunToolData(blenderPath, file.Path)
+	tool, err := exec.RunToolData(blenderPath, file.Path)
+	if err != nil {
+		return nil, err
+	}
+	// Pack 状態を DB に保存
+	if updateErr := model.UpdateProjectFilePacked(fileID, tool.Pack); updateErr != nil {
+		log.Error("GetToolData: UpdateProjectFilePacked fileID=%s error=%v", fileID, updateErr)
+	}
+	return tool, nil
 }
 
 func GetCameras(installID uint, fileID string) ([]*exec.CameraTool, error) {

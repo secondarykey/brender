@@ -51,6 +51,7 @@ const (
 	SceneFlag   = "SCENES"
 	CameraFlag  = "CAMERA"
 	SamplesFlag = "SAMPLES"
+	PackFlag    = "PACK"
 	StartFlag   = "START"
 	StartStart  = "START"
 	EndFlag     = "END"
@@ -67,6 +68,7 @@ var parsers = []*parser{
 	newParser(SceneFlag, func(line string) interface{} { return parseScene(line) }),
 	newParser(CameraFlag, func(line string) interface{} { return parseCamera(line) }),
 	newParser(SamplesFlag, func(line string) interface{} { return parseSamples(line) }),
+	newParser(PackFlag, func(line string) interface{} { return parsePack(line) }),
 }
 
 /**
@@ -101,6 +103,7 @@ type Tool struct {
 	Engines []string
 	Scenes  []*SceneTool
 	Cameras []*CameraTool
+	Pack    bool
 }
 
 func (t Tool) ActiveScene() *SceneTool {
@@ -186,6 +189,10 @@ func parseTool(stdout string) Tool {
 				} else if p.Name == SamplesFlag {
 					if v, ok := obj.([]string); ok {
 						setSamples(rtn.Scenes, v)
+					}
+				} else if p.Name == PackFlag {
+					if v, ok := obj.(bool); ok {
+						rtn.Pack = v
 					}
 				}
 			}
@@ -337,4 +344,8 @@ func parseCamera(line string) *CameraTool {
 	c.Scenes = strings.Split(csv[1], ",")
 
 	return c
+}
+
+func parsePack(line string) bool {
+	return strings.TrimSpace(line) == "True"
 }
