@@ -107,17 +107,42 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
     }
   }
 
+  const fileInputRef = useRef(null)
+  const [uploading, setUploading] = useState(false)
+
   const handleAddFile = async () => {
     showError('')
+    if (isWails()) {
+      try {
+        const path = await Dialogs.OpenFile({
+          Filters: [{ DisplayName: 'Blender File', Pattern: '*.blend' }],
+        })
+        if (!path) return
+        await ProjectApi.addFile({ projectID, path })
+        load()
+      } catch (err) {
+        showError(String(err))
+      }
+    } else {
+      // サーバモード: ファイルアップロード
+      fileInputRef.current?.click()
+    }
+  }
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+    setUploading(true)
+    showError('')
     try {
-      const path = await Dialogs.OpenFile({
-        Filters: [{ DisplayName: 'Blender File', Pattern: '*.blend' }],
-      })
-      if (!path) return
-      await ProjectApi.addFile({ projectID, path })
+      await ProjectApi.uploadFile({ projectID, file })
       load()
+      showToast(t('workspace.fileUploaded'))
     } catch (err) {
       showError(String(err))
+    } finally {
+      setUploading(false)
     }
   }
 
@@ -232,7 +257,18 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
 
       <div className="list-spacer" />
       <div className="list-fab">
-        <button className="btn btn-green" onClick={handleAddFile}>{t('workspace.addFile')}</button>
+        <button className="btn btn-green" onClick={handleAddFile} disabled={uploading}>
+          {uploading ? t('workspace.uploading') : t('workspace.addFile')}
+        </button>
+        {!isWails() && (
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".blend"
+            style={{ display: 'none' }}
+            onChange={handleFileUpload}
+          />
+        )}
       </div>
     </div>
   )

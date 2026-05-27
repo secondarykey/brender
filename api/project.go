@@ -1,6 +1,7 @@
 package api
 
 import (
+	"io"
 	"io/fs"
 	"log/slog"
 	"os"
@@ -36,6 +37,51 @@ func UpdateProjectFile(fileID string, name string, note string, blenderInstallID
 
 func GetFile(fileID string) (*model.ProjectFile, error) {
 	return model.GetProjectFile(fileID)
+}
+
+// UploadProjectFile はアップロードされたファイルを保存し、ProjectFile を登録する。
+// 保存先: {workDir}/{projectID}/{fileID}/{fileID}.blend
+func UploadProjectFile(projectID string, filename string, r io.Reader) (*model.ProjectFile, error) {
+	baseDir, err := GetProjectBaseDir(projectID)
+	if err != nil {
+		return nil, err
+	}
+	// ファイルIDを先に生成してパスを決定
+	f := &model.ProjectFile{
+		ID:        model.NewFileID(),
+		ProjectID: projectID,
+		Name:      filename,
+	}
+	dir := filepath.Join(baseDir, projectID, f.ID)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return nil, xerrors.Errorf("UploadProjectFile MkdirAll: %w", err)
+	}
+	savePath := filepath.Join(dir, f.ID+".blend")
+	out, err := os.Create(savePath)
+	if err != nil {
+		return nil, xerrors.Errorf("UploadProjectFile Create: %w", err)
+	}
+	if _, err := io.Copy(out, r); err != nil {
+		out.Close()
+		return nil, xerrors.Errorf("UploadProjectFile Copy: %w", err)
+	}
+	out.Close()
+
+	f.Path = savePath
+	if err := model.InsertProjectFile(f); err != nil {
+		return nil, err
+	}
+	now := time.Now()
+	if err := model.UpdateProjectFileProcessedAt(f.ID, &now); err != nil {
+		slog.Error("UploadProjectFile: UpdateProjectFileProcessedAt", "error", err)
+	}
+	touchProjectProcessedAt(projectID)
+	go func() {
+		if err := CreateThumbnailWorkspace(projectID, f); err != nil {
+			slog.Error("thumbnail workspace creation failed", "fileID", f.ID, "error", err)
+		}
+	}()
+	return f, nil
 }
 
 func AddProjectFile(projectID, path string) (*model.ProjectFile, error) {

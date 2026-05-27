@@ -186,6 +186,8 @@
     "empty": "No workspaces",
     "createNew": "+ Create Workspace",
     "addFile": "+ Add .blend file",
+    "uploading": "Uploading...",
+    "fileUploaded": "File uploaded successfully",
     "addFilesFromDir": "+ Add files from directory",
     "addFilesFromDirResult": "Added {{added}}, skipped {{skipped}}",
     "listView": "List view",
