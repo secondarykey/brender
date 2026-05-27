@@ -7,6 +7,14 @@ import { useToast, useMessage } from '../../../lib/toast'
 import SortSelect from '../../../components/SortSelect'
 import { isWails } from '../../../lib/api/_client'
 
+// サーバモード時にファイルパスが {projectID}/{fileID}/{fileID}.blend でなければ非対応
+function isServerIncompatible(file) {
+  if (isWails()) return false
+  const norm = (file.path || '').replace(/\\/g, '/')
+  const expected = `${file.project_id}/${file.id}/${file.id}.blend`
+  return !norm.endsWith(expected)
+}
+
 // ── サムネイルタイル ──────────────────────────────────────
 function FileCard({ projectID, g, navigate, projectName, thumbnailMode, onSetThumbnail }) {
   const { t } = useTranslation()
@@ -47,7 +55,7 @@ function FileCard({ projectID, g, navigate, projectName, thumbnailMode, onSetThu
 
   return (
     <div
-      className={`file-tile${thumbnailMode ? ' file-tile-thumb-select' : ''}${g.file.packed === false ? ' file-tile-not-packed' : ''}`}
+      className={`file-tile${thumbnailMode ? ' file-tile-thumb-select' : ''}${isServerIncompatible(g.file) ? ' file-tile-not-packed' : ''}`}
       title={fileName}
       onClick={handleClick}
     >
@@ -59,8 +67,8 @@ function FileCard({ projectID, g, navigate, projectName, thumbnailMode, onSetThu
       </div>
       <div className="file-tile-info">
         <div className={`file-tile-name${g.file.file_exists === false ? ' file-missing' : ''}`} title={fileName}>{fileName}</div>
-        {g.file.packed === false && (
-          <div className="file-tile-pack-warning" title={t('file.notPacked')}>{t('file.notPacked')}</div>
+        {isServerIncompatible(g.file) && (
+          <div className="file-tile-pack-warning" title={t('file.serverIncompatible')}>{t('file.serverIncompatible')}</div>
         )}
       </div>
     </div>
@@ -232,8 +240,8 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
               )}
               <div className="file-item-info">
                 <span className={`ws-file-name${g.file.file_exists === false ? ' file-missing' : ''}`}>{g.file.name || g.file.path.split(/[/\\]/).pop()}</span>
-                {g.file.packed === false && (
-                  <span className="file-item-pack-warning">{t('file.notPacked')}</span>
+                {isServerIncompatible(g.file) && (
+                  <span className="file-item-pack-warning">{t('file.serverIncompatible')}</span>
                 )}
                 <span className="ws-file-path">{g.file.path}</span>
               </div>
