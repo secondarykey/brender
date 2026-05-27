@@ -155,10 +155,26 @@ def printCameras():
 
     print("==== CAMERA END")
 
+def printPack():
+    pack = isPacked();
+    print("==== PACK START")
+    print(f"{pack}")
+    print("==== PACK END")
+
+def isPacked():
+    datablocks = [bpy.data.images, bpy.data.sounds, bpy.data.fonts]
+    for datablock in datablocks:
+        for block in datablock:
+            # 外部ファイルが存在していて、かつ packed_file が無い場合は未パック
+            if block.filepath and not block.packed_file:
+                return False
+    return True
+
 if __name__ == "__main__":
     print("=BRENDER PYTHON TOOL START")
     printEngines()
     printScenes()
     printSamples()
     printCameras()
+    printPack()
     print("=BRENDER PYTHON TOOL END")
