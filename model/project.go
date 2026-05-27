@@ -64,6 +64,17 @@ func newFileID() string {
 	return id.String()
 }
 
+// NewFileID は外部パッケージ用の公開ラッパー。
+func NewFileID() string { return newFileID() }
+
+// InsertProjectFile は既にフィールドが埋まった ProjectFile を DB に挿入する。
+func InsertProjectFile(f *ProjectFile) error {
+	if res := db.Create(f); res.Error != nil {
+		return xerrors.Errorf("InsertProjectFile: %w", res.Error)
+	}
+	return nil
+}
+
 func ListProjects(sort, dir string) ([]*ProjectDetail, error) {
 	var projects []*Project
 	if res := db.Order(resolveOrder(sort, dir)).Find(&projects); res.Error != nil {

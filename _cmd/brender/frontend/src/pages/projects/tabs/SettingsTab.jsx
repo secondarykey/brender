@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
 import { ProjectApi, WorkDirApi } from '../../../lib/api'
+import { isWails } from '../../../lib/api/_client'
 import { onAppEvent } from '../../../lib/appEvents'
 import { useToast, useMessage } from '../../../lib/toast'
 import Dialog from '../../../components/Dialog'
@@ -297,6 +298,7 @@ function SettingsTab({ detail, focusName, workDir, workDirs, onUpdated, onDelete
           onMigrated={onUpdated}
         />
 
+        {isWails() && (
         <div style={{ marginTop: 16 }}>
           <button
             className="btn btn-sm btn-outline"
@@ -326,6 +328,7 @@ function SettingsTab({ detail, focusName, workDir, workDirs, onUpdated, onDelete
           </button>
           {dirMsg && <div className="success-msg" style={{ marginTop: 6 }}>{dirMsg}</div>}
         </div>
+        )}
 
         <ConfirmDialog
           open={confirm}

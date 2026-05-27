@@ -28,6 +28,7 @@ func NewServer(assets fs.FS, host string, port int) *Server {
 
 	mux.Handle("POST /api/{service}/{method}", handler)
 	mux.Handle("GET /events", broker.Handler())
+	mux.HandleFunc("POST /api/project/upload_file", handler.handleUploadFile)
 
 	// Wails ランタイムのスタブ — ブラウザモードでは不要だが、
 	// ビルド済み JS が @wailsio/runtime 経由でリクエストするためスタブを返す。

@@ -45,6 +45,19 @@ export const ProjectApi = {
     isWails() ? svc().then(s => s.AddFile(projectID, path))
               : serverCall('project', 'add_file', { project_id: projectID, path }),
 
+  /** ファイルをアップロードして追加（サーバモード用）
+   * @param {{ projectID: string, file: File }} args
+   */
+  uploadFile: async ({ projectID, file }) => {
+    const form = new FormData()
+    form.append('project_id', projectID)
+    form.append('file', file)
+    const res = await fetch('/api/project/upload_file', { method: 'POST', body: form })
+    const json = await res.json()
+    if (json.error) throw new Error(json.error)
+    return json.data
+  },
+
   /** ファイル情報を取得
    * @param {{ fileID: number }} args
    */
