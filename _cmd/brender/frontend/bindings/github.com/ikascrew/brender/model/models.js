@@ -384,6 +384,14 @@ export class FileSearchResult {
              */
             this["engine_fixed"] = false;
         }
+        if (!("packed" in $$source)) {
+            /**
+             * nil=未検査, true=パック済み, false=未パック
+             * @member
+             * @type {boolean | null}
+             */
+            this["packed"] = null;
+        }
         if (!("file_modified_at" in $$source)) {
             /**
              * @member
@@ -1071,6 +1079,14 @@ export class ProjectFile {
              * @type {boolean}
              */
             this["engine_fixed"] = false;
+        }
+        if (!("packed" in $$source)) {
+            /**
+             * nil=未検査, true=パック済み, false=未パック
+             * @member
+             * @type {boolean | null}
+             */
+            this["packed"] = null;
         }
         if (!("file_modified_at" in $$source)) {
             /**

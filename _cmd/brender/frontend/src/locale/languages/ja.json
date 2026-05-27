@@ -113,7 +113,7 @@
     "tag": "タグ",
     "server": "サーバ",
     "system": "システム",
-    "directory": "ディレクトリ設定",
+    "directory": "ファイル管理",
     "workDirs": "作業ディレクトリ",
     "dataManagement": "データ管理",
     "jobManagement": "ジョブ管理",
@@ -408,7 +408,13 @@
       "projectsUnit": "件",
       "dataSize": "データサイズ",
       "destination": "移動先",
-      "current": "現在"
+      "current": "現在",
+      "checkAllFiles": "全ファイルを確認",
+      "checkingFiles": "ファイルを確認中...",
+      "checkComplete": "ファイル確認完了",
+      "checkResult": "{{total}}件中 — 存在: {{exists}}件, パック済み: {{packed}}件, 未パック: {{notPacked}}件, 不明: {{unknown}}件, 欠損: {{missing}}件",
+      "checkResultNoTool": "{{total}}件中 — 存在: {{exists}}件, 欠損: {{missing}}件",
+      "noFilesRegistered": "ファイルが登録されていません"
     },
     "addBlender": "+ Blender を追加",
     "noBlenders": "登録されたBlenderはありません",

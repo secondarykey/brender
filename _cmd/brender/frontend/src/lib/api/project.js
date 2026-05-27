@@ -58,6 +58,12 @@ export const ProjectApi = {
     return json.data
   },
 
+  /** 全プロジェクトの全ファイルを取得（設定画面の一括確認用）
+   */
+  listAllFiles: () =>
+    isWails() ? svc().then(s => s.ListAllFiles())
+              : serverCall('project', 'list_all_files'),
+
   /** ファイル情報を取得
    * @param {{ fileID: number }} args
    */

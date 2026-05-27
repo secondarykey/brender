@@ -112,6 +112,15 @@ export function List(sort, dir) {
 }
 
 /**
+ * @returns {$CancellablePromise<(model$0.ProjectFile | null)[]>}
+ */
+export function ListAllFiles() {
+    return $Call.ByID(652541797).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType7($result);
+    }));
+}
+
+/**
  * @param {string} fileID
  * @returns {$CancellablePromise<void>}
  */
@@ -197,3 +206,4 @@ const $$createType3 = $Create.Nullable($$createType2);
 const $$createType4 = model$0.ProjectDetail.createFrom;
 const $$createType5 = $Create.Nullable($$createType4);
 const $$createType6 = $Create.Array($$createType5);
+const $$createType7 = $Create.Array($$createType1);

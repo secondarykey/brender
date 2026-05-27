@@ -235,6 +235,18 @@ func UpdateProjectFileProcessedAt(id string, t *time.Time) error {
 	return nil
 }
 
+// ListAllProjectFiles は全プロジェクトの全ファイルを返す。
+func ListAllProjectFiles() ([]*ProjectFile, error) {
+	var files []*ProjectFile
+	if res := db.Find(&files); res.Error != nil {
+		return nil, xerrors.Errorf("ListAllProjectFiles: %w", res.Error)
+	}
+	for _, f := range files {
+		populateFileInfo(f)
+	}
+	return files, nil
+}
+
 func UpdateProjectFilePacked(id string, packed bool) error {
 	if res := db.Model(&ProjectFile{}).Where("id = ?", id).Update("packed", packed); res.Error != nil {
 		return xerrors.Errorf("UpdateProjectFilePacked: %w", res.Error)
