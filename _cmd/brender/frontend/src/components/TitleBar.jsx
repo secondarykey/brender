@@ -10,6 +10,7 @@ function TitleBar() {
   const [isMac, setIsMac] = useState(false)
   const [closeReason, setCloseReason] = useState(null)
   const [devVersion, setDevVersion] = useState('')
+  const [serverLabel, setServerLabel] = useState('')
 
   useEffect(() => {
     const id = setTimeout(() => {
@@ -19,8 +20,16 @@ function TitleBar() {
   }, [])
 
   useEffect(() => {
-    EnvironmentApi.getVersion().then(v => {
+    Promise.all([
+      EnvironmentApi.getVersion(),
+      EnvironmentApi.get(),
+    ]).then(([v, env]) => {
       if (v.dev) setDevVersion(`${v.version}+DEV`)
+      if (env && env.server) {
+        const host = env.server_host || '0.0.0.0'
+        const port = env.server_port || 8080
+        setServerLabel(`ServerMode(${host}:${port})`)
+      }
     }).catch(() => {})
   }, [])
 
@@ -53,7 +62,11 @@ function TitleBar() {
     <>
       <div className={`titlebar${isMac ? ' mac' : ''}`}>
         <img src={appIcon} className="titlebar-icon" alt="Brender" />
-        {devVersion && <span className="titlebar-dev-version">{devVersion}</span>}
+        {(serverLabel || devVersion) && (
+          <span className="titlebar-dev-version">
+            {serverLabel}{serverLabel && devVersion ? ' : ' : ''}{devVersion}
+          </span>
+        )}
         {!isMac && (
           <div className="titlebar-controls">
             <button className="titlebar-btn titlebar-btn-min"   onClick={() => Window.Minimise()}       title={t('title.minimum')}>&#8211;</button>
