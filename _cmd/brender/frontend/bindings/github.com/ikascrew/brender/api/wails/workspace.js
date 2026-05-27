@@ -51,7 +51,7 @@ export function CreateBatch(projectID, projectFileID, specs) {
 
 /**
  * CreateMovie は ffmpeg による動画作成を goroutine で開始し即返す。
- * ffmpeg プロセス完了後（成功・失敗とも）に "movie:created" イベントを emit する。
+ * ffmpeg プロセス完了後（成功・失敗とも）に api.MovieCreatedHook 経由で通知する。
  * 入力拡張子はジョブの OutputExt から自動取得するため、呼び出し元での指定は不要。
  * @param {string} projectID
  * @param {string} fileID

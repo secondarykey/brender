@@ -112,6 +112,16 @@ export function SetOutputFormat(format) {
     return $Call.ByID(1766674691, format);
 }
 
+/**
+ * @param {boolean} enabled
+ * @param {string} host
+ * @param {number} port
+ * @returns {$CancellablePromise<void>}
+ */
+export function SetServer(enabled, host, port) {
+    return $Call.ByID(3725997998, enabled, host, port);
+}
+
 // Private type creation functions
 const $$createType0 = model$0.Environment.createFrom;
 const $$createType1 = $Create.Nullable($$createType0);

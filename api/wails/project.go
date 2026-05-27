@@ -40,6 +40,10 @@ func (s *Project) GetFile(fileID string) (*model.ProjectFile, error) {
 	return api.GetFile(fileID)
 }
 
+func (s *Project) ListAllFiles() ([]*model.ProjectFile, error) {
+	return api.ListAllProjectFiles()
+}
+
 func (s *Project) AddFile(projectID, path string) (*model.ProjectFile, error) {
 	return api.AddProjectFile(projectID, path)
 }

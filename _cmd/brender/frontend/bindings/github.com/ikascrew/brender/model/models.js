@@ -190,6 +190,20 @@ export class Environment {
              */
             this["server"] = false;
         }
+        if (!("server_host" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["server_host"] = "";
+        }
+        if (!("server_port" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["server_port"] = 0;
+        }
         if (!("output_format" in $$source)) {
             /**
              * レンダリング出力フォーマット（"PNG" / "JPEG"）。空なら "PNG"
@@ -369,6 +383,14 @@ export class FileSearchResult {
              * @type {boolean}
              */
             this["engine_fixed"] = false;
+        }
+        if (!("packed" in $$source)) {
+            /**
+             * nil=未検査, true=パック済み, false=未パック
+             * @member
+             * @type {boolean | null}
+             */
+            this["packed"] = null;
         }
         if (!("file_modified_at" in $$source)) {
             /**
@@ -1057,6 +1079,14 @@ export class ProjectFile {
              * @type {boolean}
              */
             this["engine_fixed"] = false;
+        }
+        if (!("packed" in $$source)) {
+            /**
+             * nil=未検査, true=パック済み, false=未パック
+             * @member
+             * @type {boolean | null}
+             */
+            this["packed"] = null;
         }
         if (!("file_modified_at" in $$source)) {
             /**

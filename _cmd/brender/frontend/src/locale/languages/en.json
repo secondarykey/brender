@@ -113,7 +113,7 @@
     "tag": "Tag",
     "server": "Server",
     "system": "System",
-    "directory": "Directory",
+    "directory": "File Management",
     "workDirs": "Work Directories",
     "dataManagement": "Data Management",
     "jobManagement": "Job Management",
@@ -408,7 +408,13 @@
       "projectsUnit": "",
       "dataSize": "Data Size",
       "destination": "destination",
-      "current": "current"
+      "current": "current",
+      "checkAllFiles": "Check All Files",
+      "checkingFiles": "Checking files...",
+      "checkComplete": "File check complete",
+      "checkResult": "{{total}} files — Exists: {{exists}}, Packed: {{packed}}, Not packed: {{notPacked}}, Unknown: {{unknown}}, Missing: {{missing}}",
+      "checkResultNoTool": "{{total}} files — Exists: {{exists}}, Missing: {{missing}}",
+      "noFilesRegistered": "No files registered"
     },
     "addBlender": "+ Add Blender",
     "noBlenders": "No Blender installations registered",

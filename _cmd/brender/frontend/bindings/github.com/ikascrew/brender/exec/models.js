@@ -188,6 +188,13 @@ export class Tool {
              */
             this["Cameras"] = [];
         }
+        if (!("Pack" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["Pack"] = false;
+        }
 
         Object.assign(this, $$source);
     }

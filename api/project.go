@@ -39,6 +39,11 @@ func GetFile(fileID string) (*model.ProjectFile, error) {
 	return model.GetProjectFile(fileID)
 }
 
+// ListAllProjectFiles は全プロジェクトの全ファイルを返す（設定画面の一括確認用）。
+func ListAllProjectFiles() ([]*model.ProjectFile, error) {
+	return model.ListAllProjectFiles()
+}
+
 // UploadProjectFile はアップロードされたファイルを保存し、ProjectFile を登録する。
 // 保存先: {workDir}/{projectID}/{fileID}/{fileID}.blend
 // 登録後に非同期でPackチェックを行い、Pack済みならサムネイル自動生成を開始する。

@@ -261,6 +261,10 @@ func (h *Handler) registerProject() {
 		return api.AddProjectFile(p.ProjectID, p.Path)
 	})
 
+	h.register("project", "list_all_files", func(_ json.RawMessage) (any, error) {
+		return api.ListAllProjectFiles()
+	})
+
 	h.register("project", "get_file", func(body json.RawMessage) (any, error) {
 		var p struct {
 			FileID string `json:"file_id"`
