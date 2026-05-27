@@ -845,6 +845,16 @@ body {
   margin-top: 2px;
 }
 
+.file-tile-not-packed {
+  border: 2px solid #e67e22;
+}
+
+.file-item-pack-warning {
+  font-size: 0.75rem;
+  color: #e67e22;
+  display: block;
+}
+
 .pack-warning-bar {
   background: rgba(230, 126, 34, 0.15);
   border: 1px solid #e67e22;
