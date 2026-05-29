@@ -1305,7 +1305,8 @@ textarea.form-input {
   bottom: 16px;
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
+  align-items: center;
+  gap: 12px;
   pointer-events: none;
   padding-top: 8px;
 }

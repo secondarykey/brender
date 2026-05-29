@@ -46,16 +46,40 @@ export const ProjectApi = {
               : serverCall('project', 'add_file', { project_id: projectID, path }),
 
   /** ファイルをアップロードして追加（サーバモード用）
-   * @param {{ projectID: string, file: File }} args
+   * @param {{ projectID: string, file: File, onProgress?: (pct: number) => void }} args
    */
-  uploadFile: async ({ projectID, file }) => {
-    const form = new FormData()
-    form.append('project_id', projectID)
-    form.append('file', file)
-    const res = await fetch('/api/project/upload_file', { method: 'POST', body: form })
-    const json = await res.json()
-    if (json.error) throw new Error(json.error)
-    return json.data
+  uploadFile: ({ projectID, file, onProgress }) => {
+    return new Promise((resolve, reject) => {
+      const form = new FormData()
+      form.append('project_id', projectID)
+      form.append('file', file)
+
+      const xhr = new XMLHttpRequest()
+      xhr.open('POST', '/api/project/upload_file')
+
+      if (onProgress) {
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            onProgress(e.loaded / e.total)
+          }
+        })
+      }
+
+      xhr.addEventListener('load', () => {
+        try {
+          const json = JSON.parse(xhr.responseText)
+          if (json.error) reject(new Error(json.error))
+          else resolve(json.data)
+        } catch {
+          reject(new Error('Invalid response'))
+        }
+      })
+
+      xhr.addEventListener('error', () => reject(new Error('Upload failed')))
+      xhr.addEventListener('abort', () => reject(new Error('Upload aborted')))
+
+      xhr.send(form)
+    })
   },
 
   /** 全プロジェクトの全ファイルを取得（設定画面の一括確認用）
