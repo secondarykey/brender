@@ -512,6 +512,92 @@ export class FileSearchResult {
     }
 }
 
+export class Group {
+    /**
+     * Creates a new Group instance.
+     * @param {Partial<Group>} [$$source = {}] - The source object to create the Group.
+     */
+    constructor($$source = {}) {
+        if (!("id" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["id"] = "";
+        }
+        if (!("name" in $$source)) {
+            /**
+             * 識別名
+             * @member
+             * @type {string}
+             */
+            this["name"] = "";
+        }
+        if (!("display_name" in $$source)) {
+            /**
+             * 表示名
+             * @member
+             * @type {string}
+             */
+            this["display_name"] = "";
+        }
+        if (!("is_system" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["is_system"] = false;
+        }
+        if (!("created_at" in $$source)) {
+            /**
+             * @member
+             * @type {time$0.Time | null}
+             */
+            this["created_at"] = null;
+        }
+        if (!("updated_at" in $$source)) {
+            /**
+             * @member
+             * @type {time$0.Time | null}
+             */
+            this["updated_at"] = null;
+        }
+        if (!("created_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["created_by"] = "";
+        }
+        if (!("updated_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["updated_by"] = "";
+        }
+        if (!("deleted_at" in $$source)) {
+            /**
+             * @member
+             * @type {gorm$0.DeletedAt}
+             */
+            this["deleted_at"] = null;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new Group instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {Group}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new Group(/** @type {Partial<Group>} */($$parsedSource));
+    }
+}
+
 /**
  * Job はレンダリング実行の完了済み履歴レコード。
  * Queue と同じ UUID v7 の ID を持つ。
@@ -1578,6 +1664,92 @@ export class TagWithCategory {
     static createFrom($$source = {}) {
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         return new TagWithCategory(/** @type {Partial<TagWithCategory>} */($$parsedSource));
+    }
+}
+
+export class User {
+    /**
+     * Creates a new User instance.
+     * @param {Partial<User>} [$$source = {}] - The source object to create the User.
+     */
+    constructor($$source = {}) {
+        if (!("id" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["id"] = "";
+        }
+        if (!("name" in $$source)) {
+            /**
+             * ログイン名・識別名
+             * @member
+             * @type {string}
+             */
+            this["name"] = "";
+        }
+        if (!("display_name" in $$source)) {
+            /**
+             * 表示名
+             * @member
+             * @type {string}
+             */
+            this["display_name"] = "";
+        }
+        if (!("is_system" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["is_system"] = false;
+        }
+        if (!("created_at" in $$source)) {
+            /**
+             * @member
+             * @type {time$0.Time | null}
+             */
+            this["created_at"] = null;
+        }
+        if (!("updated_at" in $$source)) {
+            /**
+             * @member
+             * @type {time$0.Time | null}
+             */
+            this["updated_at"] = null;
+        }
+        if (!("created_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["created_by"] = "";
+        }
+        if (!("updated_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["updated_by"] = "";
+        }
+        if (!("deleted_at" in $$source)) {
+            /**
+             * @member
+             * @type {gorm$0.DeletedAt}
+             */
+            this["deleted_at"] = null;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new User instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {User}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new User(/** @type {Partial<User>} */($$parsedSource));
     }
 }
 

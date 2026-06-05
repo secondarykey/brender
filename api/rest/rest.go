@@ -33,7 +33,7 @@ func (h *Handler) register(service, method string, fn handlerFunc) {
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// REST リクエストのユーザを Guest にセット
-	model.SetGoroutineUser(model.UserGuest)
+	model.SetGoroutineUser(model.UserIDGuest)
 	defer model.ClearGoroutineUser()
 
 	service := r.PathValue("service")
@@ -81,7 +81,7 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 
 func (h *Handler) handleUploadFile(w http.ResponseWriter, r *http.Request) {
 	// REST リクエストのユーザを Guest にセット
-	model.SetGoroutineUser(model.UserGuest)
+	model.SetGoroutineUser(model.UserIDGuest)
 	defer model.ClearGoroutineUser()
 
 	start := time.Now()

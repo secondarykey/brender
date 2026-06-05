@@ -7,14 +7,8 @@ import (
 	"sync"
 )
 
-// ユーザ名定数
-const (
-	UserOwner = "BrenderOwner"
-	UserGuest = "Guest"
-)
-
-// defaultUser は Wails モードでのグローバルデフォルトユーザ。
-var defaultUser = UserOwner
+// defaultUser は Wails モードでのグローバルデフォルトユーザID。
+var defaultUser = UserIDOwner
 
 // goroutine ごとのユーザ名を保持する（REST リクエスト用）
 var goroutineUser sync.Map

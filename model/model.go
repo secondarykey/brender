@@ -95,9 +95,17 @@ func Init(dsn string) error {
 	db.AutoMigrate(&TagCategory{})
 	db.AutoMigrate(&Tag{})
 	db.AutoMigrate(&ProjectFileTag{})
+	db.AutoMigrate(&User{})
+	db.AutoMigrate(&Group{})
+	db.AutoMigrate(&UserGroup{})
 
 	db.Exec("DROP INDEX IF EXISTS idx_tags_name")
 	db.Exec("DROP INDEX IF EXISTS uni_tags_name")
+
+	// システムユーザ・グループの初期投入
+	if err := SeedAuthData(); err != nil {
+		return err
+	}
 
 	return nil
 }
