@@ -438,6 +438,8 @@
     "serverHostPlaceholder": "Empty = all interfaces",
     "serverHostHint": "Specify a domain name, IP address, or localhost. Leave empty to listen on all network interfaces.",
     "serverPort": "Port",
+    "serverAuth": "Enable user authentication",
+    "serverAuthHint": "When disabled, web access is treated as \"Guest\" user",
     "serverRestartRequired": "Restart the app to apply this setting",
     "systemLog": "System Log",
     "openSystemLog": "Open System Log",

@@ -42,11 +42,12 @@ func (h *Handler) registerEnvironment() {
 			Enabled bool   `json:"enabled"`
 			Host    string `json:"host"`
 			Port    int    `json:"port"`
+			Auth    bool   `json:"auth"`
 		}
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return nil, api.SetServer(p.Enabled, p.Host, p.Port)
+		return nil, api.SetServer(p.Enabled, p.Host, p.Port, p.Auth)
 	})
 
 	h.register("environment", "set_ffmpeg", func(body json.RawMessage) (any, error) {

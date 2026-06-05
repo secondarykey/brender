@@ -68,6 +68,20 @@ export class BlenderInstall {
              */
             this["updated_at"] = null;
         }
+        if (!("created_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["created_by"] = "";
+        }
+        if (!("updated_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["updated_by"] = "";
+        }
         if (!("deleted_at" in $$source)) {
             /**
              * @member
@@ -204,6 +218,13 @@ export class Environment {
              */
             this["server_port"] = 0;
         }
+        if (!("server_auth" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["server_auth"] = false;
+        }
         if (!("output_format" in $$source)) {
             /**
              * レンダリング出力フォーマット（"PNG" / "JPEG"）。空なら "PNG"
@@ -260,6 +281,20 @@ export class Environment {
              * @type {time$0.Time | null}
              */
             this["updated_at"] = null;
+        }
+        if (!("created_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["created_by"] = "";
+        }
+        if (!("updated_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["updated_by"] = "";
         }
         if (!("deleted_at" in $$source)) {
             /**
@@ -433,6 +468,20 @@ export class FileSearchResult {
              * @type {time$0.Time | null}
              */
             this["updated_at"] = null;
+        }
+        if (!("created_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["created_by"] = "";
+        }
+        if (!("updated_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["updated_by"] = "";
         }
         if (!("deleted_at" in $$source)) {
             /**
@@ -703,6 +752,13 @@ export class Job {
              */
             this["enqueued_at"] = null;
         }
+        if (!("created_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["created_by"] = "";
+        }
 
         Object.assign(this, $$source);
     }
@@ -910,6 +966,20 @@ export class Project {
              * @type {time$0.Time | null}
              */
             this["updated_at"] = null;
+        }
+        if (!("created_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["created_by"] = "";
+        }
+        if (!("updated_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["updated_by"] = "";
         }
         if (!("deleted_at" in $$source)) {
             /**
@@ -1130,6 +1200,20 @@ export class ProjectFile {
              */
             this["updated_at"] = null;
         }
+        if (!("created_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["created_by"] = "";
+        }
+        if (!("updated_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["updated_by"] = "";
+        }
         if (!("deleted_at" in $$source)) {
             /**
              * @member
@@ -1209,6 +1293,13 @@ export class Queue {
              */
             this["created_at"] = null;
         }
+        if (!("created_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["created_by"] = "";
+        }
 
         Object.assign(this, $$source);
     }
@@ -1271,6 +1362,20 @@ export class Tag {
              * @type {time$0.Time | null}
              */
             this["updated_at"] = null;
+        }
+        if (!("created_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["created_by"] = "";
+        }
+        if (!("updated_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["updated_by"] = "";
         }
         if (!("deleted_at" in $$source)) {
             /**
@@ -1341,6 +1446,20 @@ export class TagCategory {
              * @type {time$0.Time | null}
              */
             this["updated_at"] = null;
+        }
+        if (!("created_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["created_by"] = "";
+        }
+        if (!("updated_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["updated_by"] = "";
         }
         if (!("deleted_at" in $$source)) {
             /**
@@ -1509,6 +1628,20 @@ export class WorkDir {
              * @type {time$0.Time | null}
              */
             this["updated_at"] = null;
+        }
+        if (!("created_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["created_by"] = "";
+        }
+        if (!("updated_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["updated_by"] = "";
         }
         if (!("deleted_at" in $$source)) {
             /**
@@ -1723,6 +1856,20 @@ export class Workspace {
              * @type {time$0.Time | null}
              */
             this["updated_at"] = null;
+        }
+        if (!("created_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["created_by"] = "";
+        }
+        if (!("updated_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["updated_by"] = "";
         }
         if (!("deleted_at" in $$source)) {
             /**

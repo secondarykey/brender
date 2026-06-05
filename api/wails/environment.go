@@ -62,8 +62,8 @@ func (s *Environment) SetOutputFormat(format string) error {
 	return api.SetOutputFormat(format)
 }
 
-func (s *Environment) SetServer(enabled bool, host string, port int) error {
-	return api.SetServer(enabled, host, port)
+func (s *Environment) SetServer(enabled bool, host string, port int, auth bool) error {
+	return api.SetServer(enabled, host, port, auth)
 }
 
 func (s *Environment) SetMaxConcurrentJobs(n int) error {

@@ -45,6 +45,8 @@ func resolveOrder(sort, dir string) string {
 type MetaFields struct {
 	CreatedAt *time.Time     `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt *time.Time     `gorm:"autoUpdateTime" json:"updated_at"`
+	CreatedBy string         `json:"created_by"`
+	UpdatedBy string         `json:"updated_by"`
 	DeletedAt gorm.DeletedAt `json:"deleted_at"`
 }
 
@@ -58,6 +60,29 @@ func Init(dsn string) error {
 	if err != nil {
 		return err
 	}
+
+	// CreatedBy / UpdatedBy を自動設定するコールバック
+	db.Callback().Create().Before("gorm:create").Register("set_created_by", func(tx *gorm.DB) {
+		user := CurrentUser()
+		if tx.Statement.Schema == nil {
+			return
+		}
+		if f := tx.Statement.Schema.LookUpField("CreatedBy"); f != nil {
+			_ = f.Set(tx.Statement.Context, tx.Statement.ReflectValue, user)
+		}
+		if f := tx.Statement.Schema.LookUpField("UpdatedBy"); f != nil {
+			_ = f.Set(tx.Statement.Context, tx.Statement.ReflectValue, user)
+		}
+	})
+	db.Callback().Update().Before("gorm:update").Register("set_updated_by", func(tx *gorm.DB) {
+		user := CurrentUser()
+		if tx.Statement.Schema == nil {
+			return
+		}
+		if f := tx.Statement.Schema.LookUpField("UpdatedBy"); f != nil {
+			tx.Statement.SetColumn("UpdatedBy", user)
+		}
+	})
 
 	db.AutoMigrate(&WorkDir{})
 	db.AutoMigrate(&Environment{})

@@ -10,28 +10,30 @@ function ServerSettings() {
   const [serverEnabled, setServerEnabled] = useState(false)
   const [serverHost, setServerHost] = useState('')
   const [serverPort, setServerPort] = useState(8080)
-  const [initial, setInitial] = useState({ enabled: false, host: '', port: 8080 })
+  const [serverAuth, setServerAuth] = useState(false)
+  const [initial, setInitial] = useState({ enabled: false, host: '', port: 8080, auth: false })
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     EnvironmentApi.get().then(env => {
       if (env) {
-        const s = { enabled: !!env.server, host: env.server_host || '', port: env.server_port || 8080 }
+        const s = { enabled: !!env.server, host: env.server_host || '', port: env.server_port || 8080, auth: !!env.server_auth }
         setServerEnabled(s.enabled)
         setServerHost(s.host)
         setServerPort(s.port)
+        setServerAuth(s.auth)
         setInitial(s)
       }
     })
   }, [])
 
-  const dirty = serverEnabled !== initial.enabled || serverHost !== initial.host || serverPort !== initial.port
+  const dirty = serverEnabled !== initial.enabled || serverHost !== initial.host || serverPort !== initial.port || serverAuth !== initial.auth
 
   const save = async () => {
     setSaving(true)
     try {
-      await EnvironmentApi.setServer({ enabled: serverEnabled, host: serverHost, port: serverPort })
-      setInitial({ enabled: serverEnabled, host: serverHost, port: serverPort })
+      await EnvironmentApi.setServer({ enabled: serverEnabled, host: serverHost, port: serverPort, auth: serverAuth })
+      setInitial({ enabled: serverEnabled, host: serverHost, port: serverPort, auth: serverAuth })
       showToast(t('common.saved'))
     } catch (e) {
       console.error(e)
@@ -84,6 +86,19 @@ function ServerSettings() {
               disabled={!serverEnabled}
             />
           </div>
+        </div>
+
+        <div className="form-field" style={{ marginTop: 16 }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={serverAuth}
+              onChange={e => setServerAuth(e.target.checked)}
+              disabled={!serverEnabled}
+            />
+            {t('settings.serverAuth')}
+          </label>
+          <span className="form-hint">{t('settings.serverAuthHint')}</span>
         </div>
 
         {dirty && (
