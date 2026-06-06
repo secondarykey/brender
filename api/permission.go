@@ -15,6 +15,10 @@ type PermissionEntry struct {
 }
 
 func SetProjectPermission(projectID, targetID, role string) error {
+	// Brender Owner の権限変更は禁止
+	if targetID == model.UserIDOwner {
+		return xerrors.New("Brender Owner の権限は変更できません")
+	}
 	// ロール検証
 	valid := false
 	for _, r := range model.AllRoles {
@@ -30,6 +34,10 @@ func SetProjectPermission(projectID, targetID, role string) error {
 }
 
 func RemoveProjectPermission(projectID, targetID string) error {
+	// Brender Owner の権限削除は禁止
+	if targetID == model.UserIDOwner {
+		return xerrors.New("Brender Owner の権限は削除できません")
+	}
 	return model.RemoveProjectPermission(projectID, targetID)
 }
 
@@ -70,6 +78,10 @@ func ListProjectPermissions(projectID string) ([]*PermissionEntry, error) {
 // ── File Permission ───────────────────────────────────────
 
 func SetFilePermission(fileID, targetID, role string) error {
+	// Brender Owner の権限変更は禁止
+	if targetID == model.UserIDOwner {
+		return xerrors.New("Brender Owner の権限は変更できません")
+	}
 	valid := false
 	for _, r := range model.AllRoles {
 		if r == role {
@@ -84,6 +96,10 @@ func SetFilePermission(fileID, targetID, role string) error {
 }
 
 func RemoveFilePermission(fileID, targetID string) error {
+	// Brender Owner の権限削除は禁止
+	if targetID == model.UserIDOwner {
+		return xerrors.New("Brender Owner の権限は削除できません")
+	}
 	return model.RemoveFilePermission(fileID, targetID)
 }
 

@@ -6,6 +6,7 @@ import Dialog from './Dialog'
 import ConfirmDialog from './ConfirmDialog'
 
 const ROLES = ['owner', 'runner', 'editor', 'viewer']
+const OWNER_ID = 'usr_owner'
 
 /**
  * PermissionSection — 権限の折りたたみセクション（プロジェクト/ファイル共通）
@@ -185,6 +186,7 @@ function PermissionSection({ mode = 'project', resourceID }) {
                 {perms.map(p => {
                   const currentRole = edited[p.target_id] ?? p.role
                   const isUser = p.target_id.startsWith('usr_')
+                  const isOwnerUser = p.target_id === OWNER_ID
                   return (
                     <tr key={p.target_id}>
                       <td>
@@ -201,6 +203,7 @@ function PermissionSection({ mode = 'project', resourceID }) {
                           className="form-select form-select-sm"
                           value={currentRole}
                           onChange={e => handleRoleChange(p.target_id, e.target.value)}
+                          disabled={isOwnerUser}
                         >
                           {ROLES.map(r => (
                             <option key={r} value={r}>{t(`permission.roles.${r}`)}</option>
@@ -208,13 +211,15 @@ function PermissionSection({ mode = 'project', resourceID }) {
                         </select>
                       </td>
                       <td style={{ textAlign: 'center' }}>
-                        <button
-                          className="btn-icon-danger"
-                          title={t('common.delete')}
-                          onClick={() => setRemoveTarget({ target_id: p.target_id, target_name: p.target_name })}
-                        >
-                          &times;
-                        </button>
+                        {!isOwnerUser && (
+                          <button
+                            className="btn-icon-danger"
+                            title={t('common.delete')}
+                            onClick={() => setRemoveTarget({ target_id: p.target_id, target_name: p.target_name })}
+                          >
+                            &times;
+                          </button>
+                        )}
                       </td>
                     </tr>
                   )
