@@ -625,6 +625,28 @@
     "copy": "Copy",
     "copied": "Copied"
   },
+  "permission": {
+    "title": "Permissions",
+    "target": "Target",
+    "role": "Role",
+    "actions": "Actions",
+    "roles": {
+      "owner": "Owner",
+      "runner": "Runner",
+      "editor": "Editor",
+      "viewer": "Viewer"
+    },
+    "add": "+ Add",
+    "addTitle": "Add Permission",
+    "addTarget": "Select target",
+    "user": "User",
+    "group": "Group",
+    "noPermissions": "No permissions configured",
+    "noTargets": "No targets available to add",
+    "confirmRemove": "Remove this permission?",
+    "saved": "Permission saved",
+    "removed": "Permission removed"
+  },
   "login": {
     "subtitle": "Please log in to continue",
     "loginId": "Login ID",
