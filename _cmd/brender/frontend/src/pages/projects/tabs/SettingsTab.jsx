@@ -331,7 +331,7 @@ function SettingsTab({ detail, focusName, workDir, workDirs, onUpdated, onDelete
         </div>
         )}
 
-        <PermissionSection projectID={detail.project.id} />
+        <PermissionSection mode="project" resourceID={detail.project.id} />
 
         <ConfirmDialog
           open={confirm}
