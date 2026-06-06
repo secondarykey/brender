@@ -380,6 +380,9 @@
       "dark": "Dark",
       "light": "Light"
     },
+    "account": "Account",
+    "logout": "Log Out",
+    "loggingOut": "Logging out...",
     "selectFolder": "Select Folder",
     "selectFile": "Select File",
     "selectDirectory": "Select Directory",

@@ -380,6 +380,9 @@
       "dark": "ダークモード",
       "light": "ライトモード"
     },
+    "account": "アカウント",
+    "logout": "ログアウト",
+    "loggingOut": "ログアウト中...",
     "selectFolder": "フォルダを選択",
     "selectFile": "ファイルを選択",
     "selectDirectory": "ディレクトリを選択",
