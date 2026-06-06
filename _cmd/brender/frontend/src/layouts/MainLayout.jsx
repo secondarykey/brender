@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { QueueApi } from '../lib/api'
+import { QueueApi, EnvironmentApi } from '../lib/api'
 import { onAppEvent } from '../lib/appEvents'
 import TitleBar from '../components/TitleBar'
 import { useTranslation } from "react-i18next"
@@ -26,6 +26,7 @@ function MainLayout({ currentPage, onNavigate, children }) {
   const { toast } = useToast()
   const { error, clearError, showError } = useMessage()
   const [queueCount, setQueueCount] = useState(0)
+  const [serverMode, setServerMode] = useState(false)
 
   useEffect(() => {
     // 初期件数取得
@@ -33,6 +34,14 @@ function MainLayout({ currentPage, onNavigate, children }) {
     // イベント購読
     const off = onAppEvent('queue:changed', data => setQueueCount(Number(data) || 0))
     return off
+  }, [])
+
+  useEffect(() => {
+    if (isWails()) {
+      EnvironmentApi.get()
+        .then(env => { if (env?.server) setServerMode(true) })
+        .catch(() => {})
+    }
   }, [])
 
   useEffect(() => {
@@ -52,6 +61,9 @@ function MainLayout({ currentPage, onNavigate, children }) {
   ]
 
   const bottomNav = [
+    ...(serverMode ? [
+      { id: 'users', label: t('menu.users'), icon: '👤' },
+    ] : []),
     { id: 'settings', label: t('menu.settings'), icon: '⚙' },
   ]
 
