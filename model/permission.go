@@ -279,6 +279,22 @@ func CopyProjectPermissionsToFile(projectID, fileID string) error {
 // デフォルト権限
 // ══════════════════════════════════════════════════════════
 
+// ListAccessibleProjectIDs はユーザがアクセス可能なプロジェクトIDの一覧を返す。
+func ListAccessibleProjectIDs(userID string) ([]string, error) {
+	ids, err := collectTargetIDs(userID)
+	if err != nil {
+		return nil, err
+	}
+	var projectIDs []string
+	if res := db.Model(&ProjectPermission{}).
+		Where("target_id IN ?", ids).
+		Distinct("project_id").
+		Pluck("project_id", &projectIDs); res.Error != nil {
+		return nil, xerrors.Errorf("ListAccessibleProjectIDs: %w", res.Error)
+	}
+	return projectIDs, nil
+}
+
 // SetDefaultProjectPermissions はプロジェクト作成時のデフォルト権限を設定する。
 // creatorID: 作成者のユーザID
 func SetDefaultProjectPermissions(projectID, creatorID string) error {
