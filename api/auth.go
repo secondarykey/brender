@@ -145,6 +145,7 @@ func GetActiveResetToken(userID string) (*ResetTokenInfo, error) {
 }
 
 // GenerateResetToken はパスワードリセットトークンを生成し、URLパスを返す。
+// 同時にパスワードをクリアし、トークンでの再設定までログイン不可にする。
 func GenerateResetToken(userID string) (string, error) {
 	user, err := model.GetUser(userID)
 	if err != nil {
@@ -152,6 +153,16 @@ func GenerateResetToken(userID string) (string, error) {
 	}
 	if user == nil {
 		return "", xerrors.New("user not found")
+	}
+
+	// パスワードをクリア（ログイン不可状態にする）
+	if err := model.ClearPassword(userID); err != nil {
+		return "", err
+	}
+
+	// 既存セッションも無効化
+	if err := model.DeleteSessionsByUser(userID); err != nil {
+		return "", err
 	}
 
 	token, err := model.CreatePasswordResetToken(userID, resetTokenDuration)

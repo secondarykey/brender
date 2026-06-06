@@ -312,6 +312,14 @@ func RemoveUserFromGroup(userID, groupID string) error {
 
 // ── Password ─────────────────────────────────────────────
 
+// ClearPassword はユーザのパスワードをクリアする（ログイン不可状態にする）。
+func ClearPassword(userID string) error {
+	if res := db.Model(&User{}).Where("id = ?", userID).Update("password_hash", ""); res.Error != nil {
+		return xerrors.Errorf("ClearPassword: %w", res.Error)
+	}
+	return nil
+}
+
 // SetPassword はユーザのパスワードを bcrypt ハッシュ化して保存する。
 func SetPassword(userID, password string) error {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
