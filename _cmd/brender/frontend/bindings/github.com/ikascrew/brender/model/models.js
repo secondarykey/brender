@@ -68,6 +68,20 @@ export class BlenderInstall {
              */
             this["updated_at"] = null;
         }
+        if (!("created_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["created_by"] = "";
+        }
+        if (!("updated_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["updated_by"] = "";
+        }
         if (!("deleted_at" in $$source)) {
             /**
              * @member
@@ -204,6 +218,13 @@ export class Environment {
              */
             this["server_port"] = 0;
         }
+        if (!("server_auth" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["server_auth"] = false;
+        }
         if (!("output_format" in $$source)) {
             /**
              * レンダリング出力フォーマット（"PNG" / "JPEG"）。空なら "PNG"
@@ -260,6 +281,20 @@ export class Environment {
              * @type {time$0.Time | null}
              */
             this["updated_at"] = null;
+        }
+        if (!("created_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["created_by"] = "";
+        }
+        if (!("updated_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["updated_by"] = "";
         }
         if (!("deleted_at" in $$source)) {
             /**
@@ -434,6 +469,20 @@ export class FileSearchResult {
              */
             this["updated_at"] = null;
         }
+        if (!("created_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["created_by"] = "";
+        }
+        if (!("updated_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["updated_by"] = "";
+        }
         if (!("deleted_at" in $$source)) {
             /**
              * @member
@@ -460,6 +509,92 @@ export class FileSearchResult {
     static createFrom($$source = {}) {
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         return new FileSearchResult(/** @type {Partial<FileSearchResult>} */($$parsedSource));
+    }
+}
+
+export class Group {
+    /**
+     * Creates a new Group instance.
+     * @param {Partial<Group>} [$$source = {}] - The source object to create the Group.
+     */
+    constructor($$source = {}) {
+        if (!("id" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["id"] = "";
+        }
+        if (!("name" in $$source)) {
+            /**
+             * 識別名
+             * @member
+             * @type {string}
+             */
+            this["name"] = "";
+        }
+        if (!("display_name" in $$source)) {
+            /**
+             * 表示名
+             * @member
+             * @type {string}
+             */
+            this["display_name"] = "";
+        }
+        if (!("is_system" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["is_system"] = false;
+        }
+        if (!("created_at" in $$source)) {
+            /**
+             * @member
+             * @type {time$0.Time | null}
+             */
+            this["created_at"] = null;
+        }
+        if (!("updated_at" in $$source)) {
+            /**
+             * @member
+             * @type {time$0.Time | null}
+             */
+            this["updated_at"] = null;
+        }
+        if (!("created_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["created_by"] = "";
+        }
+        if (!("updated_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["updated_by"] = "";
+        }
+        if (!("deleted_at" in $$source)) {
+            /**
+             * @member
+             * @type {gorm$0.DeletedAt}
+             */
+            this["deleted_at"] = null;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new Group instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {Group}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new Group(/** @type {Partial<Group>} */($$parsedSource));
     }
 }
 
@@ -703,6 +838,13 @@ export class Job {
              */
             this["enqueued_at"] = null;
         }
+        if (!("created_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["created_by"] = "";
+        }
 
         Object.assign(this, $$source);
     }
@@ -910,6 +1052,20 @@ export class Project {
              * @type {time$0.Time | null}
              */
             this["updated_at"] = null;
+        }
+        if (!("created_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["created_by"] = "";
+        }
+        if (!("updated_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["updated_by"] = "";
         }
         if (!("deleted_at" in $$source)) {
             /**
@@ -1130,6 +1286,20 @@ export class ProjectFile {
              */
             this["updated_at"] = null;
         }
+        if (!("created_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["created_by"] = "";
+        }
+        if (!("updated_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["updated_by"] = "";
+        }
         if (!("deleted_at" in $$source)) {
             /**
              * @member
@@ -1209,6 +1379,13 @@ export class Queue {
              */
             this["created_at"] = null;
         }
+        if (!("created_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["created_by"] = "";
+        }
 
         Object.assign(this, $$source);
     }
@@ -1271,6 +1448,20 @@ export class Tag {
              * @type {time$0.Time | null}
              */
             this["updated_at"] = null;
+        }
+        if (!("created_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["created_by"] = "";
+        }
+        if (!("updated_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["updated_by"] = "";
         }
         if (!("deleted_at" in $$source)) {
             /**
@@ -1341,6 +1532,20 @@ export class TagCategory {
              * @type {time$0.Time | null}
              */
             this["updated_at"] = null;
+        }
+        if (!("created_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["created_by"] = "";
+        }
+        if (!("updated_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["updated_by"] = "";
         }
         if (!("deleted_at" in $$source)) {
             /**
@@ -1462,6 +1667,92 @@ export class TagWithCategory {
     }
 }
 
+export class User {
+    /**
+     * Creates a new User instance.
+     * @param {Partial<User>} [$$source = {}] - The source object to create the User.
+     */
+    constructor($$source = {}) {
+        if (!("id" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["id"] = "";
+        }
+        if (!("name" in $$source)) {
+            /**
+             * ログイン名・識別名
+             * @member
+             * @type {string}
+             */
+            this["name"] = "";
+        }
+        if (!("display_name" in $$source)) {
+            /**
+             * 表示名
+             * @member
+             * @type {string}
+             */
+            this["display_name"] = "";
+        }
+        if (!("is_system" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["is_system"] = false;
+        }
+        if (!("created_at" in $$source)) {
+            /**
+             * @member
+             * @type {time$0.Time | null}
+             */
+            this["created_at"] = null;
+        }
+        if (!("updated_at" in $$source)) {
+            /**
+             * @member
+             * @type {time$0.Time | null}
+             */
+            this["updated_at"] = null;
+        }
+        if (!("created_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["created_by"] = "";
+        }
+        if (!("updated_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["updated_by"] = "";
+        }
+        if (!("deleted_at" in $$source)) {
+            /**
+             * @member
+             * @type {gorm$0.DeletedAt}
+             */
+            this["deleted_at"] = null;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new User instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {User}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new User(/** @type {Partial<User>} */($$parsedSource));
+    }
+}
+
 export class WorkDir {
     /**
      * Creates a new WorkDir instance.
@@ -1509,6 +1800,20 @@ export class WorkDir {
              * @type {time$0.Time | null}
              */
             this["updated_at"] = null;
+        }
+        if (!("created_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["created_by"] = "";
+        }
+        if (!("updated_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["updated_by"] = "";
         }
         if (!("deleted_at" in $$source)) {
             /**
@@ -1723,6 +2028,20 @@ export class Workspace {
              * @type {time$0.Time | null}
              */
             this["updated_at"] = null;
+        }
+        if (!("created_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["created_by"] = "";
+        }
+        if (!("updated_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["updated_by"] = "";
         }
         if (!("deleted_at" in $$source)) {
             /**

@@ -83,3 +83,39 @@ func (s *Project) SetFileThumbnailFromWorkspace(projectID string, fileID string,
 func (s *Project) SetProjectThumbnailFromFile(projectID string, fileID string) (string, error) {
 	return api.SetProjectThumbnailFromFile(projectID, fileID)
 }
+
+// ── Permission ────────────────────────────────────────────
+
+func (s *Project) SetPermission(projectID, targetID, role string) error {
+	return api.SetProjectPermission(projectID, targetID, role)
+}
+
+func (s *Project) RemovePermission(projectID, targetID string) error {
+	return api.RemoveProjectPermission(projectID, targetID)
+}
+
+func (s *Project) ListPermissions(projectID string) ([]*api.PermissionEntry, error) {
+	return api.ListProjectPermissions(projectID)
+}
+
+func (s *Project) GetUserRole(projectID, userID string) (string, error) {
+	return api.GetUserProjectRole(projectID, userID)
+}
+
+// ── File Permission ───────────────────────────────────────
+
+func (s *Project) SetFilePermission(fileID, targetID, role string) error {
+	return api.SetFilePermission(fileID, targetID, role)
+}
+
+func (s *Project) RemoveFilePermission(fileID, targetID string) error {
+	return api.RemoveFilePermission(fileID, targetID)
+}
+
+func (s *Project) ListFilePermissions(fileID string) ([]*api.PermissionEntry, error) {
+	return api.ListFilePermissions(fileID)
+}
+
+func (s *Project) GetUserFileRole(fileID, userID string) (string, error) {
+	return api.GetUserFileRole(fileID, userID)
+}

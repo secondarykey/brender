@@ -120,6 +120,7 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
 
   const fileInputRef = useRef(null)
   const [uploading, setUploading] = useState(false)
+  const [uploadPct, setUploadPct] = useState(0)
 
   const handleAddFile = async () => {
     showError('')
@@ -140,20 +141,33 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
     }
   }
 
+  const fmtSize = (bytes) => {
+    if (bytes < 1024) return bytes + ' B'
+    if (bytes < 1024 ** 2) return (bytes / 1024).toFixed(1) + ' KB'
+    if (bytes < 1024 ** 3) return (bytes / 1024 ** 2).toFixed(1) + ' MB'
+    return (bytes / 1024 ** 3).toFixed(1) + ' GB'
+  }
+
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
     e.target.value = ''
     setUploading(true)
+    setUploadPct(0)
     showError('')
     try {
-      await ProjectApi.uploadFile({ projectID, file })
+      await ProjectApi.uploadFile({
+        projectID,
+        file,
+        onProgress: (pct) => setUploadPct(pct),
+      })
       load()
       showToast(t('workspace.fileUploaded'))
     } catch (err) {
       showError(String(err))
     } finally {
       setUploading(false)
+      setUploadPct(0)
     }
   }
 
@@ -271,6 +285,22 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
 
       <div className="list-spacer" />
       <div className="list-fab">
+        {uploading && (
+          <div className="upload-progress">
+            <div style={{ fontSize: '0.82rem', color: 'rgba(var(--fg), 0.6)', marginBottom: 4 }}>
+              {t('workspace.uploading')} {Math.round(uploadPct * 100)}%
+            </div>
+            <div style={{ background: 'rgba(var(--fg), 0.1)', borderRadius: 4, height: 6, width: 200 }}>
+              <div style={{
+                background: '#27ae60',
+                borderRadius: 4,
+                height: 6,
+                width: `${Math.round(uploadPct * 100)}%`,
+                transition: 'width 0.2s',
+              }} />
+            </div>
+          </div>
+        )}
         <button className="btn btn-green" onClick={handleAddFile} disabled={uploading}>
           {uploading ? t('workspace.uploading') : t('workspace.addFile')}
         </button>

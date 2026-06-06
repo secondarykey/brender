@@ -28,6 +28,7 @@ func (h *Handler) registerRoutes() {
 	h.registerWorkDir()
 	h.registerCodes()
 	h.registerTag()
+	h.registerAuth()
 }
 
 // ── Environment ─────────────────────────────────────────
@@ -42,11 +43,12 @@ func (h *Handler) registerEnvironment() {
 			Enabled bool   `json:"enabled"`
 			Host    string `json:"host"`
 			Port    int    `json:"port"`
+			Auth    bool   `json:"auth"`
 		}
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return nil, api.SetServer(p.Enabled, p.Host, p.Port)
+		return nil, api.SetServer(p.Enabled, p.Host, p.Port, p.Auth)
 	})
 
 	h.register("environment", "set_ffmpeg", func(body json.RawMessage) (any, error) {
@@ -392,6 +394,98 @@ func (h *Handler) registerProject() {
 			return nil, err
 		}
 		return api.SetProjectThumbnailFromFile(p.ProjectID, p.FileID)
+	})
+
+	// ── Permission ──────────────────────────────────────
+
+	h.register("project", "set_permission", func(body json.RawMessage) (any, error) {
+		var p struct {
+			ProjectID string `json:"project_id"`
+			TargetID  string `json:"target_id"`
+			Role      string `json:"role"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return nil, api.SetProjectPermission(p.ProjectID, p.TargetID, p.Role)
+	})
+
+	h.register("project", "remove_permission", func(body json.RawMessage) (any, error) {
+		var p struct {
+			ProjectID string `json:"project_id"`
+			TargetID  string `json:"target_id"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return nil, api.RemoveProjectPermission(p.ProjectID, p.TargetID)
+	})
+
+	h.register("project", "list_permissions", func(body json.RawMessage) (any, error) {
+		var p struct {
+			ProjectID string `json:"project_id"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return api.ListProjectPermissions(p.ProjectID)
+	})
+
+	h.register("project", "get_user_role", func(body json.RawMessage) (any, error) {
+		var p struct {
+			ProjectID string `json:"project_id"`
+			UserID    string `json:"user_id"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return api.GetUserProjectRole(p.ProjectID, p.UserID)
+	})
+
+	// ── File Permission ─────────────────────────────────
+
+	h.register("project", "set_file_permission", func(body json.RawMessage) (any, error) {
+		var p struct {
+			FileID   string `json:"file_id"`
+			TargetID string `json:"target_id"`
+			Role     string `json:"role"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return nil, api.SetFilePermission(p.FileID, p.TargetID, p.Role)
+	})
+
+	h.register("project", "remove_file_permission", func(body json.RawMessage) (any, error) {
+		var p struct {
+			FileID   string `json:"file_id"`
+			TargetID string `json:"target_id"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return nil, api.RemoveFilePermission(p.FileID, p.TargetID)
+	})
+
+	h.register("project", "list_file_permissions", func(body json.RawMessage) (any, error) {
+		var p struct {
+			FileID string `json:"file_id"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return api.ListFilePermissions(p.FileID)
+	})
+
+	h.register("project", "get_user_file_role", func(body json.RawMessage) (any, error) {
+		var p struct {
+			FileID string `json:"file_id"`
+			UserID string `json:"user_id"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return api.GetUserFileRole(p.FileID, p.UserID)
 	})
 }
 
@@ -1239,5 +1333,145 @@ func (h *Handler) registerTag() {
 
 	h.register("tag", "list_tag_usage_counts", func(_ json.RawMessage) (any, error) {
 		return api.ListTagUsageCounts()
+	})
+}
+
+// ── Auth ───────────────────────────────────────────────────
+
+func (h *Handler) registerAuth() {
+	h.register("auth", "list_users", func(_ json.RawMessage) (any, error) {
+		return api.ListUsers()
+	})
+
+	h.register("auth", "get_user", func(body json.RawMessage) (any, error) {
+		var p struct {
+			ID string `json:"id"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return api.GetUser(p.ID)
+	})
+
+	h.register("auth", "create_user", func(body json.RawMessage) (any, error) {
+		var p struct {
+			Name        string `json:"name"`
+			DisplayName string `json:"display_name"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return api.CreateUser(p.Name, p.DisplayName)
+	})
+
+	h.register("auth", "update_user", func(body json.RawMessage) (any, error) {
+		var p struct {
+			ID          string `json:"id"`
+			Name        string `json:"name"`
+			DisplayName string `json:"display_name"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return api.UpdateUser(p.ID, p.Name, p.DisplayName)
+	})
+
+	h.register("auth", "delete_user", func(body json.RawMessage) (any, error) {
+		var p struct {
+			ID string `json:"id"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return nil, api.DeleteUser(p.ID)
+	})
+
+	h.register("auth", "list_groups", func(_ json.RawMessage) (any, error) {
+		return api.ListGroups()
+	})
+
+	h.register("auth", "get_group", func(body json.RawMessage) (any, error) {
+		var p struct {
+			ID string `json:"id"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return api.GetGroup(p.ID)
+	})
+
+	h.register("auth", "create_group", func(body json.RawMessage) (any, error) {
+		var p struct {
+			Name        string `json:"name"`
+			DisplayName string `json:"display_name"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return api.CreateGroup(p.Name, p.DisplayName)
+	})
+
+	h.register("auth", "update_group", func(body json.RawMessage) (any, error) {
+		var p struct {
+			ID          string `json:"id"`
+			Name        string `json:"name"`
+			DisplayName string `json:"display_name"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return api.UpdateGroup(p.ID, p.Name, p.DisplayName)
+	})
+
+	h.register("auth", "delete_group", func(body json.RawMessage) (any, error) {
+		var p struct {
+			ID string `json:"id"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return nil, api.DeleteGroup(p.ID)
+	})
+
+	h.register("auth", "list_groups_by_user", func(body json.RawMessage) (any, error) {
+		var p struct {
+			UserID string `json:"user_id"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return api.ListGroupsByUser(p.UserID)
+	})
+
+	h.register("auth", "list_users_by_group", func(body json.RawMessage) (any, error) {
+		var p struct {
+			GroupID string `json:"group_id"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return api.ListUsersByGroup(p.GroupID)
+	})
+
+	h.register("auth", "add_user_to_group", func(body json.RawMessage) (any, error) {
+		var p struct {
+			UserID  string `json:"user_id"`
+			GroupID string `json:"group_id"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return nil, api.AddUserToGroup(p.UserID, p.GroupID)
+	})
+
+	h.register("auth", "remove_user_from_group", func(body json.RawMessage) (any, error) {
+		var p struct {
+			UserID  string `json:"user_id"`
+			GroupID string `json:"group_id"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return nil, api.RemoveUserFromGroup(p.UserID, p.GroupID)
 	})
 }

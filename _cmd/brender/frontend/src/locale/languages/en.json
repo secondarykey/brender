@@ -51,6 +51,7 @@
     "search": "Search",
     "queue": "Queue",
     "miniMonitor": "Mini Monitor",
+    "users": "User Management",
     "settings": "Settings"
   },
   "title": {
@@ -438,6 +439,8 @@
     "serverHostPlaceholder": "Empty = all interfaces",
     "serverHostHint": "Specify a domain name, IP address, or localhost. Leave empty to listen on all network interfaces.",
     "serverPort": "Port",
+    "serverAuth": "Enable user authentication",
+    "serverAuthHint": "When disabled, web access is treated as \"Guest\" user",
     "serverRestartRequired": "Restart the app to apply this setting",
     "systemLog": "System Log",
     "openSystemLog": "Open System Log",
@@ -573,5 +576,34 @@
   "system": {
     "license": "License",
     "thirdPartyLicenses": "Third-Party Licenses"
+  },
+  "users": {
+    "tabUsers": "Users",
+    "tabGroups": "Groups",
+    "addUser": "+ Add User",
+    "addGroup": "+ Add Group",
+    "editUser": "Edit User",
+    "editGroup": "Edit Group",
+    "createUser": "Create User",
+    "createGroup": "Create Group",
+    "name": "Name",
+    "displayName": "Display Name",
+    "id": "ID",
+    "system": "System",
+    "systemBadge": "System",
+    "noUsers": "No users",
+    "noGroups": "No groups",
+    "nameRequired": "Name is required",
+    "confirmDeleteUser": "Delete this user?",
+    "deleteUserWarning": "Permission settings for this user will also be deleted. This action cannot be undone.",
+    "confirmDeleteGroup": "Delete this group?",
+    "deleteGroupWarning": "Permission settings and memberships for this group will also be deleted. This action cannot be undone.",
+    "members": "Members",
+    "memberCount": "{{count}} members",
+    "addMember": "Add Member",
+    "removeMember": "Remove",
+    "noMembers": "No members",
+    "allGroupHint": "All users automatically belong to this group",
+    "groups": "Groups"
   }
 }

@@ -68,6 +68,7 @@ type Job struct {
 	StartedAt     *time.Time `json:"started_at"`
 	CompletedAt   *time.Time `json:"completed_at"`
 	EnqueuedAt    *time.Time `json:"enqueued_at"` // キュー登録時刻
+	CreatedBy     string     `json:"created_by"`
 }
 
 func CreateJob(j *Job) error {

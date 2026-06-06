@@ -116,10 +116,11 @@ export function SetOutputFormat(format) {
  * @param {boolean} enabled
  * @param {string} host
  * @param {number} port
+ * @param {boolean} auth
  * @returns {$CancellablePromise<void>}
  */
-export function SetServer(enabled, host, port) {
-    return $Call.ByID(3725997998, enabled, host, port);
+export function SetServer(enabled, host, port, auth) {
+    return $Call.ByID(3725997998, enabled, host, port, auth);
 }
 
 // Private type creation functions

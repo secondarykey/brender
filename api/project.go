@@ -82,6 +82,10 @@ func UploadProjectFile(projectID string, filename string, r io.Reader) (*model.P
 		slog.Error("UploadProjectFile: UpdateProjectFileProcessedAt", "error", err)
 	}
 	touchProjectProcessedAt(projectID)
+	// プロジェクトの権限をファイルにコピー
+	if err := model.CopyProjectPermissionsToFile(projectID, f.ID); err != nil {
+		slog.Error("UploadProjectFile: CopyProjectPermissionsToFile", "error", err)
+	}
 	// 非同期でPackチェック → Pack済みならサムネイル自動生成
 	go checkPackAndThumbnail(projectID, f)
 	return f, nil
@@ -120,6 +124,10 @@ func AddProjectFile(projectID, path string) (*model.ProjectFile, error) {
 		slog.Error("AddProjectFile: UpdateProjectFileProcessedAt", "error", err)
 	}
 	touchProjectProcessedAt(projectID)
+	// プロジェクトの権限をファイルにコピー
+	if err := model.CopyProjectPermissionsToFile(projectID, f.ID); err != nil {
+		slog.Error("AddProjectFile: CopyProjectPermissionsToFile", "error", err)
+	}
 	go func() {
 		if err := CreateThumbnailWorkspace(projectID, f); err != nil {
 			slog.Error("thumbnail workspace creation failed", "fileID", f.ID, "error", err)
@@ -216,6 +224,9 @@ func DeleteProjectFile(fileID string, force bool) error {
 	if err := model.DeleteWorkspacesByProjectFile(fileID); err != nil {
 		return xerrors.Errorf("DeleteProjectFile workspaces: %w", err)
 	}
+	if err := model.DeleteFilePermissions(fileID); err != nil {
+		return xerrors.Errorf("DeleteProjectFile permissions: %w", err)
+	}
 	return model.RemoveProjectFile(fileID)
 }
 
@@ -255,6 +266,9 @@ func DeleteProject(id string, force bool) error {
 	if err := model.DeleteWorkspacesByProject(id); err != nil {
 		return xerrors.Errorf("DeleteProject workspaces: %w", err)
 	}
+	if err := model.DeleteProjectPermissions(id); err != nil {
+		return xerrors.Errorf("DeleteProject permissions: %w", err)
+	}
 	return model.DeleteProject(id)
 }
 
@@ -273,6 +287,11 @@ func CreateProject(name string) (*model.ProjectDetail, error) {
 	now := time.Now()
 	if err := model.UpdateProjectProcessedAt(d.Project.ID, &now); err != nil {
 		slog.Error("CreateProject: UpdateProjectProcessedAt", "error", err)
+	}
+	// デフォルト権限を設定（作成者 + BrenderOwner → owner, All → viewer）
+	creatorID := model.CurrentUser()
+	if err := model.SetDefaultProjectPermissions(d.Project.ID, creatorID); err != nil {
+		slog.Error("CreateProject: SetDefaultProjectPermissions", "error", err)
 	}
 	return d, nil
 }

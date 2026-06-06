@@ -9,6 +9,7 @@ import (
 
 	"github.com/ikascrew/brender/api"
 	"github.com/ikascrew/brender/log"
+	"github.com/ikascrew/brender/model"
 )
 
 type handlerFunc func(body json.RawMessage) (any, error)
@@ -31,6 +32,10 @@ func (h *Handler) register(service, method string, fn handlerFunc) {
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// REST リクエストのユーザを Guest にセット
+	model.SetGoroutineUser(model.UserIDGuest)
+	defer model.ClearGoroutineUser()
+
 	service := r.PathValue("service")
 	method := r.PathValue("method")
 	key := service + "/" + method
@@ -75,6 +80,10 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 }
 
 func (h *Handler) handleUploadFile(w http.ResponseWriter, r *http.Request) {
+	// REST リクエストのユーザを Guest にセット
+	model.SetGoroutineUser(model.UserIDGuest)
+	defer model.ClearGoroutineUser()
+
 	start := time.Now()
 
 	if err := r.ParseMultipartForm(512 << 20); err != nil { // 512MB max

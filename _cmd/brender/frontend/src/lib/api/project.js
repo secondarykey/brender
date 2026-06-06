@@ -46,16 +46,40 @@ export const ProjectApi = {
               : serverCall('project', 'add_file', { project_id: projectID, path }),
 
   /** ファイルをアップロードして追加（サーバモード用）
-   * @param {{ projectID: string, file: File }} args
+   * @param {{ projectID: string, file: File, onProgress?: (pct: number) => void }} args
    */
-  uploadFile: async ({ projectID, file }) => {
-    const form = new FormData()
-    form.append('project_id', projectID)
-    form.append('file', file)
-    const res = await fetch('/api/project/upload_file', { method: 'POST', body: form })
-    const json = await res.json()
-    if (json.error) throw new Error(json.error)
-    return json.data
+  uploadFile: ({ projectID, file, onProgress }) => {
+    return new Promise((resolve, reject) => {
+      const form = new FormData()
+      form.append('project_id', projectID)
+      form.append('file', file)
+
+      const xhr = new XMLHttpRequest()
+      xhr.open('POST', '/api/project/upload_file')
+
+      if (onProgress) {
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            onProgress(e.loaded / e.total)
+          }
+        })
+      }
+
+      xhr.addEventListener('load', () => {
+        try {
+          const json = JSON.parse(xhr.responseText)
+          if (json.error) reject(new Error(json.error))
+          else resolve(json.data)
+        } catch {
+          reject(new Error('Invalid response'))
+        }
+      })
+
+      xhr.addEventListener('error', () => reject(new Error('Upload failed')))
+      xhr.addEventListener('abort', () => reject(new Error('Upload aborted')))
+
+      xhr.send(form)
+    })
   },
 
   /** 全プロジェクトの全ファイルを取得（設定画面の一括確認用）
@@ -140,4 +164,64 @@ export const ProjectApi = {
   setProjectThumbnailFromFile: ({ projectID, fileID }) =>
     isWails() ? svc().then(s => s.SetProjectThumbnailFromFile(projectID, fileID))
               : serverCall('project', 'set_project_thumbnail_from_file', { project_id: projectID, file_id: fileID }),
+
+  // ── Permission ────────────────────────────────────────
+
+  /** プロジェクト権限を設定
+   * @param {{ projectID: string, targetID: string, role: string }} args
+   */
+  setPermission: ({ projectID, targetID, role }) =>
+    isWails() ? svc().then(s => s.SetPermission(projectID, targetID, role))
+              : serverCall('project', 'set_permission', { project_id: projectID, target_id: targetID, role }),
+
+  /** プロジェクト権限を削除
+   * @param {{ projectID: string, targetID: string }} args
+   */
+  removePermission: ({ projectID, targetID }) =>
+    isWails() ? svc().then(s => s.RemovePermission(projectID, targetID))
+              : serverCall('project', 'remove_permission', { project_id: projectID, target_id: targetID }),
+
+  /** プロジェクトの権限一覧を取得
+   * @param {{ projectID: string }} args
+   */
+  listPermissions: ({ projectID }) =>
+    isWails() ? svc().then(s => s.ListPermissions(projectID))
+              : serverCall('project', 'list_permissions', { project_id: projectID }),
+
+  /** ユーザのプロジェクトでの最上位ロールを取得
+   * @param {{ projectID: string, userID: string }} args
+   */
+  getUserRole: ({ projectID, userID }) =>
+    isWails() ? svc().then(s => s.GetUserRole(projectID, userID))
+              : serverCall('project', 'get_user_role', { project_id: projectID, user_id: userID }),
+
+  // ── File Permission ───────────────────────────────────
+
+  /** ファイル権限を設定
+   * @param {{ fileID: string, targetID: string, role: string }} args
+   */
+  setFilePermission: ({ fileID, targetID, role }) =>
+    isWails() ? svc().then(s => s.SetFilePermission(fileID, targetID, role))
+              : serverCall('project', 'set_file_permission', { file_id: fileID, target_id: targetID, role }),
+
+  /** ファイル権限を削除
+   * @param {{ fileID: string, targetID: string }} args
+   */
+  removeFilePermission: ({ fileID, targetID }) =>
+    isWails() ? svc().then(s => s.RemoveFilePermission(fileID, targetID))
+              : serverCall('project', 'remove_file_permission', { file_id: fileID, target_id: targetID }),
+
+  /** ファイルの権限一覧を取得
+   * @param {{ fileID: string }} args
+   */
+  listFilePermissions: ({ fileID }) =>
+    isWails() ? svc().then(s => s.ListFilePermissions(fileID))
+              : serverCall('project', 'list_file_permissions', { file_id: fileID }),
+
+  /** ユーザのファイルでの最上位ロールを取得
+   * @param {{ fileID: string, userID: string }} args
+   */
+  getUserFileRole: ({ fileID, userID }) =>
+    isWails() ? svc().then(s => s.GetUserFileRole(fileID, userID))
+              : serverCall('project', 'get_user_file_role', { file_id: fileID, user_id: userID }),
 }
