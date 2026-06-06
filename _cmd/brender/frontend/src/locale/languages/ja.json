@@ -625,6 +625,28 @@
     "copy": "コピー",
     "copied": "コピー済"
   },
+  "permission": {
+    "title": "権限",
+    "target": "対象",
+    "role": "ロール",
+    "actions": "操作",
+    "roles": {
+      "owner": "オーナー",
+      "runner": "実行者",
+      "editor": "編集者",
+      "viewer": "閲覧者"
+    },
+    "add": "+ 追加",
+    "addTitle": "権限を追加",
+    "addTarget": "対象を選択",
+    "user": "ユーザ",
+    "group": "グループ",
+    "noPermissions": "権限が設定されていません",
+    "noTargets": "追加できる対象がありません",
+    "confirmRemove": "この権限を削除しますか？",
+    "saved": "権限を保存しました",
+    "removed": "権限を削除しました"
+  },
   "login": {
     "subtitle": "ログインしてください",
     "loginId": "ログインID",

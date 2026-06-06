@@ -8,6 +8,7 @@ import { useToast, useMessage } from '../../../lib/toast'
 import Dialog from '../../../components/Dialog'
 import ConfirmDialog from '../../../components/ConfirmDialog'
 import NoteSection from '../../../components/NoteSection'
+import PermissionSection from '../../../components/PermissionSection'
 
 const IMAGE_FILTER = [{ DisplayName: 'Image', Pattern: '*.jpg;*.jpeg;*.png;*.bmp;*.webp' }]
 
@@ -329,6 +330,8 @@ function SettingsTab({ detail, focusName, workDir, workDirs, onUpdated, onDelete
           {dirMsg && <div className="success-msg" style={{ marginTop: 6 }}>{dirMsg}</div>}
         </div>
         )}
+
+        <PermissionSection projectID={detail.project.id} />
 
         <ConfirmDialog
           open={confirm}
