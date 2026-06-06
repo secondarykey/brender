@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AuthApi } from '../../lib/api'
+import { AuthApi, EnvironmentApi } from '../../lib/api'
+import { isWails } from '../../lib/api/_client'
 import { useToast, useMessage } from '../../lib/toast'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import Dialog from '../../components/Dialog'
@@ -395,9 +396,16 @@ function UsersTab() {
   const handleIssueToken = async (user) => {
     try {
       const urlPath = await AuthApi.generateResetToken({ userID: user.id })
-      // サーバのホスト情報からフルURLを構築
-      const fullURL = `${window.location.origin}${urlPath}`
-      setResetURL(fullURL)
+      // Wails モードでは Environment のサーバ設定からURLを構築
+      // サーバモードでは window.location.origin を使用
+      let origin = window.location.origin
+      if (isWails()) {
+        const env = await EnvironmentApi.get()
+        const host = env?.server_host || 'localhost'
+        const port = env?.server_port || 8080
+        origin = `http://${host}:${port}`
+      }
+      setResetURL(`${origin}${urlPath}`)
       setShowResetDialog(true)
     } catch (err) {
       showError(String(err))
