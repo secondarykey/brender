@@ -614,7 +614,11 @@
     "issueTokenTitle": "Issue password setup URL",
     "resetTokenTitle": "Password Setup URL",
     "resetTokenHint": "Share this URL with the user. They can set their password by visiting this URL.",
-    "resetTokenExpiry": "This URL is valid for 24 hours and can only be used once.",
+    "resetTokenExpiryNew": "Valid for 24 hours from issue. Can only be used once.",
+    "resetTokenExpiryAt": "Expires: {{time}}",
+    "noActiveToken": "No active password setup URL. Click the Issue button to create one.",
+    "reissueHint": "Reissuing will invalidate the current URL.",
+    "reissueToken": "Reissue",
     "copy": "Copy",
     "copied": "Copied"
   },

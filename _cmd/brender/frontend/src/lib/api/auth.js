@@ -110,6 +110,14 @@ export const AuthApi = {
     isWails() ? svc().then(s => s.ListUsersWithStatus())
               : serverCall('auth', 'list_users_with_status'),
 
+  /** 既存の有効なリセットトークンを取得
+   * @param {{ userID: string }} args
+   * @returns {Promise<{ url_path: string, expires_at: string } | null>}
+   */
+  getActiveResetToken: ({ userID }) =>
+    isWails() ? svc().then(s => s.GetActiveResetToken(userID))
+              : serverCall('auth', 'get_active_reset_token', { user_id: userID }),
+
   /** パスワードリセットトークンを発行
    * @param {{ userID: string }} args
    * @returns {Promise<string>} URL パス

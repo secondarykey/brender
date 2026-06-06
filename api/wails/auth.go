@@ -79,6 +79,10 @@ func (s *Auth) ListUsersWithStatus() ([]*api.UserWithStatus, error) {
 	return api.ListUsersWithStatus()
 }
 
+func (s *Auth) GetActiveResetToken(userID string) (*api.ResetTokenInfo, error) {
+	return api.GetActiveResetToken(userID)
+}
+
 func (s *Auth) GenerateResetToken(userID string) (string, error) {
 	return api.GenerateResetToken(userID)
 }

@@ -306,10 +306,62 @@ function MembersDialog({ open, group, onClose }) {
   )
 }
 
-// ── パスワードリセットURL表示ダイアログ ────────────────────────
-function ResetTokenDialog({ open, resetURL, onClose }) {
+// ── サーバオリジン取得ヘルパー ───────────────────────────────
+async function getServerOrigin() {
+  if (isWails()) {
+    const env = await EnvironmentApi.get()
+    const host = env?.server_host || 'localhost'
+    const port = env?.server_port || 8080
+    return `http://${host}:${port}`
+  }
+  return window.location.origin
+}
+
+// ── パスワードリセットURL管理ダイアログ ──────────────────────
+function ResetTokenDialog({ open, user, onClose }) {
   const { t } = useTranslation()
+  const [loading, setLoading] = useState(false)
+  const [issuing, setIssuing] = useState(false)
+  const [resetURL, setResetURL] = useState('')
+  const [expiresAt, setExpiresAt] = useState('')
   const [copied, setCopied] = useState(false)
+  const [error, setError] = useState('')
+
+  // ダイアログを開いた時に既存トークンを取得
+  useEffect(() => {
+    if (!open || !user) return
+    setLoading(true)
+    setResetURL('')
+    setExpiresAt('')
+    setError('')
+    setCopied(false)
+    AuthApi.getActiveResetToken({ userID: user.id })
+      .then(async (info) => {
+        if (info?.url_path) {
+          const origin = await getServerOrigin()
+          setResetURL(`${origin}${info.url_path}`)
+          setExpiresAt(info.expires_at)
+        }
+      })
+      .catch(err => setError(String(err)))
+      .finally(() => setLoading(false))
+  }, [open, user])
+
+  const handleIssue = async () => {
+    setIssuing(true)
+    setError('')
+    setCopied(false)
+    try {
+      const urlPath = await AuthApi.generateResetToken({ userID: user.id })
+      const origin = await getServerOrigin()
+      setResetURL(`${origin}${urlPath}`)
+      setExpiresAt('') // 今発行したので24時間後
+    } catch (err) {
+      setError(String(err))
+    } finally {
+      setIssuing(false)
+    }
+  }
 
   const handleCopy = async () => {
     try {
@@ -317,36 +369,66 @@ function ResetTokenDialog({ open, resetURL, onClose }) {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {
-      // フォールバック: 選択
       const el = document.getElementById('reset-url-input')
       if (el) { el.select() }
+    }
+  }
+
+  const formatExpiry = (iso) => {
+    if (!iso) return t('users.resetTokenExpiryNew')
+    try {
+      const d = new Date(iso)
+      return t('users.resetTokenExpiryAt', { time: d.toLocaleString() })
+    } catch {
+      return ''
     }
   }
 
   return (
     <Dialog
       open={open}
-      title={t('users.resetTokenTitle')}
+      title={`${t('users.resetTokenTitle')} — ${user?.display_name || user?.name || ''}`}
       onClose={onClose}
+      message={error || undefined}
+      messageSeverity="error"
       actions={
         <button className="btn btn-ghost" onClick={onClose}>{t('common.close')}</button>
       }
     >
-      <p className="form-hint" style={{ marginBottom: 12 }}>{t('users.resetTokenHint')}</p>
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-        <input
-          id="reset-url-input"
-          className="form-input"
-          value={resetURL}
-          readOnly
-          onClick={e => e.target.select()}
-          style={{ width: '100%', fontFamily: 'monospace', fontSize: '0.82rem' }}
-        />
-        <button className="btn btn-sm" onClick={handleCopy}>
-          {copied ? t('users.copied') : t('users.copy')}
-        </button>
-      </div>
-      <p className="form-hint" style={{ marginTop: 8 }}>{t('users.resetTokenExpiry')}</p>
+      {loading ? (
+        <p style={{ color: 'rgba(var(--fg),0.5)' }}>{t('common.loading')}</p>
+      ) : resetURL ? (
+        <>
+          <p className="form-hint" style={{ marginBottom: 12 }}>{t('users.resetTokenHint')}</p>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <input
+              id="reset-url-input"
+              className="form-input"
+              value={resetURL}
+              readOnly
+              onClick={e => e.target.select()}
+              style={{ width: '100%', fontFamily: 'monospace', fontSize: '0.82rem' }}
+            />
+            <button className="btn btn-sm" onClick={handleCopy}>
+              {copied ? t('users.copied') : t('users.copy')}
+            </button>
+          </div>
+          <p className="form-hint" style={{ marginTop: 8 }}>{formatExpiry(expiresAt)}</p>
+          <div style={{ marginTop: 16, borderTop: '1px solid rgba(var(--fg),0.08)', paddingTop: 12 }}>
+            <p className="form-hint" style={{ marginBottom: 8 }}>{t('users.reissueHint')}</p>
+            <button className="btn btn-outline btn-sm" onClick={handleIssue} disabled={issuing}>
+              {issuing ? t('common.processing') : t('users.reissueToken')}
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          <p className="form-hint" style={{ marginBottom: 16 }}>{t('users.noActiveToken')}</p>
+          <button className="btn btn-run" onClick={handleIssue} disabled={issuing}>
+            {issuing ? t('common.processing') : t('users.issueToken')}
+          </button>
+        </>
+      )}
     </Dialog>
   )
 }
@@ -362,14 +444,12 @@ function UsersTab() {
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState('')
   const [groupsDialog, setGroupsDialog] = useState(null)
-  const [resetURL, setResetURL] = useState('')
-  const [showResetDialog, setShowResetDialog] = useState(false)
+  const [resetTokenUser, setResetTokenUser] = useState(null)
 
   const load = () => {
     AuthApi.listUsersWithStatus()
       .then(list => setUsers(list || []))
       .catch(() => {
-        // フォールバック: listUsersWithStatus が未対応の場合
         AuthApi.listUsers()
           .then(list => setUsers(list || []))
           .catch(err => showError(String(err)))
@@ -390,25 +470,6 @@ function UsersTab() {
       setDeleteError(String(err))
     } finally {
       setDeleting(false)
-    }
-  }
-
-  const handleIssueToken = async (user) => {
-    try {
-      const urlPath = await AuthApi.generateResetToken({ userID: user.id })
-      // Wails モードでは Environment のサーバ設定からURLを構築
-      // サーバモードでは window.location.origin を使用
-      let origin = window.location.origin
-      if (isWails()) {
-        const env = await EnvironmentApi.get()
-        const host = env?.server_host || 'localhost'
-        const port = env?.server_port || 8080
-        origin = `http://${host}:${port}`
-      }
-      setResetURL(`${origin}${urlPath}`)
-      setShowResetDialog(true)
-    } catch (err) {
-      showError(String(err))
     }
   }
 
@@ -447,7 +508,7 @@ function UsersTab() {
                   <UserGroupsBadges userID={u.id} onClick={() => setGroupsDialog(u)} />
                 </td>
                 <td style={{ display: 'flex', gap: 6 }}>
-                  <button className="btn btn-run btn-sm" onClick={() => handleIssueToken(u)}
+                  <button className="btn btn-run btn-sm" onClick={() => setResetTokenUser(u)}
                           title={t('users.issueTokenTitle')}>
                     {t('users.issueToken')}
                   </button>
@@ -493,9 +554,9 @@ function UsersTab() {
       />
 
       <ResetTokenDialog
-        open={showResetDialog}
-        resetURL={resetURL}
-        onClose={() => setShowResetDialog(false)}
+        open={!!resetTokenUser}
+        user={resetTokenUser}
+        onClose={() => setResetTokenUser(null)}
       />
 
       <ConfirmDialog
