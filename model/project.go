@@ -93,6 +93,32 @@ func ListProjects(sort, dir string) ([]*ProjectDetail, error) {
 	return details, nil
 }
 
+// ListProjectsForUser はユーザがアクセス可能なプロジェクトのみを返す。
+func ListProjectsForUser(userID, sort, dir string) ([]*ProjectDetail, error) {
+	projectIDs, err := ListAccessibleProjectIDs(userID)
+	if err != nil {
+		return nil, err
+	}
+	if len(projectIDs) == 0 {
+		return []*ProjectDetail{}, nil
+	}
+
+	var projects []*Project
+	if res := db.Where("id IN ?", projectIDs).Order(resolveOrder(sort, dir)).Find(&projects); res.Error != nil {
+		return nil, xerrors.Errorf("ListProjectsForUser: %w", res.Error)
+	}
+
+	details := make([]*ProjectDetail, 0, len(projects))
+	for _, p := range projects {
+		d, err := loadProjectDetail(p)
+		if err != nil {
+			return nil, err
+		}
+		details = append(details, d)
+	}
+	return details, nil
+}
+
 func GetProject(id string) (*ProjectDetail, error) {
 	var p Project
 	res := db.First(&p, "id = ?", id)

@@ -14,7 +14,12 @@ import (
 )
 
 func ListProjects(sort, dir string) ([]*model.ProjectDetail, error) {
-	return model.ListProjects(sort, dir)
+	userID := model.CurrentUser()
+	// Owner は全プロジェクトを参照可能
+	if userID == model.UserIDOwner {
+		return model.ListProjects(sort, dir)
+	}
+	return model.ListProjectsForUser(userID, sort, dir)
 }
 
 func GetProject(id string) (*model.ProjectDetail, error) {
