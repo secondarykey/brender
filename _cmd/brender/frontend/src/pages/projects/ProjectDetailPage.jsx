@@ -14,6 +14,7 @@ function ProjectDetailPage({ id, initialTab, focusName, navigate }) {
   const [workDirs, setWorkDirs] = useState([])
   const [tab, setTab]         = useState(initialTab || 'workspace')
   const [loadError, setLoadError] = useState(false)
+  const [accessDenied, setAccessDenied] = useState(false)
 
   const tabs = [
     { id: 'workspace', label: t('tabs.fileList') },
@@ -28,10 +29,21 @@ function ProjectDetailPage({ id, initialTab, focusName, navigate }) {
         setWorkDirs(dirs)
         setWorkDir(dirs.find(w => w.id === d.project.work_dir_id) || null)
       })
-      .catch(err => { showError(String(err)); setLoadError(true) })
+      .catch(err => {
+        if (String(err).includes('access denied')) {
+          setAccessDenied(true)
+        } else {
+          showError(String(err))
+          setLoadError(true)
+        }
+      })
   }
 
   useEffect(() => { load() }, [id])
+
+  if (accessDenied) {
+    return <div className="page"><p className="setting-desc">{t('permission.accessDenied')}</p></div>
+  }
 
   if (loadError) {
     return <div className="page" />

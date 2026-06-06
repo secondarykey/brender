@@ -1048,13 +1048,21 @@ function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspa
   const { showError } = useMessage()
   const [detail, setDetail]           = useState(null)
   const [loadFailed, setLoadFailed]   = useState(false)
+  const [accessDenied, setAccessDenied] = useState(false)
   const [historyReload, setHistoryReload] = useState(0)
   const [workDirStatus, setWorkDirStatus] = useState(null)
 
   const load = useCallback(() => {
     WorkspaceApi.get({ projectID, workspaceID })
       .then(d => setDetail(d))
-      .catch(err => { showError(String(err)); setLoadFailed(true) })
+      .catch(err => {
+        if (String(err).includes('access denied')) {
+          setAccessDenied(true)
+        } else {
+          showError(String(err))
+          setLoadFailed(true)
+        }
+      })
   }, [projectID, workspaceID, showError])
 
   useEffect(() => { load() }, [load])
@@ -1067,6 +1075,10 @@ function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspa
       })
       .catch(() => {})
   }, [projectID])
+
+  if (accessDenied) {
+    return <div className="page"><p className="setting-desc">{t('permission.accessDenied')}</p></div>
+  }
 
   if (loadFailed && !detail) {
     return <div className="page" />

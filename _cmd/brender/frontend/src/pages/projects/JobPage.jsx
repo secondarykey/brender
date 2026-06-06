@@ -804,6 +804,7 @@ function JobPage({ job: initialJob, jobID: propJobID, navigate, backPage, backPa
   const [tab, setTab]       = useState(initialJob && [2, 3, 6, 7, 8, 9].includes(initialJob.data_status) ? 'render' : 'detail')
   const [job, setJob]       = useState(initialJob || null)
   const [names, setNames]   = useState({ project: '', file: '', workspace: '' })
+  const [accessDenied, setAccessDenied] = useState(false)
 
   useLayoutEffect(() => {
     if (initialTab) setTab(initialTab)
@@ -811,7 +812,9 @@ function JobPage({ job: initialJob, jobID: propJobID, navigate, backPage, backPa
 
   useEffect(() => {
     if (!job) {
-      QueueApi.getJob({ id }).then(j => { if (j) setJob(j) }).catch(() => {})
+      QueueApi.getJob({ id }).then(j => { if (j) setJob(j) }).catch(err => {
+        if (String(err).includes('access denied')) setAccessDenied(true)
+      })
     }
   }, [id])
 
@@ -850,6 +853,10 @@ function JobPage({ job: initialJob, jobID: propJobID, navigate, backPage, backPa
 
   const handleDeleted = () => {
     navigate(backPage || 'projects', backParams || {})
+  }
+
+  if (accessDenied) {
+    return <div className="page"><p className="setting-desc">{t('permission.accessDenied')}</p></div>
   }
 
   if (!job) {

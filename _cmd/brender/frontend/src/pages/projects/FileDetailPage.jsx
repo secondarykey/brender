@@ -846,15 +846,26 @@ function FileDetailPage({ projectID, projectName, fileID, fileName, initialTab, 
   const [tab, setTab] = useState(initialTab || 'workspace')
   const [currentFileName, setCurrentFileName] = useState(fileName)
   const [workDirStatus, setWorkDirStatus] = useState(null)
+  const [accessDenied, setAccessDenied] = useState(false)
 
   useEffect(() => {
+    // ファイル権限チェック
+    ProjectApi.getFile({ fileID })
+      .catch(err => {
+        if (String(err).includes('access denied')) setAccessDenied(true)
+      })
+    // プロジェクト情報取得
     Promise.all([ProjectApi.get({ id: projectID }), WorkDirApi.list()])
       .then(([d, dirs]) => {
         const wd = (dirs || []).find(w => w.id === d?.project?.work_dir_id)
         setWorkDirStatus(wd?.status || null)
       })
       .catch(() => {})
-  }, [projectID])
+  }, [projectID, fileID])
+
+  if (accessDenied) {
+    return <div className="page"><p className="setting-desc">{t('permission.accessDenied')}</p></div>
+  }
 
   const tabs = [
     { id: 'workspace', label: t('tabs.workspaceList') },
