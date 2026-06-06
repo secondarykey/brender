@@ -11,6 +11,9 @@ import { Create as $Create } from "@wailsio/runtime";
 import * as model$0 from "../model/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
+import * as gorm$0 from "../../../../gorm.io/gorm/models.js";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
 import * as time$0 from "../../../../time/models.js";
 
 export class AddDirResult {
@@ -642,6 +645,45 @@ export class RenderPreview {
 }
 
 /**
+ * ResetTokenInfo は既存トークンの情報。
+ */
+export class ResetTokenInfo {
+    /**
+     * Creates a new ResetTokenInfo instance.
+     * @param {Partial<ResetTokenInfo>} [$$source = {}] - The source object to create the ResetTokenInfo.
+     */
+    constructor($$source = {}) {
+        if (!("url_path" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["url_path"] = "";
+        }
+        if (!("expires_at" in $$source)) {
+            /**
+             * ISO 8601
+             * @member
+             * @type {string}
+             */
+            this["expires_at"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new ResetTokenInfo instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {ResetTokenInfo}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new ResetTokenInfo(/** @type {Partial<ResetTokenInfo>} */($$parsedSource));
+    }
+}
+
+/**
  * TestRenderParams はテストレンダリングのインラインパラメータ（ワークスペースへの保存は行わない）
  */
 export class TestRenderParams {
@@ -725,6 +767,102 @@ export class TestRenderParams {
     static createFrom($$source = {}) {
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         return new TestRenderParams(/** @type {Partial<TestRenderParams>} */($$parsedSource));
+    }
+}
+
+/**
+ * UserWithStatus はユーザ情報にパスワード設定状態を付加した構造体。
+ */
+export class UserWithStatus {
+    /**
+     * Creates a new UserWithStatus instance.
+     * @param {Partial<UserWithStatus>} [$$source = {}] - The source object to create the UserWithStatus.
+     */
+    constructor($$source = {}) {
+        if (!("id" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["id"] = "";
+        }
+        if (!("name" in $$source)) {
+            /**
+             * ログインID（ASCII限定）
+             * @member
+             * @type {string}
+             */
+            this["name"] = "";
+        }
+        if (!("display_name" in $$source)) {
+            /**
+             * 表示名
+             * @member
+             * @type {string}
+             */
+            this["display_name"] = "";
+        }
+        if (!("is_system" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["is_system"] = false;
+        }
+        if (!("created_at" in $$source)) {
+            /**
+             * @member
+             * @type {time$0.Time | null}
+             */
+            this["created_at"] = null;
+        }
+        if (!("updated_at" in $$source)) {
+            /**
+             * @member
+             * @type {time$0.Time | null}
+             */
+            this["updated_at"] = null;
+        }
+        if (!("created_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["created_by"] = "";
+        }
+        if (!("updated_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["updated_by"] = "";
+        }
+        if (!("deleted_at" in $$source)) {
+            /**
+             * @member
+             * @type {gorm$0.DeletedAt}
+             */
+            this["deleted_at"] = null;
+        }
+        if (!("has_password" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["has_password"] = false;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new UserWithStatus instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {UserWithStatus}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new UserWithStatus(/** @type {Partial<UserWithStatus>} */($$parsedSource));
     }
 }
 

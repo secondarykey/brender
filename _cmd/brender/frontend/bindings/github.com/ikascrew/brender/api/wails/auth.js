@@ -8,6 +8,9 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
+import * as api$0 from "../models.js";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
 import * as model$0 from "../../model/models.js";
 
 /**
@@ -20,12 +23,11 @@ export function AddUserToGroup(userID, groupID) {
 }
 
 /**
- * @param {string} name
  * @param {string} displayName
  * @returns {$CancellablePromise<model$0.Group | null>}
  */
-export function CreateGroup(name, displayName) {
-    return $Call.ByID(2857276305, name, displayName).then(/** @type {($result: any) => any} */(($result) => {
+export function CreateGroup(displayName) {
+    return $Call.ByID(2857276305, displayName).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType1($result);
     }));
 }
@@ -58,6 +60,24 @@ export function DeleteUser(id) {
 }
 
 /**
+ * @param {string} userID
+ * @returns {$CancellablePromise<string>}
+ */
+export function GenerateResetToken(userID) {
+    return $Call.ByID(2289765149, userID);
+}
+
+/**
+ * @param {string} userID
+ * @returns {$CancellablePromise<api$0.ResetTokenInfo | null>}
+ */
+export function GetActiveResetToken(userID) {
+    return $Call.ByID(1968277732, userID).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType5($result);
+    }));
+}
+
+/**
  * @param {string} id
  * @returns {$CancellablePromise<model$0.Group | null>}
  */
@@ -82,7 +102,7 @@ export function GetUser(id) {
  */
 export function ListGroups() {
     return $Call.ByID(4100209790).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType4($result);
+        return $$createType6($result);
     }));
 }
 
@@ -92,7 +112,7 @@ export function ListGroups() {
  */
 export function ListGroupsByUser(userID) {
     return $Call.ByID(1171496292, userID).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType4($result);
+        return $$createType6($result);
     }));
 }
 
@@ -101,7 +121,7 @@ export function ListGroupsByUser(userID) {
  */
 export function ListUsers() {
     return $Call.ByID(1896742238).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType5($result);
+        return $$createType7($result);
     }));
 }
 
@@ -111,7 +131,16 @@ export function ListUsers() {
  */
 export function ListUsersByGroup(groupID) {
     return $Call.ByID(3605273598, groupID).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType5($result);
+        return $$createType7($result);
+    }));
+}
+
+/**
+ * @returns {$CancellablePromise<(api$0.UserWithStatus | null)[]>}
+ */
+export function ListUsersWithStatus() {
+    return $Call.ByID(567575780).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType10($result);
     }));
 }
 
@@ -126,12 +155,11 @@ export function RemoveUserFromGroup(userID, groupID) {
 
 /**
  * @param {string} id
- * @param {string} name
  * @param {string} displayName
  * @returns {$CancellablePromise<model$0.Group | null>}
  */
-export function UpdateGroup(id, name, displayName) {
-    return $Call.ByID(3999736698, id, name, displayName).then(/** @type {($result: any) => any} */(($result) => {
+export function UpdateGroup(id, displayName) {
+    return $Call.ByID(3999736698, id, displayName).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType1($result);
     }));
 }
@@ -153,5 +181,10 @@ const $$createType0 = model$0.Group.createFrom;
 const $$createType1 = $Create.Nullable($$createType0);
 const $$createType2 = model$0.User.createFrom;
 const $$createType3 = $Create.Nullable($$createType2);
-const $$createType4 = $Create.Array($$createType1);
-const $$createType5 = $Create.Array($$createType3);
+const $$createType4 = api$0.ResetTokenInfo.createFrom;
+const $$createType5 = $Create.Nullable($$createType4);
+const $$createType6 = $Create.Array($$createType1);
+const $$createType7 = $Create.Array($$createType3);
+const $$createType8 = api$0.UserWithStatus.createFrom;
+const $$createType9 = $Create.Nullable($$createType8);
+const $$createType10 = $Create.Array($$createType9);

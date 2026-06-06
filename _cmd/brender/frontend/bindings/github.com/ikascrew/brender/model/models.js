@@ -525,14 +525,6 @@ export class Group {
              */
             this["id"] = "";
         }
-        if (!("name" in $$source)) {
-            /**
-             * 識別名
-             * @member
-             * @type {string}
-             */
-            this["name"] = "";
-        }
         if (!("display_name" in $$source)) {
             /**
              * 表示名
@@ -1682,7 +1674,7 @@ export class User {
         }
         if (!("name" in $$source)) {
             /**
-             * ログイン名・識別名
+             * ログインID（ASCII限定）
              * @member
              * @type {string}
              */
