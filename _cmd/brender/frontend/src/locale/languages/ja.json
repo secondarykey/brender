@@ -647,7 +647,8 @@
     "confirmRemove": "この権限を削除しますか？",
     "saved": "権限を保存しました",
     "removed": "権限を削除しました",
-    "accessDenied": "権限がありません"
+    "accessDenied": "権限がありません",
+    "accessDeniedLabel": "[アクセス拒否]"
   },
   "login": {
     "subtitle": "ログインしてください",
