@@ -11,8 +11,6 @@ const ROLES = ['owner', 'runner', 'editor', 'viewer']
  * PermissionSection — 権限の折りたたみセクション（プロジェクト/ファイル共通）
  *
  * @param {{ mode: 'project' | 'file', resourceID: string }} props
- *   mode='project' → ProjectApi.listPermissions / setPermission / removePermission (projectID)
- *   mode='file'    → ProjectApi.listFilePermissions / setFilePermission / removeFilePermission (fileID)
  */
 function PermissionSection({ mode = 'project', resourceID }) {
   const { t } = useTranslation()
@@ -40,14 +38,14 @@ function PermissionSection({ mode = 'project', resourceID }) {
   // 追加ダイアログ
   const [addOpen, setAddOpen]     = useState(false)
   const [addType, setAddType]     = useState('user') // 'user' | 'group'
-  const [addTarget, setAddTarget] = useState('')
+  const [selected, setSelected]   = useState(new Set()) // 選択中のID群
   const [addRole, setAddRole]     = useState('viewer')
   const [users, setUsers]         = useState([])
   const [groups, setGroups]       = useState([])
   const [addBusy, setAddBusy]     = useState(false)
 
   // 削除確認
-  const [removeTarget, setRemoveTarget] = useState(null) // { target_id, target_name }
+  const [removeTarget, setRemoveTarget] = useState(null)
   const [removing, setRemoving]   = useState(false)
 
   const load = () => {
@@ -79,8 +77,7 @@ function PermissionSection({ mode = 'project', resourceID }) {
   const handleSave = async () => {
     setSaving(true)
     try {
-      const entries = Object.entries(edited)
-      for (const [targetID, role] of entries) {
+      for (const [targetID, role] of Object.entries(edited)) {
         await api.set(targetID, role)
       }
       showToast(t('permission.saved'))
@@ -92,7 +89,7 @@ function PermissionSection({ mode = 'project', resourceID }) {
     }
   }
 
-  // 追加ダイアログを開くとき、ユーザ/グループ一覧を取得
+  // 追加ダイアログを開く
   const openAddDialog = async () => {
     try {
       const [u, g] = await Promise.all([
@@ -103,24 +100,35 @@ function PermissionSection({ mode = 'project', resourceID }) {
       setGroups(g || [])
       setAddType('user')
       setAddRole('viewer')
-      setAddTarget('')
+      setSelected(new Set())
       setAddOpen(true)
     } catch (err) {
       showError(String(err))
     }
   }
 
-  // 追加ダイアログの候補（既に設定済みのものを除外）
+  // 候補（設定済みを除外）
   const existingIDs = new Set(perms.map(p => p.target_id))
   const candidates = addType === 'user'
     ? users.filter(u => !existingIDs.has(u.id))
     : groups.filter(g => !existingIDs.has(g.id))
 
+  const toggleSelect = (id) => {
+    setSelected(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
   const handleAdd = async () => {
-    if (!addTarget) return
+    if (selected.size === 0) return
     setAddBusy(true)
     try {
-      await api.set(addTarget, addRole)
+      for (const targetID of selected) {
+        await api.set(targetID, addRole)
+      }
       showToast(t('permission.saved'))
       setAddOpen(false)
       load()
@@ -242,56 +250,61 @@ function PermissionSection({ mode = 'project', resourceID }) {
             <button
               className="btn btn-green"
               onClick={handleAdd}
-              disabled={addBusy || !addTarget}
+              disabled={addBusy || selected.size === 0}
             >
-              {t('common.create')}
+              {selected.size > 0
+                ? `${t('permission.addAction')}(${selected.size})`
+                : t('permission.addAction')}
             </button>
           </>
         }
       >
-        <div className="form" style={{ maxWidth: 400 }}>
+        <div style={{ maxWidth: 400 }}>
           {/* ユーザ/グループ切り替え */}
-          <div className="form-field">
-            <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-              <button
-                className={`btn btn-sm ${addType === 'user' ? '' : 'btn-outline'}`}
-                onClick={() => { setAddType('user'); setAddTarget('') }}
-              >
-                {t('permission.user')}
-              </button>
-              <button
-                className={`btn btn-sm ${addType === 'group' ? '' : 'btn-outline'}`}
-                onClick={() => { setAddType('group'); setAddTarget('') }}
-              >
-                {t('permission.group')}
-              </button>
-            </div>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+            <button
+              className={`btn btn-sm ${addType === 'user' ? '' : 'btn-outline'}`}
+              onClick={() => { setAddType('user'); setSelected(new Set()) }}
+            >
+              {t('permission.user')}
+            </button>
+            <button
+              className={`btn btn-sm ${addType === 'group' ? '' : 'btn-outline'}`}
+              onClick={() => { setAddType('group'); setSelected(new Set()) }}
+            >
+              {t('permission.group')}
+            </button>
           </div>
 
-          {/* 対象セレクト */}
-          <div className="form-field">
-            <label className="form-label">{t('permission.addTarget')}</label>
-            {candidates.length === 0 ? (
-              <p style={{ fontSize: 13, color: 'rgba(var(--fg), 0.4)' }}>
-                {t('permission.noTargets')}
-              </p>
-            ) : (
-              <select
-                className="form-select"
-                style={{ width: '100%' }}
-                value={addTarget}
-                onChange={e => setAddTarget(e.target.value)}
-              >
-                <option value="">---</option>
-                {candidates.map(c => (
-                  <option key={c.id} value={c.id}>
-                    {c.display_name || c.name}
-                    {c.is_system ? ` (${t('users.systemBadge')})` : ''}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
+          {/* 対象一覧 */}
+          {candidates.length === 0 ? (
+            <p style={{ fontSize: 13, color: 'rgba(var(--fg), 0.4)' }}>
+              {t('permission.noTargets')}
+            </p>
+          ) : (
+            <div className="perm-candidate-list">
+              {candidates.map(c => {
+                const id = c.id
+                const checked = selected.has(id)
+                const label = c.display_name || c.name
+                return (
+                  <label key={id} className={`perm-candidate-row${checked ? ' perm-candidate-selected' : ''}`}>
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggleSelect(id)}
+                    />
+                    <span className="perm-candidate-name">
+                      {label}
+                      {c.is_system && (
+                        <span className="perm-system-badge">{t('users.systemBadge')}</span>
+                      )}
+                    </span>
+                  </label>
+                )
+              })}
+            </div>
+          )}
 
           {/* ロールセレクト */}
           <div className="form-field" style={{ marginTop: 12 }}>

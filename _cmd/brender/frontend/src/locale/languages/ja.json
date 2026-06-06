@@ -643,6 +643,7 @@
     "group": "グループ",
     "noPermissions": "権限が設定されていません",
     "noTargets": "追加できる対象がありません",
+    "addAction": "追加",
     "confirmRemove": "この権限を削除しますか？",
     "saved": "権限を保存しました",
     "removed": "権限を削除しました"

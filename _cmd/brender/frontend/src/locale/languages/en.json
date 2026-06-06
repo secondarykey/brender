@@ -643,6 +643,7 @@
     "group": "Group",
     "noPermissions": "No permissions configured",
     "noTargets": "No targets available to add",
+    "addAction": "Add",
     "confirmRemove": "Remove this permission?",
     "saved": "Permission saved",
     "removed": "Permission removed"
