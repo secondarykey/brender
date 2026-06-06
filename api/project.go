@@ -23,6 +23,17 @@ func ListProjects(sort, dir string) ([]*model.ProjectDetail, error) {
 }
 
 func GetProject(id string) (*model.ProjectDetail, error) {
+	userID := model.CurrentUser()
+	// Owner は常にアクセス可能
+	if userID != model.UserIDOwner {
+		ok, err := model.HasProjectAccess(id, userID)
+		if err != nil {
+			return nil, xerrors.Errorf("GetProject permission check: %w", err)
+		}
+		if !ok {
+			return nil, xerrors.New("access denied")
+		}
+	}
 	return model.GetProject(id)
 }
 
@@ -41,6 +52,16 @@ func UpdateProjectFile(fileID string, name string, note string, blenderInstallID
 }
 
 func GetFile(fileID string) (*model.ProjectFile, error) {
+	userID := model.CurrentUser()
+	if userID != model.UserIDOwner {
+		ok, err := model.HasFileAccess(fileID, userID)
+		if err != nil {
+			return nil, xerrors.Errorf("GetFile permission check: %w", err)
+		}
+		if !ok {
+			return nil, xerrors.New("access denied")
+		}
+	}
 	return model.GetProjectFile(fileID)
 }
 

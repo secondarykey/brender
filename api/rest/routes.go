@@ -790,7 +790,7 @@ func (h *Handler) registerQueue() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return model.GetJob(p.ID)
+		return api.GetJob(p.ID)
 	})
 
 	h.register("queue", "update_job_meta", func(body json.RawMessage) (any, error) {

@@ -88,7 +88,7 @@ func (s *Queue) ListJobsByProjectFilePaged(projectID string, fileID string, page
 }
 
 func (s *Queue) GetJob(id string) (*model.Job, error) {
-	return model.GetJob(id)
+	return api.GetJob(id)
 }
 
 func (s *Queue) UpdateJobMeta(id, name, note string) error {
