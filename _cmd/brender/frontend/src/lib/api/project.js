@@ -164,4 +164,34 @@ export const ProjectApi = {
   setProjectThumbnailFromFile: ({ projectID, fileID }) =>
     isWails() ? svc().then(s => s.SetProjectThumbnailFromFile(projectID, fileID))
               : serverCall('project', 'set_project_thumbnail_from_file', { project_id: projectID, file_id: fileID }),
+
+  // ── Permission ────────────────────────────────────────
+
+  /** プロジェクト権限を設定
+   * @param {{ projectID: string, targetID: string, role: string }} args
+   */
+  setPermission: ({ projectID, targetID, role }) =>
+    isWails() ? svc().then(s => s.SetPermission(projectID, targetID, role))
+              : serverCall('project', 'set_permission', { project_id: projectID, target_id: targetID, role }),
+
+  /** プロジェクト権限を削除
+   * @param {{ projectID: string, targetID: string }} args
+   */
+  removePermission: ({ projectID, targetID }) =>
+    isWails() ? svc().then(s => s.RemovePermission(projectID, targetID))
+              : serverCall('project', 'remove_permission', { project_id: projectID, target_id: targetID }),
+
+  /** プロジェクトの権限一覧を取得
+   * @param {{ projectID: string }} args
+   */
+  listPermissions: ({ projectID }) =>
+    isWails() ? svc().then(s => s.ListPermissions(projectID))
+              : serverCall('project', 'list_permissions', { project_id: projectID }),
+
+  /** ユーザのプロジェクトでの最上位ロールを取得
+   * @param {{ projectID: string, userID: string }} args
+   */
+  getUserRole: ({ projectID, userID }) =>
+    isWails() ? svc().then(s => s.GetUserRole(projectID, userID))
+              : serverCall('project', 'get_user_role', { project_id: projectID, user_id: userID }),
 }

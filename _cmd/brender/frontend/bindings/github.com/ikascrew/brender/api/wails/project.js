@@ -101,6 +101,15 @@ export function GetProjectThumbnail(projectID) {
 }
 
 /**
+ * @param {string} projectID
+ * @param {string} userID
+ * @returns {$CancellablePromise<string>}
+ */
+export function GetUserRole(projectID, userID) {
+    return $Call.ByID(3985835934, projectID, userID);
+}
+
+/**
  * @param {string} sort
  * @param {string} dir
  * @returns {$CancellablePromise<(model$0.ProjectDetail | null)[]>}
@@ -121,11 +130,30 @@ export function ListAllFiles() {
 }
 
 /**
+ * @param {string} projectID
+ * @returns {$CancellablePromise<(api$0.PermissionEntry | null)[]>}
+ */
+export function ListPermissions(projectID) {
+    return $Call.ByID(396037249, projectID).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType10($result);
+    }));
+}
+
+/**
  * @param {string} fileID
  * @returns {$CancellablePromise<void>}
  */
 export function RemoveFile(fileID) {
     return $Call.ByID(2574066893, fileID);
+}
+
+/**
+ * @param {string} projectID
+ * @param {string} targetID
+ * @returns {$CancellablePromise<void>}
+ */
+export function RemovePermission(projectID, targetID) {
+    return $Call.ByID(924510580, projectID, targetID);
 }
 
 /**
@@ -146,6 +174,16 @@ export function SetFileThumbnail(projectID, fileID, imagePath) {
  */
 export function SetFileThumbnailFromWorkspace(projectID, fileID, workspaceID) {
     return $Call.ByID(3596304418, projectID, fileID, workspaceID);
+}
+
+/**
+ * @param {string} projectID
+ * @param {string} targetID
+ * @param {string} role
+ * @returns {$CancellablePromise<void>}
+ */
+export function SetPermission(projectID, targetID, role) {
+    return $Call.ByID(2541738386, projectID, targetID, role);
 }
 
 /**
@@ -207,3 +245,6 @@ const $$createType4 = model$0.ProjectDetail.createFrom;
 const $$createType5 = $Create.Nullable($$createType4);
 const $$createType6 = $Create.Array($$createType5);
 const $$createType7 = $Create.Array($$createType1);
+const $$createType8 = api$0.PermissionEntry.createFrom;
+const $$createType9 = $Create.Nullable($$createType8);
+const $$createType10 = $Create.Array($$createType9);

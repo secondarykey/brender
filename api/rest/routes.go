@@ -395,6 +395,52 @@ func (h *Handler) registerProject() {
 		}
 		return api.SetProjectThumbnailFromFile(p.ProjectID, p.FileID)
 	})
+
+	// ── Permission ──────────────────────────────────────
+
+	h.register("project", "set_permission", func(body json.RawMessage) (any, error) {
+		var p struct {
+			ProjectID string `json:"project_id"`
+			TargetID  string `json:"target_id"`
+			Role      string `json:"role"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return nil, api.SetProjectPermission(p.ProjectID, p.TargetID, p.Role)
+	})
+
+	h.register("project", "remove_permission", func(body json.RawMessage) (any, error) {
+		var p struct {
+			ProjectID string `json:"project_id"`
+			TargetID  string `json:"target_id"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return nil, api.RemoveProjectPermission(p.ProjectID, p.TargetID)
+	})
+
+	h.register("project", "list_permissions", func(body json.RawMessage) (any, error) {
+		var p struct {
+			ProjectID string `json:"project_id"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return api.ListProjectPermissions(p.ProjectID)
+	})
+
+	h.register("project", "get_user_role", func(body json.RawMessage) (any, error) {
+		var p struct {
+			ProjectID string `json:"project_id"`
+			UserID    string `json:"user_id"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return api.GetUserProjectRole(p.ProjectID, p.UserID)
+	})
 }
 
 // ── Workspace ───────────────────────────────────────────

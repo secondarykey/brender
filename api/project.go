@@ -255,6 +255,9 @@ func DeleteProject(id string, force bool) error {
 	if err := model.DeleteWorkspacesByProject(id); err != nil {
 		return xerrors.Errorf("DeleteProject workspaces: %w", err)
 	}
+	if err := model.DeleteProjectPermissions(id); err != nil {
+		return xerrors.Errorf("DeleteProject permissions: %w", err)
+	}
 	return model.DeleteProject(id)
 }
 
@@ -273,6 +276,11 @@ func CreateProject(name string) (*model.ProjectDetail, error) {
 	now := time.Now()
 	if err := model.UpdateProjectProcessedAt(d.Project.ID, &now); err != nil {
 		slog.Error("CreateProject: UpdateProjectProcessedAt", "error", err)
+	}
+	// デフォルト権限を設定（作成者 + BrenderOwner → owner, All → viewer）
+	creatorID := model.CurrentUser()
+	if err := model.SetDefaultProjectPermissions(d.Project.ID, creatorID); err != nil {
+		slog.Error("CreateProject: SetDefaultProjectPermissions", "error", err)
 	}
 	return d, nil
 }
