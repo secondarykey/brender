@@ -586,14 +586,16 @@
     "editGroup": "グループ編集",
     "createUser": "ユーザ作成",
     "createGroup": "グループ作成",
-    "name": "名前",
+    "loginId": "ログインID",
+    "loginIdHint": "ASCII文字のみ。空欄の場合はIDと同じ値が設定されます",
+    "loginIdPlaceholder": "空欄 = IDと同じ値",
     "displayName": "表示名",
+    "displayNameRequired": "表示名を入力してください",
     "id": "ID",
     "system": "システム",
     "systemBadge": "システム",
     "noUsers": "ユーザがいません",
     "noGroups": "グループがありません",
-    "nameRequired": "名前を入力してください",
     "confirmDeleteUser": "ユーザを削除しますか？",
     "deleteUserWarning": "このユーザの権限設定も削除されます。この操作は取り消せません。",
     "confirmDeleteGroup": "グループを削除しますか？",
@@ -604,6 +606,23 @@
     "removeMember": "除外",
     "noMembers": "メンバーがいません",
     "allGroupHint": "全ユーザが自動的に参加するグループです",
-    "groups": "所属グループ"
+    "groups": "所属グループ",
+    "password": "パスワード",
+    "pwSet": "設定済",
+    "pwUnset": "未設定",
+    "issueToken": "発行",
+    "issueTokenTitle": "パスワード設定URLを発行",
+    "resetTokenTitle": "パスワード設定URL",
+    "resetTokenHint": "このURLをユーザに共有してください。ユーザはこのURLからパスワードを設定できます。",
+    "resetTokenExpiry": "このURLは24時間有効です。1回のみ使用できます。",
+    "copy": "コピー",
+    "copied": "コピー済"
+  },
+  "login": {
+    "subtitle": "ログインしてください",
+    "loginId": "ログインID",
+    "password": "パスワード",
+    "login": "ログイン",
+    "loggingIn": "ログイン中..."
   }
 }

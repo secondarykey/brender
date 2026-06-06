@@ -43,12 +43,12 @@ func (s *Auth) GetGroup(id string) (*model.Group, error) {
 	return api.GetGroup(id)
 }
 
-func (s *Auth) CreateGroup(name, displayName string) (*model.Group, error) {
-	return api.CreateGroup(name, displayName)
+func (s *Auth) CreateGroup(displayName string) (*model.Group, error) {
+	return api.CreateGroup(displayName)
 }
 
-func (s *Auth) UpdateGroup(id, name, displayName string) (*model.Group, error) {
-	return api.UpdateGroup(id, name, displayName)
+func (s *Auth) UpdateGroup(id, displayName string) (*model.Group, error) {
+	return api.UpdateGroup(id, displayName)
 }
 
 func (s *Auth) DeleteGroup(id string) error {
@@ -71,4 +71,14 @@ func (s *Auth) AddUserToGroup(userID, groupID string) error {
 
 func (s *Auth) RemoveUserFromGroup(userID, groupID string) error {
 	return api.RemoveUserFromGroup(userID, groupID)
+}
+
+// ── Password / Login ─────────────────────────────────────
+
+func (s *Auth) ListUsersWithStatus() ([]*api.UserWithStatus, error) {
+	return api.ListUsersWithStatus()
+}
+
+func (s *Auth) GenerateResetToken(userID string) (string, error) {
+	return api.GenerateResetToken(userID)
 }

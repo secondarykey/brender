@@ -32,9 +32,12 @@ func (h *Handler) register(service, method string, fn handlerFunc) {
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// REST リクエストのユーザを Guest にセット
-	model.SetGoroutineUser(model.UserIDGuest)
-	defer model.ClearGoroutineUser()
+	// 認証ミドルウェアで goroutine ユーザが既にセットされている場合はそのまま使用。
+	// セットされていなければ（認証無効時など）Guest をフォールバックとしてセットする。
+	if !model.IsGoroutineUserSet() {
+		model.SetGoroutineUser(model.UserIDGuest)
+		defer model.ClearGoroutineUser()
+	}
 
 	service := r.PathValue("service")
 	method := r.PathValue("method")
@@ -80,9 +83,11 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 }
 
 func (h *Handler) handleUploadFile(w http.ResponseWriter, r *http.Request) {
-	// REST リクエストのユーザを Guest にセット
-	model.SetGoroutineUser(model.UserIDGuest)
-	defer model.ClearGoroutineUser()
+	// 認証ミドルウェアで goroutine ユーザが既にセットされている場合はそのまま使用
+	if !model.IsGoroutineUserSet() {
+		model.SetGoroutineUser(model.UserIDGuest)
+		defer model.ClearGoroutineUser()
+	}
 
 	start := time.Now()
 

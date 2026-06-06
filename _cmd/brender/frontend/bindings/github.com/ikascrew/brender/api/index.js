@@ -6,6 +6,7 @@ export {
     AddDirResult,
     FileSearchResponse,
     JobFileInfo,
+    PermissionEntry,
     PreviousRenderInfo,
     QueueItem,
     RenderPreview,

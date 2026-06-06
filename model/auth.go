@@ -2,9 +2,12 @@ package model
 
 import (
 	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"math/big"
+	"time"
 
+	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/xerrors"
 	"gorm.io/gorm"
 )
@@ -49,11 +52,27 @@ func NewGroupID() string {
 // ── User ──────────────────────────────────────────────────
 
 type User struct {
-	ID          string `gorm:"primaryKey" json:"id"`
-	Name        string `json:"name"`         // ログイン名・識別名
-	DisplayName string `json:"display_name"` // 表示名
-	IsSystem    bool   `gorm:"default:false" json:"is_system"`
-	MetaFields  `gorm:"embedded"`
+	ID           string `gorm:"primaryKey" json:"id"`
+	Name         string `gorm:"uniqueIndex" json:"name"` // ログインID（ASCII限定）
+	DisplayName  string `json:"display_name"`             // 表示名
+	PasswordHash string `json:"-"`                        // bcrypt ハッシュ（APIレスポンスに含めない）
+	IsSystem     bool   `gorm:"default:false" json:"is_system"`
+	MetaFields   `gorm:"embedded"`
+}
+
+// HasPassword はパスワードが設定済みかを返す。
+func (u *User) HasPassword() bool {
+	return u.PasswordHash != ""
+}
+
+// isASCII は文字列がASCII文字のみで構成されているかを判定する。
+func isASCII(s string) bool {
+	for _, c := range s {
+		if c > 127 {
+			return false
+		}
+	}
+	return true
 }
 
 func ListUsers() ([]*User, error) {
@@ -77,8 +96,15 @@ func GetUser(id string) (*User, error) {
 }
 
 func CreateUser(name, displayName string) (*User, error) {
+	id := NewUserID()
+	if name == "" {
+		name = id
+	}
+	if !isASCII(name) {
+		return nil, xerrors.New("login ID must be ASCII characters only")
+	}
 	u := &User{
-		ID:          NewUserID(),
+		ID:          id,
 		Name:        name,
 		DisplayName: displayName,
 	}
@@ -97,6 +123,9 @@ func UpdateUser(id, name, displayName string) (*User, error) {
 		// システムユーザは表示名のみ変更可
 		u.DisplayName = displayName
 	} else {
+		if !isASCII(name) {
+			return nil, xerrors.New("login ID must be ASCII characters only")
+		}
 		u.Name = name
 		u.DisplayName = displayName
 	}
@@ -126,7 +155,6 @@ func DeleteUser(id string) error {
 
 type Group struct {
 	ID          string `gorm:"primaryKey" json:"id"`
-	Name        string `json:"name"`         // 識別名
 	DisplayName string `json:"display_name"` // 表示名
 	IsSystem    bool   `gorm:"default:false" json:"is_system"`
 	MetaFields  `gorm:"embedded"`
@@ -134,7 +162,7 @@ type Group struct {
 
 func ListGroups() ([]*Group, error) {
 	var groups []*Group
-	if res := db.Order("is_system desc, name asc").Find(&groups); res.Error != nil {
+	if res := db.Order("is_system desc, display_name asc").Find(&groups); res.Error != nil {
 		return nil, xerrors.Errorf("ListGroups: %w", res.Error)
 	}
 	return groups, nil
@@ -152,10 +180,9 @@ func GetGroup(id string) (*Group, error) {
 	return &g, nil
 }
 
-func CreateGroup(name, displayName string) (*Group, error) {
+func CreateGroup(displayName string) (*Group, error) {
 	g := &Group{
 		ID:          NewGroupID(),
-		Name:        name,
 		DisplayName: displayName,
 	}
 	if res := db.Create(g); res.Error != nil {
@@ -164,17 +191,12 @@ func CreateGroup(name, displayName string) (*Group, error) {
 	return g, nil
 }
 
-func UpdateGroup(id, name, displayName string) (*Group, error) {
+func UpdateGroup(id, displayName string) (*Group, error) {
 	var g Group
 	if res := db.First(&g, "id = ?", id); res.Error != nil {
 		return nil, xerrors.Errorf("UpdateGroup find: %w", res.Error)
 	}
-	if g.IsSystem {
-		g.DisplayName = displayName
-	} else {
-		g.Name = name
-		g.DisplayName = displayName
-	}
+	g.DisplayName = displayName
 	if res := db.Save(&g); res.Error != nil {
 		return nil, xerrors.Errorf("UpdateGroup save: %w", res.Error)
 	}
@@ -232,7 +254,7 @@ func ListGroupsByUser(userID string) ([]*Group, error) {
 		}
 		if len(ids) > 0 {
 			var extra []*Group
-			if res := db.Where("id IN ?", ids).Order("name asc").Find(&extra); res.Error != nil {
+			if res := db.Where("id IN ?", ids).Order("display_name asc").Find(&extra); res.Error != nil {
 				return nil, xerrors.Errorf("ListGroupsByUser groups: %w", res.Error)
 			}
 			groups = append(groups, extra...)
@@ -288,6 +310,187 @@ func RemoveUserFromGroup(userID, groupID string) error {
 	return nil
 }
 
+// ── Password ─────────────────────────────────────────────
+
+// SetPassword はユーザのパスワードを bcrypt ハッシュ化して保存する。
+func SetPassword(userID, password string) error {
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return xerrors.Errorf("SetPassword hash: %w", err)
+	}
+	if res := db.Model(&User{}).Where("id = ?", userID).Update("password_hash", string(hash)); res.Error != nil {
+		return xerrors.Errorf("SetPassword save: %w", res.Error)
+	}
+	return nil
+}
+
+// VerifyPassword はユーザのパスワードを検証する。
+func VerifyPassword(userID, password string) (bool, error) {
+	var u User
+	if res := db.First(&u, "id = ?", userID); res.Error != nil {
+		return false, xerrors.Errorf("VerifyPassword: %w", res.Error)
+	}
+	if u.PasswordHash == "" {
+		return false, nil
+	}
+	err := bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(password))
+	if err == bcrypt.ErrMismatchedHashAndPassword {
+		return false, nil
+	}
+	if err != nil {
+		return false, xerrors.Errorf("VerifyPassword compare: %w", err)
+	}
+	return true, nil
+}
+
+// GetUserByName はログインID（Name）でユーザを検索する。
+func GetUserByName(name string) (*User, error) {
+	var u User
+	res := db.First(&u, "name = ?", name)
+	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if res.Error != nil {
+		return nil, xerrors.Errorf("GetUserByName: %w", res.Error)
+	}
+	return &u, nil
+}
+
+// ── PasswordResetToken ──────────────────────────────────
+
+// PasswordResetToken はパスワード設定用のワンタイムトークン。
+type PasswordResetToken struct {
+	Token     string     `gorm:"primaryKey" json:"token"`
+	UserID    string     `json:"user_id"`
+	ExpiresAt time.Time  `json:"expires_at"`
+	Used      bool       `gorm:"default:false" json:"used"`
+	CreatedAt *time.Time `gorm:"autoCreateTime" json:"created_at"`
+}
+
+// generateSecureToken はセキュアなランダムトークンを生成する。
+func generateSecureToken() (string, error) {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(b), nil
+}
+
+// CreatePasswordResetToken はパスワードリセットトークンを作成する。
+// 既存の未使用トークンは無効化する。
+func CreatePasswordResetToken(userID string, duration time.Duration) (*PasswordResetToken, error) {
+	// 既存の未使用トークンを無効化
+	db.Model(&PasswordResetToken{}).
+		Where("user_id = ? AND used = ?", userID, false).
+		Update("used", true)
+
+	token, err := generateSecureToken()
+	if err != nil {
+		return nil, xerrors.Errorf("CreatePasswordResetToken: %w", err)
+	}
+
+	t := &PasswordResetToken{
+		Token:     token,
+		UserID:    userID,
+		ExpiresAt: time.Now().Add(duration),
+	}
+	if res := db.Create(t); res.Error != nil {
+		return nil, xerrors.Errorf("CreatePasswordResetToken save: %w", res.Error)
+	}
+	return t, nil
+}
+
+// GetPasswordResetToken はトークンを検索して返す。有効期限切れ・使用済みは nil を返す。
+func GetPasswordResetToken(token string) (*PasswordResetToken, error) {
+	var t PasswordResetToken
+	res := db.First(&t, "token = ?", token)
+	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if res.Error != nil {
+		return nil, xerrors.Errorf("GetPasswordResetToken: %w", res.Error)
+	}
+	if t.Used || time.Now().After(t.ExpiresAt) {
+		return nil, nil
+	}
+	return &t, nil
+}
+
+// MarkTokenUsed はトークンを使用済みにする。
+func MarkTokenUsed(token string) error {
+	if res := db.Model(&PasswordResetToken{}).Where("token = ?", token).Update("used", true); res.Error != nil {
+		return xerrors.Errorf("MarkTokenUsed: %w", res.Error)
+	}
+	return nil
+}
+
+// ── Session ──────────────────────────────────────────────
+
+// Session はログインセッション。
+type Session struct {
+	ID        string     `gorm:"primaryKey" json:"id"`
+	UserID    string     `json:"user_id"`
+	ExpiresAt time.Time  `json:"expires_at"`
+	CreatedAt *time.Time `gorm:"autoCreateTime" json:"created_at"`
+}
+
+// CreateSession はセッションを作成する。
+func CreateSession(userID string, duration time.Duration) (*Session, error) {
+	token, err := generateSecureToken()
+	if err != nil {
+		return nil, xerrors.Errorf("CreateSession: %w", err)
+	}
+	s := &Session{
+		ID:        token,
+		UserID:    userID,
+		ExpiresAt: time.Now().Add(duration),
+	}
+	if res := db.Create(s); res.Error != nil {
+		return nil, xerrors.Errorf("CreateSession save: %w", res.Error)
+	}
+	return s, nil
+}
+
+// GetSession はセッションを検索する。有効期限切れは nil を返して自動削除する。
+func GetSession(id string) (*Session, error) {
+	var s Session
+	res := db.First(&s, "id = ?", id)
+	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if res.Error != nil {
+		return nil, xerrors.Errorf("GetSession: %w", res.Error)
+	}
+	if time.Now().After(s.ExpiresAt) {
+		db.Delete(&Session{}, "id = ?", id)
+		return nil, nil
+	}
+	return &s, nil
+}
+
+// DeleteSession はセッションを削除する。
+func DeleteSession(id string) error {
+	if res := db.Delete(&Session{}, "id = ?", id); res.Error != nil {
+		return xerrors.Errorf("DeleteSession: %w", res.Error)
+	}
+	return nil
+}
+
+// DeleteSessionsByUser はユーザの全セッションを削除する。
+func DeleteSessionsByUser(userID string) error {
+	if res := db.Where("user_id = ?", userID).Delete(&Session{}); res.Error != nil {
+		return xerrors.Errorf("DeleteSessionsByUser: %w", res.Error)
+	}
+	return nil
+}
+
+// CleanExpiredSessions は有効期限切れのセッションとトークンを削除する。
+func CleanExpiredSessions() {
+	now := time.Now()
+	db.Where("expires_at < ?", now).Delete(&Session{})
+	db.Where("expires_at < ? OR used = ?", now, true).Delete(&PasswordResetToken{})
+}
+
 // ── シードデータ ──────────────────────────────────────────
 
 // SeedAuthData はシステムユーザ・グループを初期投入する。
@@ -317,7 +520,7 @@ func SeedAuthData() error {
 	var allCount int64
 	db.Model(&Group{}).Where("id = ?", GroupIDAll).Count(&allCount)
 	if allCount == 0 {
-		all := &Group{ID: GroupIDAll, Name: "All", DisplayName: "All Users", IsSystem: true}
+		all := &Group{ID: GroupIDAll, DisplayName: "All Users", IsSystem: true}
 		if res := db.Create(all); res.Error != nil {
 			return xerrors.Errorf("seed all group: %w", res.Error)
 		}

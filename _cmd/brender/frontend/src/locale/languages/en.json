@@ -586,14 +586,16 @@
     "editGroup": "Edit Group",
     "createUser": "Create User",
     "createGroup": "Create Group",
-    "name": "Name",
+    "loginId": "Login ID",
+    "loginIdHint": "ASCII characters only. If empty, the user ID will be used",
+    "loginIdPlaceholder": "Empty = same as user ID",
     "displayName": "Display Name",
+    "displayNameRequired": "Display name is required",
     "id": "ID",
     "system": "System",
     "systemBadge": "System",
     "noUsers": "No users",
     "noGroups": "No groups",
-    "nameRequired": "Name is required",
     "confirmDeleteUser": "Delete this user?",
     "deleteUserWarning": "Permission settings for this user will also be deleted. This action cannot be undone.",
     "confirmDeleteGroup": "Delete this group?",
@@ -604,6 +606,23 @@
     "removeMember": "Remove",
     "noMembers": "No members",
     "allGroupHint": "All users automatically belong to this group",
-    "groups": "Groups"
+    "groups": "Groups",
+    "password": "Password",
+    "pwSet": "Set",
+    "pwUnset": "Not set",
+    "issueToken": "Issue",
+    "issueTokenTitle": "Issue password setup URL",
+    "resetTokenTitle": "Password Setup URL",
+    "resetTokenHint": "Share this URL with the user. They can set their password by visiting this URL.",
+    "resetTokenExpiry": "This URL is valid for 24 hours and can only be used once.",
+    "copy": "Copy",
+    "copied": "Copied"
+  },
+  "login": {
+    "subtitle": "Please log in to continue",
+    "loginId": "Login ID",
+    "password": "Password",
+    "login": "Log In",
+    "loggingIn": "Logging in..."
   }
 }

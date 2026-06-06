@@ -1402,25 +1402,23 @@ func (h *Handler) registerAuth() {
 
 	h.register("auth", "create_group", func(body json.RawMessage) (any, error) {
 		var p struct {
-			Name        string `json:"name"`
 			DisplayName string `json:"display_name"`
 		}
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.CreateGroup(p.Name, p.DisplayName)
+		return api.CreateGroup(p.DisplayName)
 	})
 
 	h.register("auth", "update_group", func(body json.RawMessage) (any, error) {
 		var p struct {
 			ID          string `json:"id"`
-			Name        string `json:"name"`
 			DisplayName string `json:"display_name"`
 		}
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.UpdateGroup(p.ID, p.Name, p.DisplayName)
+		return api.UpdateGroup(p.ID, p.DisplayName)
 	})
 
 	h.register("auth", "delete_group", func(body json.RawMessage) (any, error) {
@@ -1473,5 +1471,54 @@ func (h *Handler) registerAuth() {
 			return nil, err
 		}
 		return nil, api.RemoveUserFromGroup(p.UserID, p.GroupID)
+	})
+
+	h.register("auth", "list_users_with_status", func(_ json.RawMessage) (any, error) {
+		return api.ListUsersWithStatus()
+	})
+
+	h.register("auth", "generate_reset_token", func(body json.RawMessage) (any, error) {
+		var p struct {
+			UserID string `json:"user_id"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return api.GenerateResetToken(p.UserID)
+	})
+
+	h.register("auth", "login", func(body json.RawMessage) (any, error) {
+		var p struct {
+			Name     string `json:"name"`
+			Password string `json:"password"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return api.Login(p.Name, p.Password)
+	})
+
+	h.register("auth", "validate_session", func(body json.RawMessage) (any, error) {
+		var p struct {
+			SessionID string `json:"session_id"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return api.ValidateSession(p.SessionID)
+	})
+
+	h.register("auth", "logout", func(body json.RawMessage) (any, error) {
+		var p struct {
+			SessionID string `json:"session_id"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return nil, api.Logout(p.SessionID)
+	})
+
+	h.register("auth", "is_auth_enabled", func(_ json.RawMessage) (any, error) {
+		return api.IsAuthEnabled()
 	})
 }
