@@ -8,19 +8,34 @@ import ConfirmDialog from './ConfirmDialog'
 const ROLES = ['owner', 'runner', 'editor', 'viewer']
 
 /**
- * PermissionSection — プロジェクト権限の折りたたみセクション
- * @param {{ projectID: string }} props
+ * PermissionSection — 権限の折りたたみセクション（プロジェクト/ファイル共通）
+ *
+ * @param {{ mode: 'project' | 'file', resourceID: string }} props
+ *   mode='project' → ProjectApi.listPermissions / setPermission / removePermission (projectID)
+ *   mode='file'    → ProjectApi.listFilePermissions / setFilePermission / removeFilePermission (fileID)
  */
-function PermissionSection({ projectID }) {
+function PermissionSection({ mode = 'project', resourceID }) {
   const { t } = useTranslation()
   const { showToast } = useToast()
   const { showError } = useMessage()
+
+  // API ディスパッチ
+  const api = {
+    list:   mode === 'file'
+      ? () => ProjectApi.listFilePermissions({ fileID: resourceID })
+      : () => ProjectApi.listPermissions({ projectID: resourceID }),
+    set:    mode === 'file'
+      ? (targetID, role) => ProjectApi.setFilePermission({ fileID: resourceID, targetID, role })
+      : (targetID, role) => ProjectApi.setPermission({ projectID: resourceID, targetID, role }),
+    remove: mode === 'file'
+      ? (targetID) => ProjectApi.removeFilePermission({ fileID: resourceID, targetID })
+      : (targetID) => ProjectApi.removePermission({ projectID: resourceID, targetID }),
+  }
 
   const [open, setOpen]           = useState(false)
   const [perms, setPerms]         = useState([])
   const [edited, setEdited]       = useState({})  // targetID -> newRole
   const [saving, setSaving]       = useState(false)
-  const [dirty, setDirty]         = useState(false)
 
   // 追加ダイアログ
   const [addOpen, setAddOpen]     = useState(false)
@@ -36,18 +51,17 @@ function PermissionSection({ projectID }) {
   const [removing, setRemoving]   = useState(false)
 
   const load = () => {
-    ProjectApi.listPermissions({ projectID })
+    api.list()
       .then(list => {
         setPerms(list || [])
         setEdited({})
-        setDirty(false)
       })
       .catch(err => showError(String(err)))
   }
 
   useEffect(() => {
     if (open) load()
-  }, [open, projectID])
+  }, [open, resourceID])
 
   const handleRoleChange = (targetID, newRole) => {
     const original = perms.find(p => p.target_id === targetID)
@@ -60,7 +74,6 @@ function PermissionSection({ projectID }) {
       }
       return next
     })
-    setDirty(true)
   }
 
   const handleSave = async () => {
@@ -68,7 +81,7 @@ function PermissionSection({ projectID }) {
     try {
       const entries = Object.entries(edited)
       for (const [targetID, role] of entries) {
-        await ProjectApi.setPermission({ projectID, targetID, role })
+        await api.set(targetID, role)
       }
       showToast(t('permission.saved'))
       load()
@@ -107,7 +120,7 @@ function PermissionSection({ projectID }) {
     if (!addTarget) return
     setAddBusy(true)
     try {
-      await ProjectApi.setPermission({ projectID, targetID: addTarget, role: addRole })
+      await api.set(addTarget, addRole)
       showToast(t('permission.saved'))
       setAddOpen(false)
       load()
@@ -122,7 +135,7 @@ function PermissionSection({ projectID }) {
     if (!removeTarget) return
     setRemoving(true)
     try {
-      await ProjectApi.removePermission({ projectID, targetID: removeTarget.target_id })
+      await api.remove(removeTarget.target_id)
       showToast(t('permission.removed'))
       setRemoveTarget(null)
       load()

@@ -13,6 +13,7 @@ import Breadcrumb from '../../components/Breadcrumb'
 import NoteSection from '../../components/NoteSection'
 import WorkspaceCreateDialog from '../../components/WorkspaceCreateDialog'
 import TagInput from '../../components/TagInput'
+import PermissionSection from '../../components/PermissionSection'
 import { isWails } from '../../lib/api/_client'
 
 
@@ -820,6 +821,8 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
             {t('file.forceDeleteLabel')}
           </label>
         </ConfirmDialog>
+
+        <PermissionSection mode="file" resourceID={fileID} />
       </div>
 
       <div className="ws-detail-right">
