@@ -441,6 +441,52 @@ func (h *Handler) registerProject() {
 		}
 		return api.GetUserProjectRole(p.ProjectID, p.UserID)
 	})
+
+	// ── File Permission ─────────────────────────────────
+
+	h.register("project", "set_file_permission", func(body json.RawMessage) (any, error) {
+		var p struct {
+			FileID   string `json:"file_id"`
+			TargetID string `json:"target_id"`
+			Role     string `json:"role"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return nil, api.SetFilePermission(p.FileID, p.TargetID, p.Role)
+	})
+
+	h.register("project", "remove_file_permission", func(body json.RawMessage) (any, error) {
+		var p struct {
+			FileID   string `json:"file_id"`
+			TargetID string `json:"target_id"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return nil, api.RemoveFilePermission(p.FileID, p.TargetID)
+	})
+
+	h.register("project", "list_file_permissions", func(body json.RawMessage) (any, error) {
+		var p struct {
+			FileID string `json:"file_id"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return api.ListFilePermissions(p.FileID)
+	})
+
+	h.register("project", "get_user_file_role", func(body json.RawMessage) (any, error) {
+		var p struct {
+			FileID string `json:"file_id"`
+			UserID string `json:"user_id"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return api.GetUserFileRole(p.FileID, p.UserID)
+	})
 }
 
 // ── Workspace ───────────────────────────────────────────

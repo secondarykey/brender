@@ -101,3 +101,21 @@ func (s *Project) ListPermissions(projectID string) ([]*api.PermissionEntry, err
 func (s *Project) GetUserRole(projectID, userID string) (string, error) {
 	return api.GetUserProjectRole(projectID, userID)
 }
+
+// ── File Permission ───────────────────────────────────────
+
+func (s *Project) SetFilePermission(fileID, targetID, role string) error {
+	return api.SetFilePermission(fileID, targetID, role)
+}
+
+func (s *Project) RemoveFilePermission(fileID, targetID string) error {
+	return api.RemoveFilePermission(fileID, targetID)
+}
+
+func (s *Project) ListFilePermissions(fileID string) ([]*api.PermissionEntry, error) {
+	return api.ListFilePermissions(fileID)
+}
+
+func (s *Project) GetUserFileRole(fileID, userID string) (string, error) {
+	return api.GetUserFileRole(fileID, userID)
+}

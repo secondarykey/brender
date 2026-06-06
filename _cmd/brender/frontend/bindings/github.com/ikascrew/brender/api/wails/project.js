@@ -101,6 +101,15 @@ export function GetProjectThumbnail(projectID) {
 }
 
 /**
+ * @param {string} fileID
+ * @param {string} userID
+ * @returns {$CancellablePromise<string>}
+ */
+export function GetUserFileRole(fileID, userID) {
+    return $Call.ByID(1799871168, fileID, userID);
+}
+
+/**
  * @param {string} projectID
  * @param {string} userID
  * @returns {$CancellablePromise<string>}
@@ -130,6 +139,16 @@ export function ListAllFiles() {
 }
 
 /**
+ * @param {string} fileID
+ * @returns {$CancellablePromise<(api$0.PermissionEntry | null)[]>}
+ */
+export function ListFilePermissions(fileID) {
+    return $Call.ByID(2330826063, fileID).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType10($result);
+    }));
+}
+
+/**
  * @param {string} projectID
  * @returns {$CancellablePromise<(api$0.PermissionEntry | null)[]>}
  */
@@ -148,12 +167,31 @@ export function RemoveFile(fileID) {
 }
 
 /**
+ * @param {string} fileID
+ * @param {string} targetID
+ * @returns {$CancellablePromise<void>}
+ */
+export function RemoveFilePermission(fileID, targetID) {
+    return $Call.ByID(2289113306, fileID, targetID);
+}
+
+/**
  * @param {string} projectID
  * @param {string} targetID
  * @returns {$CancellablePromise<void>}
  */
 export function RemovePermission(projectID, targetID) {
     return $Call.ByID(924510580, projectID, targetID);
+}
+
+/**
+ * @param {string} fileID
+ * @param {string} targetID
+ * @param {string} role
+ * @returns {$CancellablePromise<void>}
+ */
+export function SetFilePermission(fileID, targetID, role) {
+    return $Call.ByID(2837561044, fileID, targetID, role);
 }
 
 /**

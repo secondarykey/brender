@@ -151,6 +151,134 @@ func GetUserProjectRole(projectID, userID string) (string, error) {
 	return best, nil
 }
 
+// ══════════════════════════════════════════════════════════
+// FilePermission — ファイル単位の権限
+// ══════════════════════════════════════════════════════════
+
+type FilePermission struct {
+	FileID   string `gorm:"primaryKey" json:"file_id"`
+	TargetID string `gorm:"primaryKey" json:"target_id"` // usr_* or grp_*
+	Role     string `json:"role"`                         // owner, runner, editor, viewer
+	MetaFields `gorm:"embedded"`
+}
+
+// ── CRUD ──────────────────────────────────────────────────
+
+func SetFilePermission(fileID, targetID, role string) error {
+	perm := FilePermission{
+		FileID:   fileID,
+		TargetID: targetID,
+		Role:     role,
+	}
+	res := db.Where("file_id = ? AND target_id = ?", fileID, targetID).
+		Assign(FilePermission{Role: role}).
+		FirstOrCreate(&perm)
+	if res.Error != nil {
+		return xerrors.Errorf("SetFilePermission: %w", res.Error)
+	}
+	if perm.Role != role {
+		perm.Role = role
+		if res := db.Save(&perm); res.Error != nil {
+			return xerrors.Errorf("SetFilePermission save: %w", res.Error)
+		}
+	}
+	return nil
+}
+
+func RemoveFilePermission(fileID, targetID string) error {
+	if res := db.Where("file_id = ? AND target_id = ?", fileID, targetID).
+		Delete(&FilePermission{}); res.Error != nil {
+		return xerrors.Errorf("RemoveFilePermission: %w", res.Error)
+	}
+	return nil
+}
+
+func ListFilePermissions(fileID string) ([]*FilePermission, error) {
+	var perms []*FilePermission
+	if res := db.Where("file_id = ?", fileID).
+		Order("role asc, target_id asc").Find(&perms); res.Error != nil {
+		return nil, xerrors.Errorf("ListFilePermissions: %w", res.Error)
+	}
+	return perms, nil
+}
+
+func DeleteFilePermissions(fileID string) error {
+	if res := db.Where("file_id = ?", fileID).Delete(&FilePermission{}); res.Error != nil {
+		return xerrors.Errorf("DeleteFilePermissions: %w", res.Error)
+	}
+	return nil
+}
+
+// ── ファイル権限判定 ──────────────────────────────────────
+
+func HasFileAccess(fileID, userID string) (bool, error) {
+	ids, err := collectTargetIDs(userID)
+	if err != nil {
+		return false, err
+	}
+	var count int64
+	if res := db.Model(&FilePermission{}).
+		Where("file_id = ? AND target_id IN ?", fileID, ids).
+		Count(&count); res.Error != nil {
+		return false, xerrors.Errorf("HasFileAccess: %w", res.Error)
+	}
+	return count > 0, nil
+}
+
+func HasFileRole(fileID, userID string, roles []string) (bool, error) {
+	ids, err := collectTargetIDs(userID)
+	if err != nil {
+		return false, err
+	}
+	var count int64
+	if res := db.Model(&FilePermission{}).
+		Where("file_id = ? AND target_id IN ? AND role IN ?", fileID, ids, roles).
+		Count(&count); res.Error != nil {
+		return false, xerrors.Errorf("HasFileRole: %w", res.Error)
+	}
+	return count > 0, nil
+}
+
+func GetUserFileRole(fileID, userID string) (string, error) {
+	ids, err := collectTargetIDs(userID)
+	if err != nil {
+		return "", err
+	}
+	var perms []FilePermission
+	if res := db.Where("file_id = ? AND target_id IN ?", fileID, ids).
+		Find(&perms); res.Error != nil {
+		return "", xerrors.Errorf("GetUserFileRole: %w", res.Error)
+	}
+	priority := map[string]int{RoleOwner: 4, RoleRunner: 3, RoleEditor: 2, RoleViewer: 1}
+	best := ""
+	bestP := 0
+	for _, p := range perms {
+		if priority[p.Role] > bestP {
+			best = p.Role
+			bestP = priority[p.Role]
+		}
+	}
+	return best, nil
+}
+
+// CopyProjectPermissionsToFile はプロジェクトの権限をファイルにコピーする。
+func CopyProjectPermissionsToFile(projectID, fileID string) error {
+	perms, err := ListProjectPermissions(projectID)
+	if err != nil {
+		return err
+	}
+	for _, p := range perms {
+		if err := SetFilePermission(fileID, p.TargetID, p.Role); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// ══════════════════════════════════════════════════════════
+// デフォルト権限
+// ══════════════════════════════════════════════════════════
+
 // SetDefaultProjectPermissions はプロジェクト作成時のデフォルト権限を設定する。
 // creatorID: 作成者のユーザID
 func SetDefaultProjectPermissions(projectID, creatorID string) error {

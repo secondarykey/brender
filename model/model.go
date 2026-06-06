@@ -99,6 +99,7 @@ func Init(dsn string) error {
 	db.AutoMigrate(&Group{})
 	db.AutoMigrate(&UserGroup{})
 	db.AutoMigrate(&ProjectPermission{})
+	db.AutoMigrate(&FilePermission{})
 
 	db.Exec("DROP INDEX IF EXISTS idx_tags_name")
 	db.Exec("DROP INDEX IF EXISTS uni_tags_name")

@@ -67,6 +67,71 @@ func ListProjectPermissions(projectID string) ([]*PermissionEntry, error) {
 	return entries, nil
 }
 
+// ── File Permission ───────────────────────────────────────
+
+func SetFilePermission(fileID, targetID, role string) error {
+	valid := false
+	for _, r := range model.AllRoles {
+		if r == role {
+			valid = true
+			break
+		}
+	}
+	if !valid {
+		return xerrors.Errorf("invalid role: %s", role)
+	}
+	return model.SetFilePermission(fileID, targetID, role)
+}
+
+func RemoveFilePermission(fileID, targetID string) error {
+	return model.RemoveFilePermission(fileID, targetID)
+}
+
+func ListFilePermissions(fileID string) ([]*PermissionEntry, error) {
+	perms, err := model.ListFilePermissions(fileID)
+	if err != nil {
+		return nil, err
+	}
+	entries := make([]*PermissionEntry, 0, len(perms))
+	for _, p := range perms {
+		entry := &PermissionEntry{
+			ProjectID: p.FileID, // ResourceID として流用
+			TargetID:  p.TargetID,
+			Role:      p.Role,
+		}
+		if len(p.TargetID) > 4 && p.TargetID[:4] == model.PrefixUser {
+			if u, err := model.GetUser(p.TargetID); err == nil && u != nil {
+				entry.TargetName = u.DisplayName
+				entry.TargetIsSystem = u.IsSystem
+			}
+		} else if len(p.TargetID) > 4 && p.TargetID[:4] == model.PrefixGroup {
+			if g, err := model.GetGroup(p.TargetID); err == nil && g != nil {
+				entry.TargetName = g.DisplayName
+				entry.TargetIsSystem = g.IsSystem
+			}
+		}
+		if entry.TargetName == "" {
+			entry.TargetName = p.TargetID
+		}
+		entries = append(entries, entry)
+	}
+	return entries, nil
+}
+
+func HasFileAccess(fileID, userID string) (bool, error) {
+	return model.HasFileAccess(fileID, userID)
+}
+
+func HasFileRole(fileID, userID string, roles []string) (bool, error) {
+	return model.HasFileRole(fileID, userID, roles)
+}
+
+func GetUserFileRole(fileID, userID string) (string, error) {
+	return model.GetUserFileRole(fileID, userID)
+}
+
+// ── Access check helpers ─────────────────────────────────
+
 func HasProjectAccess(projectID, userID string) (bool, error) {
 	return model.HasProjectAccess(projectID, userID)
 }
