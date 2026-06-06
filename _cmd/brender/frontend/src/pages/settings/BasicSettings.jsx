@@ -1,12 +1,28 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { LANGUAGES } from '../../languages'
 import { useTheme } from '../../lib/theme'
+import { isWails } from '../../lib/api/_client'
+import { AuthApi } from '../../lib/api'
 
 const THEME_OPTIONS = ['system', 'dark', 'light']
 
 function BasicSettings() {
   const { t, i18n } = useTranslation()
   const { preference, changeTheme } = useTheme()
+  const [loggingOut, setLoggingOut] = useState(false)
+
+  const serverMode = !isWails()
+
+  const handleLogout = async () => {
+    setLoggingOut(true)
+    try {
+      await AuthApi.logout()
+    } catch (_) {
+      // エラーでもリロードしてログイン画面に遷移
+    }
+    window.location.reload()
+  }
 
   return (
     <div>
@@ -37,6 +53,21 @@ function BasicSettings() {
           ))}
         </select>
       </div>
+
+      {serverMode && (
+        <>
+          <h2 className="section-title" style={{ marginTop: 24 }}>{t('settings.account')}</h2>
+          <div className="setting-row">
+            <button
+              className="btn btn-danger"
+              onClick={handleLogout}
+              disabled={loggingOut}
+            >
+              {loggingOut ? t('settings.loggingOut') : t('settings.logout')}
+            </button>
+          </div>
+        </>
+      )}
     </div>
   )
 }
