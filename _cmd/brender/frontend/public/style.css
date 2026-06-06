@@ -2967,6 +2967,55 @@ html[data-theme="light"] .pw-unset {
   background: rgba(231,76,60,0.1);
 }
 
+/* ── Permission candidate list (add dialog) ── */
+.perm-candidate-list {
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid rgba(var(--fg), 0.1);
+  border-radius: 6px;
+}
+.perm-candidate-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(var(--fg), 0.05);
+  font-size: 0.85rem;
+  transition: background 0.1s;
+}
+.perm-candidate-row:last-child {
+  border-bottom: none;
+}
+.perm-candidate-row:hover {
+  background: rgba(var(--fg), 0.04);
+}
+.perm-candidate-selected {
+  background: rgba(74,124,220,0.1);
+}
+.perm-candidate-selected:hover {
+  background: rgba(74,124,220,0.15);
+}
+.perm-candidate-row input[type="checkbox"] {
+  flex-shrink: 0;
+  accent-color: #4a7cdc;
+}
+.perm-candidate-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html[data-theme="light"] .perm-candidate-row:hover {
+  background: rgba(0,0,0,0.04);
+}
+html[data-theme="light"] .perm-candidate-selected {
+  background: rgba(74,124,220,0.08);
+}
+html[data-theme="light"] .perm-candidate-selected:hover {
+  background: rgba(74,124,220,0.12);
+}
+
 html[data-theme="light"] .perm-type-user {
   background: rgba(74,124,220,0.12);
   color: #3a6cc7;
