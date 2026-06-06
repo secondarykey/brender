@@ -1,6 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
-import { useTranslation } from 'react-i18next'
-import { ToastProvider, useMessage } from './lib/toast'
+import { useState, useEffect } from 'react'
+import { ToastProvider } from './lib/toast'
 import MainLayout from './layouts/MainLayout'
 import ProjectListPage from './pages/projects/ProjectListPage'
 import ProjectDetailPage from './pages/projects/ProjectDetailPage'
@@ -12,7 +11,7 @@ import SettingsPage from './pages/settings/SettingsPage'
 import SearchPage from './pages/search/SearchPage'
 import UsersPage from './pages/users/UsersPage'
 import LoginPage from './pages/login/LoginPage'
-import { EnvironmentApi, WorkDirApi, AuthApi, ProjectApi, QueueApi } from './lib/api'
+import { EnvironmentApi, WorkDirApi, AuthApi } from './lib/api'
 import { isWails } from './lib/api/_client'
 
 export function VideoPlayer({ path }) {
@@ -104,41 +103,9 @@ function App() {
     return () => window.removeEventListener('keydown', handler)
   }, [])
 
-  const showErrorRef = useRef(null)
-
   const navigate = (page, params = {}) => {
-    const go = () => {
-      if (page === 'queue') setQueueKey(k => k + 1)
-      setNav({ page, params })
-    }
-    const deny = () => showErrorRef.current?.()
-
-    // プロジェクト権限チェック（遷移前）
-    if (page === 'project' && params.id) {
-      ProjectApi.get({ id: params.id }).then(go).catch(err => {
-        if (String(err).includes('access denied')) deny(); else go()
-      })
-      return
-    }
-    // ファイル権限チェック（遷移前）
-    if ((page === 'file' || page === 'workspace') && params.fileID) {
-      ProjectApi.getFile({ fileID: params.fileID }).then(go).catch(err => {
-        if (String(err).includes('access denied')) deny(); else go()
-      })
-      return
-    }
-    // ジョブ: ファイル権限チェック（遷移前）
-    if (page === 'job') {
-      const jobID = params.jobID || params.job?.id
-      if (jobID) {
-        QueueApi.getJob({ id: jobID }).then(go).catch(err => {
-          if (String(err).includes('access denied')) deny(); else go()
-        })
-        return
-      }
-    }
-
-    go()
+    if (page === 'queue') setQueueKey(k => k + 1)
+    setNav({ page, params })
   }
 
   const renderPage = () => {
@@ -219,20 +186,11 @@ function App() {
 
   return (
     <ToastProvider>
-      <ErrorBridge showErrorRef={showErrorRef} />
       <MainLayout currentPage={section} onNavigate={(p) => navigate(p)}>
         {renderPage()}
       </MainLayout>
     </ToastProvider>
   )
-}
-
-/** ToastProvider 内で showError を ref 経由で navigate に渡すブリッジ */
-function ErrorBridge({ showErrorRef }) {
-  const { showError } = useMessage()
-  const { t } = useTranslation()
-  showErrorRef.current = () => showError(t('permission.accessDenied'))
-  return null
 }
 
 export default App
