@@ -841,9 +841,10 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
 }
 
 // ── ページ本体 ────────────────────────────────────────────
-function FileDetailPage({ projectID, projectName, fileID, fileName, initialTab, navigate }) {
+function FileDetailPage({ projectID, projectName: initialProjectName, fileID, fileName, initialTab, navigate }) {
   const { t } = useTranslation()
   const [tab, setTab] = useState(initialTab || 'workspace')
+  const [projectName, setProjectName] = useState(initialProjectName)
   const [currentFileName, setCurrentFileName] = useState(fileName)
   const [workDirStatus, setWorkDirStatus] = useState(null)
   const [accessDenied, setAccessDenied] = useState(false)
@@ -854,9 +855,10 @@ function FileDetailPage({ projectID, projectName, fileID, fileName, initialTab, 
       .catch(err => {
         if (String(err).includes('access denied')) setAccessDenied(true)
       })
-    // プロジェクト情報取得
+    // プロジェクト情報取得（パンくず名もAPIから取得して統一）
     Promise.all([ProjectApi.get({ id: projectID }), WorkDirApi.list()])
       .then(([d, dirs]) => {
+        if (d?.project?.name) setProjectName(d.project.name)
         const wd = (dirs || []).find(w => w.id === d?.project?.work_dir_id)
         setWorkDirStatus(wd?.status || null)
       })

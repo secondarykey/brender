@@ -1043,9 +1043,10 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
 
 
 // ── ページ本体 ────────────────────────────────────────────
-function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspaceID, focusName, navigate }) {
+function WorkspaceDetailPage({ projectID, projectName: initialProjectName, fileID, fileName, workspaceID, focusName, navigate }) {
   const { t } = useTranslation()
   const { showError } = useMessage()
+  const [projectName, setProjectName] = useState(initialProjectName)
   const [detail, setDetail]           = useState(null)
   const [loadFailed, setLoadFailed]   = useState(false)
   const [accessDenied, setAccessDenied] = useState(false)
@@ -1068,8 +1069,10 @@ function WorkspaceDetailPage({ projectID, projectName, fileID, fileName, workspa
   useEffect(() => { load() }, [load])
 
   useEffect(() => {
+    // プロジェクト情報取得（パンくず名もAPIから取得して統一）
     Promise.all([ProjectApi.get({ id: projectID }), WorkDirApi.list()])
       .then(([d, dirs]) => {
+        if (d?.project?.name) setProjectName(d.project.name)
         const wd = (dirs || []).find(w => w.id === d?.project?.work_dir_id)
         setWorkDirStatus(wd?.status || null)
       })
