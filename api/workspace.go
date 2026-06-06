@@ -15,6 +15,24 @@ func ListWorkspacesByProject(projectID string, sort, dir string) ([]*model.Works
 }
 
 func GetWorkspace(projectID string, workspaceID string) (*model.WorkspaceDetail, error) {
+	userID := model.CurrentUser()
+	if userID != model.UserIDOwner {
+		// ワークスペースのファイルIDを取得して権限チェック
+		detail, err := model.GetWorkspace(projectID, workspaceID)
+		if err != nil {
+			return nil, err
+		}
+		if detail != nil && detail.Workspace != nil && detail.Workspace.ProjectFileID != "" {
+			ok, err := model.HasFileAccess(detail.Workspace.ProjectFileID, userID)
+			if err != nil {
+				return nil, xerrors.Errorf("GetWorkspace permission check: %w", err)
+			}
+			if !ok {
+				return nil, xerrors.New("access denied")
+			}
+		}
+		return detail, nil
+	}
 	return model.GetWorkspace(projectID, workspaceID)
 }
 

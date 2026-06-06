@@ -11,7 +11,7 @@ import SettingsPage from './pages/settings/SettingsPage'
 import SearchPage from './pages/search/SearchPage'
 import UsersPage from './pages/users/UsersPage'
 import LoginPage from './pages/login/LoginPage'
-import { EnvironmentApi, WorkDirApi, AuthApi } from './lib/api'
+import { EnvironmentApi, WorkDirApi, AuthApi, ProjectApi, QueueApi } from './lib/api'
 import { isWails } from './lib/api/_client'
 
 export function VideoPlayer({ path }) {
@@ -104,8 +104,38 @@ function App() {
   }, [])
 
   const navigate = (page, params = {}) => {
-    if (page === 'queue') setQueueKey(k => k + 1)
-    setNav({ page, params })
+    const go = () => {
+      if (page === 'queue') setQueueKey(k => k + 1)
+      setNav({ page, params })
+    }
+    const deny = () => setNav({ page: 'projects', params: {} })
+
+    // プロジェクト権限チェック（遷移前）
+    if (page === 'project' && params.id) {
+      ProjectApi.get({ id: params.id }).then(go).catch(err => {
+        if (String(err).includes('access denied')) deny(); else go()
+      })
+      return
+    }
+    // ファイル権限チェック（遷移前）
+    if ((page === 'file' || page === 'workspace') && params.fileID) {
+      ProjectApi.getFile({ fileID: params.fileID }).then(go).catch(err => {
+        if (String(err).includes('access denied')) deny(); else go()
+      })
+      return
+    }
+    // ジョブ: ファイル権限チェック（遷移前）
+    if (page === 'job') {
+      const jobID = params.jobID || params.job?.id
+      if (jobID) {
+        QueueApi.getJob({ id: jobID }).then(go).catch(err => {
+          if (String(err).includes('access denied')) deny(); else go()
+        })
+        return
+      }
+    }
+
+    go()
   }
 
   const renderPage = () => {

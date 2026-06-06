@@ -1402,6 +1402,24 @@ func GetImageBase64(path string) (string, error) {
 	return "data:" + mime + ";base64," + base64.StdEncoding.EncodeToString(data), nil
 }
 
+func GetJob(id string) (*model.Job, error) {
+	j, err := model.GetJob(id)
+	if err != nil {
+		return nil, err
+	}
+	userID := model.CurrentUser()
+	if userID != model.UserIDOwner && j.ProjectFileID != "" {
+		ok, err := model.HasFileAccess(j.ProjectFileID, userID)
+		if err != nil {
+			return nil, xerrors.Errorf("GetJob permission check: %w", err)
+		}
+		if !ok {
+			return nil, xerrors.New("access denied")
+		}
+	}
+	return j, nil
+}
+
 func ListJobsByWorkspace(projectID string, workspaceID string) ([]*model.Job, error) {
 	return model.ListJobsByWorkspace(projectID, workspaceID)
 }
