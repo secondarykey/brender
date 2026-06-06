@@ -72,3 +72,13 @@ func (s *Auth) AddUserToGroup(userID, groupID string) error {
 func (s *Auth) RemoveUserFromGroup(userID, groupID string) error {
 	return api.RemoveUserFromGroup(userID, groupID)
 }
+
+// ── Password / Login ─────────────────────────────────────
+
+func (s *Auth) ListUsersWithStatus() ([]*api.UserWithStatus, error) {
+	return api.ListUsersWithStatus()
+}
+
+func (s *Auth) GenerateResetToken(userID string) (string, error) {
+	return api.GenerateResetToken(userID)
+}

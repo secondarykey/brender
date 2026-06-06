@@ -25,6 +25,11 @@ export async function serverCall(service, method, args = {}) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(args),
   })
+  // セッション期限切れ → ページリロードでログイン画面に遷移
+  if (res.status === 401) {
+    window.location.reload()
+    throw new Error('unauthorized')
+  }
   const json = await res.json()
   if (json.error) throw new Error(json.error)
   return json.data

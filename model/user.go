@@ -39,6 +39,12 @@ func CurrentUser() string {
 	return defaultUser
 }
 
+// IsGoroutineUserSet は現在の goroutine にユーザが紐付いているかを返す。
+func IsGoroutineUserSet() bool {
+	_, ok := goroutineUser.Load(goroutineID())
+	return ok
+}
+
 // goroutineID は現在の goroutine ID を返す。
 func goroutineID() uint64 {
 	var buf [64]byte

@@ -2823,3 +2823,75 @@ html[data-theme="light"] .data-status-deleted   { background: rgba(180,80,20,0.1
 html[data-theme="light"] .data-status-corrupted { background: rgba(160,40,40,0.2);   color: #7a1010; }
 html[data-theme="light"] .data-status-modified  { background: rgba(190,110,20,0.18); color: #7a4a00; }
 html[data-theme="light"] .data-status-locked    { background: rgba(170,140,10,0.2);  color: #6a5200; }
+
+/* ── Login page ── */
+.login-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: var(--bg);
+  padding: 20px;
+}
+.login-card {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 40px;
+  max-width: 380px;
+  width: 100%;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+}
+.login-title {
+  font-size: 1.8rem;
+  text-align: center;
+  color: rgba(var(--fg), 0.87);
+  margin-bottom: 4px;
+}
+.login-subtitle {
+  text-align: center;
+  color: rgba(var(--fg), 0.4);
+  font-size: 0.85rem;
+  margin-bottom: 28px;
+}
+.login-error {
+  background: rgba(192,57,43,0.15);
+  color: #e74c3c;
+  padding: 10px 14px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+}
+.login-btn {
+  width: 100%;
+  height: 42px;
+  margin-top: 20px;
+  font-size: 1rem;
+}
+
+/* ── Password badges ── */
+.pw-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  border-radius: 3px;
+  padding: 2px 6px;
+}
+.pw-set {
+  background: rgba(39,174,96,0.18);
+  color: #27ae60;
+}
+.pw-unset {
+  background: rgba(var(--fg), 0.06);
+  color: rgba(var(--fg), 0.35);
+}
+
+html[data-theme="light"] .login-error {
+  background: rgba(192,57,43,0.1);
+}
+html[data-theme="light"] .pw-set {
+  background: rgba(39,174,96,0.15);
+  color: #1a6e3a;
+}
+html[data-theme="light"] .pw-unset {
+  background: rgba(0,0,0,0.05);
+  color: rgba(0,0,0,0.3);
+}

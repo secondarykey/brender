@@ -157,6 +157,65 @@ export class JobFileInfo {
     }
 }
 
+/**
+ * PermissionEntry は権限一覧表示用（ターゲットの表示名を付与）。
+ */
+export class PermissionEntry {
+    /**
+     * Creates a new PermissionEntry instance.
+     * @param {Partial<PermissionEntry>} [$$source = {}] - The source object to create the PermissionEntry.
+     */
+    constructor($$source = {}) {
+        if (!("project_id" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["project_id"] = "";
+        }
+        if (!("target_id" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["target_id"] = "";
+        }
+        if (!("target_name" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["target_name"] = "";
+        }
+        if (!("target_is_system" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["target_is_system"] = false;
+        }
+        if (!("role" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["role"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new PermissionEntry instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {PermissionEntry}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new PermissionEntry(/** @type {Partial<PermissionEntry>} */($$parsedSource));
+    }
+}
+
 export class PreviousRenderInfo {
     /**
      * Creates a new PreviousRenderInfo instance.

@@ -305,6 +305,51 @@ function MembersDialog({ open, group, onClose }) {
   )
 }
 
+// ── パスワードリセットURL表示ダイアログ ────────────────────────
+function ResetTokenDialog({ open, resetURL, onClose }) {
+  const { t } = useTranslation()
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(resetURL)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // フォールバック: 選択
+      const el = document.getElementById('reset-url-input')
+      if (el) { el.select() }
+    }
+  }
+
+  return (
+    <Dialog
+      open={open}
+      title={t('users.resetTokenTitle')}
+      onClose={onClose}
+      actions={
+        <button className="btn btn-ghost" onClick={onClose}>{t('common.close')}</button>
+      }
+    >
+      <p className="form-hint" style={{ marginBottom: 12 }}>{t('users.resetTokenHint')}</p>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <input
+          id="reset-url-input"
+          className="form-input"
+          value={resetURL}
+          readOnly
+          onClick={e => e.target.select()}
+          style={{ width: '100%', fontFamily: 'monospace', fontSize: '0.82rem' }}
+        />
+        <button className="btn btn-sm" onClick={handleCopy}>
+          {copied ? t('users.copied') : t('users.copy')}
+        </button>
+      </div>
+      <p className="form-hint" style={{ marginTop: 8 }}>{t('users.resetTokenExpiry')}</p>
+    </Dialog>
+  )
+}
+
 // ── ユーザタブ ──────────────────────────────────────────────
 function UsersTab() {
   const { t } = useTranslation()
@@ -316,11 +361,18 @@ function UsersTab() {
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState('')
   const [groupsDialog, setGroupsDialog] = useState(null)
+  const [resetURL, setResetURL] = useState('')
+  const [showResetDialog, setShowResetDialog] = useState(false)
 
   const load = () => {
-    AuthApi.listUsers()
+    AuthApi.listUsersWithStatus()
       .then(list => setUsers(list || []))
-      .catch(err => showError(String(err)))
+      .catch(() => {
+        // フォールバック: listUsersWithStatus が未対応の場合
+        AuthApi.listUsers()
+          .then(list => setUsers(list || []))
+          .catch(err => showError(String(err)))
+      })
   }
 
   useEffect(() => { load() }, [])
@@ -340,6 +392,18 @@ function UsersTab() {
     }
   }
 
+  const handleIssueToken = async (user) => {
+    try {
+      const urlPath = await AuthApi.generateResetToken({ userID: user.id })
+      // サーバのホスト情報からフルURLを構築
+      const fullURL = `${window.location.origin}${urlPath}`
+      setResetURL(fullURL)
+      setShowResetDialog(true)
+    } catch (err) {
+      showError(String(err))
+    }
+  }
+
   return (
     <div>
       {users.length === 0 ? (
@@ -350,9 +414,10 @@ function UsersTab() {
             <tr>
               <th>{t('users.loginId')}</th>
               <th>{t('users.displayName')}</th>
+              <th>{t('users.password')}</th>
               <th>{t('users.id')}</th>
               <th>{t('users.groups')}</th>
-              <th style={{ width: 140 }}></th>
+              <th style={{ width: 220 }}></th>
             </tr>
           </thead>
           <tbody>
@@ -363,11 +428,21 @@ function UsersTab() {
                   {u.name}
                 </td>
                 <td>{u.display_name}</td>
+                <td>
+                  {u.has_password
+                    ? <span className="pw-badge pw-set">{t('users.pwSet')}</span>
+                    : <span className="pw-badge pw-unset">{t('users.pwUnset')}</span>
+                  }
+                </td>
                 <td className="path-cell">{u.id}</td>
                 <td>
                   <UserGroupsBadges userID={u.id} onClick={() => setGroupsDialog(u)} />
                 </td>
                 <td style={{ display: 'flex', gap: 6 }}>
+                  <button className="btn btn-run btn-sm" onClick={() => handleIssueToken(u)}
+                          title={t('users.issueTokenTitle')}>
+                    {t('users.issueToken')}
+                  </button>
                   <button className="btn btn-sm" onClick={() => setEditUser(u)}>
                     {t('common.edit')}
                   </button>
@@ -407,6 +482,12 @@ function UsersTab() {
         open={!!groupsDialog}
         user={groupsDialog}
         onClose={() => setGroupsDialog(null)}
+      />
+
+      <ResetTokenDialog
+        open={showResetDialog}
+        resetURL={resetURL}
+        onClose={() => setShowResetDialog(false)}
       />
 
       <ConfirmDialog

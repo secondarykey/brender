@@ -102,4 +102,39 @@ export const AuthApi = {
   removeUserFromGroup: ({ userID, groupID }) =>
     isWails() ? svc().then(s => s.RemoveUserFromGroup(userID, groupID))
               : serverCall('auth', 'remove_user_from_group', { user_id: userID, group_id: groupID }),
+
+  // ── Password / Login ─────────────────────────────────────
+
+  /** パスワード設定状態付きユーザ一覧 */
+  listUsersWithStatus: () =>
+    isWails() ? svc().then(s => s.ListUsersWithStatus())
+              : serverCall('auth', 'list_users_with_status'),
+
+  /** パスワードリセットトークンを発行
+   * @param {{ userID: string }} args
+   * @returns {Promise<string>} URL パス
+   */
+  generateResetToken: ({ userID }) =>
+    isWails() ? svc().then(s => s.GenerateResetToken(userID))
+              : serverCall('auth', 'generate_reset_token', { user_id: userID }),
+
+  /** ログイン（サーバモード用）
+   * @param {{ name: string, password: string }} args
+   */
+  login: ({ name, password }) =>
+    serverCall('auth', 'login', { name, password }),
+
+  /** ログアウト（サーバモード用） */
+  logout: () =>
+    serverCall('auth', 'logout', {}),
+
+  /** セッション検証（サーバモード用） */
+  me: () =>
+    fetch('/api/auth/me', { credentials: 'same-origin' })
+      .then(r => r.json())
+      .then(j => j.data || null),
+
+  /** 認証が有効かを確認 */
+  isAuthEnabled: () =>
+    serverCall('auth', 'is_auth_enabled'),
 }

@@ -26,6 +26,14 @@ func NewServer(assets fs.FS, host string, port int) *Server {
 
 	mux := http.NewServeMux()
 
+	// ── 認証関連ルート（ミドルウェアの前に登録） ──
+	mux.HandleFunc("POST /api/auth/login", handler.handleLogin)
+	mux.HandleFunc("POST /api/auth/logout", handler.handleLogout)
+	mux.HandleFunc("GET /api/auth/me", handleGetMe)
+	mux.HandleFunc("POST /api/auth/validate_reset_token", handleValidateResetToken)
+	mux.HandleFunc("POST /api/auth/reset_password", handleResetPasswordAPI)
+	mux.HandleFunc("/user/reset/", handleResetPage)
+
 	mux.Handle("POST /api/{service}/{method}", handler)
 	mux.Handle("GET /events", broker.Handler())
 	mux.HandleFunc("POST /api/project/upload_file", handler.handleUploadFile)
@@ -62,10 +70,13 @@ func NewServer(assets fs.FS, host string, port int) *Server {
 		http.ServeFile(w, r, p)
 	})
 
+	// 期限切れセッション・トークンの定期クリーンアップ
+	cleanupExpiredAuthData()
+
 	s := &Server{
 		httpServer: &http.Server{
 			Addr:    fmt.Sprintf("%s:%d", host, port),
-			Handler: requestLogger(mux),
+			Handler: requestLogger(authMiddleware(mux)),
 		},
 		broker:  broker,
 		handler: handler,

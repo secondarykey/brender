@@ -39,7 +39,7 @@ function MainLayout({ currentPage, onNavigate, children }) {
   useEffect(() => {
     if (isWails()) {
       EnvironmentApi.get()
-        .then(env => { if (env?.server) setServerMode(true) })
+        .then(env => { if (env?.server && env?.server_auth) setServerMode(true) })
         .catch(() => {})
     }
   }, [])

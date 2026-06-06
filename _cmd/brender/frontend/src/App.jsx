@@ -10,7 +10,9 @@ import QueuePage from './pages/queue/QueuePage'
 import SettingsPage from './pages/settings/SettingsPage'
 import SearchPage from './pages/search/SearchPage'
 import UsersPage from './pages/users/UsersPage'
-import { EnvironmentApi, WorkDirApi } from './lib/api'
+import LoginPage from './pages/login/LoginPage'
+import { EnvironmentApi, WorkDirApi, AuthApi } from './lib/api'
+import { isWails } from './lib/api/_client'
 
 export function VideoPlayer({ path }) {
   const handleMetadata = async (e) => {
@@ -50,15 +52,48 @@ function App() {
 
   const [nav, setNav]         = useState({ page: 'projects', params: {} })
   const [queueKey, setQueueKey] = useState(0)
+  // ログイン状態管理（サーバモード + 認証ON の場合のみ使用）
+  const [authChecked, setAuthChecked] = useState(false)
+  const [needsLogin, setNeedsLogin] = useState(false)
+
+  // サーバモードの認証チェック
+  useEffect(() => {
+    if (isWails()) {
+      // Wails モードではログイン不要
+      setAuthChecked(true)
+      return
+    }
+    // サーバモード: 認証が有効かチェック → 有効ならセッション検証
+    AuthApi.isAuthEnabled()
+      .then(enabled => {
+        if (!enabled) {
+          setAuthChecked(true)
+          return
+        }
+        // セッション検証
+        return AuthApi.me().then(user => {
+          if (!user) {
+            setNeedsLogin(true)
+          }
+          setAuthChecked(true)
+        })
+      })
+      .catch(() => {
+        // エラー時はログイン不要とみなす
+        setAuthChecked(true)
+      })
+  }, [])
 
   useEffect(() => {
+    // ログインが必要な場合や認証チェック中はスキップ
+    if (!authChecked || needsLogin) return
     WorkDirApi.list()
       .then(list => {
         const hasActive = (list || []).some(w => w.status === 'active')
         if (!hasActive) setNav({ page: 'settings', params: { tab: 'directory' } })
       })
       .catch(() => {})
-  }, [])
+  }, [authChecked, needsLogin])
 
   useEffect(() => {
     const handler = e => {
@@ -128,6 +163,26 @@ function App() {
   }
 
   const section = ['project', 'file', 'workspace', 'job'].includes(nav.page) ? 'projects' : nav.page
+
+  // 認証チェック中はローディング表示
+  if (!authChecked) {
+    return (
+      <ToastProvider>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'var(--bg)' }}>
+          <span style={{ color: 'rgba(var(--fg), 0.4)' }}>Loading...</span>
+        </div>
+      </ToastProvider>
+    )
+  }
+
+  // ログインが必要な場合
+  if (needsLogin) {
+    return (
+      <ToastProvider>
+        <LoginPage onLogin={() => setNeedsLogin(false)} />
+      </ToastProvider>
+    )
+  }
 
   return (
     <ToastProvider>
