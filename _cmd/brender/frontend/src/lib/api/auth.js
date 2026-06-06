@@ -53,18 +53,18 @@ export const AuthApi = {
               : serverCall('auth', 'get_group', { id }),
 
   /** グループを作成
-   * @param {{ name: string, displayName?: string }} args
+   * @param {{ displayName: string }} args
    */
-  createGroup: ({ name, displayName = '' }) =>
-    isWails() ? svc().then(s => s.CreateGroup(name, displayName))
-              : serverCall('auth', 'create_group', { name, display_name: displayName }),
+  createGroup: ({ displayName }) =>
+    isWails() ? svc().then(s => s.CreateGroup(displayName))
+              : serverCall('auth', 'create_group', { display_name: displayName }),
 
   /** グループを更新
-   * @param {{ id: string, name: string, displayName?: string }} args
+   * @param {{ id: string, displayName: string }} args
    */
-  updateGroup: ({ id, name, displayName = '' }) =>
-    isWails() ? svc().then(s => s.UpdateGroup(id, name, displayName))
-              : serverCall('auth', 'update_group', { id, name, display_name: displayName }),
+  updateGroup: ({ id, displayName }) =>
+    isWails() ? svc().then(s => s.UpdateGroup(id, displayName))
+              : serverCall('auth', 'update_group', { id, display_name: displayName }),
 
   /** グループを削除
    * @param {{ id: string }} args

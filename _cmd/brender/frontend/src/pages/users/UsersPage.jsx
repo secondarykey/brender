@@ -26,16 +26,13 @@ function UserDialog({ open, user, onClose, onSaved }) {
   }, [open, user])
 
   const handleSave = async () => {
-    if (!name.trim()) {
-      setError(t('users.nameRequired'))
-      return
-    }
     setSaving(true)
     setError('')
     try {
       if (isEdit) {
         await AuthApi.updateUser({ id: user.id, name: name.trim(), displayName: displayName.trim() })
       } else {
+        // 新規作成: name が空ならサーバ側でIDと同じ値を設定
         await AuthApi.createUser({ name: name.trim(), displayName: displayName.trim() })
       }
       showToast(t('common.saved'))
@@ -67,16 +64,16 @@ function UserDialog({ open, user, onClose, onSaved }) {
     >
       <div className="form" style={{ maxWidth: 400 }}>
         <div className="form-field">
-          <label className="form-label">{t('users.name')}</label>
+          <label className="form-label">{t('users.loginId')}</label>
           <input
             className="form-input"
             value={name}
             onChange={e => setName(e.target.value)}
             disabled={isSystem}
-            autoFocus={!isSystem}
-            style={{ width: '100%' }}
+            placeholder={!isEdit ? t('users.loginIdPlaceholder') : ''}
+            style={{ width: '100%', fontFamily: 'monospace', fontSize: '0.85rem' }}
           />
-          {isSystem && <span className="form-hint">{t('users.systemBadge')}</span>}
+          <span className="form-hint">{t('users.loginIdHint')}</span>
         </div>
         <div className="form-field" style={{ marginTop: 12 }}>
           <label className="form-label">{t('users.displayName')}</label>
@@ -84,7 +81,7 @@ function UserDialog({ open, user, onClose, onSaved }) {
             className="form-input"
             value={displayName}
             onChange={e => setDisplayName(e.target.value)}
-            autoFocus={isSystem}
+            autoFocus
             style={{ width: '100%' }}
           />
         </div>
@@ -103,34 +100,31 @@ function UserDialog({ open, user, onClose, onSaved }) {
 function GroupDialog({ open, group, onClose, onSaved }) {
   const { t } = useTranslation()
   const { showToast } = useToast()
-  const [name, setName] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
   const isEdit = !!group
-  const isSystem = group?.is_system
 
   useEffect(() => {
     if (open) {
-      setName(group?.name || '')
       setDisplayName(group?.display_name || '')
       setError('')
     }
   }, [open, group])
 
   const handleSave = async () => {
-    if (!name.trim()) {
-      setError(t('users.nameRequired'))
+    if (!displayName.trim()) {
+      setError(t('users.displayNameRequired'))
       return
     }
     setSaving(true)
     setError('')
     try {
       if (isEdit) {
-        await AuthApi.updateGroup({ id: group.id, name: name.trim(), displayName: displayName.trim() })
+        await AuthApi.updateGroup({ id: group.id, displayName: displayName.trim() })
       } else {
-        await AuthApi.createGroup({ name: name.trim(), displayName: displayName.trim() })
+        await AuthApi.createGroup({ displayName: displayName.trim() })
       }
       showToast(t('common.saved'))
       onSaved()
@@ -161,24 +155,12 @@ function GroupDialog({ open, group, onClose, onSaved }) {
     >
       <div className="form" style={{ maxWidth: 400 }}>
         <div className="form-field">
-          <label className="form-label">{t('users.name')}</label>
-          <input
-            className="form-input"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            disabled={isSystem}
-            autoFocus={!isSystem}
-            style={{ width: '100%' }}
-          />
-          {isSystem && <span className="form-hint">{t('users.systemBadge')}</span>}
-        </div>
-        <div className="form-field" style={{ marginTop: 12 }}>
           <label className="form-label">{t('users.displayName')}</label>
           <input
             className="form-input"
             value={displayName}
             onChange={e => setDisplayName(e.target.value)}
-            autoFocus={isSystem}
+            autoFocus
             style={{ width: '100%' }}
           />
         </div>
@@ -254,7 +236,7 @@ function MembersDialog({ open, group, onClose }) {
   return (
     <Dialog
       open={open}
-      title={`${t('users.members')} — ${group?.display_name || group?.name || ''}`}
+      title={`${t('users.members')} — ${group?.display_name || ''}`}
       onClose={onClose}
       message={error || undefined}
       messageSeverity="error"
@@ -273,7 +255,7 @@ function MembersDialog({ open, group, onClose }) {
         <table className="blender-table">
           <thead>
             <tr>
-              <th>{t('users.name')}</th>
+              <th>{t('users.loginId')}</th>
               <th>{t('users.displayName')}</th>
               <th>{t('users.id')}</th>
               {!isAllGroup && <th style={{ width: 80 }}></th>}
@@ -366,7 +348,7 @@ function UsersTab() {
         <table className="blender-table">
           <thead>
             <tr>
-              <th>{t('users.name')}</th>
+              <th>{t('users.loginId')}</th>
               <th>{t('users.displayName')}</th>
               <th>{t('users.id')}</th>
               <th>{t('users.groups')}</th>
@@ -438,7 +420,7 @@ function UsersTab() {
       >
         {deleteTarget && (
           <>
-            <p><span className="dialog-label">{t('users.name')}</span>{deleteTarget.name}</p>
+            <p><span className="dialog-label">{t('users.loginId')}</span>{deleteTarget.name}</p>
             <p><span className="dialog-label">{t('users.displayName')}</span>{deleteTarget.display_name}</p>
             <p><span className="dialog-label">{t('users.id')}</span>{deleteTarget.id}</p>
             <p style={{ marginTop: 12, color: 'rgba(var(--fg),0.6)', fontSize: '0.85rem' }}>{t('users.deleteUserWarning')}</p>
@@ -462,7 +444,7 @@ function UserGroupsBadges({ userID, onClick }) {
   return (
     <span style={{ cursor: 'pointer' }} onClick={onClick} title="Click to view groups">
       {groups.map(g => (
-        <span key={g.id} className="user-group-badge">{g.display_name || g.name}</span>
+        <span key={g.id} className="user-group-badge">{g.display_name}</span>
       ))}
     </span>
   )
@@ -496,7 +478,6 @@ function UserGroupsDialog({ open, user, onClose }) {
         <table className="blender-table">
           <thead>
             <tr>
-              <th>{t('users.name')}</th>
               <th>{t('users.displayName')}</th>
               <th>{t('users.id')}</th>
             </tr>
@@ -506,9 +487,8 @@ function UserGroupsDialog({ open, user, onClose }) {
               <tr key={g.id}>
                 <td>
                   {g.is_system && <span className="default-badge" style={{ marginRight: 6 }}>{t('users.systemBadge')}</span>}
-                  {g.name}
+                  {g.display_name}
                 </td>
-                <td>{g.display_name}</td>
                 <td className="path-cell">{g.id}</td>
               </tr>
             ))}
@@ -562,7 +542,6 @@ function GroupsTab() {
         <table className="blender-table">
           <thead>
             <tr>
-              <th>{t('users.name')}</th>
               <th>{t('users.displayName')}</th>
               <th>{t('users.id')}</th>
               <th>{t('users.members')}</th>
@@ -574,9 +553,8 @@ function GroupsTab() {
               <tr key={g.id}>
                 <td>
                   {g.is_system && <span className="default-badge" style={{ marginRight: 6 }}>{t('users.systemBadge')}</span>}
-                  {g.name}
+                  {g.display_name}
                 </td>
-                <td>{g.display_name}</td>
                 <td className="path-cell">{g.id}</td>
                 <td>
                   <GroupMemberCount groupID={g.id} onClick={() => setMembersTarget(g)} />
@@ -637,7 +615,6 @@ function GroupsTab() {
       >
         {deleteTarget && (
           <>
-            <p><span className="dialog-label">{t('users.name')}</span>{deleteTarget.name}</p>
             <p><span className="dialog-label">{t('users.displayName')}</span>{deleteTarget.display_name}</p>
             <p><span className="dialog-label">{t('users.id')}</span>{deleteTarget.id}</p>
             <p style={{ marginTop: 12, color: 'rgba(var(--fg),0.6)', fontSize: '0.85rem' }}>{t('users.deleteGroupWarning')}</p>

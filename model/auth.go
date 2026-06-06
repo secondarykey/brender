@@ -50,10 +50,20 @@ func NewGroupID() string {
 
 type User struct {
 	ID          string `gorm:"primaryKey" json:"id"`
-	Name        string `json:"name"`         // ログイン名・識別名
-	DisplayName string `json:"display_name"` // 表示名
+	Name        string `gorm:"uniqueIndex" json:"name"` // ログインID（ASCII限定）
+	DisplayName string `json:"display_name"`             // 表示名
 	IsSystem    bool   `gorm:"default:false" json:"is_system"`
 	MetaFields  `gorm:"embedded"`
+}
+
+// isASCII は文字列がASCII文字のみで構成されているかを判定する。
+func isASCII(s string) bool {
+	for _, c := range s {
+		if c > 127 {
+			return false
+		}
+	}
+	return true
 }
 
 func ListUsers() ([]*User, error) {
@@ -77,8 +87,15 @@ func GetUser(id string) (*User, error) {
 }
 
 func CreateUser(name, displayName string) (*User, error) {
+	id := NewUserID()
+	if name == "" {
+		name = id
+	}
+	if !isASCII(name) {
+		return nil, xerrors.New("login ID must be ASCII characters only")
+	}
 	u := &User{
-		ID:          NewUserID(),
+		ID:          id,
 		Name:        name,
 		DisplayName: displayName,
 	}
@@ -97,6 +114,9 @@ func UpdateUser(id, name, displayName string) (*User, error) {
 		// システムユーザは表示名のみ変更可
 		u.DisplayName = displayName
 	} else {
+		if !isASCII(name) {
+			return nil, xerrors.New("login ID must be ASCII characters only")
+		}
 		u.Name = name
 		u.DisplayName = displayName
 	}
@@ -126,7 +146,6 @@ func DeleteUser(id string) error {
 
 type Group struct {
 	ID          string `gorm:"primaryKey" json:"id"`
-	Name        string `json:"name"`         // 識別名
 	DisplayName string `json:"display_name"` // 表示名
 	IsSystem    bool   `gorm:"default:false" json:"is_system"`
 	MetaFields  `gorm:"embedded"`
@@ -134,7 +153,7 @@ type Group struct {
 
 func ListGroups() ([]*Group, error) {
 	var groups []*Group
-	if res := db.Order("is_system desc, name asc").Find(&groups); res.Error != nil {
+	if res := db.Order("is_system desc, display_name asc").Find(&groups); res.Error != nil {
 		return nil, xerrors.Errorf("ListGroups: %w", res.Error)
 	}
 	return groups, nil
@@ -152,10 +171,9 @@ func GetGroup(id string) (*Group, error) {
 	return &g, nil
 }
 
-func CreateGroup(name, displayName string) (*Group, error) {
+func CreateGroup(displayName string) (*Group, error) {
 	g := &Group{
 		ID:          NewGroupID(),
-		Name:        name,
 		DisplayName: displayName,
 	}
 	if res := db.Create(g); res.Error != nil {
@@ -164,17 +182,12 @@ func CreateGroup(name, displayName string) (*Group, error) {
 	return g, nil
 }
 
-func UpdateGroup(id, name, displayName string) (*Group, error) {
+func UpdateGroup(id, displayName string) (*Group, error) {
 	var g Group
 	if res := db.First(&g, "id = ?", id); res.Error != nil {
 		return nil, xerrors.Errorf("UpdateGroup find: %w", res.Error)
 	}
-	if g.IsSystem {
-		g.DisplayName = displayName
-	} else {
-		g.Name = name
-		g.DisplayName = displayName
-	}
+	g.DisplayName = displayName
 	if res := db.Save(&g); res.Error != nil {
 		return nil, xerrors.Errorf("UpdateGroup save: %w", res.Error)
 	}
@@ -232,7 +245,7 @@ func ListGroupsByUser(userID string) ([]*Group, error) {
 		}
 		if len(ids) > 0 {
 			var extra []*Group
-			if res := db.Where("id IN ?", ids).Order("name asc").Find(&extra); res.Error != nil {
+			if res := db.Where("id IN ?", ids).Order("display_name asc").Find(&extra); res.Error != nil {
 				return nil, xerrors.Errorf("ListGroupsByUser groups: %w", res.Error)
 			}
 			groups = append(groups, extra...)
@@ -317,7 +330,7 @@ func SeedAuthData() error {
 	var allCount int64
 	db.Model(&Group{}).Where("id = ?", GroupIDAll).Count(&allCount)
 	if allCount == 0 {
-		all := &Group{ID: GroupIDAll, Name: "All", DisplayName: "All Users", IsSystem: true}
+		all := &Group{ID: GroupIDAll, DisplayName: "All Users", IsSystem: true}
 		if res := db.Create(all); res.Error != nil {
 			return xerrors.Errorf("seed all group: %w", res.Error)
 		}

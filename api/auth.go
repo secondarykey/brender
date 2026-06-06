@@ -46,21 +46,18 @@ func GetGroup(id string) (*model.Group, error) {
 	return model.GetGroup(id)
 }
 
-func CreateGroup(name, displayName string) (*model.Group, error) {
-	if name == "" {
-		return nil, xerrors.New("group name is required")
-	}
+func CreateGroup(displayName string) (*model.Group, error) {
 	if displayName == "" {
-		displayName = name
+		return nil, xerrors.New("group display name is required")
 	}
-	return model.CreateGroup(name, displayName)
+	return model.CreateGroup(displayName)
 }
 
-func UpdateGroup(id, name, displayName string) (*model.Group, error) {
-	if name == "" {
-		return nil, xerrors.New("group name is required")
+func UpdateGroup(id, displayName string) (*model.Group, error) {
+	if displayName == "" {
+		return nil, xerrors.New("group display name is required")
 	}
-	return model.UpdateGroup(id, name, displayName)
+	return model.UpdateGroup(id, displayName)
 }
 
 func DeleteGroup(id string) error {

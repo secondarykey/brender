@@ -43,12 +43,12 @@ func (s *Auth) GetGroup(id string) (*model.Group, error) {
 	return api.GetGroup(id)
 }
 
-func (s *Auth) CreateGroup(name, displayName string) (*model.Group, error) {
-	return api.CreateGroup(name, displayName)
+func (s *Auth) CreateGroup(displayName string) (*model.Group, error) {
+	return api.CreateGroup(displayName)
 }
 
-func (s *Auth) UpdateGroup(id, name, displayName string) (*model.Group, error) {
-	return api.UpdateGroup(id, name, displayName)
+func (s *Auth) UpdateGroup(id, displayName string) (*model.Group, error) {
+	return api.UpdateGroup(id, displayName)
 }
 
 func (s *Auth) DeleteGroup(id string) error {

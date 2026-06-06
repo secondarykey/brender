@@ -1402,25 +1402,23 @@ func (h *Handler) registerAuth() {
 
 	h.register("auth", "create_group", func(body json.RawMessage) (any, error) {
 		var p struct {
-			Name        string `json:"name"`
 			DisplayName string `json:"display_name"`
 		}
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.CreateGroup(p.Name, p.DisplayName)
+		return api.CreateGroup(p.DisplayName)
 	})
 
 	h.register("auth", "update_group", func(body json.RawMessage) (any, error) {
 		var p struct {
 			ID          string `json:"id"`
-			Name        string `json:"name"`
 			DisplayName string `json:"display_name"`
 		}
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.UpdateGroup(p.ID, p.Name, p.DisplayName)
+		return api.UpdateGroup(p.ID, p.DisplayName)
 	})
 
 	h.register("auth", "delete_group", func(body json.RawMessage) (any, error) {
