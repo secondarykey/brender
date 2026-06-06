@@ -872,11 +872,11 @@ function JobPage({ job: initialJob, jobID: propJobID, navigate, backPage, backPa
       <div className="page-header">
         <Breadcrumb items={[
           { label: t('breadcrumb.projects'), onClick: () => navigate('projects') },
-          names.project && { label: names.project, onClick: () => navigate('project', { id: job.project_id }) },
-          names.file && { label: names.file, onClick: () => navigate('file', { projectID: job.project_id, projectName: names.project, fileID: job.project_file_id, fileName: names.file }) },
-          names.workspace && { label: names.workspace, onClick: () => navigate('workspace', { projectID: job.project_id, projectName: names.project, fileID: job.project_file_id, fileName: names.file, workspaceID: job.workspace_id, workspaceName: names.workspace }) },
+          { label: names.project, onClick: () => navigate('project', { id: job.project_id }) },
+          { label: names.file, onClick: () => navigate('file', { projectID: job.project_id, projectName: names.project, fileID: job.project_file_id, fileName: names.file }) },
+          { label: names.workspace, onClick: () => navigate('workspace', { projectID: job.project_id, projectName: names.project, fileID: job.project_file_id, fileName: names.file, workspaceID: job.workspace_id, workspaceName: names.workspace }) },
           { label: t('breadcrumb.jobResult') },
-        ].filter(Boolean)} />
+        ]} />
       </div>
 
       <div className="tab-nav">
