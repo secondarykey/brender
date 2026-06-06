@@ -614,7 +614,11 @@
     "issueTokenTitle": "パスワード設定URLを発行",
     "resetTokenTitle": "パスワード設定URL",
     "resetTokenHint": "このURLをユーザに共有してください。ユーザはこのURLからパスワードを設定できます。",
-    "resetTokenExpiry": "このURLは24時間有効です。1回のみ使用できます。",
+    "resetTokenExpiryNew": "発行から24時間有効です。1回のみ使用できます。",
+    "resetTokenExpiryAt": "有効期限: {{time}}",
+    "noActiveToken": "有効なパスワード設定URLはありません。発行ボタンを押してURLを作成してください。",
+    "reissueHint": "再発行すると現在のURLは無効になります。",
+    "reissueToken": "再発行",
     "copy": "コピー",
     "copied": "コピー済"
   },

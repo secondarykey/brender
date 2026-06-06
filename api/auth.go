@@ -116,6 +116,34 @@ func ListUsersWithStatus() ([]*UserWithStatus, error) {
 	return result, nil
 }
 
+// ResetTokenInfo は既存トークンの情報。
+type ResetTokenInfo struct {
+	URLPath   string `json:"url_path"`
+	ExpiresAt string `json:"expires_at"` // ISO 8601
+}
+
+// GetActiveResetToken はユーザの有効なリセットトークンのURLパスを返す。存在しなければ nil。
+func GetActiveResetToken(userID string) (*ResetTokenInfo, error) {
+	user, err := model.GetUser(userID)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, xerrors.New("user not found")
+	}
+	t, err := model.GetActiveResetTokenByUser(userID)
+	if err != nil {
+		return nil, err
+	}
+	if t == nil {
+		return nil, nil
+	}
+	return &ResetTokenInfo{
+		URLPath:   fmt.Sprintf("/user/reset/%s", t.Token),
+		ExpiresAt: t.ExpiresAt.Format(time.RFC3339),
+	}, nil
+}
+
 // GenerateResetToken はパスワードリセットトークンを生成し、URLパスを返す。
 func GenerateResetToken(userID string) (string, error) {
 	user, err := model.GetUser(userID)

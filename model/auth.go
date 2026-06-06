@@ -376,6 +376,20 @@ func generateSecureToken() (string, error) {
 	return hex.EncodeToString(b), nil
 }
 
+// GetActiveResetTokenByUser はユーザの有効な（未使用かつ期限内の）トークンを返す。
+func GetActiveResetTokenByUser(userID string) (*PasswordResetToken, error) {
+	var t PasswordResetToken
+	res := db.Where("user_id = ? AND used = ? AND expires_at > ?", userID, false, time.Now()).
+		Order("created_at desc").First(&t)
+	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if res.Error != nil {
+		return nil, xerrors.Errorf("GetActiveResetTokenByUser: %w", res.Error)
+	}
+	return &t, nil
+}
+
 // CreatePasswordResetToken はパスワードリセットトークンを作成する。
 // 既存の未使用トークンは無効化する。
 func CreatePasswordResetToken(userID string, duration time.Duration) (*PasswordResetToken, error) {

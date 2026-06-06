@@ -1477,6 +1477,16 @@ func (h *Handler) registerAuth() {
 		return api.ListUsersWithStatus()
 	})
 
+	h.register("auth", "get_active_reset_token", func(body json.RawMessage) (any, error) {
+		var p struct {
+			UserID string `json:"user_id"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return api.GetActiveResetToken(p.UserID)
+	})
+
 	h.register("auth", "generate_reset_token", func(body json.RawMessage) (any, error) {
 		var p struct {
 			UserID string `json:"user_id"`
