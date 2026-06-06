@@ -279,6 +279,22 @@ func CopyProjectPermissionsToFile(projectID, fileID string) error {
 // デフォルト権限
 // ══════════════════════════════════════════════════════════
 
+// ListAccessibleFileIDs はユーザがアクセス可能なファイルIDの一覧を返す。
+func ListAccessibleFileIDs(userID string) ([]string, error) {
+	ids, err := collectTargetIDs(userID)
+	if err != nil {
+		return nil, err
+	}
+	var fileIDs []string
+	if res := db.Model(&FilePermission{}).
+		Where("target_id IN ?", ids).
+		Distinct("file_id").
+		Pluck("file_id", &fileIDs); res.Error != nil {
+		return nil, xerrors.Errorf("ListAccessibleFileIDs: %w", res.Error)
+	}
+	return fileIDs, nil
+}
+
 // ListAccessibleProjectIDs はユーザがアクセス可能なプロジェクトIDの一覧を返す。
 func ListAccessibleProjectIDs(userID string) ([]string, error) {
 	ids, err := collectTargetIDs(userID)

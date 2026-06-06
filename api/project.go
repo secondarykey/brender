@@ -33,6 +33,8 @@ func GetProject(id string) (*model.ProjectDetail, error) {
 		if !ok {
 			return nil, xerrors.New("access denied")
 		}
+		// ファイル権限でフィルタしたプロジェクト詳細を返す
+		return model.GetProjectForUser(id, userID)
 	}
 	return model.GetProject(id)
 }

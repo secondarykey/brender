@@ -189,7 +189,16 @@ func SearchFiles(tagIDs []uint, page, pageSize int, sort, dir string, untagged b
 		pageSize = 20
 	}
 	keyword = strings.TrimSpace(keyword)
-	files, total, err := model.SearchFilesByTags(tagIDs, page, pageSize, sort, dir, untagged, keyword)
+
+	userID := model.CurrentUser()
+	var files []*model.FileSearchResult
+	var total int64
+	var err error
+	if userID != model.UserIDOwner {
+		files, total, err = model.SearchFilesByTagsForUser(tagIDs, page, pageSize, sort, dir, untagged, keyword, userID)
+	} else {
+		files, total, err = model.SearchFilesByTags(tagIDs, page, pageSize, sort, dir, untagged, keyword)
+	}
 	if err != nil {
 		return nil, err
 	}
