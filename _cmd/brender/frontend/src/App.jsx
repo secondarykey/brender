@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
-import { ToastProvider } from './lib/toast'
+import { useState, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
+import { ToastProvider, useMessage } from './lib/toast'
 import MainLayout from './layouts/MainLayout'
 import ProjectListPage from './pages/projects/ProjectListPage'
 import ProjectDetailPage from './pages/projects/ProjectDetailPage'
@@ -103,12 +104,14 @@ function App() {
     return () => window.removeEventListener('keydown', handler)
   }, [])
 
+  const showErrorRef = useRef(null)
+
   const navigate = (page, params = {}) => {
     const go = () => {
       if (page === 'queue') setQueueKey(k => k + 1)
       setNav({ page, params })
     }
-    const deny = () => setNav({ page: 'projects', params: {} })
+    const deny = () => showErrorRef.current?.()
 
     // プロジェクト権限チェック（遷移前）
     if (page === 'project' && params.id) {
@@ -216,11 +219,20 @@ function App() {
 
   return (
     <ToastProvider>
+      <ErrorBridge showErrorRef={showErrorRef} />
       <MainLayout currentPage={section} onNavigate={(p) => navigate(p)}>
         {renderPage()}
       </MainLayout>
     </ToastProvider>
   )
+}
+
+/** ToastProvider 内で showError を ref 経由で navigate に渡すブリッジ */
+function ErrorBridge({ showErrorRef }) {
+  const { showError } = useMessage()
+  const { t } = useTranslation()
+  showErrorRef.current = () => showError(t('permission.accessDenied'))
+  return null
 }
 
 export default App

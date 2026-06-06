@@ -646,7 +646,8 @@
     "addAction": "追加",
     "confirmRemove": "この権限を削除しますか？",
     "saved": "権限を保存しました",
-    "removed": "権限を削除しました"
+    "removed": "権限を削除しました",
+    "accessDenied": "権限がありません"
   },
   "login": {
     "subtitle": "ログインしてください",

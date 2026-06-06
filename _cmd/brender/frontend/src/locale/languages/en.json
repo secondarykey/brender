@@ -646,7 +646,8 @@
     "addAction": "Add",
     "confirmRemove": "Remove this permission?",
     "saved": "Permission saved",
-    "removed": "Permission removed"
+    "removed": "Permission removed",
+    "accessDenied": "Access denied"
   },
   "login": {
     "subtitle": "Please log in to continue",
