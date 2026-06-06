@@ -42,7 +42,11 @@ func authMiddleware(next http.Handler) http.Handler {
 		// セッション Cookie を取得
 		cookie, err := r.Cookie(sessionCookieName)
 		if err != nil || cookie.Value == "" {
-			handleUnauthorized(w, r, path)
+			if handleUnauthorized(w, r, path) {
+				return // API → 401 を返して終了
+			}
+			// ページリクエスト → SPA を返す（React側でログイン画面を表示）
+			next.ServeHTTP(w, r)
 			return
 		}
 
@@ -50,13 +54,19 @@ func authMiddleware(next http.Handler) http.Handler {
 		user, err := api.ValidateSession(cookie.Value)
 		if err != nil {
 			log.Error("authMiddleware validate session: %v", err)
-			handleUnauthorized(w, r, path)
+			if handleUnauthorized(w, r, path) {
+				return
+			}
+			next.ServeHTTP(w, r)
 			return
 		}
 		if user == nil {
 			// セッション無効 → Cookie を削除
 			clearSessionCookie(w)
-			handleUnauthorized(w, r, path)
+			if handleUnauthorized(w, r, path) {
+				return
+			}
+			next.ServeHTTP(w, r)
 			return
 		}
 
@@ -104,19 +114,16 @@ func hasStaticExtension(path string) bool {
 	return false
 }
 
-// handleUnauthorized はAPI呼び出しに401を、ページリクエストにログインページへリダイレクトを返す。
-func handleUnauthorized(w http.ResponseWriter, r *http.Request, path string) {
+// handleUnauthorized はAPI呼び出しに401を返す。ページリクエストの場合は false を返し、
+// 呼び出し元で SPA の index.html を返すようにする（React側でログイン画面を表示）。
+func handleUnauthorized(w http.ResponseWriter, r *http.Request, path string) bool {
 	if strings.HasPrefix(path, "/api/") {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
 		json.NewEncoder(w).Encode(map[string]string{"error": "unauthorized"})
-		return
+		return true // レスポンス済み
 	}
-	// ページリクエスト → ログインページのHTMLを返す
-	// SPAなので index.html を返しつつフロントエンドでログイン判定する
-	// ただしセッションが無い場合はフロントエンドで /login に遷移する
-	// ここではそのまま通す（フロントエンド側で判定）
-	// → SPAのindex.htmlは常に返す必要がある
+	return false // SPA を返す必要あり
 }
 
 // setSessionCookie はセッション Cookie をセットする。
@@ -396,13 +403,20 @@ func resetSuccessHTML() string {
   h1 { font-size: 1.5rem; margin-bottom: 12px; color: #27ae60; }
   p { color: rgba(255,255,255,0.6); line-height: 1.6; }
   .check { font-size: 3rem; margin-bottom: 16px; }
+  .login-link {
+    display: inline-block; margin-top: 20px; padding: 10px 28px;
+    background: #4a7cdc; color: #fff; text-decoration: none;
+    border-radius: 6px; font-size: 1rem;
+  }
+  .login-link:hover { background: #5a8cec; }
 </style>
 </head>
 <body>
 <div class="card">
   <div class="check">&#10003;</div>
   <h1>Password Set Successfully</h1>
-  <p>You can now log in with your new password.<br>You may close this page.</p>
+  <p>You can now log in with your new password.</p>
+  <a href="/" class="login-link">Log In</a>
 </div>
 </body>
 </html>`
