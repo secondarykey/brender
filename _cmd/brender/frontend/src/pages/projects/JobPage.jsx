@@ -811,27 +811,25 @@ function JobPage({ job: initialJob, jobID: propJobID, navigate, backPage, backPa
   }, [])
 
   useEffect(() => {
-    if (!job) {
-      QueueApi.getJob({ id }).then(j => { if (j) setJob(j) }).catch(err => {
-        if (String(err).includes('access denied')) setAccessDenied(true)
-      })
-    }
+    // initialJob が渡されても権限チェックは行う
+    QueueApi.getJob({ id }).then(j => { if (j) setJob(j) }).catch(err => {
+      if (String(err).includes('access denied')) setAccessDenied(true)
+    })
   }, [id])
 
   useEffect(() => {
     if (!job) return
-    const fetches = []
+    setNames(prev => ({ ...prev, file: job.file_name || '' }))
+    // 各名前を独立して取得（一方の権限拒否が他方に影響しない）
     if (job.project_id) {
-      fetches.push(ProjectApi.get({ id: job.project_id }).then(d => ({ project: d?.project?.name || '' })))
+      ProjectApi.get({ id: job.project_id })
+        .then(d => setNames(prev => ({ ...prev, project: d?.project?.name || '' })))
+        .catch(() => {})
     }
     if (job.project_id && job.workspace_id) {
-      fetches.push(WorkspaceApi.get({ projectID: job.project_id, workspaceID: job.workspace_id }).then(d => ({ workspace: d?.workspace?.name || '' })))
-    }
-    setNames(prev => ({ ...prev, file: job.file_name || '' }))
-    if (fetches.length > 0) {
-      Promise.all(fetches).then(results => {
-        setNames(prev => Object.assign({}, prev, ...results))
-      }).catch(() => {})
+      WorkspaceApi.get({ projectID: job.project_id, workspaceID: job.workspace_id })
+        .then(d => setNames(prev => ({ ...prev, workspace: d?.workspace?.name || '' })))
+        .catch(() => {})
     }
   }, [job?.project_id, job?.workspace_id, job?.file_name])
 
