@@ -647,7 +647,8 @@
     "confirmRemove": "Remove this permission?",
     "saved": "Permission saved",
     "removed": "Permission removed",
-    "accessDenied": "Access denied"
+    "accessDenied": "Access denied",
+    "accessDeniedLabel": "[Access Denied]"
   },
   "login": {
     "subtitle": "Please log in to continue",

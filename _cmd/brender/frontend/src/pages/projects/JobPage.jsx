@@ -824,7 +824,9 @@ function JobPage({ job: initialJob, jobID: propJobID, navigate, backPage, backPa
     if (job.project_id) {
       ProjectApi.get({ id: job.project_id })
         .then(d => setNames(prev => ({ ...prev, project: d?.project?.name || '' })))
-        .catch(() => {})
+        .catch(err => {
+          if (String(err).includes('access denied')) setNames(prev => ({ ...prev, project: t('permission.accessDeniedLabel') }))
+        })
     }
     if (job.project_id && job.workspace_id) {
       WorkspaceApi.get({ projectID: job.project_id, workspaceID: job.workspace_id })

@@ -856,13 +856,17 @@ function FileDetailPage({ projectID, projectName: initialProjectName, fileID, fi
         if (String(err).includes('access denied')) setAccessDenied(true)
       })
     // プロジェクト情報取得（パンくず名もAPIから取得して統一）
-    Promise.all([ProjectApi.get({ id: projectID }), WorkDirApi.list()])
-      .then(([d, dirs]) => {
+    ProjectApi.get({ id: projectID })
+      .then(d => {
         if (d?.project?.name) setProjectName(d.project.name)
-        const wd = (dirs || []).find(w => w.id === d?.project?.work_dir_id)
-        setWorkDirStatus(wd?.status || null)
+        WorkDirApi.list().then(dirs => {
+          const wd = (dirs || []).find(w => w.id === d?.project?.work_dir_id)
+          setWorkDirStatus(wd?.status || null)
+        }).catch(() => {})
       })
-      .catch(() => {})
+      .catch(err => {
+        if (String(err).includes('access denied')) setProjectName(t('permission.accessDeniedLabel'))
+      })
   }, [projectID, fileID])
 
   if (accessDenied) {
