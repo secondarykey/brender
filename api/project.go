@@ -73,6 +73,17 @@ func UpdateProjectFile(fileID string, name string, note string, blenderInstallID
 	if name == "" {
 		return nil, xerrors.New("file name is required")
 	}
+	// Editor 以上の権限が必要
+	userID := model.CurrentUser()
+	if userID != model.UserIDOwner {
+		ok, err := model.HasFileRole(fileID, userID, []string{model.RoleOwner, model.RoleEditor})
+		if err != nil {
+			return nil, xerrors.Errorf("UpdateProjectFile permission check: %w", err)
+		}
+		if !ok {
+			return nil, xerrors.New("access denied")
+		}
+	}
 	return model.UpdateProjectFile(fileID, name, note, blenderInstallID, blenderFixed, scene, sceneFixed, camera, cameraFixed, engine, engineFixed)
 }
 
@@ -86,8 +97,20 @@ func GetFile(fileID string) (*model.ProjectFile, error) {
 		if !ok {
 			return nil, xerrors.New("access denied")
 		}
+		f, err := model.GetProjectFile(fileID)
+		if err != nil {
+			return nil, err
+		}
+		role, _ := model.GetUserFileRole(fileID, userID)
+		f.MyRole = role
+		return f, nil
 	}
-	return model.GetProjectFile(fileID)
+	f, err := model.GetProjectFile(fileID)
+	if err != nil {
+		return nil, err
+	}
+	f.MyRole = model.RoleOwner
+	return f, nil
 }
 
 // ListAllProjectFiles は全プロジェクトの全ファイルを返す（設定画面の一括確認用）。
@@ -237,6 +260,17 @@ func RemoveProjectFile(fileID string) error {
 }
 
 func DeleteProjectFile(fileID string, force bool) error {
+	// Owner のみ削除可能
+	userID := model.CurrentUser()
+	if userID != model.UserIDOwner {
+		ok, err := model.HasFileRole(fileID, userID, []string{model.RoleOwner})
+		if err != nil {
+			return xerrors.Errorf("DeleteProjectFile permission check: %w", err)
+		}
+		if !ok {
+			return xerrors.New("access denied")
+		}
+	}
 	if !force {
 		locked, err := model.HasLockedJobsByProjectFile(fileID)
 		if err != nil {

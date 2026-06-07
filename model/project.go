@@ -39,6 +39,7 @@ type ProjectFile struct {
 	Packed           *bool      `json:"packed"`          // nil=未検査, true=パック済み, false=未パック
 	FileModifiedAt   *time.Time `gorm:"-" json:"file_modified_at"`
 	FileExists       bool       `gorm:"-" json:"file_exists"`
+	MyRole           string     `gorm:"-" json:"my_role,omitempty"` // API層で設定
 	DisplayOrder     int        `gorm:"default:99999" json:"display_order"`
 	ProcessedAt      *time.Time `json:"processed_at"`
 	MetaFields       `gorm:"embedded"`
