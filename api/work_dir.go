@@ -133,6 +133,17 @@ func CheckWorkDir(path string) (map[string]interface{}, error) {
 
 // StartMigrateProjectWorkDir はプロジェクトを別の作業ディレクトリへ非同期で移行する。
 func StartMigrateProjectWorkDir(projectID string, newWorkDirID uint) error {
+	// Owner のみ作業ディレクトリの変更が可能
+	userID := model.CurrentUser()
+	if userID != model.UserIDOwner {
+		ok, err := model.HasProjectRole(projectID, userID, []string{model.RoleOwner})
+		if err != nil {
+			return xerrors.Errorf("StartMigrateProjectWorkDir permission check: %w", err)
+		}
+		if !ok {
+			return xerrors.New("access denied")
+		}
+	}
 	oldBase, err := GetProjectBaseDir(projectID)
 	if err != nil {
 		return xerrors.Errorf("StartMigrateProjectWorkDir: %w", err)
