@@ -472,7 +472,7 @@ function DefaultTag({ value, t }) {
 }
 
 // ── 設定タブ ─────────────────────────────────────────────
-function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
+function SettingsTab({ projectID, fileID, fileName, role, onUpdated, onDeleted }) {
   const { t } = useTranslation()
   const { showToast } = useToast()
   const { showError } = useMessage()
@@ -500,6 +500,11 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
   const [missingEngine, setMissingEngine]     = useState('')
   const [convertedEngine, setConvertedEngine] = useState(null)
   const [fileTags, setFileTags]             = useState([])
+
+  const isOwner  = role === 'owner'
+  const isEditor = role === 'editor'
+  const canEdit  = isOwner || isEditor  // editor 以上は保存可能
+  const readOnly = !canEdit             // viewer / runner は設定閲覧のみ
 
   const fetchToolData = (installID) => {
     setToolLoading(true)
@@ -658,6 +663,7 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
                 className="form-input"
                 value={name}
                 onChange={e => setName(e.target.value)}
+                disabled={readOnly}
               />
               {isWails() && (
                 <button
@@ -691,6 +697,7 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
                   className="form-select"
                   value={blenderInstallID}
                   onChange={e => handleBlenderChange(Number(e.target.value))}
+                  disabled={readOnly}
                 >
                   <option value={0}>{t('common.notSet')}</option>
                   {blenders.map(b => (
@@ -699,7 +706,7 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
                 </select>
               )}
               <label className="form-checkbox-label" style={{ marginTop: 6 }}>
-                <input type="checkbox" checked={blenderFixed} onChange={e => setBlenderFixed(e.target.checked)} />
+                <input type="checkbox" checked={blenderFixed} onChange={e => setBlenderFixed(e.target.checked)} disabled={readOnly} />
                 <span style={{ marginLeft: 6 }}>{t('file.fixed')}</span>
               </label>
             </div>
@@ -716,7 +723,7 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
                   className="form-select"
                   value={engine}
                   onChange={e => { setEngine(e.target.value); setMissingEngine(''); setConvertedEngine(null) }}
-                  disabled={toolLoading}
+                  disabled={toolLoading || readOnly}
                 >
                   <option value="">{t('common.notSet')}</option>
                   {toolData.Engines.map(eng => <option key={eng} value={eng}>{eng}</option>)}
@@ -727,12 +734,13 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
                   value={engine}
                   onChange={e => setEngine(e.target.value)}
                   placeholder={t('workspace.enginePlaceholder')}
+                  disabled={readOnly}
                 />
               )}
               {missingEngine && <span className="form-hint" style={{ color: '#e74c3c' }}>{t('workspace.engineMissing', { name: missingEngine })}</span>}
               {convertedEngine && <span className="form-hint" style={{ color: '#e0a030' }}>{t('workspace.engineConverted', { from: convertedEngine.from, to: convertedEngine.to })}</span>}
               <label className="form-checkbox-label" style={{ marginTop: 6 }}>
-                <input type="checkbox" checked={engineFixed} onChange={e => setEngineFixed(e.target.checked)} />
+                <input type="checkbox" checked={engineFixed} onChange={e => setEngineFixed(e.target.checked)} disabled={readOnly} />
                 <span style={{ marginLeft: 6 }}>{t('file.fixed')}</span>
               </label>
             </div>
@@ -749,7 +757,7 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
                   className="form-select"
                   value={scene}
                   onChange={e => handleSceneChange(e.target.value)}
-                  disabled={toolLoading}
+                  disabled={toolLoading || readOnly}
                 >
                   <option value="">{t('common.notSet')}</option>
                   {scenes.map(s => <option key={s} value={s}>{s}</option>)}
@@ -760,11 +768,12 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
                   value={scene}
                   onChange={e => handleSceneChange(e.target.value)}
                   placeholder={t('common.notSetPlaceholder')}
+                  disabled={readOnly}
                 />
               )}
               {missingScene && <span className="form-hint" style={{ color: '#e74c3c' }}>{t('workspace.sceneMissing', { name: missingScene })}</span>}
               <label className="form-checkbox-label" style={{ marginTop: 6 }}>
-                <input type="checkbox" checked={sceneFixed} onChange={e => setSceneFixed(e.target.checked)} />
+                <input type="checkbox" checked={sceneFixed} onChange={e => setSceneFixed(e.target.checked)} disabled={readOnly} />
                 <span style={{ marginLeft: 6 }}>{t('file.fixed')}</span>
               </label>
             </div>
@@ -777,7 +786,7 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
                 className="form-select"
                 value={camera}
                 onChange={e => { setCamera(e.target.value); setMissingCamera('') }}
-                disabled={toolLoading}
+                disabled={toolLoading || readOnly}
               >
                 <option value="">{t('common.notSet')}</option>
                 {allCameras
@@ -787,22 +796,27 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
               </select>
               {missingCamera && <span className="form-hint" style={{ color: '#e74c3c' }}>{t('workspace.cameraMissing', { name: missingCamera })}</span>}
               <label className="form-checkbox-label" style={{ marginTop: 6 }}>
-                <input type="checkbox" checked={cameraFixed} onChange={e => setCameraFixed(e.target.checked)} />
+                <input type="checkbox" checked={cameraFixed} onChange={e => setCameraFixed(e.target.checked)} disabled={readOnly} />
                 <span style={{ marginLeft: 6 }}>{t('file.fixed')}</span>
               </label>
             </div>
           </div>
 
-          <NoteSection value={note} onChange={setNote} />
+          <NoteSection value={note} onChange={setNote} disabled={readOnly} />
 
-          <div className="form-actions">
+          {canEdit && (
+          <div className="form-actions" style={isOwner ? undefined : { justifyContent: 'flex-end' }}>
+            {isOwner && (
             <button className="btn btn-danger" onClick={() => { setForceDel(false); setConfirm(true) }}>{t('common.delete')}</button>
+            )}
             <button className="btn btn-green" onClick={handleSave} disabled={saving}>
               {saving ? t('common.saving') : t('common.save')}
             </button>
           </div>
+          )}
         </div>
 
+        {isOwner && (
         <ConfirmDialog
           open={confirm}
           hold
@@ -821,8 +835,11 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
             {t('file.forceDeleteLabel')}
           </label>
         </ConfirmDialog>
+        )}
 
+        {isOwner && (
         <PermissionSection mode="file" resourceID={fileID} />
+        )}
       </div>
 
       <div className="ws-detail-right">
@@ -848,10 +865,14 @@ function FileDetailPage({ projectID, projectName: initialProjectName, fileID, fi
   const [currentFileName, setCurrentFileName] = useState(fileName)
   const [workDirStatus, setWorkDirStatus] = useState(null)
   const [accessDenied, setAccessDenied] = useState(false)
+  const [fileRole, setFileRole] = useState('owner')
 
   useEffect(() => {
-    // ファイル権限チェック
+    // ファイル権限チェック + ロール取得
     ProjectApi.getFile({ fileID })
+      .then(f => {
+        if (f?.my_role) setFileRole(f.my_role)
+      })
       .catch(err => {
         if (String(err).includes('access denied')) setAccessDenied(true)
       })
@@ -941,6 +962,7 @@ function FileDetailPage({ projectID, projectName: initialProjectName, fileID, fi
             projectID={projectID}
             fileID={fileID}
             fileName={currentFileName}
+            role={fileRole}
             onUpdated={f => setCurrentFileName(f.name)}
             onDeleted={() => navigate('project', { id: projectID })}
           />
