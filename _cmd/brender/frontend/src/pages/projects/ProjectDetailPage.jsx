@@ -99,6 +99,7 @@ function ProjectDetailPage({ id, initialTab, focusName, navigate }) {
             focusName={focusName}
             workDir={workDir}
             workDirs={workDirs}
+            role={detail.my_role || 'owner'}
             onUpdated={load}
             onDeleted={() => navigate('projects')}
           />

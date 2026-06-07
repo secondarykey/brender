@@ -47,6 +47,7 @@ type ProjectFile struct {
 type ProjectDetail struct {
 	Project *Project       `json:"project"`
 	Files   []*ProjectFile `json:"files"`
+	MyRole  string         `json:"my_role,omitempty"` // API層で設定（CurrentUser のロール）
 }
 
 func newProjectID() string {

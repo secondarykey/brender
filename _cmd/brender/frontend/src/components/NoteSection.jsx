@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-function NoteSection({ value, onChange, style }) {
+function NoteSection({ value, onChange, style, disabled }) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(!!value)
 
@@ -19,6 +19,7 @@ function NoteSection({ value, onChange, style }) {
             value={value}
             onChange={e => onChange(e.target.value)}
             placeholder={t('common.notePlaceholder')}
+            disabled={disabled}
           />
         </div>
       )}

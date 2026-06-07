@@ -34,14 +34,37 @@ func GetProject(id string) (*model.ProjectDetail, error) {
 			return nil, xerrors.New("access denied")
 		}
 		// ファイル権限でフィルタしたプロジェクト詳細を返す
-		return model.GetProjectForUser(id, userID)
+		detail, err := model.GetProjectForUser(id, userID)
+		if err != nil {
+			return nil, err
+		}
+		// ユーザのロールを付与
+		role, _ := model.GetUserProjectRole(id, userID)
+		detail.MyRole = role
+		return detail, nil
 	}
-	return model.GetProject(id)
+	detail, err := model.GetProject(id)
+	if err != nil {
+		return nil, err
+	}
+	detail.MyRole = model.RoleOwner
+	return detail, nil
 }
 
 func UpdateProject(id, name, note string) (*model.ProjectDetail, error) {
 	if name == "" {
 		return nil, xerrors.New("project name is required")
+	}
+	// Editor 以上の権限が必要
+	userID := model.CurrentUser()
+	if userID != model.UserIDOwner {
+		ok, err := model.HasProjectRole(id, userID, []string{model.RoleOwner, model.RoleEditor})
+		if err != nil {
+			return nil, xerrors.Errorf("UpdateProject permission check: %w", err)
+		}
+		if !ok {
+			return nil, xerrors.New("access denied")
+		}
 	}
 	return model.UpdateProject(id, name, note)
 }
@@ -259,6 +282,17 @@ func DeleteProjectFile(fileID string, force bool) error {
 }
 
 func DeleteProject(id string, force bool) error {
+	// Owner のみ削除可能
+	userID := model.CurrentUser()
+	if userID != model.UserIDOwner {
+		ok, err := model.HasProjectRole(id, userID, []string{model.RoleOwner})
+		if err != nil {
+			return xerrors.Errorf("DeleteProject permission check: %w", err)
+		}
+		if !ok {
+			return xerrors.New("access denied")
+		}
+	}
 	if !force {
 		locked, err := model.HasLockedJobsByProject(id)
 		if err != nil {
