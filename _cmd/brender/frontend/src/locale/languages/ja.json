@@ -634,6 +634,7 @@
       "owner": "オーナー",
       "runner": "実行者",
       "editor": "編集者",
+      "file_register": "ファイル登録者",
       "viewer": "閲覧者"
     },
     "add": "+ 追加",

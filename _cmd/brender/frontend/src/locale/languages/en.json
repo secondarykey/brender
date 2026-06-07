@@ -634,6 +634,7 @@
       "owner": "Owner",
       "runner": "Runner",
       "editor": "Editor",
+      "file_register": "File Register",
       "viewer": "Viewer"
     },
     "add": "+ Add",

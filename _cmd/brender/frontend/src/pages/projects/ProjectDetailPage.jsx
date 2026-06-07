@@ -91,6 +91,7 @@ function ProjectDetailPage({ id, initialTab, focusName, navigate }) {
             projectID={id}
             projectName={detail.project.name}
             navigate={navigate}
+            role={detail.my_role || 'owner'}
           />
         )}
         {tab === 'settings' && (

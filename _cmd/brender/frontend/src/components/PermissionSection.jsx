@@ -5,7 +5,8 @@ import { useToast, useMessage } from '../lib/toast'
 import Dialog from './Dialog'
 import ConfirmDialog from './ConfirmDialog'
 
-const ROLES = ['owner', 'runner', 'editor', 'viewer']
+const PROJECT_ROLES = ['owner', 'editor', 'file_register', 'viewer']
+const FILE_ROLES    = ['owner', 'runner', 'editor', 'viewer']
 const OWNER_ID = 'usr_owner'
 
 /**
@@ -16,6 +17,7 @@ const OWNER_ID = 'usr_owner'
 function PermissionSection({ mode = 'project', resourceID }) {
   const { t } = useTranslation()
   const { showToast } = useToast()
+  const ROLES = mode === 'file' ? FILE_ROLES : PROJECT_ROLES
   const { showError } = useMessage()
 
   // API ディスパッチ

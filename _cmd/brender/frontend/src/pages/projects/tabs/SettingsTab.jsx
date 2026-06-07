@@ -206,10 +206,12 @@ function SettingsTab({ detail, focusName, workDir, workDirs, role, onUpdated, on
   const nameRef = useRef(null)
   const hasFocused = useRef(false)
 
-  const isOwner  = role === 'owner'
-  const isEditor = role === 'editor'
-  const canEdit  = isOwner || isEditor  // editor 以上は保存可能
-  const readOnly = !canEdit             // viewer は閲覧のみ
+  const isOwner        = role === 'owner'
+  const isEditor       = role === 'editor'
+  const isFileRegister = role === 'file_register'
+  const canEdit        = isOwner || isEditor           // editor 以上は保存可能
+  const canAddFiles    = isOwner || isEditor || isFileRegister  // file_register 以上はファイル追加可能
+  const readOnly       = !canEdit                      // viewer / file_register は設定閲覧のみ
 
   useEffect(() => {
     setForm({ name: detail.project.name })
@@ -311,7 +313,7 @@ function SettingsTab({ detail, focusName, workDir, workDirs, role, onUpdated, on
         />
         )}
 
-        {isOwner && isWails() && (
+        {canAddFiles && isWails() && (
         <div style={{ marginTop: 16 }}>
           <button
             className="btn btn-sm btn-outline"
