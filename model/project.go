@@ -142,6 +142,33 @@ func loadProjectDetail(p *Project) (*ProjectDetail, error) {
 	return &ProjectDetail{Project: p, Files: files}, nil
 }
 
+// GetProjectForUser はユーザがアクセス可能なファイルのみを含むプロジェクト詳細を返す。
+func GetProjectForUser(id, userID string) (*ProjectDetail, error) {
+	var p Project
+	res := db.First(&p, "id = ?", id)
+	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if res.Error != nil {
+		return nil, xerrors.Errorf("GetProjectForUser: %w", res.Error)
+	}
+	fileIDs, err := ListAccessibleFileIDs(userID)
+	if err != nil {
+		return nil, err
+	}
+	if len(fileIDs) == 0 {
+		return &ProjectDetail{Project: &p, Files: []*ProjectFile{}}, nil
+	}
+	var files []*ProjectFile
+	if res := db.Where("project_id = ? AND id IN ?", p.ID, fileIDs).Find(&files); res.Error != nil {
+		return nil, xerrors.Errorf("GetProjectForUser files: %w", res.Error)
+	}
+	for _, f := range files {
+		populateFileInfo(f)
+	}
+	return &ProjectDetail{Project: &p, Files: files}, nil
+}
+
 // SelectProject は exec パッケージとの互換性のために残す
 func SelectProject(id string) (*Project, error) {
 	var p Project

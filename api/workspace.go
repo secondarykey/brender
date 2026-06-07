@@ -11,6 +11,10 @@ import (
 )
 
 func ListWorkspacesByProject(projectID string, sort, dir string) ([]*model.WorkspacesByFile, error) {
+	userID := model.CurrentUser()
+	if userID != model.UserIDOwner {
+		return model.ListWorkspacesByProjectForUser(projectID, userID, sort, dir)
+	}
 	return model.ListWorkspacesByProject(projectID, sort, dir)
 }
 

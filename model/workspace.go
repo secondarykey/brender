@@ -87,6 +87,45 @@ func ListWorkspacesByProject(projectID string, sort, dir string) ([]*WorkspacesB
 	return result, nil
 }
 
+// ListWorkspacesByProjectForUser はユーザがアクセス可能なファイルのみを含むワークスペース一覧を返す。
+func ListWorkspacesByProjectForUser(projectID, userID string, sort, dir string) ([]*WorkspacesByFile, error) {
+	fileIDs, err := ListAccessibleFileIDs(userID)
+	if err != nil {
+		return nil, err
+	}
+	if len(fileIDs) == 0 {
+		return []*WorkspacesByFile{}, nil
+	}
+
+	fileOrder := sort
+	if sort == "file_modified_at" {
+		fileOrder = "display_order"
+	}
+	order := resolveOrder(fileOrder, dir)
+	var files []*ProjectFile
+	if res := db.Where("project_id = ? AND id IN ?", projectID, fileIDs).Order(order).Find(&files); res.Error != nil {
+		return nil, xerrors.Errorf("ListWorkspacesByProjectForUser files: %w", res.Error)
+	}
+
+	wsOrder := resolveOrder(sort, dir)
+	result := make([]*WorkspacesByFile, 0, len(files))
+	for _, f := range files {
+		populateFileInfo(f)
+		var ws []*Workspace
+		if res := db.Where("project_id = ? AND project_file_id = ? AND is_system = ?", projectID, f.ID, false).
+			Order(wsOrder).Find(&ws); res.Error != nil {
+			return nil, xerrors.Errorf("ListWorkspacesByProjectForUser workspaces: %w", res.Error)
+		}
+		result = append(result, &WorkspacesByFile{File: f, Workspaces: ws})
+	}
+
+	if sort == "file_modified_at" {
+		sortFilesByModifiedAt(result, dir)
+	}
+
+	return result, nil
+}
+
 func sortFilesByModifiedAt(result []*WorkspacesByFile, dir string) {
 	desc := dir != "asc"
 	gosort.SliceStable(result, func(i, j int) bool {
