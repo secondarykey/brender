@@ -75,7 +75,7 @@ function FileCard({ projectID, g, navigate, projectName, thumbnailMode, onSetThu
   )
 }
 
-function WorkspaceTab({ projectID, navigate, projectName }) {
+function WorkspaceTab({ projectID, navigate, projectName, role }) {
   const { t } = useTranslation()
   const { showToast } = useToast()
   const { showError } = useMessage()
@@ -85,6 +85,11 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
   const [thumbnailMode, setThumbnailMode] = useState(false)
   const [sort, setSort] = useState(() => localStorage.getItem('sort:files') || 'display_order')
   const [dir, setDir]   = useState(() => localStorage.getItem('dir:files') || '')
+
+  const isOwner     = role === 'owner'
+  const isEditor    = role === 'editor'
+  const canEdit     = isOwner || isEditor
+  const canAddFiles = isOwner || isEditor || role === 'file_register'
 
   const load = (s, d) => {
     WorkspaceApi.listByProject({ projectID, sort: s, dir: d })
@@ -205,7 +210,7 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
             <SortSelect value={sort} onChange={handleSortChange} dir={dir} onDirChange={handleDirChange} options={['display_order', 'name', 'created_at', 'processed_at', 'file_modified_at']} />
           </>
         )}
-        {groups.length > 0 && (
+        {groups.length > 0 && canEdit && (
           <div style={{ marginLeft: 'auto' }}>
             <button
               className={`btn btn-sm${thumbnailMode ? ' btn-outline-active' : ' btn-outline'}`}
@@ -284,6 +289,7 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
 
 
       <div className="list-spacer" />
+      {canAddFiles && (
       <div className="list-fab">
         {uploading && (
           <div className="upload-progress">
@@ -314,6 +320,7 @@ function WorkspaceTab({ projectID, navigate, projectName }) {
           />
         )}
       </div>
+      )}
     </div>
   )
 }

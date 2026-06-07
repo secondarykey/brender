@@ -6,14 +6,21 @@ import (
 
 // 権限ロール
 const (
-	RoleOwner  = "owner"
-	RoleRunner = "runner"
-	RoleEditor = "editor"
-	RoleViewer = "viewer"
+	RoleOwner        = "owner"
+	RoleRunner       = "runner"
+	RoleEditor       = "editor"
+	RoleFileRegister = "file_register"
+	RoleViewer       = "viewer"
 )
 
-// AllRoles は有効なロール一覧。
-var AllRoles = []string{RoleOwner, RoleRunner, RoleEditor, RoleViewer}
+// AllRoles は全ロールの一覧。
+var AllRoles = []string{RoleOwner, RoleRunner, RoleEditor, RoleFileRegister, RoleViewer}
+
+// AllProjectRoles はプロジェクトで使用可能なロール。runner は含まない。
+var AllProjectRoles = []string{RoleOwner, RoleEditor, RoleFileRegister, RoleViewer}
+
+// AllFileRoles はファイルで使用可能なロール。file_register は含まない。
+var AllFileRoles = []string{RoleOwner, RoleRunner, RoleEditor, RoleViewer}
 
 // ProjectPermission はプロジェクトに対するユーザ/グループの権限。
 // TargetID は usr_* または grp_* のいずれか。
@@ -139,7 +146,7 @@ func GetUserProjectRole(projectID, userID string) (string, error) {
 		return "", xerrors.Errorf("GetUserProjectRole: %w", res.Error)
 	}
 	// 優先順位: owner > runner > editor > viewer
-	priority := map[string]int{RoleOwner: 4, RoleRunner: 3, RoleEditor: 2, RoleViewer: 1}
+	priority := map[string]int{RoleOwner: 5, RoleRunner: 4, RoleEditor: 3, RoleFileRegister: 2, RoleViewer: 1}
 	best := ""
 	bestP := 0
 	for _, p := range perms {
@@ -249,7 +256,7 @@ func GetUserFileRole(fileID, userID string) (string, error) {
 		Find(&perms); res.Error != nil {
 		return "", xerrors.Errorf("GetUserFileRole: %w", res.Error)
 	}
-	priority := map[string]int{RoleOwner: 4, RoleRunner: 3, RoleEditor: 2, RoleViewer: 1}
+	priority := map[string]int{RoleOwner: 5, RoleRunner: 4, RoleEditor: 3, RoleFileRegister: 2, RoleViewer: 1}
 	best := ""
 	bestP := 0
 	for _, p := range perms {

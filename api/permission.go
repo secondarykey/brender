@@ -19,9 +19,9 @@ func SetProjectPermission(projectID, targetID, role string) error {
 	if targetID == model.UserIDOwner {
 		return xerrors.New("Brender Owner の権限は変更できません")
 	}
-	// ロール検証
+	// プロジェクト用ロール検証（runner は不可）
 	valid := false
-	for _, r := range model.AllRoles {
+	for _, r := range model.AllProjectRoles {
 		if r == role {
 			valid = true
 			break
@@ -82,8 +82,9 @@ func SetFilePermission(fileID, targetID, role string) error {
 	if targetID == model.UserIDOwner {
 		return xerrors.New("Brender Owner の権限は変更できません")
 	}
+	// ファイル用ロール検証（file_register は不可）
 	valid := false
-	for _, r := range model.AllRoles {
+	for _, r := range model.AllFileRoles {
 		if r == role {
 			valid = true
 			break
