@@ -381,6 +381,8 @@
       "light": "Light"
     },
     "account": "Account",
+    "loginId": "Login ID",
+    "displayName": "Display Name",
     "logout": "Log Out",
     "loggingOut": "Logging out...",
     "selectFolder": "Select Folder",

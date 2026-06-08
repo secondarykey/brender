@@ -10,6 +10,7 @@ import Breadcrumb from '../../components/Breadcrumb'
 import { formatDate as fmt, formatDateFull, formatDateShort } from '../../lib/dateFormat'
 import { isWails } from '../../lib/api/_client'
 import MoviePlayer from '../../components/MoviePlayer'
+import AccessDenied from '../../components/AccessDenied'
 
 const VIDEO_EXTS = new Set(['.mp4', '.mov', '.avi', '.mkv', '.webm', '.m4v'])
 const IMAGE_EXTS = new Set(['.png', '.jpg', '.jpeg', '.exr', '.tiff', '.tif', '.bmp', '.hdr', '.webp', '.tga'])
@@ -899,7 +900,7 @@ function JobPage({ job: initialJob, jobID: propJobID, navigate, backPage, backPa
   }
 
   if (accessDenied) {
-    return <div className="page"><p className="setting-desc">{t('permission.accessDenied')}</p></div>
+    return <AccessDenied onBack={() => navigate(backPage || 'projects', backParams || {})} />
   }
 
   if (!job) {

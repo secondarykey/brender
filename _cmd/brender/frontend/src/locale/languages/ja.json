@@ -381,6 +381,8 @@
       "light": "ライトモード"
     },
     "account": "アカウント",
+    "loginId": "ログインID",
+    "displayName": "表示名",
     "logout": "ログアウト",
     "loggingOut": "ログアウト中...",
     "selectFolder": "フォルダを選択",

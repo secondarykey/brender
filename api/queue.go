@@ -1274,7 +1274,34 @@ func ListJobs() ([]*model.Job, error) {
 }
 
 func ListJobsPaged(filter *model.JobFilter, page, pageSize int) (*model.JobListResult, error) {
-	return model.ListJobsPaged(filter, page, pageSize)
+	result, err := model.ListJobsPaged(filter, page, pageSize)
+	if err != nil {
+		return nil, err
+	}
+	userID := model.CurrentUser()
+	if userID == model.UserIDOwner {
+		for _, j := range result.Jobs {
+			j.HasFileAccess = true
+		}
+	} else {
+		cache := map[string]bool{}
+		for _, j := range result.Jobs {
+			if j.ProjectFileID == "" {
+				j.HasFileAccess = true
+				continue
+			}
+			if v, ok := cache[j.ProjectFileID]; ok {
+				j.HasFileAccess = v
+				continue
+			}
+			ok, err := model.HasFileAccess(j.ProjectFileID, userID)
+			if err == nil {
+				j.HasFileAccess = ok
+			}
+			cache[j.ProjectFileID] = j.HasFileAccess
+		}
+	}
+	return result, nil
 }
 
 func UpdateJobMeta(id, name, note string) error {

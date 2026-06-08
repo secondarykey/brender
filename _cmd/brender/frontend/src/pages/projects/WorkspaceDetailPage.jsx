@@ -11,6 +11,7 @@ import ConfirmDialog from '../../components/ConfirmDialog'
 import HoldButton from '../../components/HoldButton'
 import Breadcrumb from '../../components/Breadcrumb'
 import NoteSection from '../../components/NoteSection'
+import AccessDenied from '../../components/AccessDenied'
 
 
 const isFrameDefault      = (start, end) => start === 0 && end === -1
@@ -1125,7 +1126,7 @@ function WorkspaceDetailPage({ projectID, projectName: initialProjectName, fileI
   }, [fileID, detail?.workspace?.project_file_id])
 
   if (accessDenied) {
-    return <div className="page"><p className="setting-desc">{t('permission.accessDenied')}</p></div>
+    return <AccessDenied onBack={() => navigate('file', { projectID, projectName: initialProjectName, fileID, fileName })} />
   }
 
   if (loadFailed && !detail) {

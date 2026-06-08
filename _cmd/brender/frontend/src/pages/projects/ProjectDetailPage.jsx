@@ -5,6 +5,7 @@ import { useMessage } from '../../lib/toast'
 import WorkspaceTab from './tabs/WorkspaceTab'
 import SettingsTab from './tabs/SettingsTab'
 import Breadcrumb from '../../components/Breadcrumb'
+import AccessDenied from '../../components/AccessDenied'
 
 function ProjectDetailPage({ id, initialTab, focusName, navigate }) {
   const { t } = useTranslation()
@@ -42,7 +43,7 @@ function ProjectDetailPage({ id, initialTab, focusName, navigate }) {
   useEffect(() => { load() }, [id])
 
   if (accessDenied) {
-    return <div className="page"><p className="setting-desc">{t('permission.accessDenied')}</p></div>
+    return <AccessDenied onBack={() => navigate('projects')} />
   }
 
   if (loadError) {
