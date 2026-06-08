@@ -61,7 +61,7 @@ function ProjectListPage({ navigate }) {
   const [hasWorkDir, setHasWorkDir] = useState(true)
   const [hasBlender, setHasBlender] = useState(true)
   const [creating, setCreating] = useState(false)
-  const [canCreateProject, setCanCreateProject] = useState(isWails()) // Wails=owner=admin
+  const [canCreateProject, setCanCreateProject] = useState(true) // デフォルト許可、ロール確認後に制限
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('viewMode:projects') || 'list')
   const [sort, setSort]         = useState(() => localStorage.getItem('sort:projects') || 'display_order')
   const [dir, setDir]           = useState(() => localStorage.getItem('dir:projects') || '')
@@ -105,9 +105,12 @@ function ProjectListPage({ navigate }) {
           if (u) {
             const role = u.role || 'creator'
             setCanCreateProject(role === 'admin' || role === 'creator')
+          } else {
+            // 認証無効（ユーザ管理オフ）→ 全員フルアクセス
+            setCanCreateProject(true)
           }
         })
-        .catch(() => {})
+        .catch(() => setCanCreateProject(true))
     }
   }, [])
 

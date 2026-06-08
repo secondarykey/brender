@@ -92,8 +92,17 @@ func (u *User) EffectiveRole() string {
 }
 
 // CanCreateProject はプロジェクト作成権限を持つかチェックする。
+// ユーザ管理（ServerAuth）が無効の場合は全員許可する。
 func CanCreateProject(userID string) (bool, error) {
 	if userID == UserIDOwner {
+		return true, nil
+	}
+	// ユーザ管理が無効なら全員許可（Guest でもフルアクセス）
+	env, err := GetEnv()
+	if err != nil {
+		return false, err
+	}
+	if env == nil || !env.ServerAuth {
 		return true, nil
 	}
 	if userID == UserIDGuest {
