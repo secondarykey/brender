@@ -1,18 +1,54 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { LANGUAGES } from '../../languages'
 import { useTheme } from '../../lib/theme'
 import { isWails } from '../../lib/api/_client'
 import { AuthApi } from '../../lib/api'
+import { useToast, useMessage } from '../../lib/toast'
 
 const THEME_OPTIONS = ['system', 'dark', 'light']
 
 function BasicSettings() {
   const { t, i18n } = useTranslation()
   const { preference, changeTheme } = useTheme()
+  const { showToast } = useToast()
+  const { showError } = useMessage()
   const [loggingOut, setLoggingOut] = useState(false)
+  const [user, setUser] = useState(null)
+  const [displayName, setDisplayName] = useState('')
+  const [savingName, setSavingName] = useState(false)
+  const savedDisplayName = useRef('')
 
   const serverMode = !isWails()
+
+  useEffect(() => {
+    if (!serverMode) return
+    AuthApi.me()
+      .then(u => {
+        if (u) {
+          setUser(u)
+          setDisplayName(u.display_name || '')
+          savedDisplayName.current = u.display_name || ''
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  const isDisplayNameDirty = displayName !== savedDisplayName.current
+
+  const handleSaveDisplayName = async () => {
+    if (!user) return
+    setSavingName(true)
+    try {
+      await AuthApi.updateUser({ id: user.id, name: user.name, displayName })
+      savedDisplayName.current = displayName
+      showToast(t('common.saved'))
+    } catch (e) {
+      showError(String(e))
+    } finally {
+      setSavingName(false)
+    }
+  }
 
   const handleLogout = async () => {
     setLoggingOut(true)
@@ -57,15 +93,42 @@ function BasicSettings() {
       {serverMode && (
         <>
           <h2 className="section-title" style={{ marginTop: 24 }}>{t('settings.account')}</h2>
-          <div className="setting-row">
-            <button
-              className="btn btn-danger"
-              onClick={handleLogout}
-              disabled={loggingOut}
-            >
-              {loggingOut ? t('settings.loggingOut') : t('settings.logout')}
-            </button>
-          </div>
+          {user && (
+            <div className="form" style={{ maxWidth: 480 }}>
+              <div className="form-field">
+                <label className="form-label">{t('settings.loginId')}</label>
+                <input
+                  type="text" className="form-input" style={{ width: '100%' }}
+                  value={user.name}
+                  disabled
+                />
+              </div>
+              <div className="form-field" style={{ marginTop: 12 }}>
+                <label className="form-label">{t('settings.displayName')}</label>
+                <input
+                  type="text" className="form-input" style={{ width: '100%' }}
+                  value={displayName}
+                  onChange={e => setDisplayName(e.target.value)}
+                />
+              </div>
+              <div className="form-actions" style={{ marginTop: 12 }}>
+                <button
+                  className="btn btn-danger"
+                  onClick={handleLogout}
+                  disabled={loggingOut}
+                >
+                  {loggingOut ? t('settings.loggingOut') : t('settings.logout')}
+                </button>
+                <button
+                  className="btn btn-green"
+                  onClick={handleSaveDisplayName}
+                  disabled={savingName || !isDisplayNameDirty}
+                >
+                  {savingName ? t('common.saving') : t('common.save')}
+                </button>
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>
