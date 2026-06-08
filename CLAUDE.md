@@ -283,6 +283,87 @@ On startup, `App.jsx` calls `EnvironmentApi.get()`. If `ProjectRoot` is not set,
 
 `EnvironmentApi.getWorkDir()` returns `os.Getwd()` for use as the default directory in the folder picker dialog.
 
+### 権限・アクセス制御
+
+サーバモードで複数ユーザが利用する場合のアクセス制御。3階層のロールシステムで構成される。
+
+#### 前提: ユーザ管理の有効条件
+権限チェックは `Environment.Server=true` かつ `Environment.ServerAuth=true` のときのみ有効。
+いずれかが `false`（Wails デスクトップモード、またはサーバモードでユーザ管理オフ）の場合、**全ての権限チェックをバイパス**し全員フルアクセスとなる。
+
+#### 1. アプリレベルロール (`User.Role`)
+ユーザ単位の全体権限。プロジェクト作成や管理操作を制御する。
+
+| ロール | 値 | 操作 |
+|---|---|---|
+| admin | `"admin"` | 全操作可（設定変更・ユーザ管理・プロジェクト作成） |
+| creator | `"creator"` | プロジェクト作成可 |
+| viewer | `"viewer"` | 閲覧のみ（プロジェクト作成不可） |
+
+**システムユーザのロールはハードコード**:
+- `usr_owner` (BrenderOwner) → 常に `admin`
+- `usr_guest` (Guest) → 常に `viewer`
+- 一般ユーザの `Role` が空の場合 → `creator`（後方互換）
+
+**判定関数**: `model.CanCreateProject(userID)` — `ServerAuth` が無効なら即 `true`。有効なら `EffectiveRole()` が `admin` または `creator` かチェック。
+
+#### 2. プロジェクトレベル権限 (`ProjectPermission`)
+プロジェクト単位でユーザ/グループに付与される。
+
+| ロール | 主な操作 |
+|---|---|
+| `owner` | プロジェクト設定変更・削除・権限管理 |
+| `editor` | プロジェクト設定の一部変更 |
+| `file_register` | ファイルの追加登録 |
+| `viewer` | 閲覧のみ |
+
+**デフォルト権限** (`SetDefaultProjectPermissions`): プロジェクト作成時に自動付与。
+- 作成者 → `owner`
+- `usr_owner` → `owner`（作成者と異なる場合）
+- `grp_all` (All Users) → `viewer`
+
+#### 3. ファイルレベル権限 (`FilePermission`)
+`.blend` ファイル単位でユーザ/グループに付与される。
+
+| ロール | 優先順位 | 主な操作 |
+|---|---|---|
+| `owner` | 6 | ファイル設定変更・削除・権限管理 |
+| `workspace_creator` | 5 | ワークスペースの作成 |
+| `editor` | 4 | ファイル設定の一部変更 |
+| `runner` | 3 | レンダリング実行 |
+| `viewer` | 1 | 閲覧のみ |
+
+ファイル追加時に `CopyProjectPermissionsToFile()` でプロジェクト権限をコピーする。
+
+#### 権限解決の仕組み
+- `TargetID` は `usr_*`（ユーザ）または `grp_*`（グループ）のいずれか
+- `collectTargetIDs(userID)` — ユーザ自身 + `grp_all` + 所属グループの全ID を収集
+- 複数のロールがマッチした場合、**最上位のロールを採用**（`GetUserProjectRole` / `GetUserFileRole`）
+- `HasProjectAccess` / `HasFileAccess` — いずれかの権限があるかの bool 判定
+
+#### ユーザ識別 (`model/user.go`)
+```go
+model.CurrentUser() // → ユーザID
+```
+- **REST モード**: goroutine-local storage から取得（認証ミドルウェアがセット）
+- **Wails モード**: グローバルデフォルト `usr_owner` を返す
+
+#### フロントエンドの権限制御
+
+**PermissionSection コンポーネント** (`src/components/PermissionSection.jsx`):
+- `mode='project'` / `mode='file'` で API を切り替え
+- Wails モードでは `EnvironmentApi.get()` で `server && server_auth` をチェック → 無効なら `return null`（非表示）
+- ブラウザモードでは常に表示
+
+**プロジェクト作成権限チェック** (`ProjectListPage.jsx`):
+- ブラウザモードで `AuthApi.me()` を呼びロールを確認
+- `me()` が `null`（認証無効 = ユーザ管理オフ）→ フルアクセス
+- `role` が `admin` / `creator` → 作成可、`viewer` → 作成不可
+
+**ジョブ履歴のファイルアクセス制御** (`QueuePage.jsx`, `JobManagement.jsx`):
+- `Job.HasFileAccess` (`gorm:"-"` フィールド) — `ListJobsPaged` で API 層がファイルID ごとにキャッシュして設定
+- `has_file_access === false` のジョブ → 行クリック・ダイアログ・ナビゲーションを抑制、ファイル名をリンクではなく淡色テキストで表示
+
 ### Scene / engine discovery
 - `BlenderApi.getScenes({ installID, fileID })` — runs `exec.RunTool()` (Python `--tool` script) on the `.blend` file to extract scene names.
 - `BlenderApi.getEngines({ installID })` — runs `blender -E help -b` and parses the engine list.
