@@ -1106,10 +1106,11 @@ func dispatchQueue(q *model.Queue, j *model.Job) {
 
 // QueueItem combines Queue (active state) with Job (parameters/names) for display.
 type QueueItem struct {
-	ID          string     `json:"id"`
-	Name        string     `json:"name"`
-	ProjectID   string     `json:"project_id"`
-	WorkspaceID string     `json:"workspace_id"`
+	ID            string     `json:"id"`
+	Name          string     `json:"name"`
+	ProjectID     string     `json:"project_id"`
+	ProjectFileID string     `json:"project_file_id"`
+	WorkspaceID   string     `json:"workspace_id"`
 	Engine        string     `json:"engine"`
 	StartFrame    int        `json:"start_frame"`
 	EndFrame      int        `json:"end_frame"`
@@ -1118,6 +1119,7 @@ type QueueItem struct {
 	StartedAt     *time.Time `json:"started_at"`
 	CreatedAt     *time.Time `json:"created_at"`
 	JobType       string     `json:"job_type"`
+	CanCancel     bool       `json:"can_cancel"`
 	// Progress (populated only while running)
 	NowFrame     int        `json:"now_frame"`
 	ExpectedAt   *time.Time `json:"expected_at,omitempty"`
@@ -1140,6 +1142,11 @@ func ListQueueItems() ([]*QueueItem, error) {
 	if err != nil {
 		return nil, err
 	}
+	userID := model.CurrentUser()
+	isOwner := userID == model.UserIDOwner
+	// ファイルIDごとのキャンセル権限キャッシュ（同一ファイルの複数キューで重複チェック回避）
+	cancelCache := map[string]bool{}
+
 	items := make([]*QueueItem, 0, len(queues))
 	for _, q := range queues {
 		item := &QueueItem{
@@ -1150,6 +1157,7 @@ func ListQueueItems() ([]*QueueItem, error) {
 			ProcessID:   q.ProcessID,
 			StartedAt:   q.StartedAt,
 			CreatedAt:   q.CreatedAt,
+			CanCancel:   isOwner,
 		}
 		if j, err := model.GetJob(q.ID); err == nil && j != nil {
 			item.Name = j.Name
@@ -1157,9 +1165,22 @@ func ListQueueItems() ([]*QueueItem, error) {
 			item.StartFrame = j.StartFrame
 			item.EndFrame = j.EndFrame
 			item.JobType = j.JobType
+			item.ProjectFileID = j.ProjectFileID
 			if j.JobType == model.JobTypeSamplesComparison && j.SamplesList != "" {
 				item.EndFrame = len(exec.ParseSamplesList(j.SamplesList))
 				item.StartFrame = 0
+			}
+			// runner 以上がキャンセル可能
+			if !isOwner && j.ProjectFileID != "" {
+				if cached, ok := cancelCache[j.ProjectFileID]; ok {
+					item.CanCancel = cached
+				} else {
+					ok, err := model.HasFileRole(j.ProjectFileID, userID, []string{model.RoleOwner, model.RoleWorkspaceCreator, model.RoleEditor, model.RoleRunner})
+					if err == nil {
+						item.CanCancel = ok
+					}
+					cancelCache[j.ProjectFileID] = item.CanCancel
+				}
 			}
 		}
 		if pr := exec.GetProgress(q.ID); pr != nil {
@@ -1201,6 +1222,23 @@ func CancelQueue(id string) error {
 	q, err := model.GetQueue(id)
 	if err != nil {
 		return xerrors.Errorf("GetQueue: %w", err)
+	}
+	// runner 以上の権限が必要
+	userID := model.CurrentUser()
+	if userID != model.UserIDOwner {
+		j, err := model.GetJob(id)
+		if err != nil {
+			return xerrors.Errorf("CancelQueue GetJob: %w", err)
+		}
+		if j != nil && j.ProjectFileID != "" {
+			ok, err := model.HasFileRole(j.ProjectFileID, userID, []string{model.RoleOwner, model.RoleWorkspaceCreator, model.RoleEditor, model.RoleRunner})
+			if err != nil {
+				return xerrors.Errorf("CancelQueue permission check: %w", err)
+			}
+			if !ok {
+				return xerrors.New("access denied")
+			}
+		}
 	}
 	if q.Status != model.QueueRunning && q.Status != model.QueueWaiting && q.Status != model.QueueRecovering {
 		return xerrors.New("実行中または待機中のジョブではありません")
