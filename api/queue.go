@@ -382,6 +382,17 @@ func TestEnqueue(projectID, workspaceID string, params TestRenderParams) (*model
 	if err != nil || w == nil {
 		return nil, xerrors.Errorf("workspace not found: %w", err)
 	}
+	// runner 以上の権限が必要
+	userID := model.CurrentUser()
+	if userID != model.UserIDOwner && w.ProjectFileID != "" {
+		ok, err := model.HasFileRole(w.ProjectFileID, userID, []string{model.RoleOwner, model.RoleWorkspaceCreator, model.RoleEditor, model.RoleRunner})
+		if err != nil {
+			return nil, xerrors.Errorf("TestEnqueue permission check: %w", err)
+		}
+		if !ok {
+			return nil, xerrors.New("access denied")
+		}
+	}
 	p, err := model.SelectProject(projectID)
 	if err != nil || p == nil {
 		return nil, xerrors.Errorf("project not found: %w", err)
@@ -495,6 +506,18 @@ func TestEnqueue(projectID, workspaceID string, params TestRenderParams) (*model
 
 // EnqueueWithPreview は解決済みの RenderPreview を使ってジョブを作成・実行する。
 func EnqueueWithPreview(projectID, workspaceID string, preview *RenderPreview) (*model.Queue, error) {
+	// runner 以上の権限が必要
+	userID := model.CurrentUser()
+	if userID != model.UserIDOwner && preview != nil && preview.ProjectFileID != "" {
+		ok, err := model.HasFileRole(preview.ProjectFileID, userID, []string{model.RoleOwner, model.RoleWorkspaceCreator, model.RoleEditor, model.RoleRunner})
+		if err != nil {
+			return nil, xerrors.Errorf("EnqueueWithPreview permission check: %w", err)
+		}
+		if !ok {
+			return nil, xerrors.New("access denied")
+		}
+	}
+
 	baseDir, err := GetProjectBaseDir(projectID)
 	if err != nil {
 		return nil, xerrors.Errorf("GetProjectBaseDir: %w", err)
@@ -614,6 +637,21 @@ func Enqueue(projectID string, workspaceID string) (*model.Queue, error) {
 func SamplesComparisonEnqueue(projectID, workspaceID string, sampleCounts []int, frame int) (*model.Queue, error) {
 	if len(sampleCounts) == 0 {
 		return nil, xerrors.New("サンプル数リストが空です")
+	}
+
+	// runner 以上の権限が必要
+	userID := model.CurrentUser()
+	if userID != model.UserIDOwner {
+		w, wErr := model.SelectWorkspace(projectID, workspaceID)
+		if wErr == nil && w != nil && w.ProjectFileID != "" {
+			ok, err := model.HasFileRole(w.ProjectFileID, userID, []string{model.RoleOwner, model.RoleWorkspaceCreator, model.RoleEditor, model.RoleRunner})
+			if err != nil {
+				return nil, xerrors.Errorf("SamplesComparisonEnqueue permission check: %w", err)
+			}
+			if !ok {
+				return nil, xerrors.New("access denied")
+			}
+		}
 	}
 
 	preview, err := PreviewRender(projectID, workspaceID)
@@ -1202,6 +1240,21 @@ func ListJobsPaged(filter *model.JobFilter, page, pageSize int) (*model.JobListR
 }
 
 func UpdateJobMeta(id, name, note string) error {
+	// runner 以上の権限が必要
+	userID := model.CurrentUser()
+	if userID != model.UserIDOwner {
+		j, err := model.GetJob(id)
+		if err != nil {
+			return xerrors.Errorf("UpdateJobMeta GetJob: %w", err)
+		}
+		ok, err := model.HasFileRole(j.ProjectFileID, userID, []string{model.RoleOwner, model.RoleWorkspaceCreator, model.RoleEditor, model.RoleRunner})
+		if err != nil {
+			return xerrors.Errorf("UpdateJobMeta permission check: %w", err)
+		}
+		if !ok {
+			return xerrors.New("access denied")
+		}
+	}
 	return model.UpdateJobMeta(id, name, note)
 }
 
@@ -1209,6 +1262,17 @@ func DeleteJob(id string) error {
 	j, err := model.GetJob(id)
 	if err != nil {
 		return xerrors.Errorf("DeleteJob GetJob: %w", err)
+	}
+	// runner 以上の権限が必要
+	userID := model.CurrentUser()
+	if userID != model.UserIDOwner {
+		ok, err := model.HasFileRole(j.ProjectFileID, userID, []string{model.RoleOwner, model.RoleWorkspaceCreator, model.RoleEditor, model.RoleRunner})
+		if err != nil {
+			return xerrors.Errorf("DeleteJob permission check: %w", err)
+		}
+		if !ok {
+			return xerrors.New("access denied")
+		}
 	}
 	if j.DataStatus%2 == 1 {
 		return xerrors.New("ロック中のジョブは削除できません")
@@ -1278,6 +1342,17 @@ func DeleteJobData(id string) error {
 	j, err := model.GetJob(id)
 	if err != nil {
 		return xerrors.Errorf("DeleteJobData GetJob: %w", err)
+	}
+	// runner 以上の権限が必要
+	userID := model.CurrentUser()
+	if userID != model.UserIDOwner {
+		ok, err := model.HasFileRole(j.ProjectFileID, userID, []string{model.RoleOwner, model.RoleWorkspaceCreator, model.RoleEditor, model.RoleRunner})
+		if err != nil {
+			return xerrors.Errorf("DeleteJobData permission check: %w", err)
+		}
+		if !ok {
+			return xerrors.New("access denied")
+		}
 	}
 	if j.DataStatus%2 == 1 {
 		return xerrors.New("ロック中のジョブのデータは削除できません")
@@ -1548,6 +1623,17 @@ func DeleteJobFiles(id string, filePaths []string) error {
 	j, err := model.GetJob(id)
 	if err != nil {
 		return xerrors.Errorf("DeleteJobFiles GetJob: %w", err)
+	}
+	// runner 以上の権限が必要
+	userID := model.CurrentUser()
+	if userID != model.UserIDOwner {
+		ok, err := model.HasFileRole(j.ProjectFileID, userID, []string{model.RoleOwner, model.RoleWorkspaceCreator, model.RoleEditor, model.RoleRunner})
+		if err != nil {
+			return xerrors.Errorf("DeleteJobFiles permission check: %w", err)
+		}
+		if !ok {
+			return xerrors.New("access denied")
+		}
 	}
 	if j.DataStatus%2 == 1 {
 		return xerrors.New("ロック中のジョブのファイルは削除できません")

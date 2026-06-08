@@ -632,6 +632,7 @@
     "actions": "Actions",
     "roles": {
       "owner": "Owner",
+      "workspace_creator": "Workspace Creator",
       "runner": "Runner",
       "editor": "Editor",
       "file_register": "File Register",

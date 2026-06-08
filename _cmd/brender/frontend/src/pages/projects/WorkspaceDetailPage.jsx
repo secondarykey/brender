@@ -235,7 +235,7 @@ function DefaultTag({ value, t }) {
 }
 
 // ── 設定タブ ──────────────────────────────────────────────
-function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, detail, focusName, onUpdated, onDeleted, onTestEnqueued, onRenderEnqueued, workDirLocked, navigate, wsStale }) {
+function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, detail, focusName, role, onUpdated, onDeleted, onTestEnqueued, onRenderEnqueued, workDirLocked, navigate, wsStale }) {
   const { t } = useTranslation()
   const { showToast } = useToast()
   const { showError } = useMessage()
@@ -261,6 +261,17 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
   const [renderConfirm, setRenderConfirm]   = useState(null)
   const [renderEnqueuing, setRenderEnqueuing] = useState(false)
   const [resolvingRender, setResolvingRender] = useState(false)
+
+  // Role-based permissions
+  // viewer < runner < editor < workspace_creator < owner
+  const isOwner            = role === 'owner'
+  const isWorkspaceCreator = role === 'workspace_creator'
+  const isEditor           = role === 'editor'
+  const isRunner           = role === 'runner'
+  const canCopyDelete      = isOwner || isWorkspaceCreator                             // workspace_creator 以上
+  const canSave            = isOwner || isWorkspaceCreator || isEditor                 // editor 以上
+  const canRun             = isOwner || isWorkspaceCreator || isEditor || isRunner      // runner 以上
+  const readOnly           = !canSave                                                  // runner / viewer は設定編集不可
   const [samplesDialogOpen, setSamplesDialogOpen] = useState(false)
   const [samplesListText, setSamplesListText]     = useState('2,4,8,16,32,64,128,256,512')
   const [samplesFrame, setSamplesFrame]           = useState(() => {
@@ -637,7 +648,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
       <div className="form-row">
         <div className="form-field" style={{ flex: 2 }}>
           <label className="form-label">{t('workspace.name')} <span className="required">*</span></label>
-          <input ref={nameRef} className="form-input" value={form.name} onChange={e => set('name', e.target.value)} />
+          <input ref={nameRef} className="form-input" value={form.name} onChange={e => set('name', e.target.value)} disabled={readOnly} />
         </div>
         <div className="form-field" style={{ flex: 1 }}>
           <label className="form-label">
@@ -650,7 +661,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
           {fileBlenderFixed ? (
             <input className="form-input" value={lockedBlenderName} disabled style={{ opacity: 0.5 }} />
           ) : (
-            <select className="form-select" value={form.blenderInstallID} onChange={e => set('blenderInstallID', Number(e.target.value))}>
+            <select className="form-select" value={form.blenderInstallID} onChange={e => set('blenderInstallID', Number(e.target.value))} disabled={readOnly}>
               <option value={0}>{t('common.notSet')}</option>
               {blenders.map(b => (
                 <option key={b.id} value={b.id}>{b.name} ({b.version || t('common.versionUnknown')})</option>
@@ -675,12 +686,12 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
           {fileEngineFixed ? (
             <input className="form-input" value={fileEngine || sceneInfo?.Engine || t('common.notSet')} disabled style={{ opacity: 0.5 }} />
           ) : engines.length > 0 ? (
-            <select className="form-select" value={form.engine} onChange={e => { set('engine', e.target.value); setMissingEngine(''); setConvertedEngine(null) }} disabled={enginesLoading}>
+            <select className="form-select" value={form.engine} onChange={e => { set('engine', e.target.value); setMissingEngine(''); setConvertedEngine(null) }} disabled={enginesLoading || readOnly}>
               <option value="">{t('common.notSet')}</option>
               {engines.map(eng => <option key={eng} value={eng}>{eng}</option>)}
             </select>
           ) : (
-            <input className="form-input" value={form.engine} onChange={e => set('engine', e.target.value)} placeholder={t('workspace.enginePlaceholder')} />
+            <input className="form-input" value={form.engine} onChange={e => set('engine', e.target.value)} placeholder={t('workspace.enginePlaceholder')} disabled={readOnly} />
           )}
           {fileEngineFixed && (
             <span className="form-hint">{t('workspace.engineLockedByFile')}</span>
@@ -690,14 +701,14 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
         </div>
         <div className="form-field" style={{ flex: '0 0 80px', minWidth: 0 }}>
           <label className="form-label">{t('workspace.samples')}</label>
-          <input className="form-input" style={{ textAlign: 'right', width: '100%' }} type="number" min={0} value={form.samples} onChange={e => set('samples', Number(e.target.value))} />
+          <input className="form-input" style={{ textAlign: 'right', width: '100%' }} type="number" min={0} value={form.samples} onChange={e => set('samples', Number(e.target.value))} disabled={readOnly} />
           {samplesDefault > 0 && (
             <span className="form-hint" style={{ whiteSpace: 'nowrap' }}>{t('workspace.samplesDefaultValue', { count: samplesDefault })}</span>
           )}
         </div>
         <div className="form-field" style={{ flex: '0 0 80px', minWidth: 0 }}>
           <label className="form-label">{t('workspace.threads')}</label>
-          <input className="form-input" style={{ textAlign: 'right', width: '100%' }} type="number" min={0} value={form.thread} onChange={e => set('thread', Number(e.target.value))} />
+          <input className="form-input" style={{ textAlign: 'right', width: '100%' }} type="number" min={0} value={form.thread} onChange={e => set('thread', Number(e.target.value))} disabled={readOnly} />
           <span className="form-hint" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={threadsHint}>{threadsHint}</span>
         </div>
       </div>
@@ -714,12 +725,12 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
           {fileSceneFixed ? (
             <input className="form-input" value={fileScene || activeScene?.Name || t('common.notSet')} disabled style={{ opacity: 0.5 }} />
           ) : scenes.length > 0 ? (
-            <select className="form-select" value={form.scene} onChange={e => { set('scene', e.target.value); set('camera', ''); setMissingScene(''); setMissingCamera('') }} disabled={toolLoading}>
+            <select className="form-select" value={form.scene} onChange={e => { set('scene', e.target.value); set('camera', ''); setMissingScene(''); setMissingCamera('') }} disabled={toolLoading || readOnly}>
               <option value="">{t('common.notSet')}</option>
               {scenes.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           ) : (
-            <input className="form-input" value={form.scene} onChange={e => set('scene', e.target.value)} placeholder={t('common.notSetPlaceholder')} />
+            <input className="form-input" value={form.scene} onChange={e => set('scene', e.target.value)} placeholder={t('common.notSetPlaceholder')} disabled={readOnly} />
           )}
           {missingScene && <span className="form-hint" style={{ color: '#e74c3c' }}>{t('workspace.sceneMissing', { name: missingScene })}</span>}
         </div>
@@ -738,7 +749,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
               className="form-select"
               value={form.camera}
               onChange={e => { set('camera', e.target.value); setMissingCamera('') }}
-              disabled={toolLoading}
+              disabled={toolLoading || readOnly}
             >
               <option value="">{t('common.notSet')}</option>
               {allCameras
@@ -753,7 +764,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
 
       <div className="form-field">
         <label className="form-checkbox-label">
-          <input type="checkbox" checked={specifyResolution} onChange={e => handleSpecifyResolution(e.target.checked)} />
+          <input type="checkbox" checked={specifyResolution} onChange={e => handleSpecifyResolution(e.target.checked)} disabled={readOnly} />
           {t('workspace.specifyResolution')}
           <DefaultTag value={resolutionDefault} t={t} />
         </label>
@@ -768,6 +779,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
                   const p = resolutionPresets.find(p => p.code === e.target.value)
                   if (p) setForm(prev => ({ ...prev, resolutionX: p.width, resolutionY: p.height }))
                 }}
+                disabled={readOnly}
               >
                 <option value="">—</option>
                 {resolutionPresets.map(p => (
@@ -777,7 +789,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
             </div>
             <div className="form-field">
               <label className="form-label">{t('workspace.resolutionX')}</label>
-              <input className="form-input" style={{ width: 100, textAlign: 'right' }} type="number" min={1} value={form.resolutionX} onChange={e => set('resolutionX', Number(e.target.value))} />
+              <input className="form-input" style={{ width: 100, textAlign: 'right' }} type="number" min={1} value={form.resolutionX} onChange={e => set('resolutionX', Number(e.target.value))} disabled={readOnly} />
             </div>
             <div style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: 4 }}>
               <button
@@ -785,13 +797,14 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
                 className="btn btn-sm btn-ghost"
                 title={t('workspace.swapResolution')}
                 onClick={() => setForm(prev => ({ ...prev, resolutionX: prev.resolutionY, resolutionY: prev.resolutionX }))}
+                disabled={readOnly}
               >
                 ⇄
               </button>
             </div>
             <div className="form-field">
               <label className="form-label">{t('workspace.resolutionY')}</label>
-              <input className="form-input" style={{ width: 100, textAlign: 'right' }} type="number" min={1} value={form.resolutionY} onChange={e => set('resolutionY', Number(e.target.value))} />
+              <input className="form-input" style={{ width: 100, textAlign: 'right' }} type="number" min={1} value={form.resolutionY} onChange={e => set('resolutionY', Number(e.target.value))} disabled={readOnly} />
             </div>
           </div>
         )}
@@ -799,7 +812,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
 
       <div className="form-field">
         <label className="form-checkbox-label">
-          <input type="checkbox" checked={specifyFrames} onChange={e => handleSpecifyFrames(e.target.checked)} />
+          <input type="checkbox" checked={specifyFrames} onChange={e => handleSpecifyFrames(e.target.checked)} disabled={readOnly} />
           {t('workspace.specifyFrameRange')}
           <DefaultTag value={frameDefault} t={t} />
         </label>
@@ -807,15 +820,15 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
           <div className="form-row" style={{ marginTop: 8 }}>
             <div className="form-field">
               <label className="form-label">{t('workspace.startFrame')}</label>
-              <input className="form-input" style={{ width: 100, textAlign: 'right' }} type="number" min={0} value={form.startFrame} onChange={e => set('startFrame', Number(e.target.value))} />
+              <input className="form-input" style={{ width: 100, textAlign: 'right' }} type="number" min={0} value={form.startFrame} onChange={e => set('startFrame', Number(e.target.value))} disabled={readOnly} />
             </div>
             <div className="form-field">
               <label className="form-label">{t('workspace.endFrame')}</label>
-              <input className="form-input" style={{ width: 100, textAlign: 'right' }} type="number" min={0} value={form.endFrame} onChange={e => set('endFrame', Number(e.target.value))} />
+              <input className="form-input" style={{ width: 100, textAlign: 'right' }} type="number" min={0} value={form.endFrame} onChange={e => set('endFrame', Number(e.target.value))} disabled={readOnly} />
             </div>
             <div className="form-field">
               <label className="form-label">{t('workspace.frameStep')}</label>
-              <input className="form-input" style={{ width: 80, textAlign: 'right' }} type="number" min={1} value={form.frameStep} onChange={e => set('frameStep', Number(e.target.value))} />
+              <input className="form-input" style={{ width: 80, textAlign: 'right' }} type="number" min={1} value={form.frameStep} onChange={e => set('frameStep', Number(e.target.value))} disabled={readOnly} />
               <span className="form-hint">{t('workspace.frameStepHint')}</span>
             </div>
           </div>
@@ -829,7 +842,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
             <DefaultTag value={imageFormats.find(f => f.code === (envOutputFormat || 'PNG'))?.label ?? (envOutputFormat || 'PNG')} t={t} />
           )}
         </div>
-        <select className="form-select" style={{ width: 200 }} value={form.outputFormat} onChange={e => set('outputFormat', e.target.value)}>
+        <select className="form-select" style={{ width: 200 }} value={form.outputFormat} onChange={e => set('outputFormat', e.target.value)} disabled={readOnly}>
           <option value="">{t('common.notSet')}</option>
           {imageFormats.map(f => (
             <option key={f.code} value={f.code}>{f.label}</option>
@@ -842,11 +855,11 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
       {error && <div className="error-msg">{error}</div>}
       {testEnqueued && <div className="warning-msg">{t('workspace.testEnqueued')}</div>}
 
-      <NoteSection value={note} onChange={setNote} />
+      <NoteSection value={note} onChange={setNote} disabled={readOnly} />
 
       <div className="form-field">
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <input type="checkbox" id="autoLock" checked={form.autoLock} onChange={e => set('autoLock', e.target.checked)} />
+          <input type="checkbox" id="autoLock" checked={form.autoLock} onChange={e => set('autoLock', e.target.checked)} disabled={readOnly} />
           <label htmlFor="autoLock" className="form-label" style={{ marginBottom: 0, cursor: 'pointer' }}>{t('workspace.autoLock')}</label>
         </div>
         {form.autoLock && (
@@ -854,44 +867,60 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
             <div className="form-field" style={{ flex: 1 }}>
               <label className="form-label">{t('workspace.autoLockMinSize')}</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <input className="form-input" style={{ width: 120, textAlign: 'right' }} type="number" min={0} value={Math.round(form.autoLockMinSize / (1024 * 1024))} onChange={e => set('autoLockMinSize', Number(e.target.value) * 1024 * 1024)} />
+                <input className="form-input" style={{ width: 120, textAlign: 'right' }} type="number" min={0} value={Math.round(form.autoLockMinSize / (1024 * 1024))} onChange={e => set('autoLockMinSize', Number(e.target.value) * 1024 * 1024)} disabled={readOnly} />
                 <span style={{ fontSize: '0.85rem', opacity: 0.7 }}>MB</span>
               </div>
             </div>
             <div className="form-field" style={{ flex: 1 }}>
               <label className="form-label">{t('workspace.autoLockKeep')}</label>
-              <input className="form-input" style={{ width: 80, textAlign: 'right' }} type="number" min={1} value={form.autoLockKeep} onChange={e => set('autoLockKeep', Math.max(1, Number(e.target.value)))} />
+              <input className="form-input" style={{ width: 80, textAlign: 'right' }} type="number" min={1} value={form.autoLockKeep} onChange={e => set('autoLockKeep', Math.max(1, Number(e.target.value)))} disabled={readOnly} />
             </div>
           </div>
         )}
       </div>
 
+      {(canRun || canCopyDelete) && (
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+        {canRun && (
         <button className="btn btn-outline btn-sm" onClick={() => setSamplesDialogOpen(true)} disabled={workDirLocked || isFormDirty}>
           {t('workspace.samplesComparison')}
         </button>
+        )}
+        {canCopyDelete && (
         <button className="btn btn-outline btn-sm" onClick={() => setCopyConfirm(true)} disabled={copying}>
           {t('workspace.copy')}
         </button>
+        )}
       </div>
+      )}
 
-      <div className="form-actions">
+      {(canRun || canSave || canCopyDelete) && (
+      <div className="form-actions" style={canCopyDelete ? undefined : { justifyContent: 'flex-end' }}>
+        {canCopyDelete && (
         <button className="btn btn-danger" onClick={() => { setForceDel(false); setConfirm(true) }}>{t('common.delete')}</button>
+        )}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
           <div style={{ display: 'flex', gap: 8 }}>
+          {canRun && (
           <button className="btn btn-run" onClick={handleTestEncode} disabled={testEnqueueing || workDirLocked}>
             {testEnqueueing ? t('common.enqueueing') : t('workspace.testRender')}
           </button>
+          )}
+          {canRun && (
           <button className="btn btn-run" onClick={handleRenderClick} disabled={resolvingRender || workDirLocked || isFormDirty}>
             {resolvingRender ? t('common.processing') : `▶ ${t('common.run')}`}
           </button>
+          )}
+          {canSave && (
           <button className="btn btn-green" onClick={handleSave} disabled={saving || !isDirty}>
             {saving ? t('common.saving') : t('common.save')}
           </button>
+          )}
           </div>
-          <span style={{ fontSize: '0.75rem', opacity: 0.45 }}>{t('workspace.testHint')}</span>
+          {canRun && <span style={{ fontSize: '0.75rem', opacity: 0.45 }}>{t('workspace.testHint')}</span>}
         </div>
       </div>
+      )}
 
       <Dialog
         open={!!renderConfirm}
@@ -1052,6 +1081,7 @@ function WorkspaceDetailPage({ projectID, projectName: initialProjectName, fileI
   const [accessDenied, setAccessDenied] = useState(false)
   const [historyReload, setHistoryReload] = useState(0)
   const [workDirStatus, setWorkDirStatus] = useState(null)
+  const [fileRole, setFileRole]       = useState('owner')
 
   const load = useCallback(() => {
     WorkspaceApi.get({ projectID, workspaceID })
@@ -1082,6 +1112,17 @@ function WorkspaceDetailPage({ projectID, projectName: initialProjectName, fileI
         if (String(err).includes('access denied')) setProjectName(t('permission.accessDeniedLabel'))
       })
   }, [projectID])
+
+  // ファイル権限のロール取得
+  useEffect(() => {
+    const fid = fileID || detail?.workspace?.project_file_id
+    if (!fid) return
+    ProjectApi.getFile({ fileID: fid })
+      .then(f => {
+        if (f?.my_role) setFileRole(f.my_role)
+      })
+      .catch(() => {})
+  }, [fileID, detail?.workspace?.project_file_id])
 
   if (accessDenied) {
     return <div className="page"><p className="setting-desc">{t('permission.accessDenied')}</p></div>
@@ -1131,6 +1172,7 @@ function WorkspaceDetailPage({ projectID, projectName: initialProjectName, fileI
             workspaceID={workspaceID}
             detail={detail}
             focusName={focusName}
+            role={fileRole}
             onUpdated={() => {}}
             onDeleted={() => navigate('file', { projectID, projectName, fileID: effectiveFileID, fileName: effectiveFileName })}
             onTestEnqueued={() => setHistoryReload(n => n + 1)}

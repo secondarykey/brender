@@ -80,7 +80,7 @@ function Row({ label, value, selectable }) {
 }
 
 // ── 詳細タブ ──────────────────────────────────────────────
-function DetailTab({ job, onDeleted, onDataStatusChanged }) {
+function DetailTab({ job, onDeleted, onDataStatusChanged, role }) {
   const { t } = useTranslation()
   const { showToast } = useToast()
   const { showError } = useMessage()
@@ -92,6 +92,14 @@ function DetailTab({ job, onDeleted, onDataStatusChanged }) {
   const [metaNote, setMetaNote]         = useState(job?.note || '')
   const [savingMeta, setSavingMeta]     = useState(false)
   const savedMeta = useRef({ name: job?.name || '', note: job?.note || '' })
+
+  // runner 以上が削除・保存可能、viewer は読み取り専用
+  const isOwner            = role === 'owner'
+  const isWorkspaceCreator = role === 'workspace_creator'
+  const isEditor           = role === 'editor'
+  const isRunner           = role === 'runner'
+  const canModify          = isOwner || isWorkspaceCreator || isEditor || isRunner
+  const readOnly           = !canModify
 
   const isMetaDirty = metaName !== savedMeta.current.name || metaNote !== savedMeta.current.note
 
@@ -149,6 +157,7 @@ function DetailTab({ job, onDeleted, onDataStatusChanged }) {
               type="text" className="form-input" style={{ width: '100%' }}
               value={metaName}
               onChange={e => setMetaName(e.target.value)}
+              disabled={readOnly}
             />
           </div>
           <div className="form-field">
@@ -159,15 +168,18 @@ function DetailTab({ job, onDeleted, onDataStatusChanged }) {
               value={metaNote}
               onChange={e => setMetaNote(e.target.value)}
               placeholder={t('job.notePlaceholder')}
+              disabled={readOnly}
             />
           </div>
         </div>
-        <div className="form-actions" style={{ marginTop: 16 }}>
-          <button className="btn btn-danger" onClick={() => setConfirm(true)} disabled={isLocked}>{t('common.delete')}</button>
-          <button className="btn btn-green" onClick={handleSaveMeta} disabled={savingMeta || !isMetaDirty}>
-            {savingMeta ? t('common.saving') : t('common.save')}
-          </button>
-        </div>
+        {canModify && (
+          <div className="form-actions" style={{ marginTop: 16 }}>
+            <button className="btn btn-danger" onClick={() => setConfirm(true)} disabled={isLocked}>{t('common.delete')}</button>
+            <button className="btn btn-green" onClick={handleSaveMeta} disabled={savingMeta || !isMetaDirty}>
+              {savingMeta ? t('common.saving') : t('common.save')}
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="ws-detail-right" style={{ flex: 3 }}>
@@ -239,7 +251,7 @@ function DetailTab({ job, onDeleted, onDataStatusChanged }) {
 }
 
 // ── レンダリング結果タブ ───────────────────────────────────
-function RenderResultTab({ job }) {
+function RenderResultTab({ job, role }) {
   const { t } = useTranslation()
   const { showToast } = useToast()
   const { showError } = useMessage()
@@ -251,6 +263,14 @@ function RenderResultTab({ job }) {
   const [playing, setPlaying]           = useState(false)
   const [loop, setLoop]                 = useState(false)
   const [settingThumb, setSettingThumb] = useState(false)
+
+  // サムネイル設定: editor 以上、動画作成: runner 以上
+  const isOwner            = role === 'owner'
+  const isWorkspaceCreator = role === 'workspace_creator'
+  const isEditor           = role === 'editor'
+  const isRunner           = role === 'runner'
+  const canSetThumbnail    = isOwner || isWorkspaceCreator || isEditor
+  const canCreateMovie     = isOwner || isWorkspaceCreator || isEditor || isRunner
   const [moviePath, setMoviePath]           = useState('')
   const [creatingMovie, setCreatingMovie]   = useState(false)
   const [movieDialogOpen, setMovieDialogOpen] = useState(false)
@@ -392,11 +412,13 @@ function RenderResultTab({ job }) {
 
   return (
     <div className="job-page-viewer">
-      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-        <button className="btn btn-sm btn-outline" onClick={handleSetThumbnail} disabled={settingThumb || images.length === 0}>
-          {settingThumb ? '...' : t('viewer.setAsThumbnail')}
-        </button>
-      </div>
+      {canSetThumbnail && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+          <button className="btn btn-sm btn-outline" onClick={handleSetThumbnail} disabled={settingThumb || images.length === 0}>
+            {settingThumb ? '...' : t('viewer.setAsThumbnail')}
+          </button>
+        </div>
+      )}
 
       <div className="image-viewer-body">
         {loadingList && <div className="image-viewer-loading">{t('common.loading')}</div>}
@@ -435,11 +457,13 @@ function RenderResultTab({ job }) {
             </button>
           )}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button className="btn btn-sm btn-green" onClick={handleOpenMovieDialog} disabled={creatingMovie || images.length <= 1}>
-            {creatingMovie ? t('viewer.movieCreating') : t('viewer.createMovie')}
-          </button>
-        </div>
+        {canCreateMovie && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button className="btn btn-sm btn-green" onClick={handleOpenMovieDialog} disabled={creatingMovie || images.length <= 1}>
+              {creatingMovie ? t('viewer.movieCreating') : t('viewer.createMovie')}
+            </button>
+          </div>
+        )}
       </div>
 
       <Dialog
@@ -515,7 +539,7 @@ function RenderResultTab({ job }) {
 }
 
 // ── データ表示タブ ────────────────────────────────────────
-function DataViewTab({ job }) {
+function DataViewTab({ job, role }) {
   const { t } = useTranslation()
   const { showError } = useMessage()
   const [files, setFiles]               = useState([])
@@ -524,6 +548,13 @@ function DataViewTab({ job }) {
   const [downloading, setDownloading]   = useState(false)
   const [deleting, setDeleting]         = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+
+  // runner 以上がデータ削除可能
+  const isOwner            = role === 'owner'
+  const isWorkspaceCreator = role === 'workspace_creator'
+  const isEditor           = role === 'editor'
+  const isRunner           = role === 'runner'
+  const canDelete          = isOwner || isWorkspaceCreator || isEditor || isRunner
   const [moviePlayerPath, setMoviePlayerPath] = useState('')
   const [previewImgSrc, setPreviewImgSrc] = useState('')
   const [previewImgName, setPreviewImgName] = useState('')
@@ -706,9 +737,11 @@ function DataViewTab({ job }) {
           <button className="btn btn-sm btn-ghost" onClick={() => selectByExts(VIDEO_EXTS)}>{t('job.filterVideo')}</button>
           <button className="btn btn-sm btn-ghost" onClick={() => selectByExts(LOG_EXTS)}>{t('job.filterLog')}</button>
         </div>
-        <button className="btn btn-sm btn-danger" onClick={() => setConfirmDelete(true)} disabled={deleting || isLocked || !someSelected}>
-          {deleting ? t('common.deleting') : `${t('common.deleteSelected')}${someSelected ? ` (${selected.size})` : ''}`}
-        </button>
+        {canDelete && (
+          <button className="btn btn-sm btn-danger" onClick={() => setConfirmDelete(true)} disabled={deleting || isLocked || !someSelected}>
+            {deleting ? t('common.deleting') : `${t('common.deleteSelected')}${someSelected ? ` (${selected.size})` : ''}`}
+          </button>
+        )}
       </div>
       <table className="queue-table">
         <thead>
@@ -805,6 +838,7 @@ function JobPage({ job: initialJob, jobID: propJobID, navigate, backPage, backPa
   const [job, setJob]       = useState(initialJob || null)
   const [names, setNames]   = useState({ project: '', file: '', workspace: '' })
   const [accessDenied, setAccessDenied] = useState(false)
+  const [fileRole, setFileRole] = useState('owner')
 
   useLayoutEffect(() => {
     if (initialTab) setTab(initialTab)
@@ -816,6 +850,15 @@ function JobPage({ job: initialJob, jobID: propJobID, navigate, backPage, backPa
       if (String(err).includes('access denied')) setAccessDenied(true)
     })
   }, [id])
+
+  // ファイル権限のロール取得
+  useEffect(() => {
+    const fileID = initialJob?.project_file_id || job?.project_file_id
+    if (!fileID) return
+    ProjectApi.getFile({ fileID })
+      .then(f => { if (f?.my_role) setFileRole(f.my_role) })
+      .catch(() => {})
+  }, [job?.project_file_id, initialJob?.project_file_id])
 
   useEffect(() => {
     if (!job) return
@@ -895,13 +938,14 @@ function JobPage({ job: initialJob, jobID: propJobID, navigate, backPage, backPa
             job={job}
             onDeleted={handleDeleted}
             onDataStatusChanged={handleDataStatusChanged}
+            role={fileRole}
           />
         )}
         {tab === 'render' && (
-          <RenderResultTab job={job} />
+          <RenderResultTab job={job} role={fileRole} />
         )}
         {tab === 'data' && (
-          <DataViewTab job={job} />
+          <DataViewTab job={job} role={fileRole} />
         )}
       </div>
     </div>

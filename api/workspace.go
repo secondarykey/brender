@@ -44,6 +44,17 @@ func CreateWorkspace(projectID string, projectFileID string, name string) (*mode
 	if name == "" {
 		return nil, xerrors.New("workspace name is required")
 	}
+	// workspace_creator 以上の権限が必要
+	userID := model.CurrentUser()
+	if userID != model.UserIDOwner {
+		ok, err := model.HasFileRole(projectFileID, userID, []string{model.RoleOwner, model.RoleWorkspaceCreator})
+		if err != nil {
+			return nil, xerrors.Errorf("CreateWorkspace permission check: %w", err)
+		}
+		if !ok {
+			return nil, xerrors.New("access denied")
+		}
+	}
 	ws, err := model.CreateWorkspace(projectID, projectFileID, name, false)
 	if err != nil {
 		return nil, err
@@ -71,6 +82,17 @@ type WorkspaceBatchSpec struct {
 func CreateWorkspaceBatch(projectID, projectFileID string, specs []WorkspaceBatchSpec) ([]*model.Workspace, error) {
 	if len(specs) == 0 {
 		return nil, xerrors.New("no workspace specs provided")
+	}
+	// workspace_creator 以上の権限が必要
+	userID := model.CurrentUser()
+	if userID != model.UserIDOwner {
+		ok, err := model.HasFileRole(projectFileID, userID, []string{model.RoleOwner, model.RoleWorkspaceCreator})
+		if err != nil {
+			return nil, xerrors.Errorf("CreateWorkspaceBatch permission check: %w", err)
+		}
+		if !ok {
+			return nil, xerrors.New("access denied")
+		}
 	}
 	var results []*model.Workspace
 	now := time.Now()
@@ -101,6 +123,18 @@ func CopyWorkspace(projectID, workspaceID, newName string) (*model.Workspace, er
 	if detail == nil {
 		return nil, xerrors.New("workspace not found")
 	}
+	// workspace_creator 以上の権限が必要
+	userID := model.CurrentUser()
+	if userID != model.UserIDOwner {
+		fileID := detail.Workspace.ProjectFileID
+		ok, err := model.HasFileRole(fileID, userID, []string{model.RoleOwner, model.RoleWorkspaceCreator})
+		if err != nil {
+			return nil, xerrors.Errorf("CopyWorkspace permission check: %w", err)
+		}
+		if !ok {
+			return nil, xerrors.New("access denied")
+		}
+	}
 	src := detail.Workspace
 	newWS, err := model.CreateWorkspace(projectID, src.ProjectFileID, newName, false)
 	if err != nil {
@@ -130,10 +164,46 @@ func UpdateWorkspace(projectID string, workspaceID string, name string, note str
 	if name == "" {
 		return nil, xerrors.New("workspace name is required")
 	}
+	// editor 以上の権限が必要（workspace_creator も含む）
+	userID := model.CurrentUser()
+	if userID != model.UserIDOwner {
+		detail, err := model.GetWorkspace(projectID, workspaceID)
+		if err != nil {
+			return nil, xerrors.Errorf("UpdateWorkspace: %w", err)
+		}
+		if detail != nil && detail.Workspace != nil {
+			fileID := detail.Workspace.ProjectFileID
+			ok, err := model.HasFileRole(fileID, userID, []string{model.RoleOwner, model.RoleWorkspaceCreator, model.RoleEditor})
+			if err != nil {
+				return nil, xerrors.Errorf("UpdateWorkspace permission check: %w", err)
+			}
+			if !ok {
+				return nil, xerrors.New("access denied")
+			}
+		}
+	}
 	return model.UpdateWorkspace(projectID, workspaceID, name, note, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY, outputFormat, autoLock, autoLockMinSize, autoLockKeep)
 }
 
 func DeleteWorkspace(projectID, workspaceID string, force bool) error {
+	// workspace_creator 以上の権限が必要
+	userID := model.CurrentUser()
+	if userID != model.UserIDOwner {
+		detail, err := model.GetWorkspace(projectID, workspaceID)
+		if err != nil {
+			return xerrors.Errorf("DeleteWorkspace: %w", err)
+		}
+		if detail != nil && detail.Workspace != nil {
+			fileID := detail.Workspace.ProjectFileID
+			ok, err := model.HasFileRole(fileID, userID, []string{model.RoleOwner, model.RoleWorkspaceCreator})
+			if err != nil {
+				return xerrors.Errorf("DeleteWorkspace permission check: %w", err)
+			}
+			if !ok {
+				return xerrors.New("access denied")
+			}
+		}
+	}
 	if !force {
 		locked, err := model.HasLockedJobsByWorkspace(workspaceID)
 		if err != nil {
