@@ -22,8 +22,18 @@ const (
 const (
 	UserIDOwner = "usr_owner"
 	UserIDGuest = "usr_guest"
-	GroupIDAll   = "grp_all"
+	GroupIDAll  = "grp_all"
 )
+
+// アプリレベルのユーザロール
+const (
+	UserRoleAdmin   = "admin"   // 全操作可能（設定変更・ユーザ管理・プロジェクト作成）
+	UserRoleCreator = "creator" // プロジェクト作成可能
+	UserRoleViewer  = "viewer"  // 閲覧のみ（プロジェクト作成不可）
+)
+
+// AllUserRoles はアプリレベルの全ロール一覧。
+var AllUserRoles = []string{UserRoleAdmin, UserRoleCreator, UserRoleViewer}
 
 // base62 文字セット
 const base62 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
@@ -56,6 +66,7 @@ type User struct {
 	Name         string `gorm:"uniqueIndex" json:"name"` // ログインID（ASCII限定）
 	DisplayName  string `json:"display_name"`             // 表示名
 	PasswordHash string `json:"-"`                        // bcrypt ハッシュ（APIレスポンスに含めない）
+	Role         string `gorm:"default:''" json:"role"`   // アプリレベルロール（admin/creator/viewer）
 	IsSystem     bool   `gorm:"default:false" json:"is_system"`
 	MetaFields   `gorm:"embedded"`
 }
@@ -63,6 +74,40 @@ type User struct {
 // HasPassword はパスワードが設定済みかを返す。
 func (u *User) HasPassword() bool {
 	return u.PasswordHash != ""
+}
+
+// EffectiveRole はユーザの実効ロールを返す。
+// システムユーザはハードコード、空の場合は creator（後方互換）。
+func (u *User) EffectiveRole() string {
+	if u.ID == UserIDOwner {
+		return UserRoleAdmin
+	}
+	if u.ID == UserIDGuest {
+		return UserRoleViewer
+	}
+	if u.Role == "" {
+		return UserRoleCreator
+	}
+	return u.Role
+}
+
+// CanCreateProject はプロジェクト作成権限を持つかチェックする。
+func CanCreateProject(userID string) (bool, error) {
+	if userID == UserIDOwner {
+		return true, nil
+	}
+	if userID == UserIDGuest {
+		return false, nil
+	}
+	u, err := GetUser(userID)
+	if err != nil {
+		return false, err
+	}
+	if u == nil {
+		return false, nil
+	}
+	role := u.EffectiveRole()
+	return role == UserRoleAdmin || role == UserRoleCreator, nil
 }
 
 // isASCII は文字列がASCII文字のみで構成されているかを判定する。
@@ -95,7 +140,7 @@ func GetUser(id string) (*User, error) {
 	return &u, nil
 }
 
-func CreateUser(name, displayName string) (*User, error) {
+func CreateUser(name, displayName, role string) (*User, error) {
 	id := NewUserID()
 	if name == "" {
 		name = id
@@ -107,6 +152,7 @@ func CreateUser(name, displayName string) (*User, error) {
 		ID:          id,
 		Name:        name,
 		DisplayName: displayName,
+		Role:        role,
 	}
 	if res := db.Create(u); res.Error != nil {
 		return nil, xerrors.Errorf("CreateUser: %w", res.Error)
@@ -114,13 +160,13 @@ func CreateUser(name, displayName string) (*User, error) {
 	return u, nil
 }
 
-func UpdateUser(id, name, displayName string) (*User, error) {
+func UpdateUser(id, name, displayName, role string) (*User, error) {
 	var u User
 	if res := db.First(&u, "id = ?", id); res.Error != nil {
 		return nil, xerrors.Errorf("UpdateUser find: %w", res.Error)
 	}
 	if u.IsSystem {
-		// システムユーザは表示名のみ変更可
+		// システムユーザは表示名のみ変更可（ロールはハードコードのため無視）
 		u.DisplayName = displayName
 	} else {
 		if !isASCII(name) {
@@ -128,6 +174,7 @@ func UpdateUser(id, name, displayName string) (*User, error) {
 		}
 		u.Name = name
 		u.DisplayName = displayName
+		u.Role = role
 	}
 	if res := db.Save(&u); res.Error != nil {
 		return nil, xerrors.Errorf("UpdateUser save: %w", res.Error)

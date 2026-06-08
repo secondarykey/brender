@@ -372,6 +372,14 @@ func CreateProject(name string) (*model.ProjectDetail, error) {
 	if name == "" {
 		return nil, xerrors.New("project name is required")
 	}
+	// プロジェクト作成権限チェック
+	ok, err := model.CanCreateProject(model.CurrentUser())
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, xerrors.New("permission denied: project creation requires creator or admin role")
+	}
 	p := &model.Project{}
 	if err := AssignDefaultWorkDir(p); err != nil {
 		return nil, err

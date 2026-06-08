@@ -18,18 +18,18 @@ export const AuthApi = {
               : serverCall('auth', 'get_user', { id }),
 
   /** ユーザを作成
-   * @param {{ name: string, displayName?: string }} args
+   * @param {{ name: string, displayName?: string, role?: string }} args
    */
-  createUser: ({ name, displayName = '' }) =>
-    isWails() ? svc().then(s => s.CreateUser(name, displayName))
-              : serverCall('auth', 'create_user', { name, display_name: displayName }),
+  createUser: ({ name, displayName = '', role = '' }) =>
+    isWails() ? svc().then(s => s.CreateUser(name, displayName, role))
+              : serverCall('auth', 'create_user', { name, display_name: displayName, role }),
 
   /** ユーザを更新
-   * @param {{ id: string, name: string, displayName?: string }} args
+   * @param {{ id: string, name: string, displayName?: string, role?: string }} args
    */
-  updateUser: ({ id, name, displayName = '' }) =>
-    isWails() ? svc().then(s => s.UpdateUser(id, name, displayName))
-              : serverCall('auth', 'update_user', { id, name, display_name: displayName }),
+  updateUser: ({ id, name, displayName = '', role = '' }) =>
+    isWails() ? svc().then(s => s.UpdateUser(id, name, displayName, role))
+              : serverCall('auth', 'update_user', { id, name, display_name: displayName, role }),
 
   /** ユーザを削除
    * @param {{ id: string }} args

@@ -21,12 +21,12 @@ func (s *Auth) GetUser(id string) (*model.User, error) {
 	return api.GetUser(id)
 }
 
-func (s *Auth) CreateUser(name, displayName string) (*model.User, error) {
-	return api.CreateUser(name, displayName)
+func (s *Auth) CreateUser(name, displayName, role string) (*model.User, error) {
+	return api.CreateUser(name, displayName, role)
 }
 
-func (s *Auth) UpdateUser(id, name, displayName string) (*model.User, error) {
-	return api.UpdateUser(id, name, displayName)
+func (s *Auth) UpdateUser(id, name, displayName, role string) (*model.User, error) {
+	return api.UpdateUser(id, name, displayName, role)
 }
 
 func (s *Auth) DeleteUser(id string) error {

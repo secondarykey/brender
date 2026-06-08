@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ProjectApi, WorkDirApi, BlenderApi } from '../../lib/api'
+import { ProjectApi, WorkDirApi, BlenderApi, AuthApi } from '../../lib/api'
+import { isWails } from '../../lib/api/_client'
 import { useMessage } from '../../lib/toast'
 import SortSelect from '../../components/SortSelect'
 
@@ -60,6 +61,7 @@ function ProjectListPage({ navigate }) {
   const [hasWorkDir, setHasWorkDir] = useState(true)
   const [hasBlender, setHasBlender] = useState(true)
   const [creating, setCreating] = useState(false)
+  const [canCreateProject, setCanCreateProject] = useState(isWails()) // Wails=owner=admin
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('viewMode:projects') || 'list')
   const [sort, setSort]         = useState(() => localStorage.getItem('sort:projects') || 'display_order')
   const [dir, setDir]           = useState(() => localStorage.getItem('dir:projects') || '')
@@ -96,9 +98,20 @@ function ProjectListPage({ navigate }) {
     BlenderApi.list()
       .then(list => setHasBlender((list || []).length > 0))
       .catch(() => setHasBlender(false))
+    // ブラウザモードではユーザロールをチェック
+    if (!isWails()) {
+      AuthApi.me()
+        .then(u => {
+          if (u) {
+            const role = u.role || 'creator'
+            setCanCreateProject(role === 'admin' || role === 'creator')
+          }
+        })
+        .catch(() => {})
+    }
   }, [])
 
-  const canCreate = hasWorkDir && hasBlender
+  const canCreate = hasWorkDir && hasBlender && canCreateProject
 
   const handleCreate = async () => {
     if (!canCreate || creating) return

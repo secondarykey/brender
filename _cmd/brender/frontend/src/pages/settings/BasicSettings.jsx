@@ -40,7 +40,7 @@ function BasicSettings() {
     if (!user) return
     setSavingName(true)
     try {
-      await AuthApi.updateUser({ id: user.id, name: user.name, displayName })
+      await AuthApi.updateUser({ id: user.id, name: user.name, displayName, role: user.role || '' })
       savedDisplayName.current = displayName
       showToast(t('common.saved'))
     } catch (e) {
@@ -111,6 +111,14 @@ function BasicSettings() {
                   onChange={e => setDisplayName(e.target.value)}
                 />
               </div>
+              {user.role && (
+                <div className="form-field" style={{ marginTop: 12 }}>
+                  <label className="form-label">{t('users.role')}</label>
+                  <div style={{ paddingTop: 6 }}>
+                    <span className={`user-role-badge user-role-${user.role}`}>{t(`users.roles.${user.role}`)}</span>
+                  </div>
+                </div>
+              )}
               <div className="form-actions" style={{ marginTop: 12 }}>
                 <button
                   className="btn btn-danger"

@@ -1357,11 +1357,12 @@ func (h *Handler) registerAuth() {
 		var p struct {
 			Name        string `json:"name"`
 			DisplayName string `json:"display_name"`
+			Role        string `json:"role"`
 		}
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.CreateUser(p.Name, p.DisplayName)
+		return api.CreateUser(p.Name, p.DisplayName, p.Role)
 	})
 
 	h.register("auth", "update_user", func(body json.RawMessage) (any, error) {
@@ -1369,11 +1370,12 @@ func (h *Handler) registerAuth() {
 			ID          string `json:"id"`
 			Name        string `json:"name"`
 			DisplayName string `json:"display_name"`
+			Role        string `json:"role"`
 		}
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.UpdateUser(p.ID, p.Name, p.DisplayName)
+		return api.UpdateUser(p.ID, p.Name, p.DisplayName, p.Role)
 	})
 
 	h.register("auth", "delete_user", func(body json.RawMessage) (any, error) {

@@ -6,12 +6,15 @@ import { useToast, useMessage } from '../../lib/toast'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import Dialog from '../../components/Dialog'
 
+const USER_ROLES = ['admin', 'creator', 'viewer']
+
 // ── ユーザ編集ダイアログ ──────────────────────────────────────
 function UserDialog({ open, user, onClose, onSaved }) {
   const { t } = useTranslation()
   const { showToast } = useToast()
   const [name, setName] = useState('')
   const [displayName, setDisplayName] = useState('')
+  const [role, setRole] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -22,6 +25,7 @@ function UserDialog({ open, user, onClose, onSaved }) {
     if (open) {
       setName(user?.name || '')
       setDisplayName(user?.display_name || '')
+      setRole(user?.role || '')
       setError('')
     }
   }, [open, user])
@@ -31,10 +35,10 @@ function UserDialog({ open, user, onClose, onSaved }) {
     setError('')
     try {
       if (isEdit) {
-        await AuthApi.updateUser({ id: user.id, name: name.trim(), displayName: displayName.trim() })
+        await AuthApi.updateUser({ id: user.id, name: name.trim(), displayName: displayName.trim(), role })
       } else {
         // 新規作成: name が空ならサーバ側でIDと同じ値を設定
-        await AuthApi.createUser({ name: name.trim(), displayName: displayName.trim() })
+        await AuthApi.createUser({ name: name.trim(), displayName: displayName.trim(), role })
       }
       showToast(t('common.saved'))
       onSaved()
@@ -85,6 +89,22 @@ function UserDialog({ open, user, onClose, onSaved }) {
             autoFocus
             style={{ width: '100%' }}
           />
+        </div>
+        <div className="form-field" style={{ marginTop: 12 }}>
+          <label className="form-label">{t('users.role')}</label>
+          <select
+            className="form-select"
+            value={role}
+            onChange={e => setRole(e.target.value)}
+            disabled={isSystem}
+            style={{ width: '100%' }}
+          >
+            <option value="">{t('users.roleDefault')}</option>
+            {USER_ROLES.map(r => (
+              <option key={r} value={r}>{t(`users.roles.${r}`)}</option>
+            ))}
+          </select>
+          <span className="form-hint">{t('users.roleHint')}</span>
         </div>
         {isEdit && (
           <div className="form-field" style={{ marginTop: 12 }}>
@@ -483,6 +503,7 @@ function UsersTab() {
             <tr>
               <th>{t('users.loginId')}</th>
               <th>{t('users.displayName')}</th>
+              <th>{t('users.role')}</th>
               <th>{t('users.password')}</th>
               <th>{t('users.id')}</th>
               <th>{t('users.groups')}</th>
@@ -490,13 +511,16 @@ function UsersTab() {
             </tr>
           </thead>
           <tbody>
-            {users.map(u => (
+            {users.map(u => {
+              const effectiveRole = u.role || (u.id === 'usr_owner' ? 'admin' : u.id === 'usr_guest' ? 'viewer' : 'creator')
+              return (
               <tr key={u.id}>
                 <td>
                   {u.is_system && <span className="default-badge" style={{ marginRight: 6 }}>{t('users.systemBadge')}</span>}
                   {u.name}
                 </td>
                 <td>{u.display_name}</td>
+                <td><span className={`user-role-badge user-role-${effectiveRole}`}>{t(`users.roles.${effectiveRole}`)}</span></td>
                 <td>
                   {u.has_password
                     ? <span className="pw-badge pw-set">{t('users.pwSet')}</span>
@@ -522,7 +546,7 @@ function UsersTab() {
                   )}
                 </td>
               </tr>
-            ))}
+            )})}
           </tbody>
         </table>
       )}

@@ -292,6 +292,10 @@ func handleGetMe(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"error": err.Error()})
 		return
 	}
+	// 実効ロールを JSON レスポンスに反映（空やシステムユーザ向け）
+	if user != nil {
+		user.Role = user.EffectiveRole()
+	}
 	writeJSON(w, http.StatusOK, map[string]any{"data": user})
 }
 
