@@ -215,6 +215,17 @@ func SetFileThumbnail(projectID, fileID, imagePath string) (string, error) {
 
 // SetWorkspaceThumbnail は imagePath の画像を 640x360 JPEG に変換してワークスペースサムネイルとして保存し、base64 データURIを返す。
 func SetWorkspaceThumbnail(projectID, fileID, workspaceID, imagePath string) (string, error) {
+	// editor 以上の権限が必要（サムネイル設定）
+	userID := model.CurrentUser()
+	if userID != model.UserIDOwner {
+		ok, err := model.HasFileRole(fileID, userID, []string{model.RoleOwner, model.RoleWorkspaceCreator, model.RoleEditor})
+		if err != nil {
+			return "", xerrors.Errorf("SetWorkspaceThumbnail permission check: %w", err)
+		}
+		if !ok {
+			return "", xerrors.New("access denied")
+		}
+	}
 	baseDir, err := GetProjectBaseDir(projectID)
 	if err != nil {
 		return "", xerrors.Errorf("SetWorkspaceThumbnail: %w", err)
@@ -229,6 +240,17 @@ func SetWorkspaceThumbnail(projectID, fileID, workspaceID, imagePath string) (st
 
 // SetFileThumbnailFromWorkspace はワークスペースのサムネイル（またはジョブ出力）をファイルサムネイルとして保存し、base64 データURIを返す。
 func SetFileThumbnailFromWorkspace(projectID, fileID, workspaceID string) (string, error) {
+	// editor 以上の権限が必要（サムネイル設定）
+	userID := model.CurrentUser()
+	if userID != model.UserIDOwner {
+		ok, err := model.HasFileRole(fileID, userID, []string{model.RoleOwner, model.RoleWorkspaceCreator, model.RoleEditor})
+		if err != nil {
+			return "", xerrors.Errorf("SetFileThumbnailFromWorkspace permission check: %w", err)
+		}
+		if !ok {
+			return "", xerrors.New("access denied")
+		}
+	}
 	baseDir, err := GetProjectBaseDir(projectID)
 	if err != nil {
 		return "", xerrors.Errorf("SetFileThumbnailFromWorkspace: %w", err)

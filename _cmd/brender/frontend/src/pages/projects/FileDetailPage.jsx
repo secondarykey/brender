@@ -18,7 +18,7 @@ import { isWails } from '../../lib/api/_client'
 
 
 // ── ワークスペースカード（サムネイル表示） ──────────────────
-function WorkspaceCard({ projectID, fileID, ws, navigate, projectName, fileName, onRunClick, resolvingWsId, thumbnailMode, onSetThumbnail, workDirLocked, small, stale }) {
+function WorkspaceCard({ projectID, fileID, ws, navigate, projectName, fileName, onRunClick, resolvingWsId, thumbnailMode, onSetThumbnail, workDirLocked, small, stale, canRun }) {
   const { t } = useTranslation()
   const [thumb, setThumb] = useState(null)
 
@@ -61,7 +61,7 @@ function WorkspaceCard({ projectID, fileID, ws, navigate, projectName, fileName,
           </div>
         )}
       </div>
-      {!thumbnailMode && !small && (
+      {!thumbnailMode && !small && canRun && (
         <div className="ws-tile-actions">
           <button
             className="btn btn-run btn-sm"
@@ -77,7 +77,7 @@ function WorkspaceCard({ projectID, fileID, ws, navigate, projectName, fileName,
 }
 
 // ── ワークスペースタブ ─────────────────────────────────────
-function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEnqueued, workDirLocked }) {
+function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEnqueued, workDirLocked, role }) {
   const { t } = useTranslation()
   const { showToast } = useToast()
   const { showError } = useMessage()
@@ -91,6 +91,15 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
   const [thumbnailMode, setThumbnailMode] = useState(false)
   const [sort, setSort]             = useState(() => localStorage.getItem('sort:workspaces') || 'display_order')
   const [dir, setDir]               = useState(() => localStorage.getItem('dir:workspaces') || '')
+
+  // Role-based permissions
+  const isOwner            = role === 'owner'
+  const isWorkspaceCreator = role === 'workspace_creator'
+  const isEditor           = role === 'editor'
+  const isRunner           = role === 'runner'
+  const canCreateWorkspace = isOwner || isWorkspaceCreator  // workspace_creator 以上
+  const canSetThumbnail    = isOwner || isWorkspaceCreator || isEditor  // editor 以上
+  const canRun             = isOwner || isWorkspaceCreator || isEditor || isRunner  // runner 以上
 
   const load = (s, d) => {
     WorkspaceApi.listByProject({ projectID, sort: s, dir: d })
@@ -190,6 +199,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
             title={t('workspace.smallCardView')}
           >▦</button>
           <SortSelect value={sort} onChange={handleSortChange} dir={dir} onDirChange={handleDirChange} />
+          {canSetThumbnail && (
           <button
             className={`btn btn-sm${thumbnailMode ? ' btn-outline-active' : ' btn-outline'}`}
             style={{ marginLeft: 'auto' }}
@@ -197,6 +207,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
           >
             {t('workspace.setAsFileThumbnail')}
           </button>
+          )}
         </div>
       )}
 
@@ -217,7 +228,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
                 className={`ws-item ws-item-run${thumbnailMode ? ' file-item-thumb-select' : ''}`}
                 onClick={thumbnailMode ? () => handleSetThumbnail(ws.id) : undefined}
               >
-                {!thumbnailMode && (
+                {!thumbnailMode && canRun && (
                   <button
                     className="btn btn-run btn-sm ws-item-run-btn"
                     onClick={() => handleRunClick(ws)}
@@ -269,6 +280,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
                 workDirLocked={workDirLocked}
                 small={viewMode === 'card-sm'}
                 stale={isStale(ws)}
+                canRun={canRun}
               />
             ))}
           </div>
@@ -281,11 +293,13 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
       </div>
 
       <div className="list-spacer" />
+      {canCreateWorkspace && (
       <div className="list-fab">
         <button className="btn btn-green" onClick={handleCreateWorkspace}>
           {t('workspace.createNew')}
         </button>
       </div>
+      )}
 
       <WorkspaceCreateDialog
         open={createDialogOpen}
@@ -501,10 +515,11 @@ function SettingsTab({ projectID, fileID, fileName, role, onUpdated, onDeleted }
   const [convertedEngine, setConvertedEngine] = useState(null)
   const [fileTags, setFileTags]             = useState([])
 
-  const isOwner  = role === 'owner'
-  const isEditor = role === 'editor'
-  const canEdit  = isOwner || isEditor  // editor 以上は保存可能
-  const readOnly = !canEdit             // viewer / runner は設定閲覧のみ
+  const isOwner            = role === 'owner'
+  const isWorkspaceCreator = role === 'workspace_creator'
+  const isEditor           = role === 'editor'
+  const canEdit  = isOwner || isWorkspaceCreator || isEditor  // editor 以上は保存可能
+  const readOnly = !canEdit             // runner / viewer は設定閲覧のみ
 
   const fetchToolData = (installID) => {
     setToolLoading(true)
@@ -943,6 +958,7 @@ function FileDetailPage({ projectID, projectName: initialProjectName, fileID, fi
                 navigate={navigate}
                 onEnqueued={() => navigate('queue')}
                 workDirLocked={workDirStatus === 'lock'}
+                role={fileRole}
               />
             </div>
             <div className="ws-detail-right">

@@ -13,6 +13,17 @@ import (
 var MovieCreatedHook func(jobID string, path string, errMsg string)
 
 func CreateMovie(projectID string, fileID string, workspaceID string, jobID string, fps int, outext string, extraArgs string) (string, chan error, error) {
+	// runner 以上の権限が必要
+	userID := model.CurrentUser()
+	if userID != model.UserIDOwner {
+		ok, err := model.HasFileRole(fileID, userID, []string{model.RoleOwner, model.RoleWorkspaceCreator, model.RoleEditor, model.RoleRunner})
+		if err != nil {
+			return "", nil, xerrors.Errorf("CreateMovie permission check: %w", err)
+		}
+		if !ok {
+			return "", nil, xerrors.New("access denied")
+		}
+	}
 
 	baseDir, err := GetProjectBaseDir(projectID)
 	if err != nil {

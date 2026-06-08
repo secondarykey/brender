@@ -632,6 +632,7 @@
     "actions": "操作",
     "roles": {
       "owner": "オーナー",
+      "workspace_creator": "ワークスペース作成者",
       "runner": "実行者",
       "editor": "編集者",
       "file_register": "ファイル登録者",

@@ -192,6 +192,7 @@ function ActiveTab({ navigate }) {
                   <button
                     className="btn btn-danger btn-sm"
                     onClick={() => setConfirmId(q.id)}
+                    disabled={q.can_cancel === false}
                   >
                     {t('common.cancelAction')}
                   </button>

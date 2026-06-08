@@ -6,7 +6,7 @@ import Dialog from './Dialog'
 import ConfirmDialog from './ConfirmDialog'
 
 const PROJECT_ROLES = ['owner', 'editor', 'file_register', 'viewer']
-const FILE_ROLES    = ['owner', 'runner', 'editor', 'viewer']
+const FILE_ROLES    = ['owner', 'workspace_creator', 'editor', 'runner', 'viewer']
 const OWNER_ID = 'usr_owner'
 
 /**

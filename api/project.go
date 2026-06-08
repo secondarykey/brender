@@ -73,10 +73,10 @@ func UpdateProjectFile(fileID string, name string, note string, blenderInstallID
 	if name == "" {
 		return nil, xerrors.New("file name is required")
 	}
-	// Editor 以上の権限が必要
+	// Editor 以上の権限が必要（workspace_creator も含む）
 	userID := model.CurrentUser()
 	if userID != model.UserIDOwner {
-		ok, err := model.HasFileRole(fileID, userID, []string{model.RoleOwner, model.RoleEditor})
+		ok, err := model.HasFileRole(fileID, userID, []string{model.RoleOwner, model.RoleWorkspaceCreator, model.RoleEditor})
 		if err != nil {
 			return nil, xerrors.Errorf("UpdateProjectFile permission check: %w", err)
 		}
