@@ -625,7 +625,15 @@
     "reissueHint": "Reissuing will invalidate the current URL.",
     "reissueToken": "Reissue",
     "copy": "Copy",
-    "copied": "Copied"
+    "copied": "Copied",
+    "role": "Role",
+    "roleDefault": "Default (creator)",
+    "roleHint": "App-level operation permissions. Defaults to creator if not set",
+    "roles": {
+      "admin": "Admin",
+      "creator": "Creator",
+      "viewer": "Viewer"
+    }
   },
   "permission": {
     "title": "Permissions",

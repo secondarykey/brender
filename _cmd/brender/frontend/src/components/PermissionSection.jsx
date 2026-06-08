@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ProjectApi, AuthApi } from '../lib/api'
+import { ProjectApi, AuthApi, EnvironmentApi } from '../lib/api'
+import { isWails } from '../lib/api/_client'
 import { useToast, useMessage } from '../lib/toast'
 import Dialog from './Dialog'
 import ConfirmDialog from './ConfirmDialog'
@@ -19,6 +20,16 @@ function PermissionSection({ mode = 'project', resourceID }) {
   const { showToast } = useToast()
   const ROLES = mode === 'file' ? FILE_ROLES : PROJECT_ROLES
   const { showError } = useMessage()
+
+  // ユーザ管理が有効かどうか（無効なら非表示）
+  const [userMgmtEnabled, setUserMgmtEnabled] = useState(!isWails())
+  useEffect(() => {
+    if (isWails()) {
+      EnvironmentApi.get()
+        .then(env => setUserMgmtEnabled(!!env?.server && !!env?.server_auth))
+        .catch(() => setUserMgmtEnabled(false))
+    }
+  }, [])
 
   // API ディスパッチ
   const api = {
@@ -158,6 +169,8 @@ function PermissionSection({ mode = 'project', resourceID }) {
   }
 
   const hasChanges = Object.keys(edited).length > 0
+
+  if (!userMgmtEnabled) return null
 
   return (
     <div style={{ marginTop: 24 }}>

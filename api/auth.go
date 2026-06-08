@@ -25,21 +25,21 @@ func GetUser(id string) (*model.User, error) {
 	return model.GetUser(id)
 }
 
-func CreateUser(name, displayName string) (*model.User, error) {
+func CreateUser(name, displayName, role string) (*model.User, error) {
 	if name == "" {
 		return nil, xerrors.New("user name is required")
 	}
 	if displayName == "" {
 		displayName = name
 	}
-	return model.CreateUser(name, displayName)
+	return model.CreateUser(name, displayName, role)
 }
 
-func UpdateUser(id, name, displayName string) (*model.User, error) {
+func UpdateUser(id, name, displayName, role string) (*model.User, error) {
 	if name == "" {
 		return nil, xerrors.New("user name is required")
 	}
-	return model.UpdateUser(id, name, displayName)
+	return model.UpdateUser(id, name, displayName, role)
 }
 
 func DeleteUser(id string) error {

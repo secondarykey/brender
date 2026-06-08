@@ -625,7 +625,15 @@
     "reissueHint": "再発行すると現在のURLは無効になります。",
     "reissueToken": "再発行",
     "copy": "コピー",
-    "copied": "コピー済"
+    "copied": "コピー済",
+    "role": "ロール",
+    "roleDefault": "デフォルト（creator）",
+    "roleHint": "アプリ全体での操作権限。未設定の場合は creator として扱います",
+    "roles": {
+      "admin": "管理者",
+      "creator": "作成者",
+      "viewer": "閲覧者"
+    }
   },
   "permission": {
     "title": "権限",

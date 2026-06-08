@@ -2904,6 +2904,26 @@ html[data-theme="light"] .data-status-locked    { background: rgba(170,140,10,0.
   color: rgba(var(--fg), 0.35);
 }
 
+/* ── ユーザロールバッジ ── */
+.user-role-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  border-radius: 3px;
+  padding: 2px 6px;
+}
+.user-role-admin {
+  background: rgba(74,124,220,0.18);
+  color: #4a7cdc;
+}
+.user-role-creator {
+  background: rgba(39,174,96,0.18);
+  color: #27ae60;
+}
+.user-role-viewer {
+  background: rgba(var(--fg), 0.06);
+  color: rgba(var(--fg), 0.5);
+}
+
 html[data-theme="light"] .login-error {
   background: rgba(192,57,43,0.1);
 }
