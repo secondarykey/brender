@@ -65,10 +65,11 @@ type Job struct {
 	JobType       string     `json:"job_type"`      // "" = 通常, "samples_comparison"
 	SamplesList   string     `json:"samples_list"`  // カンマ区切りサンプル数
 	DiskSize      int64      `json:"disk_size"`     // 出力フォルダの容量（バイト）
-	StartedAt     *time.Time `json:"started_at"`
-	CompletedAt   *time.Time `json:"completed_at"`
-	EnqueuedAt    *time.Time `json:"enqueued_at"` // キュー登録時刻
-	CreatedBy     string     `json:"created_by"`
+	StartedAt      *time.Time `json:"started_at"`
+	CompletedAt    *time.Time `json:"completed_at"`
+	EnqueuedAt     *time.Time `json:"enqueued_at"` // キュー登録時刻
+	CreatedBy      string     `json:"created_by"`
+	HasFileAccess  bool       `gorm:"-" json:"has_file_access"` // API 層で設定（DB 非保存）
 }
 
 func CreateJob(j *Job) error {

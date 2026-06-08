@@ -287,12 +287,18 @@ function JobManagement({ navigate }) {
               </tr>
             </thead>
             <tbody>
-              {pageJobs.map(j => (
-                <tr key={j.id} className="row-clickable" onClick={() => setSelected(j)}>
+              {pageJobs.map(j => {
+                const accessible = j.has_file_access !== false
+                return (
+                <tr key={j.id} className={accessible ? 'row-clickable' : ''} onClick={() => accessible && setSelected(j)}>
                   <td>
-                    <button className="link-btn" onClick={e => { e.stopPropagation(); navigate && navigate('job', { job: j, initialTab: 'render', backPage: 'settings', backParams: { tab: 'directory' } }) }}>
-                      {j.name || '—'}
-                    </button>
+                    {accessible ? (
+                      <button className="link-btn" onClick={e => { e.stopPropagation(); navigate && navigate('job', { job: j, initialTab: 'render', backPage: 'settings', backParams: { tab: 'directory' } }) }}>
+                        {j.name || '—'}
+                      </button>
+                    ) : (
+                      <span style={{ opacity: 0.5 }}>{j.name || '—'}</span>
+                    )}
                   </td>
                   <td className="col-c">
                     <span className={`status-badge status-${j.status}`}>{t(`status.${j.status}`)}</span>
@@ -301,7 +307,7 @@ function JobManagement({ navigate }) {
                   <td className="col-r num-cell" style={DELETED_STATUSES.includes(j.data_status) ? { textDecoration: 'line-through', opacity: 0.5 } : undefined}>{formatSize(j.disk_size)}</td>
                   <td className="col-c date-cell">{formatDate(j.completed_at)}</td>
                 </tr>
-              ))}
+              )})}
             </tbody>
           </table>
           <Pagination page={currentPage} totalPages={totalPages} onChange={p => setPage(p)} pageSize={pageSize} onPageSizeChange={p => { setPageSize(p); setPage(1) }} total={total} />
