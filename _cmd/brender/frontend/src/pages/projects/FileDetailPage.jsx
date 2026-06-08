@@ -14,6 +14,7 @@ import NoteSection from '../../components/NoteSection'
 import WorkspaceCreateDialog from '../../components/WorkspaceCreateDialog'
 import TagInput from '../../components/TagInput'
 import PermissionSection from '../../components/PermissionSection'
+import AccessDenied from '../../components/AccessDenied'
 import { isWails } from '../../lib/api/_client'
 
 
@@ -906,7 +907,7 @@ function FileDetailPage({ projectID, projectName: initialProjectName, fileID, fi
   }, [projectID, fileID])
 
   if (accessDenied) {
-    return <div className="page"><p className="setting-desc">{t('permission.accessDenied')}</p></div>
+    return <AccessDenied onBack={() => navigate('project', { id: projectID })} />
   }
 
   const tabs = [
