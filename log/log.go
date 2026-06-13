@@ -54,7 +54,7 @@ func Init(ctx context.Context) (*slog.Logger, error) {
 	}
 	logFile = f
 
-	handler := &simpleHandler{w: logFile, level: &logLevel}
+	handler := requestHandler{next: &simpleHandler{w: logFile, level: &logLevel}}
 	logger := slog.New(handler)
 	slog.SetDefault(logger)
 	gLogger = logger
@@ -67,10 +67,13 @@ func Enabled(lv slog.Level) bool {
 }
 
 // simpleHandler はデフォルトの log パッケージに近いシンプルな出力を行う slog.Handler。
-// 出力形式: 2006/01/02 15:04:05 [LEVEL] message
+// 出力形式: 2006/01/02 15:04:05 [LEVEL] message key=value ...
+// 形式はシンプルに保つ。JSON など別形式が必要になった場合はこのハンドラを拡張せず
+// 別 Handler を用意する。ctx の扱いは requestHandler に委ねる（ここでは ctx を見ない）。
 type simpleHandler struct {
 	w     io.Writer
 	level *slog.LevelVar
+	attrs []slog.Attr // WithAttrs で蓄積した属性（破棄しない）
 }
 
 func (h *simpleHandler) Enabled(_ context.Context, l slog.Level) bool {
@@ -78,16 +81,90 @@ func (h *simpleHandler) Enabled(_ context.Context, l slog.Level) bool {
 }
 
 func (h *simpleHandler) Handle(_ context.Context, r slog.Record) error {
-	t := r.Time.Format(time.RFC3339)
-	_, err := fmt.Fprintf(h.w, "%s [%s] %s\n", t, levelName(r.Level), r.Message)
+	var b strings.Builder
+	fmt.Fprintf(&b, "%s [%s] %s", r.Time.Format(time.RFC3339), levelName(r.Level), r.Message)
+	for _, a := range h.attrs {
+		writeAttr(&b, a)
+	}
+	r.Attrs(func(a slog.Attr) bool {
+		writeAttr(&b, a)
+		return true
+	})
+	b.WriteByte('\n')
+	_, err := io.WriteString(h.w, b.String())
 	return err
 }
 
-// TODO(server): simpleHandler は属性・グループを破棄し、Message のみを出力する。
-// マルチユーザのサーバモードでは user/job などの構造化属性でログを識別したいので、
-// その用途では属性を出力する別 Handler（JSON 等）に差し替える前提。現状は未対応。
-func (h *simpleHandler) WithAttrs(_ []slog.Attr) slog.Handler { return h }
-func (h *simpleHandler) WithGroup(_ string) slog.Handler      { return h }
+func writeAttr(b *strings.Builder, a slog.Attr) {
+	fmt.Fprintf(b, " %s=%v", a.Key, a.Value.Any())
+}
+
+func (h *simpleHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	nh := *h
+	nh.attrs = append(append([]slog.Attr{}, h.attrs...), attrs...)
+	return &nh
+}
+
+// WithGroup はグループ未使用のため当面 no-op。属性は破棄しない。
+func (h *simpleHandler) WithGroup(_ string) slog.Handler { return h }
+
+// ── requestHandler ───────────────────────────────────────
+// ctx に載せた相関情報（request_id / user / job_id）を属性として付与し、
+// 次の Handler に委譲するデコレータ。ctx の扱いはこの層に集約し、出力ハンドラ
+// （simpleHandler 等）は ctx を意識しなくてよい。
+// 値の格納は WithRequestID / WithUser / WithJob を使う。
+
+type ctxKey int
+
+const (
+	keyRequestID ctxKey = iota
+	keyUserID
+	keyJobID
+)
+
+// WithRequestID は ctx にリクエストIDを載せる。
+func WithRequestID(ctx context.Context, v string) context.Context {
+	return context.WithValue(ctx, keyRequestID, v)
+}
+
+// WithUser は ctx にユーザIDを載せる。
+func WithUser(ctx context.Context, v string) context.Context {
+	return context.WithValue(ctx, keyUserID, v)
+}
+
+// WithJob は ctx にジョブIDを載せる。
+func WithJob(ctx context.Context, v string) context.Context {
+	return context.WithValue(ctx, keyJobID, v)
+}
+
+type requestHandler struct {
+	next slog.Handler
+}
+
+func (h requestHandler) Enabled(ctx context.Context, l slog.Level) bool {
+	return h.next.Enabled(ctx, l)
+}
+
+func (h requestHandler) Handle(ctx context.Context, r slog.Record) error {
+	if v, _ := ctx.Value(keyRequestID).(string); v != "" {
+		r.AddAttrs(slog.String("request_id", v))
+	}
+	if v, _ := ctx.Value(keyUserID).(string); v != "" {
+		r.AddAttrs(slog.String("user", v))
+	}
+	if v, _ := ctx.Value(keyJobID).(string); v != "" {
+		r.AddAttrs(slog.String("job_id", v))
+	}
+	return h.next.Handle(ctx, r)
+}
+
+func (h requestHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	return requestHandler{next: h.next.WithAttrs(attrs)}
+}
+
+func (h requestHandler) WithGroup(name string) slog.Handler {
+	return requestHandler{next: h.next.WithGroup(name)}
+}
 
 func levelName(l slog.Level) string {
 	switch {
@@ -172,6 +249,36 @@ func put(ctx context.Context, lv slog.Level, format string, args ...interface{})
 		msg := fmt.Sprintf(format, args...)
 		slog.Log(ctx, lv, msg)
 	}
+}
+
+// ── Context 版 ───────────────────────────────────────────
+// 呼び出し側の ctx をそのまま渡し、requestHandler が ctx 内の相関情報
+// （request_id / user / job_id）を属性として付与する。グローバル gCtx に
+// 依存しないため、HTTP リクエストやジョブ単位のログ追跡に使う。
+// メッセージは既存の Info 等と同じ printf 形式。
+
+func TraceContext(ctx context.Context, msg string, args ...interface{}) {
+	put(ctx, LevelTrace, msg, args...)
+}
+
+func DebugContext(ctx context.Context, msg string, args ...interface{}) {
+	put(ctx, slog.LevelDebug, msg, args...)
+}
+
+func InfoContext(ctx context.Context, msg string, args ...interface{}) {
+	put(ctx, slog.LevelInfo, msg, args...)
+}
+
+func NoticeContext(ctx context.Context, msg string, args ...interface{}) {
+	put(ctx, LevelNotice, msg, args...)
+}
+
+func WarnContext(ctx context.Context, msg string, args ...interface{}) {
+	put(ctx, slog.LevelWarn, msg, args...)
+}
+
+func ErrorContext(ctx context.Context, msg string, args ...interface{}) {
+	put(ctx, slog.LevelError, msg, args...)
 }
 
 // 関数の開始地点に
