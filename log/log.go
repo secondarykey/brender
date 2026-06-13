@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ikascrew/brender/config"
 	"golang.org/x/xerrors"
 )
 
@@ -37,7 +38,11 @@ func Init(ctx context.Context) (*slog.Logger, error) {
 
 	gCtx = ctx
 
-	dir := filepath.Join(os.TempDir(), "brender")
+	// 出力先は brender.ini の log_dir を優先。未設定なら temp 配下。
+	dir := config.Get().LogDir
+	if dir == "" {
+		dir = filepath.Join(os.TempDir(), "brender", "logs")
+	}
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return nil, xerrors.Errorf("os.MkdirAll() error: %w", err)
 	}
@@ -78,6 +83,9 @@ func (h *simpleHandler) Handle(_ context.Context, r slog.Record) error {
 	return err
 }
 
+// TODO(server): simpleHandler は属性・グループを破棄し、Message のみを出力する。
+// マルチユーザのサーバモードでは user/job などの構造化属性でログを識別したいので、
+// その用途では属性を出力する別 Handler（JSON 等）に差し替える前提。現状は未対応。
 func (h *simpleHandler) WithAttrs(_ []slog.Attr) slog.Handler { return h }
 func (h *simpleHandler) WithGroup(_ string) slog.Handler      { return h }
 

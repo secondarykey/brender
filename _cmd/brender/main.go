@@ -15,6 +15,7 @@ import (
 	"github.com/ikascrew/brender/api"
 	"github.com/ikascrew/brender/api/rest"
 	"github.com/ikascrew/brender/api/wails"
+	"github.com/ikascrew/brender/config"
 	"github.com/ikascrew/brender/log"
 	"github.com/ikascrew/brender/model"
 	"golang.org/x/xerrors"
@@ -31,16 +32,21 @@ var appVersion string
 
 func initDB() error {
 
-	home, err := os.UserHomeDir()
+	dir, err := config.Dir()
 	if err != nil {
 		return err
 	}
-	dir := filepath.Join(home, ".brender")
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err
 	}
 
-	return model.Init(filepath.Join(dir, "brender.db"))
+	// DB パスは brender.ini の db_path を優先。未設定なら ~/.brender/brender.db。
+	dbPath := config.Get().DBPath
+	if dbPath == "" {
+		dbPath = filepath.Join(dir, "brender.db")
+	}
+
+	return model.Init(dbPath)
 }
 
 func initLocale() error {
@@ -87,6 +93,11 @@ func run() error {
 	err = initDB()
 	if err != nil {
 		return xerrors.Errorf("initDB() error: %w", err)
+	}
+
+	// 常駐中に溜まった生成済みスクリプトを起動時に一掃する
+	if err := api.ClearScripts(); err != nil {
+		log.Notice("ClearScripts: %v", err)
 	}
 
 	// 前回終了時に running のまま残ったキューを waiting に戻す

@@ -29,6 +29,12 @@ func getMaxConcurrentJobs() int64 {
 	return int64(env.MaxConcurrentJobs)
 }
 
+// ClearScripts は起動時に生成済みの Python スクリプトを一掃する。
+// サーバモードは常駐するため、無制限な蓄積を防ぐ目的で呼ぶ。
+func ClearScripts() error {
+	return exec.ClearScripts()
+}
+
 // RecoverStaleQueues は起動時に running 状態のまま残ったキューを検出し、
 // 旧ジョブを interrupted で閉じて新しい Job+Queue を recovering で作成する。
 func RecoverStaleQueues() {
