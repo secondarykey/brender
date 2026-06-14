@@ -4,9 +4,6 @@ on:
   push:
     tags:
       - 'v*'
-env:
-
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 jobs:
 
@@ -26,7 +23,7 @@ jobs:
     steps:
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
@@ -39,7 +36,7 @@ jobs:
             librsvg2-dev
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: '1.26'
 
@@ -52,7 +49,7 @@ jobs:
           echo "VERSION=$(cat _cmd/brender/version | xargs)" >> $GITHUB_ENV
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '22'
 
@@ -96,7 +93,7 @@ jobs:
           echo "ZIP_PATH=${ZIP_NAME}" >> $GITHUB_ENV
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.os }}-asset
           path: ${{ env.ZIP_PATH }}
@@ -116,7 +113,7 @@ jobs:
 
     steps:
     - name: Download all artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v7
       with:
         path: ./all-zips
         merge-multiple: true
