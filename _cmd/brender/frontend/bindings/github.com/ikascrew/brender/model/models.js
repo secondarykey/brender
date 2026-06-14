@@ -441,6 +441,14 @@ export class FileSearchResult {
              */
             this["file_exists"] = false;
         }
+        if (/** @type {any} */(false)) {
+            /**
+             * API層で設定
+             * @member
+             * @type {string | undefined}
+             */
+            this["my_role"] = undefined;
+        }
         if (!("display_order" in $$source)) {
             /**
              * @member
@@ -1101,6 +1109,14 @@ export class ProjectDetail {
              */
             this["files"] = [];
         }
+        if (/** @type {any} */(false)) {
+            /**
+             * API層で設定（CurrentUser のロール）
+             * @member
+             * @type {string | undefined}
+             */
+            this["my_role"] = undefined;
+        }
 
         Object.assign(this, $$source);
     }
@@ -1249,6 +1265,14 @@ export class ProjectFile {
              * @type {boolean}
              */
             this["file_exists"] = false;
+        }
+        if (/** @type {any} */(false)) {
+            /**
+             * API層で設定
+             * @member
+             * @type {string | undefined}
+             */
+            this["my_role"] = undefined;
         }
         if (!("display_order" in $$source)) {
             /**

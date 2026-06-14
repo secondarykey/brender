@@ -27,7 +27,7 @@ wails3 build
 wails3 generate bindings
 ```
 
-The DB is stored at `~/.brender/brender.db` (SQLite, created automatically on first run).
+The DB is stored at `~/.brender/brender.db` (SQLite, created automatically on first run). パスは `~/.brender/brender.ini` の `db_path` で上書き可（[起動設定ファイル](#起動設定ファイル-config-brenderini) 参照）。
 
 ### CLI tool
 ```bash
@@ -363,6 +363,34 @@ model.CurrentUser() // → ユーザID
 **ジョブ履歴のファイルアクセス制御** (`QueuePage.jsx`, `JobManagement.jsx`):
 - `Job.HasFileAccess` (`gorm:"-"` フィールド) — `ListJobsPaged` で API 層がファイルID ごとにキャッシュして設定
 - `has_file_access === false` のジョブ → 行クリック・ダイアログ・ナビゲーションを抑制、ファイル名をリンクではなく淡色テキストで表示
+
+### 起動設定ファイル (`config/`, `~/.brender/brender.ini`)
+
+DB（`Environment`）を読む**前**に確定したい設定の受け皿。`log.Init()` が `initDB()` より先に呼ばれるため、ログ出力先のような早期設定は DB に置けない。`config.Get()` がプロセス起動時に1回だけ `~/.brender/brender.ini` を読む（**変更は再起動で反映**）。デスクトップ・サーバ両モード共通。ファイルが無ければ各呼び出し側のデフォルトにフォールバックする。
+
+形式は INI 風の最小仕様（フラットな `key = value`、`#`/`;` コメント、`[section]` 行は無視）:
+```ini
+log_dir = D:\brender\logs
+db_path = D:\brender\brender.db
+```
+
+| キー | 反映先 | 未設定時のデフォルト |
+|---|---|---|
+| `log_dir` | `log.Init()` のログ出力ディレクトリ | `{TempDir}/brender/logs` |
+| `db_path` | `main.initDB()` の SQLite パス | `~/.brender/brender.db` |
+
+新しいキーを足す場合: `config.Config` にフィールド追加 → `load()` の `switch` に case 追加 → 読みたい箇所で `config.Get().Xxx`。
+
+### Temp ディレクトリ構成
+```
+{TempDir}/brender/
+  logs/                  ← アプリログ（YYYYMMDD.log、日次・追記）。brender.ini の log_dir で変更可
+  scripts/               ← Blender 用 Python 生成スクリプト
+    tool_*.py            ← シーン/エンジン解析（getToolPythonFile でプロセス内1回キャッシュ）
+    run_*.py             ← レンダリング実行（毎回生成）
+    samples_*.py         ← サンプル比較（毎回生成）
+```
+スクリプトは生成のみで削除しない（クリーンアップ方針）。常駐するサーバモードでの無制限な蓄積を防ぐため、起動時に `api.ClearScripts()`（→ `exec.ClearScripts()`）が `scripts/` を一掃する。生成は `exec.createScript(tmplName, pattern, dto)` に集約。
 
 ### Scene / engine discovery
 - `BlenderApi.getScenes({ installID, fileID })` — runs `exec.RunTool()` (Python `--tool` script) on the `.blend` file to extract scene names.

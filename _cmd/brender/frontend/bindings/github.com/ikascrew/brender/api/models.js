@@ -340,6 +340,13 @@ export class QueueItem {
              */
             this["project_id"] = "";
         }
+        if (!("project_file_id" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["project_file_id"] = "";
+        }
         if (!("workspace_id" in $$source)) {
             /**
              * @member
@@ -402,6 +409,13 @@ export class QueueItem {
              * @type {string}
              */
             this["job_type"] = "";
+        }
+        if (!("can_cancel" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["can_cancel"] = false;
         }
         if (!("now_frame" in $$source)) {
             /**
