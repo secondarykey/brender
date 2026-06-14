@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -17,6 +16,7 @@ import (
 
 	"github.com/ikascrew/brender/code"
 	"github.com/ikascrew/brender/exec"
+	"github.com/ikascrew/brender/log"
 	"github.com/ikascrew/brender/model"
 	"golang.org/x/xerrors"
 )
@@ -40,7 +40,7 @@ func ClearScripts() error {
 func RecoverStaleQueues() {
 	queues, err := model.ListRunningQueues()
 	if err != nil {
-		log.Println("RecoverStaleQueues: ListRunningQueues:", err)
+		log.Error("RecoverStaleQueues: ListRunningQueues: %v", err)
 		return
 	}
 	if len(queues) == 0 {
@@ -56,7 +56,7 @@ func RecoverStaleQueues() {
 
 		oldJob, err := model.GetJob(q.ID)
 		if err != nil || oldJob == nil {
-			log.Printf("RecoverStaleQueues: job %s not found, deleting orphan queue", q.ID)
+			log.Notice("RecoverStaleQueues: job %s not found, deleting orphan queue", q.ID)
 			model.DeleteQueue(q.ID)
 			continue
 		}
@@ -64,22 +64,22 @@ func RecoverStaleQueues() {
 		now := time.Now()
 		diskSize := calcDirSize(oldJob.OutputDir)
 		if err := model.UpdateJobDone(q.ID, model.JobInterrupted, "", &now, diskSize, model.JobDataCorrupted); err != nil {
-			log.Println("RecoverStaleQueues: UpdateJobDone:", err)
+			log.Error("RecoverStaleQueues: UpdateJobDone: %v", err)
 		}
 		if err := model.DeleteQueue(q.ID); err != nil {
-			log.Println("RecoverStaleQueues: DeleteQueue:", err)
+			log.Error("RecoverStaleQueues: DeleteQueue: %v", err)
 			continue
 		}
 
 		newID, err := model.NewQueueID()
 		if err != nil {
-			log.Println("RecoverStaleQueues: NewQueueID:", err)
+			log.Error("RecoverStaleQueues: NewQueueID: %v", err)
 			continue
 		}
 
 		newOutputDir := filepath.Join(filepath.Dir(oldJob.OutputDir), newID)
 		if err := os.MkdirAll(newOutputDir, 0755); err != nil {
-			log.Println("RecoverStaleQueues: MkdirAll:", err)
+			log.Error("RecoverStaleQueues: MkdirAll: %v", err)
 			continue
 		}
 
@@ -109,7 +109,7 @@ func RecoverStaleQueues() {
 			EnqueuedAt:    &now,
 		}
 		if err := model.CreateJob(newJob); err != nil {
-			log.Println("RecoverStaleQueues: CreateJob:", err)
+			log.Error("RecoverStaleQueues: CreateJob: %v", err)
 			continue
 		}
 
@@ -120,15 +120,15 @@ func RecoverStaleQueues() {
 			Status:      model.QueueRecovering,
 		}
 		if err := model.CreateQueue(newQueue); err != nil {
-			log.Println("RecoverStaleQueues: CreateQueue:", err)
+			log.Error("RecoverStaleQueues: CreateQueue: %v", err)
 			continue
 		}
 
-		log.Printf("RecoverStaleQueues: job %s interrupted, new queue %s created", q.ID, newID)
+		log.Notice("RecoverStaleQueues: job %s interrupted, new queue %s created", q.ID, newID)
 		recovered++
 	}
 	if recovered > 0 {
-		log.Printf("RecoverStaleQueues: %d queue(s) recovered", recovered)
+		log.Notice("RecoverStaleQueues: %d queue(s) recovered", recovered)
 	}
 }
 
@@ -145,14 +145,14 @@ func KillRunningQueues() {
 	shuttingDown.Store(true)
 	queues, err := model.ListRunningQueues()
 	if err != nil {
-		log.Println("KillRunningQueues: ListRunningQueues:", err)
+		log.Error("KillRunningQueues: ListRunningQueues: %v", err)
 		return
 	}
 	for _, q := range queues {
 		if q.ProcessID > 0 {
 			if proc, err := os.FindProcess(q.ProcessID); err == nil {
 				proc.Kill()
-				log.Printf("KillRunningQueues: killed process %d (queue %s)", q.ProcessID, q.ID)
+				log.Notice("KillRunningQueues: killed process %d (queue %s)", q.ProcessID, q.ID)
 			}
 		}
 	}
@@ -592,13 +592,13 @@ func EnqueueWithPreview(projectID, workspaceID string, preview *RenderPreview) (
 
 	if preview.JobType == model.JobTypeRender {
 		if err := model.UpdateWorkspaceProcessedAt(workspaceID, &now); err != nil {
-			log.Println("UpdateWorkspaceProcessedAt:", err)
+			log.Error("UpdateWorkspaceProcessedAt: %v", err)
 		}
 		if err := model.UpdateProjectFileProcessedAt(preview.ProjectFileID, &now); err != nil {
-			log.Println("UpdateProjectFileProcessedAt:", err)
+			log.Error("UpdateProjectFileProcessedAt: %v", err)
 		}
 		if err := model.UpdateProjectProcessedAt(projectID, &now); err != nil {
-			log.Println("UpdateProjectProcessedAt:", err)
+			log.Error("UpdateProjectProcessedAt: %v", err)
 		}
 	}
 
@@ -826,10 +826,10 @@ func executeSamplesComparison(q *model.Queue, job *model.Job) {
 
 	now := time.Now()
 	if updateErr := model.UpdateQueueRunning(q.ID, pid); updateErr != nil {
-		log.Println("UpdateQueueRunning error:", updateErr)
+		log.Error("UpdateQueueRunning error: %v", updateErr)
 	}
 	if updateErr := model.UpdateJobStarted(q.ID, &now); updateErr != nil {
-		log.Println("UpdateJobStarted error:", updateErr)
+		log.Error("UpdateJobStarted error: %v", updateErr)
 	}
 
 	blenderErr := <-errCh
@@ -922,7 +922,7 @@ func executeQueue(q *model.Queue, job *model.Job) {
 	if runScript, rsErr := exec.GetRunPythonFile(run); rsErr == nil {
 		b.RunScript = runScript
 	} else {
-		log.Println("GetRunPythonFile error (rendering continues without script):", rsErr)
+		log.Warn("GetRunPythonFile error (rendering continues without script): %v", rsErr)
 	}
 
 	pw := exec.NewProcessingWriter(job.StartFrame, job.EndFrame)
@@ -948,10 +948,10 @@ func executeQueue(q *model.Queue, job *model.Job) {
 
 	now := time.Now()
 	if updateErr := model.UpdateQueueRunning(q.ID, pid); updateErr != nil {
-		log.Println("UpdateQueueRunning error:", updateErr)
+		log.Error("UpdateQueueRunning error: %v", updateErr)
 	}
 	if updateErr := model.UpdateJobStarted(q.ID, &now); updateErr != nil {
-		log.Println("UpdateJobStarted error:", updateErr)
+		log.Error("UpdateJobStarted error: %v", updateErr)
 	}
 
 	blenderErr := <-errCh
@@ -996,7 +996,7 @@ func removeOutputDirs(dirs []string) {
 		}
 		if _, err := os.Stat(dir); err == nil {
 			if err := os.RemoveAll(dir); err != nil {
-				log.Println("removeOutputDirs:", err)
+				log.Error("removeOutputDirs: %v", err)
 			}
 		}
 	}
@@ -1005,7 +1005,7 @@ func removeOutputDirs(dirs []string) {
 // finishJob updates the Job status, sets CompletedAt, then deletes the Queue record.
 func finishJob(id string, success bool, errMsg string, diskSize int64) {
 	if shuttingDown.Load() {
-		log.Printf("finishJob: skipped (shutting down) id=%s", id)
+		log.Notice("finishJob: skipped (shutting down) id=%s", id)
 		return
 	}
 	now := time.Now()
@@ -1016,10 +1016,10 @@ func finishJob(id string, success bool, errMsg string, diskSize int64) {
 		dataStatus = model.JobDataCorrupted
 	}
 	if err := model.UpdateJobDone(id, status, errMsg, &now, diskSize, dataStatus); err != nil {
-		log.Println("UpdateJobDone error:", err)
+		log.Error("UpdateJobDone error: %v", err)
 	}
 	if err := model.DeleteQueue(id); err != nil {
-		log.Println("DeleteQueue error:", err)
+		log.Error("DeleteQueue error: %v", err)
 	}
 	if success {
 		applyAutoLock(id, diskSize)
@@ -1045,7 +1045,7 @@ func applyAutoLock(jobID string, diskSize int64) {
 		return
 	}
 	if err := model.UpdateJobDataStatus(jobID, model.JobDataAvailableLocked); err != nil {
-		log.Println("applyAutoLock lock error:", err)
+		log.Error("applyAutoLock lock error: %v", err)
 		return
 	}
 	keep := ws.AutoLockKeep
@@ -1054,7 +1054,7 @@ func applyAutoLock(jobID string, diskSize int64) {
 	}
 	count, err := model.CountAutoLockedJobs(ws.ID)
 	if err != nil {
-		log.Println("applyAutoLock count error:", err)
+		log.Error("applyAutoLock count error: %v", err)
 		return
 	}
 	for count > int64(keep) {
@@ -1063,7 +1063,7 @@ func applyAutoLock(jobID string, diskSize int64) {
 			break
 		}
 		if err := model.UpdateJobDataStatus(oldest.ID, model.JobDataAvailable); err != nil {
-			log.Println("applyAutoLock unlock error:", err)
+			log.Error("applyAutoLock unlock error: %v", err)
 			break
 		}
 		count--
@@ -1262,7 +1262,7 @@ func CancelQueue(id string) error {
 		diskSize = calcDirSize(j.OutputDir)
 	}
 	if err := model.UpdateJobDone(q.ID, model.JobCancelled, "", &now, diskSize, model.JobDataCorrupted); err != nil {
-		log.Println("UpdateJobDone(cancelled) error:", err)
+		log.Error("UpdateJobDone(cancelled) error: %v", err)
 	}
 	wasRunning := q.Status == model.QueueRunning
 	if err := model.DeleteQueue(q.ID); err != nil {
@@ -1351,7 +1351,7 @@ func DeleteJob(id string) error {
 	if j.OutputDir != "" {
 		if _, statErr := os.Stat(j.OutputDir); statErr == nil {
 			if rmErr := os.RemoveAll(j.OutputDir); rmErr != nil {
-				log.Println("DeleteJob RemoveAll:", rmErr)
+				log.Error("DeleteJob RemoveAll: %v", rmErr)
 			}
 		}
 	}
@@ -1401,7 +1401,7 @@ func BulkDeleteJobsByWorkspace(projectID, workspaceID string, keepCount int, dat
 			opErr = DeleteJob(j.ID)
 		}
 		if opErr != nil {
-			log.Println("BulkDeleteJobsByWorkspace:", opErr)
+			log.Error("BulkDeleteJobsByWorkspace: %v", opErr)
 			continue
 		}
 		deleted++
@@ -1499,18 +1499,18 @@ type JobFileInfo struct {
 func ListJobFiles(id string) ([]*JobFileInfo, error) {
 	j, err := model.GetJob(id)
 	if err != nil {
-		log.Printf("[ListJobFiles] GetJob error: %v", err)
+		log.Error("[ListJobFiles] GetJob error: %v", err)
 		return nil, xerrors.Errorf("ListJobFiles GetJob: %w", err)
 	}
-	log.Printf("[ListJobFiles] job=%s outputDir=%q dataStatus=%d", id, j.OutputDir, j.DataStatus)
+	log.Debug("[ListJobFiles] job=%s outputDir=%q dataStatus=%d", id, j.OutputDir, j.DataStatus)
 	if j.OutputDir == "" {
-		log.Printf("[ListJobFiles] outputDir is empty, returning nil")
+		log.Debug("[ListJobFiles] outputDir is empty, returning nil")
 		return nil, nil
 	}
 	entries, err := os.ReadDir(j.OutputDir)
 	if err != nil {
 		if os.IsNotExist(err) {
-			log.Printf("[ListJobFiles] dir not found: %s", j.OutputDir)
+			log.Debug("[ListJobFiles] dir not found: %s", j.OutputDir)
 			return nil, nil
 		}
 		return nil, xerrors.Errorf("ListJobFiles ReadDir: %w", err)
@@ -1521,7 +1521,7 @@ func ListJobFiles(id string) ([]*JobFileInfo, error) {
 		if err != nil {
 			continue
 		}
-		log.Printf("[ListJobFiles] file: %s (isDir=%v, size=%d)", e.Name(), e.IsDir(), info.Size())
+		log.Debug("[ListJobFiles] file: %s (isDir=%v, size=%d)", e.Name(), e.IsDir(), info.Size())
 		list = append(list, &JobFileInfo{
 			Name:    e.Name(),
 			Path:    filepath.Join(j.OutputDir, e.Name()),
@@ -1530,7 +1530,7 @@ func ListJobFiles(id string) ([]*JobFileInfo, error) {
 			IsDir:   e.IsDir(),
 		})
 	}
-	log.Printf("[ListJobFiles] returning %d files", len(list))
+	log.Debug("[ListJobFiles] returning %d files", len(list))
 	return list, nil
 }
 
@@ -1776,7 +1776,7 @@ func CleanJobData(filter *model.CleanFilter) (int, error) {
 	deleted := 0
 	for _, j := range jobs {
 		if err := DeleteJobData(j.ID); err != nil {
-			log.Println("CleanJobData:", err)
+			log.Error("CleanJobData: %v", err)
 			continue
 		}
 		deleted++

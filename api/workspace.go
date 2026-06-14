@@ -1,11 +1,11 @@
 package api
 
 import (
-	"log"
 	"os"
 	"path/filepath"
 	"time"
 
+	"github.com/ikascrew/brender/log"
 	"github.com/ikascrew/brender/model"
 	"golang.org/x/xerrors"
 )
@@ -61,13 +61,13 @@ func CreateWorkspace(projectID string, projectFileID string, name string) (*mode
 	}
 	now := time.Now()
 	if err := model.UpdateWorkspaceProcessedAt(ws.ID, &now); err != nil {
-		log.Printf("CreateWorkspace: UpdateWorkspaceProcessedAt: %v", err)
+		log.Error("CreateWorkspace: UpdateWorkspaceProcessedAt: %v", err)
 	}
 	if err := model.UpdateProjectFileProcessedAt(projectFileID, &now); err != nil {
-		log.Printf("CreateWorkspace: UpdateProjectFileProcessedAt: %v", err)
+		log.Error("CreateWorkspace: UpdateProjectFileProcessedAt: %v", err)
 	}
 	if err := model.UpdateProjectProcessedAt(projectID, &now); err != nil {
-		log.Printf("CreateWorkspace: UpdateProjectProcessedAt: %v", err)
+		log.Error("CreateWorkspace: UpdateProjectProcessedAt: %v", err)
 	}
 	return ws, nil
 }
@@ -102,15 +102,15 @@ func CreateWorkspaceBatch(projectID, projectFileID string, specs []WorkspaceBatc
 			return results, err
 		}
 		if err := model.UpdateWorkspaceProcessedAt(ws.ID, &now); err != nil {
-			log.Printf("CreateWorkspaceBatch: UpdateWorkspaceProcessedAt: %v", err)
+			log.Error("CreateWorkspaceBatch: UpdateWorkspaceProcessedAt: %v", err)
 		}
 		results = append(results, ws)
 	}
 	if err := model.UpdateProjectFileProcessedAt(projectFileID, &now); err != nil {
-		log.Printf("CreateWorkspaceBatch: UpdateProjectFileProcessedAt: %v", err)
+		log.Error("CreateWorkspaceBatch: UpdateProjectFileProcessedAt: %v", err)
 	}
 	if err := model.UpdateProjectProcessedAt(projectID, &now); err != nil {
-		log.Printf("CreateWorkspaceBatch: UpdateProjectProcessedAt: %v", err)
+		log.Error("CreateWorkspaceBatch: UpdateProjectProcessedAt: %v", err)
 	}
 	return results, nil
 }
@@ -149,13 +149,13 @@ func CopyWorkspace(projectID, workspaceID, newName string) (*model.Workspace, er
 	}
 	now := time.Now()
 	if err := model.UpdateWorkspaceProcessedAt(newWS.ID, &now); err != nil {
-		log.Printf("CopyWorkspace: UpdateWorkspaceProcessedAt: %v", err)
+		log.Error("CopyWorkspace: UpdateWorkspaceProcessedAt: %v", err)
 	}
 	if err := model.UpdateProjectFileProcessedAt(src.ProjectFileID, &now); err != nil {
-		log.Printf("CopyWorkspace: UpdateProjectFileProcessedAt: %v", err)
+		log.Error("CopyWorkspace: UpdateProjectFileProcessedAt: %v", err)
 	}
 	if err := model.UpdateProjectProcessedAt(projectID, &now); err != nil {
-		log.Printf("CopyWorkspace: UpdateProjectProcessedAt: %v", err)
+		log.Error("CopyWorkspace: UpdateProjectProcessedAt: %v", err)
 	}
 	return newWS, nil
 }
@@ -219,7 +219,7 @@ func DeleteWorkspace(projectID, workspaceID string, force bool) error {
 	if len(dirs) > 0 {
 		wsDir := filepath.Dir(dirs[0])
 		if err := os.RemoveAll(wsDir); err != nil {
-			log.Printf("DeleteWorkspace: remove workspace dir: %v", err)
+			log.Error("DeleteWorkspace: remove workspace dir: %v", err)
 		}
 	}
 	if err := model.DeleteJobsByWorkspace(workspaceID); err != nil {
