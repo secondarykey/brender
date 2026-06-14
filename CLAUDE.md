@@ -49,19 +49,6 @@ brender-tool [-b <blender>] [-S <scene>] [-E <engine>] [-s <start>] [-e <end>] [
 #   --scenes   List scenes in the .blend file and exit
 ```
 
-### HTTP server (legacy / server mode)
-```bash
-# Run
-go run ./server/_cmd/
-
-# Build binary
-go build -o brender-server ./server/_cmd/
-```
-
-The server listens on `:8080`. On startup it clears all lock files from prior runs.
-The server's DB path is hardcoded to `../test4.db` (relative to `server/`) — known issue, not yet migrated.
-**Note:** `server/handler/api/` references removed model fields and does not build with `./...`. Build with `go build ./exec/... ./api/... ./model/...` to avoid server errors.
-
 ### Tests
 ```bash
 go test ./...
@@ -87,15 +74,11 @@ model/         (GORM models + CRUD, SQLite via glebarez/sqlite)
 exec/          (Blender subprocess management + output parsing)
 
 _cmd/brender-tool/  (CLI, uses exec/ + api/ directly)
-
-server/        (legacy HTTP server, still functional but handler/api/ is stale)
 ```
 
 ### Module layout
 - Root module `github.com/ikascrew/brender` (`go.mod` at project root) is authoritative.
 - `_cmd/brender/` has its own `go.mod` (`github.com/ikascrew/brender/cmd/brender`) with a `replace` directive pointing to the root module.
-- `server/` has its own `go.mod` and `replace` directive pointing to the root module.
-- `_cmd/old/` — archived previous server implementation, not built.
 
 ### Wails3 services (`api/wails/`)
 | File | Type | Wraps |
