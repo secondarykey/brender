@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/ikascrew/brender/log"
 	"golang.org/x/xerrors"
 )
 
@@ -136,11 +137,11 @@ func (rt *RenderingTime) expected(data map[int][]*Frame) {
 
 	avg := total / num
 	remain := int64(rt.Max - rt.Now)
-	fmt.Println("AVG:", time.Duration(avg))
-	fmt.Println("RemainFrame:", remain)
+	log.Debug("AVG: %s", time.Duration(avg))
+	log.Debug("RemainFrame: %d", remain)
 
 	at := time.Duration(avg * remain)
-	fmt.Println("Remain:", at)
+	log.Debug("Remain: %s", at)
 
 	//1フレーム平均を算出
 	now := time.Now()

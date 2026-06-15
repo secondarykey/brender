@@ -5,10 +5,13 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/ikascrew/brender/exec"
+	"github.com/ikascrew/brender/log"
 	"golang.org/x/xerrors"
 )
 
@@ -55,6 +58,17 @@ func init() {
 func main() {
 
 	flag.Parse()
+
+	if _, err := log.Init(context.Background()); err != nil {
+		fmt.Fprintf(os.Stderr, "log.Init() error: %+v\n", err)
+		os.Exit(1)
+	}
+	defer log.Close()
+
+	if verbose {
+		log.SetLevel(slog.LevelDebug)
+	}
+
 	if engines {
 		err := printEngineList()
 		if err != nil {
@@ -188,14 +202,15 @@ func rendering(f string) error {
 
 	tool := b.Tool
 	fmt.Printf("Blender Version: %s (%s)\n", tool.Version, tool.Build)
+	log.Info("Blender Version: %s (%s)", tool.Version, tool.Build)
 
-	//TODO シーンチェック？
 	s := tool.ActiveScene()
 	if scene == "" {
 		scene = s.Name
 	}
 	b.Scene = scene
 	fmt.Printf("Scene: %s\n", b.Scene)
+	log.Info("Scene: %s", b.Scene)
 
 	if start == -1 {
 		start = s.Start
@@ -220,16 +235,25 @@ func rendering(f string) error {
 	b.Start = start
 	b.End = end
 	fmt.Printf("Frame: %d-%d\n", b.Start, b.End)
-
-	// TODO プロジェクトの出力位置も利用したい
-	//出力先の指定がない場合
-	if output == "" {
-	}
+	log.Info("Frame: %d-%d", b.Start, b.End)
 
 	var w []io.Writer
 	if verbose {
-		//標準出力にすべて出力
 		w = append(w, os.Stdout)
+	}
+
+	if output != "" {
+		logPath := filepath.Join(output, "render.log")
+		if err := os.MkdirAll(output, 0755); err != nil {
+			return xerrors.Errorf("MkdirAll() error: %w", err)
+		}
+		logFile, err := os.Create(logPath)
+		if err != nil {
+			return xerrors.Errorf("render.log create error: %w", err)
+		}
+		defer logFile.Close()
+		w = append(w, logFile)
+		log.Info("render.log: %s", logPath)
 	}
 
 	//処理をまとめてくれるライターを生成
