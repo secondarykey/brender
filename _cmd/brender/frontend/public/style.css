@@ -3064,3 +3064,71 @@ html[data-theme="light"] .perm-type-group {
   background: rgba(39,174,96,0.12);
   color: #1a8a4a;
 }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   System Monitor (CPU / GPU usage bars)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+.sysmon-container {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 16px;
+  border-top: 1px solid rgba(var(--fg), 0.08);
+  flex-wrap: wrap;
+}
+
+.sysmon-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.sysmon-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(var(--fg), 0.5);
+  white-space: nowrap;
+  min-width: 32px;
+}
+
+.sysmon-track {
+  width: 80px;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(var(--fg), 0.08);
+  overflow: hidden;
+}
+
+.sysmon-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.sysmon-pct {
+  font-size: 0.72rem;
+  color: rgba(var(--fg), 0.6);
+  min-width: 28px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.sysmon-detail {
+  font-size: 0.68rem;
+  color: rgba(var(--fg), 0.4);
+  white-space: nowrap;
+}
+
+.sysmon-gpu-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sysmon-temp {
+  font-size: 0.72rem;
+  color: rgba(var(--fg), 0.5);
+  white-space: nowrap;
+}

@@ -668,5 +668,8 @@
     "password": "パスワード",
     "login": "ログイン",
     "loggingIn": "ログイン中..."
+  },
+  "sysmon": {
+    "memory": "メモリ"
   }
 }

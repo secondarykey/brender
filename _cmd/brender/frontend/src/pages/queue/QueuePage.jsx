@@ -8,6 +8,7 @@ import ConfirmDialog from '../../components/ConfirmDialog'
 import Pagination from '../../components/Pagination'
 import { formatDate, formatDateFull } from '../../lib/dateFormat'
 import { isWails } from '../../lib/api/_client'
+import SystemStats from '../../components/SystemStats'
 
 function StatusBadge({ status }) {
   const { t } = useTranslation()
@@ -367,6 +368,7 @@ function QueuePage({ navigate }) {
         {tab === 'active'  && <ActiveTab  navigate={navigate} />}
         {tab === 'history' && <HistoryTab navigate={navigate} />}
       </div>
+      <SystemStats />
     </div>
   )
 }

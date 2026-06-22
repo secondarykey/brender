@@ -668,5 +668,8 @@
     "password": "Password",
     "login": "Log In",
     "loggingIn": "Logging in..."
+  },
+  "sysmon": {
+    "memory": "Memory"
   }
 }

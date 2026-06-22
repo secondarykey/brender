@@ -18,6 +18,7 @@ import (
 	"github.com/ikascrew/brender/config"
 	"github.com/ikascrew/brender/log"
 	"github.com/ikascrew/brender/model"
+	"github.com/ikascrew/brender/sysmon"
 	"golang.org/x/xerrors"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
@@ -121,6 +122,7 @@ func run() error {
 			application.NewService(wails.NewCodes()),
 			application.NewService(wails.NewTag()),
 			application.NewService(wails.NewAuth()),
+			application.NewService(wails.NewSysMon()),
 		},
 		Assets: application.AssetOptions{
 			Handler: &movieAwareHandler{fallback: application.AssetFileServerFS(assets)},
@@ -157,6 +159,7 @@ func run() error {
 	})
 	// メインウィンドウが閉じられたらアプリ全体を終了する（ログウィンドウも閉じる）
 	mainWin.RegisterHook(events.Common.WindowClosing, func(_ *application.WindowEvent) {
+		api.StopSystemMonitor()
 		api.KillRunningQueues()
 		model.Close()
 		application.Get().Quit()
@@ -202,6 +205,12 @@ func run() error {
 			"pct":         pct,
 		})
 	}
+
+	// システムモニタリング開始（CPU/GPU 使用率をフロントエンドへ通知）
+	api.SystemStatsHook = func(stats sysmon.Stats) {
+		application.Get().Event.Emit("system:stats", stats)
+	}
+	api.StartSystemMonitor()
 
 	// サーバモードの起動
 	var restServer *rest.Server
