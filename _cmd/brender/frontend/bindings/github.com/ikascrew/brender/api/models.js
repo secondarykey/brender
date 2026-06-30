@@ -816,6 +816,14 @@ export class UserWithStatus {
              */
             this["display_name"] = "";
         }
+        if (!("role" in $$source)) {
+            /**
+             * アプリレベルロール（admin/creator/viewer）
+             * @member
+             * @type {string}
+             */
+            this["role"] = "";
+        }
         if (!("is_system" in $$source)) {
             /**
              * @member

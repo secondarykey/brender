@@ -8,6 +8,7 @@ import * as Codes from "./codes.js";
 import * as Environment from "./environment.js";
 import * as Project from "./project.js";
 import * as Queue from "./queue.js";
+import * as SysMon from "./sysmon.js";
 import * as Tag from "./tag.js";
 import * as WorkDir from "./workdir.js";
 import * as Workspace from "./workspace.js";
@@ -18,6 +19,7 @@ export {
     Environment,
     Project,
     Queue,
+    SysMon,
     Tag,
     WorkDir,
     Workspace

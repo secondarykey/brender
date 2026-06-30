@@ -35,10 +35,11 @@ export function CreateGroup(displayName) {
 /**
  * @param {string} name
  * @param {string} displayName
+ * @param {string} role
  * @returns {$CancellablePromise<model$0.User | null>}
  */
-export function CreateUser(name, displayName) {
-    return $Call.ByID(91531153, name, displayName).then(/** @type {($result: any) => any} */(($result) => {
+export function CreateUser(name, displayName, role) {
+    return $Call.ByID(91531153, name, displayName, role).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType3($result);
     }));
 }
@@ -168,10 +169,11 @@ export function UpdateGroup(id, displayName) {
  * @param {string} id
  * @param {string} name
  * @param {string} displayName
+ * @param {string} role
  * @returns {$CancellablePromise<model$0.User | null>}
  */
-export function UpdateUser(id, name, displayName) {
-    return $Call.ByID(2438993184, id, name, displayName).then(/** @type {($result: any) => any} */(($result) => {
+export function UpdateUser(id, name, displayName, role) {
+    return $Call.ByID(2438993184, id, name, displayName, role).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType3($result);
     }));
 }

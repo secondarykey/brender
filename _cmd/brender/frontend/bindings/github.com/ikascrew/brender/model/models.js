@@ -845,6 +845,14 @@ export class Job {
              */
             this["created_by"] = "";
         }
+        if (!("has_file_access" in $$source)) {
+            /**
+             * API 層で設定（DB 非保存）
+             * @member
+             * @type {boolean}
+             */
+            this["has_file_access"] = false;
+        }
 
         Object.assign(this, $$source);
     }
@@ -1711,6 +1719,14 @@ export class User {
              * @type {string}
              */
             this["display_name"] = "";
+        }
+        if (!("role" in $$source)) {
+            /**
+             * アプリレベルロール（admin/creator/viewer）
+             * @member
+             * @type {string}
+             */
+            this["role"] = "";
         }
         if (!("is_system" in $$source)) {
             /**

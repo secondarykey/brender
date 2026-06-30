@@ -7,7 +7,7 @@ require (
 	github.com/glebarez/sqlite v1.11.0
 	github.com/google/uuid v1.6.0
 	github.com/shirou/gopsutil/v4 v4.26.5
-	github.com/wailsapp/wails/v3 v3.0.0-alpha2.105
+	github.com/wailsapp/wails/v3 v3.0.0-alpha2.110
 	golang.org/x/crypto v0.52.0
 	golang.org/x/image v0.40.0
 	golang.org/x/sys v0.45.0
@@ -35,7 +35,7 @@ require (
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/tklauser/go-sysconf v0.3.16 // indirect
 	github.com/tklauser/numcpus v0.11.0 // indirect
-	github.com/wailsapp/wails/webview2 v1.0.24 // indirect
+	github.com/wailsapp/wails/webview2 v1.0.27 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f // indirect
 	modernc.org/libc v1.67.6 // indirect
