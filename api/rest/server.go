@@ -61,6 +61,24 @@ func NewServer(assets fs.FS, host string, port int) *Server {
 	fileServer := http.FileServerFS(distFS)
 	mux.Handle("/", spaHandler(fileServer, distFS))
 
+	// サムネイル配信。base64 ではなく画像 URL で返すことでブラウザキャッシュ（304）を効かせる。
+	// 認証は authMiddleware、アクセス権限とパス解決は api.ServeThumbnailPath が担う。
+	mux.HandleFunc("GET /thumbnail", func(w http.ResponseWriter, r *http.Request) {
+		q := r.URL.Query()
+		path, err := api.ServeThumbnailPath(r.Context(), q.Get("project_id"), q.Get("file_id"), q.Get("workspace_id"))
+		if err != nil {
+			http.Error(w, "forbidden", http.StatusForbidden)
+			return
+		}
+		if path == "" {
+			http.NotFound(w, r)
+			return
+		}
+		// Last-Modified による条件付き取得は http.ServeFile が処理する
+		w.Header().Set("Cache-Control", "private, max-age=0, must-revalidate")
+		http.ServeFile(w, r, path)
+	})
+
 	// ローカル動画ファイル配信。
 	// 任意ファイル読み取りを防ぐため、登録済み作業ディレクトリ配下のパスに限定する。
 	mux.HandleFunc("GET /_movie", func(w http.ResponseWriter, r *http.Request) {

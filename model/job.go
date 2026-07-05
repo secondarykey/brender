@@ -101,6 +101,26 @@ func GetJob(id string) (*Job, error) {
 	return &j, nil
 }
 
+// GetJobsByIDs は複数のジョブを1クエリでまとめて取得し、ID → *Job のマップで返す。
+// N+1 を避けたい一覧処理（キュー表示など）で使う。
+func GetJobsByIDs(ids []string) (map[string]*Job, error) {
+	result := make(map[string]*Job, len(ids))
+	if len(ids) == 0 {
+		return result, nil
+	}
+	var jobs []*Job
+	res := db.Select("jobs.*, project_files.name AS file_name").
+		Joins("LEFT JOIN project_files ON project_files.id = jobs.project_file_id").
+		Where("jobs.id IN ?", ids).Find(&jobs)
+	if res.Error != nil {
+		return nil, xerrors.Errorf("GetJobsByIDs: %w", res.Error)
+	}
+	for _, j := range jobs {
+		result[j.ID] = j
+	}
+	return result, nil
+}
+
 func ListJobs() ([]*Job, error) {
 	var list []*Job
 	res := db.Select("jobs.*, project_files.name AS file_name").

@@ -118,7 +118,7 @@ func hasStaticExtension(path string) bool {
 // 呼び出し元で SPA の index.html を返すようにする（React側でログイン画面を表示）。
 // /_movie（ファイル配信）と /events（SSE）は SPA ではなくリソースのため 401 を返す。
 func handleUnauthorized(w http.ResponseWriter, r *http.Request, path string) bool {
-	if strings.HasPrefix(path, "/api/") || path == "/_movie" || path == "/events" {
+	if strings.HasPrefix(path, "/api/") || path == "/_movie" || path == "/events" || path == "/thumbnail" {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
 		json.NewEncoder(w).Encode(map[string]string{"error": "unauthorized"})

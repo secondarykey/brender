@@ -338,7 +338,7 @@ func (h *Handler) registerProject() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.GetFileThumbnail(p.ProjectID, p.FileID)
+		return api.GetFileThumbnailURL(ctx, p.ProjectID, p.FileID)
 	})
 
 	h.register("project", "get_project_thumbnail", func(ctx context.Context, body json.RawMessage) (any, error) {
@@ -348,7 +348,7 @@ func (h *Handler) registerProject() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.GetProjectThumbnail(p.ProjectID)
+		return api.GetProjectThumbnailURL(ctx, p.ProjectID)
 	})
 
 	h.register("project", "set_project_thumbnail", func(ctx context.Context, body json.RawMessage) (any, error) {
@@ -599,7 +599,7 @@ func (h *Handler) registerWorkspace() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.GetWorkspaceThumbnail(p.ProjectID, p.FileID, p.WorkspaceID)
+		return api.GetWorkspaceThumbnailURL(ctx, p.ProjectID, p.FileID, p.WorkspaceID)
 	})
 
 	h.register("workspace", "set_thumbnail", func(ctx context.Context, body json.RawMessage) (any, error) {

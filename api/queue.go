@@ -1174,6 +1174,16 @@ func ListQueueItems(ctx context.Context) ([]*QueueItem, error) {
 	// ファイルIDごとのキャンセル権限キャッシュ（同一ファイルの複数キューで重複チェック回避）
 	cancelCache := map[string]bool{}
 
+	// キューに対応する Job をまとめて1クエリで取得（N+1 回避）
+	jobIDs := make([]string, 0, len(queues))
+	for _, q := range queues {
+		jobIDs = append(jobIDs, q.ID)
+	}
+	jobs, err := model.GetJobsByIDs(jobIDs)
+	if err != nil {
+		return nil, err
+	}
+
 	items := make([]*QueueItem, 0, len(queues))
 	for _, q := range queues {
 		item := &QueueItem{
@@ -1186,7 +1196,7 @@ func ListQueueItems(ctx context.Context) ([]*QueueItem, error) {
 			CreatedAt:   q.CreatedAt,
 			CanCancel:   isOwner,
 		}
-		if j, err := model.GetJob(q.ID); err == nil && j != nil {
+		if j := jobs[q.ID]; j != nil {
 			item.Name = j.Name
 			item.Engine = j.Engine
 			item.StartFrame = j.StartFrame

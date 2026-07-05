@@ -54,7 +54,7 @@ export const WorkspaceApi = {
     isWails() ? svc().then(s => s.Delete(projectID, workspaceID, force))
               : serverCall('workspace', 'delete', { project_id: projectID, workspace_id: workspaceID, force }),
 
-  /** ワークスペースのサムネイル画像を base64 データURIで取得
+  /** ワークスペースのサムネイルを取得。Wails は base64、サーバモードは配信URL。
    * @param {{ projectID: string, fileID: string, workspaceID: string }} args
    */
   getThumbnail: ({ projectID, fileID, workspaceID }) =>

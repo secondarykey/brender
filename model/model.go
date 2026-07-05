@@ -1,6 +1,7 @@
 package model
 
 import (
+	"strings"
 	"time"
 
 	"github.com/ikascrew/brender/log"
@@ -55,8 +56,17 @@ func Init(dsn string) error {
 	conf := &gorm.Config{}
 	conf.Logger = log.NewDBLogger()
 
+	// WAL + busy_timeout でサーバモードの同時アクセス時の "database is locked" を避ける。
+	// glebarez ドライバは接続ごとに DSN の _pragma を適用する（busy_timeout は既定 5000ms）。
+	// journal_mode=WAL は読み取りと書き込みの同時実行を可能にする。
+	sep := "?"
+	if strings.Contains(dsn, "?") {
+		sep = "&"
+	}
+	connDSN := dsn + sep + "_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)&_pragma=synchronous(NORMAL)"
+
 	var err error
-	db, err = gorm.Open(sqlite.Open(dsn), conf)
+	db, err = gorm.Open(sqlite.Open(connDSN), conf)
 	if err != nil {
 		return err
 	}

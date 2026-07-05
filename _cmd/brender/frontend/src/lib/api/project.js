@@ -123,14 +123,16 @@ export const ProjectApi = {
     isWails() ? svc().then(s => s.DeleteFile(fileID, force))
               : serverCall('project', 'delete_file', { file_id: fileID, force }),
 
-  /** ファイルのサムネイル画像を base64 データURIで取得
+  /** ファイルのサムネイルを取得。Wails は base64 データURI、サーバモードは
+   * 配信URL（/thumbnail?...、ブラウザキャッシュが効く）。存在しなければ空文字。
+   * どちらも文字列なので img の src にそのまま渡せる。
    * @param {{ projectID: string, fileID: number }} args
    */
   getFileThumbnail: ({ projectID, fileID }) =>
     isWails() ? svc().then(s => s.GetFileThumbnail(projectID, fileID))
               : serverCall('project', 'get_file_thumbnail', { project_id: projectID, file_id: fileID }),
 
-  /** プロジェクトのサムネイル画像を base64 データURIで取得
+  /** プロジェクトのサムネイルを取得。Wails は base64、サーバモードは配信URL。
    * @param {{ projectID: string }} args
    */
   getProjectThumbnail: ({ projectID }) =>

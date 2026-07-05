@@ -27,7 +27,7 @@ wails3 build
 wails3 generate bindings
 ```
 
-The DB is stored at `~/.brender/brender.db` (SQLite, created automatically on first run). パスは `~/.brender/brender.ini` の `db_path` で上書き可（[起動設定ファイル](#起動設定ファイル-config-brenderini) 参照）。
+The DB is stored at `~/.brender/brender.db` (SQLite, created automatically on first run). パスは `~/.brender/brender.ini` の `db_path` で上書き可（[起動設定ファイル](#起動設定ファイル-config-brenderini) 参照）。`model.Init` は DSN に `_pragma=journal_mode(WAL)` / `synchronous(NORMAL)` を付与し、サーバモードの同時アクセス時の `database is locked` を避ける（glebarez ドライバは接続ごとに `busy_timeout=5000ms` を既定で適用）。WAL 有効時は `brender.db-wal` / `-shm` が併設される。
 
 ### CLI tool
 ```bash
@@ -154,7 +154,12 @@ Services are registered in `_cmd/brender/main.go`. After adding or changing a se
 - 元画像をアスペクト比保持でキャンバスに収まる最大サイズに縮小（長辺基準 `min(W/srcW, H/srcH)`）
 - 中央配置、JPEG quality 85
 
-`GetFileThumbnail(projectID, fileID)` — `thumbnail.jpg` を base64 data URI で返す。存在しない場合は `IsSystem` ワークスペースの完了ジョブから画像を検索して変換・保存してから返す。
+**パス解決** (`thumbnailPath`): サムネイル種別（プロジェクト/ファイル/ワークスペース）ごとの `thumbnail.jpg` のパスを返す共通ヘルパー。無ければ完了ジョブ出力から生成する。base64 版・URL 版・HTTP 配信で共用する。
+
+**取得の2形態**:
+- **base64**（Wails デスクトップ）: `GetFileThumbnail` / `GetProjectThumbnail` / `GetWorkspaceThumbnail` が `thumbnailPath` + `imageToBase64` でデータURIを返す。
+- **URL 配信**（サーバモード）: `GetFileThumbnailURL` 等が `/thumbnail?project_id=...&file_id=...&v={mtime}` を返し、実体は REST の `GET /thumbnail`（`api.ServeThumbnailPath`、認証+アクセス権限チェック+`Last-Modified` による 304）が配信する。base64 の 33% 肥大を避け、ブラウザキャッシュを効かせる。`v={mtime}` で再生成時にキャッシュを更新。存在しなければ空文字（フロントはプレースホルダ表示のまま `queue:changed` で再取得）。
+- フロントの `ProjectApi.getFileThumbnail` はどちらのモードでも文字列（データURI or URL）を返すため、`<img src>` にそのまま渡せる（消費側コードはモード非依存）。
 
 **IsSystem ワークスペース**: 現在はワークスペース一覧に表示したまま。将来 `ListWorkspacesByProject` の WHERE 句に `is_system = false` を追加して除外する予定。
 
@@ -413,6 +418,8 @@ db_path = D:\brender\brender.db
 - `BlenderApi.getEngines({ installID })` — runs `blender -E help -b` and parses the engine list.
 - Both fall back to `model.FirstBlender()` when `installID == 0`.
 
+**RunTool 結果キャッシュ** (`exec/toolcache.go`): `RunTool()` の解析結果 `Tool` を `(cmd, filePath)` キー + ファイル更新時刻でインメモリキャッシュする。Blender 起動は数秒かかるため、同一 `.blend` への `ResolveScene` / `GetToolData` / `getScenes` 等の重複起動を排除する。特にファイル登録時のサムネイル生成（`GetToolData`（Packチェック）→ `CreateThumbnailWorkspace` の `ResolveScene` → `TestEnqueue` 内の `ResolveScene`）が1回の Blender 起動で済む。ファイルが編集されると mtime が変わり自動的にキャッシュミスになる。明示的な破棄は `exec.InvalidateToolCache(cmd, filePath)`。
+
 ### CLI terminal display (`_cmd/brender-tool/main.go`)
 `runTerminalDisplay` polls `pw.Result()` every 200ms and calls `printTerminal` to render a fixed-height status block using ANSI cursor-up escape sequences. `exec.Terminal` handles line width and refresh. No JSON is output — the terminal display IS the output.
 
@@ -452,7 +459,7 @@ After `Enqueue()` succeeds, the app navigates to the queue page (`navigate('queu
 - 「+ .blend ファイルを追加」ボタン: `.list-fab`（`position: sticky; bottom: 16px`）で画面下部に常時表示
 - 「ディレクトリからファイルを追加」機能: プロジェクト設定タブ（SettingsTab）の作業ディレクトリセクション下に配置
 - タイルサイズ: 幅 320px、縦レイアウト（サムネイル上 180px + 名称のみ下）
-- サムネイル: `ProjectApi.getFileThumbnail({ projectID, fileID })` で base64 data URI を取得して表示
+- サムネイル: `ProjectApi.getFileThumbnail({ projectID, fileID })` で取得（Wails は base64、サーバモードは配信URL）して `<img src>` に渡す
 
 ### サイドバー
 - アイコンのみ表示（ラベルなし）、`title` 属性でツールチップ

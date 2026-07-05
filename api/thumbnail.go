@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"fmt"
 	"image"
 	stdDraw "image/draw"
 	"image/jpeg"
 	"image/png"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -18,6 +20,126 @@ import (
 	xdraw "golang.org/x/image/draw"
 	"golang.org/x/xerrors"
 )
+
+// thumbnailPath はサムネイル種別ごとの thumbnail.jpg のパスを返す（必要なら生成する）。
+// workspaceID != "" → ワークスペース、fileID != "" → ファイル、どちらも "" → プロジェクト。
+// 生成できない場合は ok=false。base64 版・URL 版・HTTP 配信で共用する。
+func thumbnailPath(projectID, fileID, workspaceID string) (string, bool) {
+	baseDir, err := GetProjectBaseDir(projectID)
+	if err != nil {
+		return "", false
+	}
+
+	switch {
+	case workspaceID != "":
+		dir := filepath.Join(baseDir, projectID, fileID, workspaceID)
+		p := filepath.Join(dir, "thumbnail.jpg")
+		if _, err := os.Stat(p); err == nil {
+			return p, true
+		}
+		job, err := model.GetLatestJobForThumbnail(workspaceID)
+		if err != nil || job == nil {
+			return "", false
+		}
+		img, _ := findFirstImage(job.OutputDir)
+		if img == "" || convertToJPEG(img, dir, p) != nil {
+			return "", false
+		}
+		return p, true
+
+	case fileID != "":
+		dir := filepath.Join(baseDir, projectID, fileID)
+		p := filepath.Join(dir, "thumbnail.jpg")
+		if _, err := os.Stat(p); err == nil {
+			return p, true
+		}
+		ws, err := model.GetSystemWorkspaceByFile(fileID)
+		if err != nil || ws == nil {
+			return "", false
+		}
+		job, err := model.GetLatestJobForThumbnail(ws.ID)
+		if err != nil || job == nil {
+			return "", false
+		}
+		img, _ := findFirstImage(job.OutputDir)
+		if img == "" || convertToJPEG(img, dir, p) != nil {
+			return "", false
+		}
+		return p, true
+
+	default:
+		p := filepath.Join(baseDir, projectID, "thumbnail.jpg")
+		if _, err := os.Stat(p); err == nil {
+			return p, true
+		}
+		return "", false
+	}
+}
+
+// thumbnailURL はサーバモードでサムネイルを配信する相対URLを返す。
+// 生成できない場合は "" を返す（フロントは空ならプレースホルダ表示・再取得する）。
+// mtime を v クエリに付けて再生成時にブラウザキャッシュを更新する。
+func thumbnailURL(projectID, fileID, workspaceID string) string {
+	p, ok := thumbnailPath(projectID, fileID, workspaceID)
+	if !ok {
+		return ""
+	}
+	q := url.Values{}
+	q.Set("project_id", projectID)
+	if fileID != "" {
+		q.Set("file_id", fileID)
+	}
+	if workspaceID != "" {
+		q.Set("workspace_id", workspaceID)
+	}
+	if info, err := os.Stat(p); err == nil {
+		q.Set("v", fmt.Sprintf("%d", info.ModTime().Unix()))
+	}
+	return "/thumbnail?" + q.Encode()
+}
+
+// GetFileThumbnailURL はファイルサムネイルの配信URLを返す（サーバモード用）。
+func GetFileThumbnailURL(ctx context.Context, projectID, fileID string) (string, error) {
+	if err := requireFileAccess(ctx, fileID); err != nil {
+		return "", err
+	}
+	return thumbnailURL(projectID, fileID, ""), nil
+}
+
+// GetProjectThumbnailURL はプロジェクトサムネイルの配信URLを返す（サーバモード用）。
+func GetProjectThumbnailURL(ctx context.Context, projectID string) (string, error) {
+	if err := requireProjectAccess(ctx, projectID); err != nil {
+		return "", err
+	}
+	return thumbnailURL(projectID, "", ""), nil
+}
+
+// GetWorkspaceThumbnailURL はワークスペースサムネイルの配信URLを返す（サーバモード用）。
+func GetWorkspaceThumbnailURL(ctx context.Context, projectID, fileID, workspaceID string) (string, error) {
+	if err := requireFileAccess(ctx, fileID); err != nil {
+		return "", err
+	}
+	return thumbnailURL(projectID, fileID, workspaceID), nil
+}
+
+// ServeThumbnailPath は HTTP 配信用にサムネイルの実パスを返す（アクセス権限チェック込み）。
+// プロジェクト配下（fileID あり）はファイルアクセス、それ以外はプロジェクトアクセスで判定する。
+func ServeThumbnailPath(ctx context.Context, projectID, fileID, workspaceID string) (string, error) {
+	if fileID != "" {
+		if err := requireFileAccess(ctx, fileID); err != nil {
+			return "", err
+		}
+	} else {
+		if err := requireProjectAccess(ctx, projectID); err != nil {
+			return "", err
+		}
+	}
+	p, ok := thumbnailPath(projectID, fileID, workspaceID)
+	if !ok {
+		return "", nil
+	}
+	return p, nil
+}
 
 func CreateThumbnailWorkspace(ctx context.Context, projectID string, file *model.ProjectFile) error {
 	blenderPath, err := resolveBlenderPath(file.BlenderInstallID, 0)
@@ -50,38 +172,11 @@ func CreateThumbnailWorkspace(ctx context.Context, projectID string, file *model
 // 存在しない場合は IsSystem ワークスペースの完了済みジョブ出力から JPEG を生成して保存する。
 // サムネイルが作れない場合は空文字を返す（エラーなし）。
 func GetFileThumbnail(projectID string, fileID string) (string, error) {
-	baseDir, err := GetProjectBaseDir(projectID)
-	if err != nil {
+	p, ok := thumbnailPath(projectID, fileID, "")
+	if !ok {
 		return "", nil
 	}
-
-	thumbDir := filepath.Join(baseDir, projectID, fileID)
-	thumbPath := filepath.Join(thumbDir, "thumbnail.jpg")
-
-	if _, err := os.Stat(thumbPath); err == nil {
-		return imageToBase64(thumbPath)
-	}
-
-	ws, err := model.GetSystemWorkspaceByFile(fileID)
-	if err != nil || ws == nil {
-		return "", nil
-	}
-
-	job, err := model.GetLatestJobForThumbnail(ws.ID)
-	if err != nil || job == nil {
-		return "", nil
-	}
-
-	imagePath, err := findFirstImage(job.OutputDir)
-	if err != nil || imagePath == "" {
-		return "", nil
-	}
-
-	if err := convertToJPEG(imagePath, thumbDir, thumbPath); err != nil {
-		return "", xerrors.Errorf("convertToJPEG: %w", err)
-	}
-
-	return imageToBase64(thumbPath)
+	return imageToBase64(p)
 }
 
 func findFirstImage(dir string) (string, error) {
@@ -307,15 +402,11 @@ func SetProjectThumbnailFromFile(projectID, fileID string) (string, error) {
 // GetProjectThumbnail はプロジェクトのサムネイル画像を base64 データURIで返す。
 // {baseDir}/{projectID}/thumbnail.jpg が存在すればそれを返す。存在しない場合は空文字を返す。
 func GetProjectThumbnail(projectID string) (string, error) {
-	baseDir, err := GetProjectBaseDir(projectID)
-	if err != nil {
+	p, ok := thumbnailPath(projectID, "", "")
+	if !ok {
 		return "", nil
 	}
-	thumbPath := filepath.Join(baseDir, projectID, "thumbnail.jpg")
-	if _, err := os.Stat(thumbPath); err != nil {
-		return "", nil
-	}
-	return imageToBase64(thumbPath)
+	return imageToBase64(p)
 }
 
 // GetWorkspaceThumbnail はワークスペースのサムネイル画像を base64 データURIで返す。
@@ -323,33 +414,11 @@ func GetProjectThumbnail(projectID string) (string, error) {
 // 存在しない場合はそのワークスペースの完了済みジョブ出力から JPEG を生成して保存する。
 // サムネイルが作れない場合は空文字を返す（エラーなし）。
 func GetWorkspaceThumbnail(projectID, fileID, workspaceID string) (string, error) {
-	baseDir, err := GetProjectBaseDir(projectID)
-	if err != nil {
+	p, ok := thumbnailPath(projectID, fileID, workspaceID)
+	if !ok {
 		return "", nil
 	}
-
-	thumbDir := filepath.Join(baseDir, projectID, fileID, workspaceID)
-	thumbPath := filepath.Join(thumbDir, "thumbnail.jpg")
-
-	if _, err := os.Stat(thumbPath); err == nil {
-		return imageToBase64(thumbPath)
-	}
-
-	job, err := model.GetLatestJobForThumbnail(workspaceID)
-	if err != nil || job == nil {
-		return "", nil
-	}
-
-	imagePath, err := findFirstImage(job.OutputDir)
-	if err != nil || imagePath == "" {
-		return "", nil
-	}
-
-	if err := convertToJPEG(imagePath, thumbDir, thumbPath); err != nil {
-		return "", xerrors.Errorf("convertToJPEG: %w", err)
-	}
-
-	return imageToBase64(thumbPath)
+	return imageToBase64(p)
 }
 
 func imageToBase64(path string) (string, error) {
