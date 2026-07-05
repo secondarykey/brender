@@ -1,20 +1,26 @@
 package api
 
 import (
+	"context"
+
 	"github.com/ikascrew/brender/model"
 	"golang.org/x/xerrors"
 )
 
 // PermissionEntry は権限一覧表示用（ターゲットの表示名を付与）。
 type PermissionEntry struct {
-	ProjectID       string `json:"project_id"`
-	TargetID        string `json:"target_id"`
-	TargetName      string `json:"target_name"`
-	TargetIsSystem  bool   `json:"target_is_system"`
-	Role            string `json:"role"`
+	ProjectID      string `json:"project_id"`
+	TargetID       string `json:"target_id"`
+	TargetName     string `json:"target_name"`
+	TargetIsSystem bool   `json:"target_is_system"`
+	Role           string `json:"role"`
 }
 
-func SetProjectPermission(projectID, targetID, role string) error {
+func SetProjectPermission(ctx context.Context, projectID, targetID, role string) error {
+	// プロジェクト owner のみ権限を変更できる
+	if err := requireProjectRole(ctx, projectID, model.RoleOwner); err != nil {
+		return err
+	}
 	// Brender Owner の権限変更は禁止
 	if targetID == model.UserIDOwner {
 		return xerrors.New("Brender Owner の権限は変更できません")
@@ -33,7 +39,11 @@ func SetProjectPermission(projectID, targetID, role string) error {
 	return model.SetProjectPermission(projectID, targetID, role)
 }
 
-func RemoveProjectPermission(projectID, targetID string) error {
+func RemoveProjectPermission(ctx context.Context, projectID, targetID string) error {
+	// プロジェクト owner のみ権限を削除できる
+	if err := requireProjectRole(ctx, projectID, model.RoleOwner); err != nil {
+		return err
+	}
 	// Brender Owner の権限削除は禁止
 	if targetID == model.UserIDOwner {
 		return xerrors.New("Brender Owner の権限は削除できません")
@@ -77,7 +87,11 @@ func ListProjectPermissions(projectID string) ([]*PermissionEntry, error) {
 
 // ── File Permission ───────────────────────────────────────
 
-func SetFilePermission(fileID, targetID, role string) error {
+func SetFilePermission(ctx context.Context, fileID, targetID, role string) error {
+	// ファイル owner のみ権限を変更できる
+	if err := requireFileRole(ctx, fileID, model.RoleOwner); err != nil {
+		return err
+	}
 	// Brender Owner の権限変更は禁止
 	if targetID == model.UserIDOwner {
 		return xerrors.New("Brender Owner の権限は変更できません")
@@ -96,7 +110,11 @@ func SetFilePermission(fileID, targetID, role string) error {
 	return model.SetFilePermission(fileID, targetID, role)
 }
 
-func RemoveFilePermission(fileID, targetID string) error {
+func RemoveFilePermission(ctx context.Context, fileID, targetID string) error {
+	// ファイル owner のみ権限を削除できる
+	if err := requireFileRole(ctx, fileID, model.RoleOwner); err != nil {
+		return err
+	}
 	// Brender Owner の権限削除は禁止
 	if targetID == model.UserIDOwner {
 		return xerrors.New("Brender Owner の権限は削除できません")

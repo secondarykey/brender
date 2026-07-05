@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/ikascrew/brender/api"
 	"github.com/ikascrew/brender/log"
 )
 
@@ -60,11 +61,16 @@ func NewServer(assets fs.FS, host string, port int) *Server {
 	fileServer := http.FileServerFS(distFS)
 	mux.Handle("/", spaHandler(fileServer, distFS))
 
-	// ローカル動画ファイル配信
+	// ローカル動画ファイル配信。
+	// 任意ファイル読み取りを防ぐため、登録済み作業ディレクトリ配下のパスに限定する。
 	mux.HandleFunc("GET /_movie", func(w http.ResponseWriter, r *http.Request) {
 		p := r.URL.Query().Get("path")
 		if p == "" || !filepath.IsAbs(p) {
 			http.Error(w, "invalid path", http.StatusBadRequest)
+			return
+		}
+		if err := api.ValidateWorkDirPath(p); err != nil {
+			http.Error(w, "forbidden", http.StatusForbidden)
 			return
 		}
 		http.ServeFile(w, r, p)

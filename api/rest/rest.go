@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,7 +13,7 @@ import (
 	"github.com/ikascrew/brender/model"
 )
 
-type handlerFunc func(body json.RawMessage) (any, error)
+type handlerFunc func(ctx context.Context, body json.RawMessage) (any, error)
 
 type Handler struct {
 	routes map[string]handlerFunc
@@ -29,6 +30,17 @@ func NewHandler() *Handler {
 func (h *Handler) register(service, method string, fn handlerFunc) {
 	key := service + "/" + method
 	h.routes[key] = fn
+}
+
+// registerAdmin は admin ロール限定のエンドポイントを登録する。
+// 設定変更・Blender 登録・ユーザ管理など、システム全体に影響する操作に使う。
+func (h *Handler) registerAdmin(service, method string, fn handlerFunc) {
+	h.register(service, method, func(ctx context.Context, body json.RawMessage) (any, error) {
+		if err := api.RequireAdmin(ctx); err != nil {
+			return nil, err
+		}
+		return fn(ctx, body)
+	})
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -64,7 +76,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		body = []byte("{}")
 	}
 
-	data, err := fn(json.RawMessage(body))
+	data, err := fn(r.Context(), json.RawMessage(body))
 	elapsed := time.Since(start)
 	if err != nil {
 		log.Warn("REST %s error: %v (%s)", key, err, elapsed)
@@ -111,7 +123,7 @@ func (h *Handler) handleUploadFile(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	result, err := api.UploadProjectFile(projectID, header.Filename, file)
+	result, err := api.UploadProjectFile(r.Context(), projectID, header.Filename, file)
 	elapsed := time.Since(start)
 	if err != nil {
 		log.Warn("REST upload error: %v (%s)", err, elapsed)

@@ -24,19 +24,19 @@ func (s *Queue) PreviewRender(projectID string, workspaceID string) (*api.Render
 }
 
 func (s *Queue) EnqueueWithPreview(projectID string, workspaceID string, preview *api.RenderPreview) (*model.Queue, error) {
-	return api.EnqueueWithPreview(projectID, workspaceID, preview)
+	return api.EnqueueWithPreview(api.WailsContext(), projectID, workspaceID, preview)
 }
 
 func (s *Queue) Enqueue(projectID string, workspaceID string) (*model.Queue, error) {
-	return api.Enqueue(projectID, workspaceID)
+	return api.Enqueue(api.WailsContext(), projectID, workspaceID)
 }
 
 func (s *Queue) TestEnqueue(projectID string, workspaceID string, params api.TestRenderParams) (*model.Queue, error) {
-	return api.TestEnqueue(projectID, workspaceID, params)
+	return api.TestEnqueue(api.WailsContext(), projectID, workspaceID, params)
 }
 
 func (s *Queue) SamplesComparisonEnqueue(projectID string, workspaceID string, sampleCounts []int, frame int) (*model.Queue, error) {
-	return api.SamplesComparisonEnqueue(projectID, workspaceID, sampleCounts, frame)
+	return api.SamplesComparisonEnqueue(api.WailsContext(), projectID, workspaceID, sampleCounts, frame)
 }
 
 func (s *Queue) List() ([]*model.Queue, error) {
@@ -44,7 +44,7 @@ func (s *Queue) List() ([]*model.Queue, error) {
 }
 
 func (s *Queue) ListItems() ([]*api.QueueItem, error) {
-	return api.ListQueueItems()
+	return api.ListQueueItems(api.WailsContext())
 }
 
 func (s *Queue) ListByWorkspace(projectID string, workspaceID string) ([]*model.Queue, error) {
@@ -56,7 +56,7 @@ func (s *Queue) Get(id string) (*model.Queue, error) {
 }
 
 func (s *Queue) Cancel(id string) error {
-	return api.CancelQueue(id)
+	return api.CancelQueue(api.WailsContext(), id)
 }
 
 func (s *Queue) KillRunning() {
@@ -68,7 +68,7 @@ func (s *Queue) ListJobs() ([]*model.Job, error) {
 }
 
 func (s *Queue) ListJobsPaged(filter *model.JobFilter, page int, pageSize int) (*model.JobListResult, error) {
-	return api.ListJobsPaged(filter, page, pageSize)
+	return api.ListJobsPaged(api.WailsContext(), filter, page, pageSize)
 }
 
 func (s *Queue) ListJobsByWorkspace(projectID string, workspaceID string) ([]*model.Job, error) {
@@ -88,59 +88,59 @@ func (s *Queue) ListJobsByProjectFilePaged(projectID string, fileID string, page
 }
 
 func (s *Queue) GetJob(id string) (*model.Job, error) {
-	return api.GetJob(id)
+	return api.GetJob(api.WailsContext(), id)
 }
 
 func (s *Queue) UpdateJobMeta(id, name, note string) error {
-	return api.UpdateJobMeta(id, name, note)
+	return api.UpdateJobMeta(api.WailsContext(), id, name, note)
 }
 
 func (s *Queue) DeleteJob(id string) error {
-	return api.DeleteJob(id)
+	return api.DeleteJob(api.WailsContext(), id)
 }
 
 func (s *Queue) BulkDeleteJobsByWorkspace(projectID string, workspaceID string, keepCount int, dataOnly bool, errorOnly bool) (int, error) {
-	return api.BulkDeleteJobsByWorkspace(projectID, workspaceID, keepCount, dataOnly, errorOnly)
+	return api.BulkDeleteJobsByWorkspace(api.WailsContext(), projectID, workspaceID, keepCount, dataOnly, errorOnly)
 }
 
 func (s *Queue) DeleteJobData(id string) error {
-	return api.DeleteJobData(id)
+	return api.DeleteJobData(api.WailsContext(), id)
 }
 
 func (s *Queue) ListJobImages(id string) ([]string, error) {
-	return api.ListJobImages(id)
+	return api.ListJobImages(api.WailsContext(), id)
 }
 
 func (s *Queue) ListJobFiles(id string) ([]*api.JobFileInfo, error) {
-	return api.ListJobFiles(id)
+	return api.ListJobFiles(api.WailsContext(), id)
 }
 
 func (s *Queue) GetImageBase64(path string) (string, error) {
-	return api.GetImageBase64(path)
+	return api.GetImageBase64(api.WailsContext(), path)
 }
 
 func (s *Queue) LockJob(id string) error {
-	return api.LockJob(id)
+	return api.LockJob(api.WailsContext(), id)
 }
 
 func (s *Queue) UnlockJob(id string) error {
-	return api.UnlockJob(id)
+	return api.UnlockJob(api.WailsContext(), id)
 }
 
 func (s *Queue) GetJobLog(id string) (string, error) {
-	return api.GetJobLog(id)
+	return api.GetJobLog(api.WailsContext(), id)
 }
 
 func (s *Queue) ZipJobData(id string, savePath string) error {
-	return api.ZipJobData(id, savePath)
+	return api.ZipJobData(api.WailsContext(), id, savePath)
 }
 
 func (s *Queue) ZipJobSelectedFiles(id string, filePaths []string, savePath string) error {
-	return api.ZipJobSelectedFiles(id, filePaths, savePath)
+	return api.ZipJobSelectedFiles(api.WailsContext(), id, filePaths, savePath)
 }
 
 func (s *Queue) DeleteJobFiles(id string, filePaths []string) error {
-	return api.DeleteJobFiles(id, filePaths)
+	return api.DeleteJobFiles(api.WailsContext(), id, filePaths)
 }
 
 func (s *Queue) OpenMovieWindow(videoPath string) error {
@@ -163,7 +163,7 @@ func (s *Queue) GetCleanableJobStats(filter *model.CleanFilter) (*model.Cleanabl
 }
 
 func (s *Queue) CleanJobData(filter *model.CleanFilter) (int, error) {
-	return api.CleanJobData(filter)
+	return api.CleanJobData(api.WailsContext(), filter)
 }
 
 func (s *Queue) MeasureFilteredDiskSize(filter *model.CleanFilter) (int64, error) {

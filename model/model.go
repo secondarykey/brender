@@ -61,9 +61,10 @@ func Init(dsn string) error {
 		return err
 	}
 
-	// CreatedBy / UpdatedBy を自動設定するコールバック
+	// CreatedBy / UpdatedBy を自動設定するコールバック。
+	// クエリに紐付いた context のユーザを優先し、なければ goroutine-local にフォールバックする。
 	db.Callback().Create().Before("gorm:create").Register("set_created_by", func(tx *gorm.DB) {
-		user := CurrentUser()
+		user := auditUser(tx.Statement.Context)
 		if tx.Statement.Schema == nil {
 			return
 		}
@@ -75,7 +76,7 @@ func Init(dsn string) error {
 		}
 	})
 	db.Callback().Update().Before("gorm:update").Register("set_updated_by", func(tx *gorm.DB) {
-		user := CurrentUser()
+		user := auditUser(tx.Statement.Context)
 		if tx.Statement.Schema == nil {
 			return
 		}

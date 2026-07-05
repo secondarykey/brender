@@ -70,11 +70,11 @@ func authMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		// 認証済み: goroutine にユーザを紐付け
+		// 認証済み: 権限判定用に ctx へ、監査カラム用に goroutine-local へユーザを紐付け
 		model.SetGoroutineUser(user.ID)
 		defer model.ClearGoroutineUser()
 
-		next.ServeHTTP(w, r)
+		next.ServeHTTP(w, r.WithContext(model.WithUser(r.Context(), user.ID)))
 	})
 }
 
@@ -114,10 +114,11 @@ func hasStaticExtension(path string) bool {
 	return false
 }
 
-// handleUnauthorized はAPI呼び出しに401を返す。ページリクエストの場合は false を返し、
+// handleUnauthorized はAPI・リソース呼び出しに401を返す。ページリクエストの場合は false を返し、
 // 呼び出し元で SPA の index.html を返すようにする（React側でログイン画面を表示）。
+// /_movie（ファイル配信）と /events（SSE）は SPA ではなくリソースのため 401 を返す。
 func handleUnauthorized(w http.ResponseWriter, r *http.Request, path string) bool {
-	if strings.HasPrefix(path, "/api/") {
+	if strings.HasPrefix(path, "/api/") || path == "/_movie" || path == "/events" {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
 		json.NewEncoder(w).Encode(map[string]string{"error": "unauthorized"})

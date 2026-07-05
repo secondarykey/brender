@@ -94,7 +94,7 @@ func (t *Tag) AssignTagByInput(projectFileID, input string) (*model.TagWithCateg
 // ── Search ───────────────────────────────────────────────
 
 func (t *Tag) SearchFiles(tagIDs []uint, page, pageSize int, sort, dir string, untagged bool, keyword string) (*api.FileSearchResponse, error) {
-	return api.SearchFiles(tagIDs, page, pageSize, sort, dir, untagged, keyword)
+	return api.SearchFiles(api.WailsContext(), tagIDs, page, pageSize, sort, dir, untagged, keyword)
 }
 
 func (t *Tag) ListTagUsageCounts() ([]*model.TagUsageCount, error) {

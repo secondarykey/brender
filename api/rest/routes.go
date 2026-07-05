@@ -1,14 +1,15 @@
 package rest
 
 import (
+	"context"
 	"encoding/json"
 	"runtime"
 
+	"github.com/google/uuid"
 	brender "github.com/ikascrew/brender"
 	"github.com/ikascrew/brender/api"
 	"github.com/ikascrew/brender/code"
 	"github.com/ikascrew/brender/model"
-	"github.com/google/uuid"
 )
 
 var appVersion string
@@ -34,11 +35,11 @@ func (h *Handler) registerRoutes() {
 // ── Environment ─────────────────────────────────────────
 
 func (h *Handler) registerEnvironment() {
-	h.register("environment", "get", func(_ json.RawMessage) (any, error) {
+	h.register("environment", "get", func(ctx context.Context, _ json.RawMessage) (any, error) {
 		return api.GetEnvironment()
 	})
 
-	h.register("environment", "set_server", func(body json.RawMessage) (any, error) {
+	h.registerAdmin("environment", "set_server", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			Enabled bool   `json:"enabled"`
 			Host    string `json:"host"`
@@ -51,7 +52,7 @@ func (h *Handler) registerEnvironment() {
 		return nil, api.SetServer(p.Enabled, p.Host, p.Port, p.Auth)
 	})
 
-	h.register("environment", "set_ffmpeg", func(body json.RawMessage) (any, error) {
+	h.registerAdmin("environment", "set_ffmpeg", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			Cmd    string `json:"cmd"`
 			FPS    int    `json:"fps"`
@@ -66,7 +67,7 @@ func (h *Handler) registerEnvironment() {
 		})
 	})
 
-	h.register("environment", "set_output_format", func(body json.RawMessage) (any, error) {
+	h.registerAdmin("environment", "set_output_format", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			Format string `json:"format"`
 		}
@@ -76,7 +77,7 @@ func (h *Handler) registerEnvironment() {
 		return nil, api.SetOutputFormat(p.Format)
 	})
 
-	h.register("environment", "set_max_concurrent_jobs", func(body json.RawMessage) (any, error) {
+	h.registerAdmin("environment", "set_max_concurrent_jobs", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			N int `json:"n"`
 		}
@@ -86,14 +87,14 @@ func (h *Handler) registerEnvironment() {
 		return nil, api.SetMaxConcurrentJobs(p.N)
 	})
 
-	h.register("environment", "get_version", func(_ json.RawMessage) (any, error) {
+	h.register("environment", "get_version", func(ctx context.Context, _ json.RawMessage) (any, error) {
 		return map[string]any{
 			"version": appVersion,
 			"dev":     devMode,
 		}, nil
 	})
 
-	h.register("environment", "get_licenses", func(_ json.RawMessage) (any, error) {
+	h.register("environment", "get_licenses", func(ctx context.Context, _ json.RawMessage) (any, error) {
 		return map[string]string{
 			"app":        brender.AppLicense,
 			"thirdParty": brender.ThirdPartyLicenses,
@@ -104,11 +105,11 @@ func (h *Handler) registerEnvironment() {
 // ── Blender ─────────────────────────────────────────────
 
 func (h *Handler) registerBlender() {
-	h.register("blender", "list", func(_ json.RawMessage) (any, error) {
+	h.register("blender", "list", func(ctx context.Context, _ json.RawMessage) (any, error) {
 		return api.ListBlenders()
 	})
 
-	h.register("blender", "register", func(body json.RawMessage) (any, error) {
+	h.registerAdmin("blender", "register", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			Path string `json:"path"`
 		}
@@ -118,7 +119,7 @@ func (h *Handler) registerBlender() {
 		return api.RegisterBlender(p.Path)
 	})
 
-	h.register("blender", "delete", func(body json.RawMessage) (any, error) {
+	h.registerAdmin("blender", "delete", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ID uint `json:"id"`
 		}
@@ -128,7 +129,7 @@ func (h *Handler) registerBlender() {
 		return nil, api.DeleteBlender(p.ID)
 	})
 
-	h.register("blender", "reorder", func(body json.RawMessage) (any, error) {
+	h.registerAdmin("blender", "reorder", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			IDs []uint `json:"ids"`
 		}
@@ -138,7 +139,7 @@ func (h *Handler) registerBlender() {
 		return nil, api.ReorderBlenders(p.IDs)
 	})
 
-	h.register("blender", "get_engines", func(body json.RawMessage) (any, error) {
+	h.register("blender", "get_engines", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			InstallID uint `json:"install_id"`
 		}
@@ -148,7 +149,7 @@ func (h *Handler) registerBlender() {
 		return api.GetEngines(p.InstallID)
 	})
 
-	h.register("blender", "get_scenes", func(body json.RawMessage) (any, error) {
+	h.register("blender", "get_scenes", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			InstallID uint   `json:"install_id"`
 			FileID    string `json:"file_id"`
@@ -159,7 +160,7 @@ func (h *Handler) registerBlender() {
 		return api.GetScenes(p.InstallID, p.FileID)
 	})
 
-	h.register("blender", "get_cameras", func(body json.RawMessage) (any, error) {
+	h.register("blender", "get_cameras", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			InstallID uint   `json:"install_id"`
 			FileID    string `json:"file_id"`
@@ -170,7 +171,7 @@ func (h *Handler) registerBlender() {
 		return api.GetCameras(p.InstallID, p.FileID)
 	})
 
-	h.register("blender", "get_tool_data", func(body json.RawMessage) (any, error) {
+	h.register("blender", "get_tool_data", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			InstallID uint   `json:"install_id"`
 			FileID    string `json:"file_id"`
@@ -181,11 +182,11 @@ func (h *Handler) registerBlender() {
 		return api.GetToolData(p.InstallID, p.FileID)
 	})
 
-	h.register("blender", "get_cpu_count", func(_ json.RawMessage) (any, error) {
+	h.register("blender", "get_cpu_count", func(ctx context.Context, _ json.RawMessage) (any, error) {
 		return runtime.NumCPU(), nil
 	})
 
-	h.register("blender", "open_file", func(body json.RawMessage) (any, error) {
+	h.registerAdmin("blender", "open_file", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			InstallID uint   `json:"install_id"`
 			FilePath  string `json:"file_path"`
@@ -200,36 +201,36 @@ func (h *Handler) registerBlender() {
 // ── Project ─────────────────────────────────────────────
 
 func (h *Handler) registerProject() {
-	h.register("project", "list", func(body json.RawMessage) (any, error) {
+	h.register("project", "list", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			Sort string `json:"sort"`
 			Dir  string `json:"dir"`
 		}
 		json.Unmarshal(body, &p)
-		return api.ListProjects(p.Sort, p.Dir)
+		return api.ListProjects(ctx, p.Sort, p.Dir)
 	})
 
-	h.register("project", "get", func(body json.RawMessage) (any, error) {
+	h.register("project", "get", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ID string `json:"id"`
 		}
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.GetProject(p.ID)
+		return api.GetProject(ctx, p.ID)
 	})
 
-	h.register("project", "create", func(body json.RawMessage) (any, error) {
+	h.register("project", "create", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			Name string `json:"name"`
 		}
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.CreateProject(p.Name)
+		return api.CreateProject(ctx, p.Name)
 	})
 
-	h.register("project", "update", func(body json.RawMessage) (any, error) {
+	h.register("project", "update", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ID   string `json:"id"`
 			Name string `json:"name"`
@@ -238,10 +239,10 @@ func (h *Handler) registerProject() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.UpdateProject(p.ID, p.Name, p.Note)
+		return api.UpdateProject(ctx, p.ID, p.Name, p.Note)
 	})
 
-	h.register("project", "delete", func(body json.RawMessage) (any, error) {
+	h.register("project", "delete", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ID    string `json:"id"`
 			Force bool   `json:"force"`
@@ -249,10 +250,10 @@ func (h *Handler) registerProject() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return nil, api.DeleteProject(p.ID, p.Force)
+		return nil, api.DeleteProject(ctx, p.ID, p.Force)
 	})
 
-	h.register("project", "add_file", func(body json.RawMessage) (any, error) {
+	h.register("project", "add_file", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ProjectID string `json:"project_id"`
 			Path      string `json:"path"`
@@ -260,24 +261,24 @@ func (h *Handler) registerProject() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.AddProjectFile(p.ProjectID, p.Path)
+		return api.AddProjectFile(ctx, p.ProjectID, p.Path)
 	})
 
-	h.register("project", "list_all_files", func(_ json.RawMessage) (any, error) {
+	h.register("project", "list_all_files", func(ctx context.Context, _ json.RawMessage) (any, error) {
 		return api.ListAllProjectFiles()
 	})
 
-	h.register("project", "get_file", func(body json.RawMessage) (any, error) {
+	h.register("project", "get_file", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			FileID string `json:"file_id"`
 		}
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.GetFile(p.FileID)
+		return api.GetFile(ctx, p.FileID)
 	})
 
-	h.register("project", "update_file", func(body json.RawMessage) (any, error) {
+	h.register("project", "update_file", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			FileID           string `json:"file_id"`
 			Name             string `json:"name"`
@@ -294,10 +295,10 @@ func (h *Handler) registerProject() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.UpdateProjectFile(p.FileID, p.Name, p.Note, p.BlenderInstallID, p.BlenderFixed, p.Scene, p.SceneFixed, p.Camera, p.CameraFixed, p.Engine, p.EngineFixed)
+		return api.UpdateProjectFile(ctx, p.FileID, p.Name, p.Note, p.BlenderInstallID, p.BlenderFixed, p.Scene, p.SceneFixed, p.Camera, p.CameraFixed, p.Engine, p.EngineFixed)
 	})
 
-	h.register("project", "add_files_from_dir", func(body json.RawMessage) (any, error) {
+	h.register("project", "add_files_from_dir", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ProjectID string `json:"project_id"`
 			Dir       string `json:"dir"`
@@ -305,10 +306,10 @@ func (h *Handler) registerProject() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.AddFilesFromDirectory(p.ProjectID, p.Dir)
+		return api.AddFilesFromDirectory(ctx, p.ProjectID, p.Dir)
 	})
 
-	h.register("project", "remove_file", func(body json.RawMessage) (any, error) {
+	h.register("project", "remove_file", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			FileID string `json:"file_id"`
 		}
@@ -318,7 +319,7 @@ func (h *Handler) registerProject() {
 		return nil, api.RemoveProjectFile(p.FileID)
 	})
 
-	h.register("project", "delete_file", func(body json.RawMessage) (any, error) {
+	h.register("project", "delete_file", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			FileID string `json:"file_id"`
 			Force  bool   `json:"force"`
@@ -326,10 +327,10 @@ func (h *Handler) registerProject() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return nil, api.DeleteProjectFile(p.FileID, p.Force)
+		return nil, api.DeleteProjectFile(ctx, p.FileID, p.Force)
 	})
 
-	h.register("project", "get_file_thumbnail", func(body json.RawMessage) (any, error) {
+	h.register("project", "get_file_thumbnail", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ProjectID string `json:"project_id"`
 			FileID    string `json:"file_id"`
@@ -340,7 +341,7 @@ func (h *Handler) registerProject() {
 		return api.GetFileThumbnail(p.ProjectID, p.FileID)
 	})
 
-	h.register("project", "get_project_thumbnail", func(body json.RawMessage) (any, error) {
+	h.register("project", "get_project_thumbnail", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ProjectID string `json:"project_id"`
 		}
@@ -350,7 +351,7 @@ func (h *Handler) registerProject() {
 		return api.GetProjectThumbnail(p.ProjectID)
 	})
 
-	h.register("project", "set_project_thumbnail", func(body json.RawMessage) (any, error) {
+	h.register("project", "set_project_thumbnail", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ProjectID string `json:"project_id"`
 			ImagePath string `json:"image_path"`
@@ -361,7 +362,7 @@ func (h *Handler) registerProject() {
 		return api.SetProjectThumbnail(p.ProjectID, p.ImagePath)
 	})
 
-	h.register("project", "set_file_thumbnail", func(body json.RawMessage) (any, error) {
+	h.register("project", "set_file_thumbnail", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ProjectID string `json:"project_id"`
 			FileID    string `json:"file_id"`
@@ -373,7 +374,7 @@ func (h *Handler) registerProject() {
 		return api.SetFileThumbnail(p.ProjectID, p.FileID, p.ImagePath)
 	})
 
-	h.register("project", "set_file_thumbnail_from_workspace", func(body json.RawMessage) (any, error) {
+	h.register("project", "set_file_thumbnail_from_workspace", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ProjectID   string `json:"project_id"`
 			FileID      string `json:"file_id"`
@@ -382,10 +383,10 @@ func (h *Handler) registerProject() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.SetFileThumbnailFromWorkspace(p.ProjectID, p.FileID, p.WorkspaceID)
+		return api.SetFileThumbnailFromWorkspace(ctx, p.ProjectID, p.FileID, p.WorkspaceID)
 	})
 
-	h.register("project", "set_project_thumbnail_from_file", func(body json.RawMessage) (any, error) {
+	h.register("project", "set_project_thumbnail_from_file", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ProjectID string `json:"project_id"`
 			FileID    string `json:"file_id"`
@@ -398,7 +399,7 @@ func (h *Handler) registerProject() {
 
 	// ── Permission ──────────────────────────────────────
 
-	h.register("project", "set_permission", func(body json.RawMessage) (any, error) {
+	h.register("project", "set_permission", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ProjectID string `json:"project_id"`
 			TargetID  string `json:"target_id"`
@@ -407,10 +408,10 @@ func (h *Handler) registerProject() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return nil, api.SetProjectPermission(p.ProjectID, p.TargetID, p.Role)
+		return nil, api.SetProjectPermission(ctx, p.ProjectID, p.TargetID, p.Role)
 	})
 
-	h.register("project", "remove_permission", func(body json.RawMessage) (any, error) {
+	h.register("project", "remove_permission", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ProjectID string `json:"project_id"`
 			TargetID  string `json:"target_id"`
@@ -418,10 +419,10 @@ func (h *Handler) registerProject() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return nil, api.RemoveProjectPermission(p.ProjectID, p.TargetID)
+		return nil, api.RemoveProjectPermission(ctx, p.ProjectID, p.TargetID)
 	})
 
-	h.register("project", "list_permissions", func(body json.RawMessage) (any, error) {
+	h.register("project", "list_permissions", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ProjectID string `json:"project_id"`
 		}
@@ -431,7 +432,7 @@ func (h *Handler) registerProject() {
 		return api.ListProjectPermissions(p.ProjectID)
 	})
 
-	h.register("project", "get_user_role", func(body json.RawMessage) (any, error) {
+	h.register("project", "get_user_role", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ProjectID string `json:"project_id"`
 			UserID    string `json:"user_id"`
@@ -444,7 +445,7 @@ func (h *Handler) registerProject() {
 
 	// ── File Permission ─────────────────────────────────
 
-	h.register("project", "set_file_permission", func(body json.RawMessage) (any, error) {
+	h.register("project", "set_file_permission", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			FileID   string `json:"file_id"`
 			TargetID string `json:"target_id"`
@@ -453,10 +454,10 @@ func (h *Handler) registerProject() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return nil, api.SetFilePermission(p.FileID, p.TargetID, p.Role)
+		return nil, api.SetFilePermission(ctx, p.FileID, p.TargetID, p.Role)
 	})
 
-	h.register("project", "remove_file_permission", func(body json.RawMessage) (any, error) {
+	h.register("project", "remove_file_permission", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			FileID   string `json:"file_id"`
 			TargetID string `json:"target_id"`
@@ -464,10 +465,10 @@ func (h *Handler) registerProject() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return nil, api.RemoveFilePermission(p.FileID, p.TargetID)
+		return nil, api.RemoveFilePermission(ctx, p.FileID, p.TargetID)
 	})
 
-	h.register("project", "list_file_permissions", func(body json.RawMessage) (any, error) {
+	h.register("project", "list_file_permissions", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			FileID string `json:"file_id"`
 		}
@@ -477,7 +478,7 @@ func (h *Handler) registerProject() {
 		return api.ListFilePermissions(p.FileID)
 	})
 
-	h.register("project", "get_user_file_role", func(body json.RawMessage) (any, error) {
+	h.register("project", "get_user_file_role", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			FileID string `json:"file_id"`
 			UserID string `json:"user_id"`
@@ -492,17 +493,17 @@ func (h *Handler) registerProject() {
 // ── Workspace ───────────────────────────────────────────
 
 func (h *Handler) registerWorkspace() {
-	h.register("workspace", "list_by_project", func(body json.RawMessage) (any, error) {
+	h.register("workspace", "list_by_project", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ProjectID string `json:"project_id"`
 			Sort      string `json:"sort"`
 			Dir       string `json:"dir"`
 		}
 		json.Unmarshal(body, &p)
-		return api.ListWorkspacesByProject(p.ProjectID, p.Sort, p.Dir)
+		return api.ListWorkspacesByProject(ctx, p.ProjectID, p.Sort, p.Dir)
 	})
 
-	h.register("workspace", "get", func(body json.RawMessage) (any, error) {
+	h.register("workspace", "get", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ProjectID   string `json:"project_id"`
 			WorkspaceID string `json:"workspace_id"`
@@ -510,10 +511,10 @@ func (h *Handler) registerWorkspace() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.GetWorkspace(p.ProjectID, p.WorkspaceID)
+		return api.GetWorkspace(ctx, p.ProjectID, p.WorkspaceID)
 	})
 
-	h.register("workspace", "create", func(body json.RawMessage) (any, error) {
+	h.register("workspace", "create", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ProjectID     string `json:"project_id"`
 			ProjectFileID string `json:"project_file_id"`
@@ -522,22 +523,22 @@ func (h *Handler) registerWorkspace() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.CreateWorkspace(p.ProjectID, p.ProjectFileID, p.Name)
+		return api.CreateWorkspace(ctx, p.ProjectID, p.ProjectFileID, p.Name)
 	})
 
-	h.register("workspace", "create_batch", func(body json.RawMessage) (any, error) {
+	h.register("workspace", "create_batch", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ProjectID     string                   `json:"project_id"`
 			ProjectFileID string                   `json:"project_file_id"`
-			Specs         []api.WorkspaceBatchSpec  `json:"specs"`
+			Specs         []api.WorkspaceBatchSpec `json:"specs"`
 		}
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.CreateWorkspaceBatch(p.ProjectID, p.ProjectFileID, p.Specs)
+		return api.CreateWorkspaceBatch(ctx, p.ProjectID, p.ProjectFileID, p.Specs)
 	})
 
-	h.register("workspace", "copy", func(body json.RawMessage) (any, error) {
+	h.register("workspace", "copy", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ProjectID   string `json:"project_id"`
 			WorkspaceID string `json:"workspace_id"`
@@ -546,10 +547,10 @@ func (h *Handler) registerWorkspace() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.CopyWorkspace(p.ProjectID, p.WorkspaceID, p.NewName)
+		return api.CopyWorkspace(ctx, p.ProjectID, p.WorkspaceID, p.NewName)
 	})
 
-	h.register("workspace", "update", func(body json.RawMessage) (any, error) {
+	h.register("workspace", "update", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ProjectID        string `json:"project_id"`
 			WorkspaceID      string `json:"workspace_id"`
@@ -574,10 +575,10 @@ func (h *Handler) registerWorkspace() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.UpdateWorkspace(p.ProjectID, p.WorkspaceID, p.Name, p.Note, p.BlenderInstallID, p.Scene, p.Camera, p.Engine, p.StartFrame, p.EndFrame, p.FrameStep, p.Thread, p.Samples, p.ResolutionX, p.ResolutionY, p.OutputFormat, p.AutoLock, p.AutoLockMinSize, p.AutoLockKeep)
+		return api.UpdateWorkspace(ctx, p.ProjectID, p.WorkspaceID, p.Name, p.Note, p.BlenderInstallID, p.Scene, p.Camera, p.Engine, p.StartFrame, p.EndFrame, p.FrameStep, p.Thread, p.Samples, p.ResolutionX, p.ResolutionY, p.OutputFormat, p.AutoLock, p.AutoLockMinSize, p.AutoLockKeep)
 	})
 
-	h.register("workspace", "delete", func(body json.RawMessage) (any, error) {
+	h.register("workspace", "delete", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ProjectID   string `json:"project_id"`
 			WorkspaceID string `json:"workspace_id"`
@@ -586,10 +587,10 @@ func (h *Handler) registerWorkspace() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return nil, api.DeleteWorkspace(p.ProjectID, p.WorkspaceID, p.Force)
+		return nil, api.DeleteWorkspace(ctx, p.ProjectID, p.WorkspaceID, p.Force)
 	})
 
-	h.register("workspace", "get_thumbnail", func(body json.RawMessage) (any, error) {
+	h.register("workspace", "get_thumbnail", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ProjectID   string `json:"project_id"`
 			FileID      string `json:"file_id"`
@@ -601,7 +602,7 @@ func (h *Handler) registerWorkspace() {
 		return api.GetWorkspaceThumbnail(p.ProjectID, p.FileID, p.WorkspaceID)
 	})
 
-	h.register("workspace", "set_thumbnail", func(body json.RawMessage) (any, error) {
+	h.register("workspace", "set_thumbnail", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ProjectID   string `json:"project_id"`
 			FileID      string `json:"file_id"`
@@ -611,10 +612,10 @@ func (h *Handler) registerWorkspace() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.SetWorkspaceThumbnail(p.ProjectID, p.FileID, p.WorkspaceID, p.ImagePath)
+		return api.SetWorkspaceThumbnail(ctx, p.ProjectID, p.FileID, p.WorkspaceID, p.ImagePath)
 	})
 
-	h.register("workspace", "create_movie", func(body json.RawMessage) (any, error) {
+	h.register("workspace", "create_movie", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ProjectID   string `json:"project_id"`
 			FileID      string `json:"file_id"`
@@ -627,7 +628,7 @@ func (h *Handler) registerWorkspace() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		path, ch, err := api.CreateMovie(p.ProjectID, p.FileID, p.WorkspaceID, p.JobID, p.FPS, p.OutExt, p.ExtraArgs)
+		path, ch, err := api.CreateMovie(ctx, p.ProjectID, p.FileID, p.WorkspaceID, p.JobID, p.FPS, p.OutExt, p.ExtraArgs)
 		if err != nil {
 			return nil, err
 		}
@@ -648,7 +649,7 @@ func (h *Handler) registerWorkspace() {
 // ── Queue ───────────────────────────────────────────────
 
 func (h *Handler) registerQueue() {
-	h.register("queue", "preview_render", func(body json.RawMessage) (any, error) {
+	h.register("queue", "preview_render", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ProjectID   string `json:"project_id"`
 			WorkspaceID string `json:"workspace_id"`
@@ -659,7 +660,7 @@ func (h *Handler) registerQueue() {
 		return api.PreviewRender(p.ProjectID, p.WorkspaceID)
 	})
 
-	h.register("queue", "enqueue_with_preview", func(body json.RawMessage) (any, error) {
+	h.register("queue", "enqueue_with_preview", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ProjectID   string             `json:"project_id"`
 			WorkspaceID string             `json:"workspace_id"`
@@ -668,10 +669,10 @@ func (h *Handler) registerQueue() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.EnqueueWithPreview(p.ProjectID, p.WorkspaceID, p.Preview)
+		return api.EnqueueWithPreview(ctx, p.ProjectID, p.WorkspaceID, p.Preview)
 	})
 
-	h.register("queue", "test_enqueue", func(body json.RawMessage) (any, error) {
+	h.register("queue", "test_enqueue", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ProjectID   string               `json:"project_id"`
 			WorkspaceID string               `json:"workspace_id"`
@@ -680,10 +681,10 @@ func (h *Handler) registerQueue() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.TestEnqueue(p.ProjectID, p.WorkspaceID, p.Params)
+		return api.TestEnqueue(ctx, p.ProjectID, p.WorkspaceID, p.Params)
 	})
 
-	h.register("queue", "samples_comparison_enqueue", func(body json.RawMessage) (any, error) {
+	h.register("queue", "samples_comparison_enqueue", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ProjectID    string `json:"project_id"`
 			WorkspaceID  string `json:"workspace_id"`
@@ -693,37 +694,37 @@ func (h *Handler) registerQueue() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.SamplesComparisonEnqueue(p.ProjectID, p.WorkspaceID, p.SampleCounts, p.Frame)
+		return api.SamplesComparisonEnqueue(ctx, p.ProjectID, p.WorkspaceID, p.SampleCounts, p.Frame)
 	})
 
-	h.register("queue", "list", func(_ json.RawMessage) (any, error) {
+	h.register("queue", "list", func(ctx context.Context, _ json.RawMessage) (any, error) {
 		return api.ListQueues()
 	})
 
-	h.register("queue", "list_items", func(_ json.RawMessage) (any, error) {
-		return api.ListQueueItems()
+	h.register("queue", "list_items", func(ctx context.Context, _ json.RawMessage) (any, error) {
+		return api.ListQueueItems(ctx)
 	})
 
-	h.register("queue", "cancel", func(body json.RawMessage) (any, error) {
+	h.register("queue", "cancel", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ID string `json:"id"`
 		}
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return nil, api.CancelQueue(p.ID)
+		return nil, api.CancelQueue(ctx, p.ID)
 	})
 
-	h.register("queue", "kill_running", func(_ json.RawMessage) (any, error) {
+	h.registerAdmin("queue", "kill_running", func(ctx context.Context, _ json.RawMessage) (any, error) {
 		api.KillRunningQueues()
 		return nil, nil
 	})
 
-	h.register("queue", "list_jobs", func(_ json.RawMessage) (any, error) {
+	h.register("queue", "list_jobs", func(ctx context.Context, _ json.RawMessage) (any, error) {
 		return api.ListJobs()
 	})
 
-	h.register("queue", "list_jobs_paged", func(body json.RawMessage) (any, error) {
+	h.register("queue", "list_jobs_paged", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			Filter   *model.JobFilter `json:"filter"`
 			Page     int              `json:"page"`
@@ -732,10 +733,10 @@ func (h *Handler) registerQueue() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.ListJobsPaged(p.Filter, p.Page, p.PageSize)
+		return api.ListJobsPaged(ctx, p.Filter, p.Page, p.PageSize)
 	})
 
-	h.register("queue", "list_jobs_by_workspace", func(body json.RawMessage) (any, error) {
+	h.register("queue", "list_jobs_by_workspace", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ProjectID   string `json:"project_id"`
 			WorkspaceID string `json:"workspace_id"`
@@ -746,7 +747,7 @@ func (h *Handler) registerQueue() {
 		return api.ListJobsByWorkspace(p.ProjectID, p.WorkspaceID)
 	})
 
-	h.register("queue", "list_jobs_by_workspace_paged", func(body json.RawMessage) (any, error) {
+	h.register("queue", "list_jobs_by_workspace_paged", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ProjectID   string `json:"project_id"`
 			WorkspaceID string `json:"workspace_id"`
@@ -759,7 +760,7 @@ func (h *Handler) registerQueue() {
 		return api.ListJobsByWorkspacePaged(p.ProjectID, p.WorkspaceID, p.Page, p.PageSize)
 	})
 
-	h.register("queue", "list_jobs_by_project_file", func(body json.RawMessage) (any, error) {
+	h.register("queue", "list_jobs_by_project_file", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ProjectID string `json:"project_id"`
 			FileID    string `json:"file_id"`
@@ -770,7 +771,7 @@ func (h *Handler) registerQueue() {
 		return api.ListJobsByProjectFile(p.ProjectID, p.FileID)
 	})
 
-	h.register("queue", "list_jobs_by_project_file_paged", func(body json.RawMessage) (any, error) {
+	h.register("queue", "list_jobs_by_project_file_paged", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ProjectID string `json:"project_id"`
 			FileID    string `json:"file_id"`
@@ -783,17 +784,17 @@ func (h *Handler) registerQueue() {
 		return api.ListJobsByProjectFilePaged(p.ProjectID, p.FileID, p.Page, p.PageSize)
 	})
 
-	h.register("queue", "get_job", func(body json.RawMessage) (any, error) {
+	h.register("queue", "get_job", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ID string `json:"id"`
 		}
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.GetJob(p.ID)
+		return api.GetJob(ctx, p.ID)
 	})
 
-	h.register("queue", "update_job_meta", func(body json.RawMessage) (any, error) {
+	h.register("queue", "update_job_meta", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ID   string `json:"id"`
 			Name string `json:"name"`
@@ -802,90 +803,90 @@ func (h *Handler) registerQueue() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return nil, api.UpdateJobMeta(p.ID, p.Name, p.Note)
+		return nil, api.UpdateJobMeta(ctx, p.ID, p.Name, p.Note)
 	})
 
-	h.register("queue", "delete_job", func(body json.RawMessage) (any, error) {
+	h.register("queue", "delete_job", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ID string `json:"id"`
 		}
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return nil, api.DeleteJob(p.ID)
+		return nil, api.DeleteJob(ctx, p.ID)
 	})
 
-	h.register("queue", "delete_job_data", func(body json.RawMessage) (any, error) {
+	h.register("queue", "delete_job_data", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ID string `json:"id"`
 		}
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return nil, api.DeleteJobData(p.ID)
+		return nil, api.DeleteJobData(ctx, p.ID)
 	})
 
-	h.register("queue", "list_job_images", func(body json.RawMessage) (any, error) {
+	h.register("queue", "list_job_images", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ID string `json:"id"`
 		}
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.ListJobImages(p.ID)
+		return api.ListJobImages(ctx, p.ID)
 	})
 
-	h.register("queue", "list_job_files", func(body json.RawMessage) (any, error) {
+	h.register("queue", "list_job_files", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ID string `json:"id"`
 		}
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.ListJobFiles(p.ID)
+		return api.ListJobFiles(ctx, p.ID)
 	})
 
-	h.register("queue", "get_image_base64", func(body json.RawMessage) (any, error) {
+	h.register("queue", "get_image_base64", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			Path string `json:"path"`
 		}
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.GetImageBase64(p.Path)
+		return api.GetImageBase64(ctx, p.Path)
 	})
 
-	h.register("queue", "lock_job", func(body json.RawMessage) (any, error) {
+	h.register("queue", "lock_job", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ID string `json:"id"`
 		}
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return nil, api.LockJob(p.ID)
+		return nil, api.LockJob(ctx, p.ID)
 	})
 
-	h.register("queue", "unlock_job", func(body json.RawMessage) (any, error) {
+	h.register("queue", "unlock_job", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ID string `json:"id"`
 		}
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return nil, api.UnlockJob(p.ID)
+		return nil, api.UnlockJob(ctx, p.ID)
 	})
 
-	h.register("queue", "get_job_log", func(body json.RawMessage) (any, error) {
+	h.register("queue", "get_job_log", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ID string `json:"id"`
 		}
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.GetJobLog(p.ID)
+		return api.GetJobLog(ctx, p.ID)
 	})
 
-	h.register("queue", "zip_job_data", func(body json.RawMessage) (any, error) {
+	h.register("queue", "zip_job_data", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ID       string `json:"id"`
 			SavePath string `json:"save_path"`
@@ -893,10 +894,10 @@ func (h *Handler) registerQueue() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return nil, api.ZipJobData(p.ID, p.SavePath)
+		return nil, api.ZipJobData(ctx, p.ID, p.SavePath)
 	})
 
-	h.register("queue", "zip_job_selected_files", func(body json.RawMessage) (any, error) {
+	h.register("queue", "zip_job_selected_files", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ID        string   `json:"id"`
 			FilePaths []string `json:"file_paths"`
@@ -905,10 +906,10 @@ func (h *Handler) registerQueue() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return nil, api.ZipJobSelectedFiles(p.ID, p.FilePaths, p.SavePath)
+		return nil, api.ZipJobSelectedFiles(ctx, p.ID, p.FilePaths, p.SavePath)
 	})
 
-	h.register("queue", "delete_job_files", func(body json.RawMessage) (any, error) {
+	h.register("queue", "delete_job_files", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ID        string   `json:"id"`
 			FilePaths []string `json:"file_paths"`
@@ -916,10 +917,10 @@ func (h *Handler) registerQueue() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return nil, api.DeleteJobFiles(p.ID, p.FilePaths)
+		return nil, api.DeleteJobFiles(ctx, p.ID, p.FilePaths)
 	})
 
-	h.register("queue", "bulk_delete_jobs_by_workspace", func(body json.RawMessage) (any, error) {
+	h.register("queue", "bulk_delete_jobs_by_workspace", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ProjectID   string `json:"project_id"`
 			WorkspaceID string `json:"workspace_id"`
@@ -930,10 +931,10 @@ func (h *Handler) registerQueue() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.BulkDeleteJobsByWorkspace(p.ProjectID, p.WorkspaceID, p.KeepCount, p.DataOnly, p.ErrorOnly)
+		return api.BulkDeleteJobsByWorkspace(ctx, p.ProjectID, p.WorkspaceID, p.KeepCount, p.DataOnly, p.ErrorOnly)
 	})
 
-	h.register("queue", "get_cleanable_job_stats", func(body json.RawMessage) (any, error) {
+	h.register("queue", "get_cleanable_job_stats", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			Filter *model.CleanFilter `json:"filter"`
 		}
@@ -943,17 +944,17 @@ func (h *Handler) registerQueue() {
 		return api.GetCleanableJobStats(p.Filter)
 	})
 
-	h.register("queue", "clean_job_data", func(body json.RawMessage) (any, error) {
+	h.register("queue", "clean_job_data", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			Filter *model.CleanFilter `json:"filter"`
 		}
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.CleanJobData(p.Filter)
+		return api.CleanJobData(ctx, p.Filter)
 	})
 
-	h.register("queue", "measure_filtered_disk_size", func(body json.RawMessage) (any, error) {
+	h.register("queue", "measure_filtered_disk_size", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			Filter *model.CleanFilter `json:"filter"`
 		}
@@ -967,11 +968,11 @@ func (h *Handler) registerQueue() {
 // ── WorkDir ─────────────────────────────────────────────
 
 func (h *Handler) registerWorkDir() {
-	h.register("work_dir", "list", func(_ json.RawMessage) (any, error) {
+	h.register("work_dir", "list", func(ctx context.Context, _ json.RawMessage) (any, error) {
 		return api.ListWorkDirs()
 	})
 
-	h.register("work_dir", "create", func(body json.RawMessage) (any, error) {
+	h.registerAdmin("work_dir", "create", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			Path     string `json:"path"`
 			Priority int    `json:"priority"`
@@ -982,7 +983,7 @@ func (h *Handler) registerWorkDir() {
 		return api.CreateWorkDir(p.Path, p.Priority)
 	})
 
-	h.register("work_dir", "update", func(body json.RawMessage) (any, error) {
+	h.registerAdmin("work_dir", "update", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ID       uint   `json:"id"`
 			Path     string `json:"path"`
@@ -995,7 +996,7 @@ func (h *Handler) registerWorkDir() {
 		return api.UpdateWorkDir(p.ID, p.Path, p.Priority, p.Status)
 	})
 
-	h.register("work_dir", "reorder", func(body json.RawMessage) (any, error) {
+	h.registerAdmin("work_dir", "reorder", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			IDs []uint `json:"ids"`
 		}
@@ -1005,7 +1006,7 @@ func (h *Handler) registerWorkDir() {
 		return nil, api.ReorderWorkDirs(p.IDs)
 	})
 
-	h.register("work_dir", "delete", func(body json.RawMessage) (any, error) {
+	h.registerAdmin("work_dir", "delete", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ID uint `json:"id"`
 		}
@@ -1015,7 +1016,7 @@ func (h *Handler) registerWorkDir() {
 		return nil, api.DeleteWorkDir(p.ID)
 	})
 
-	h.register("work_dir", "check_dir", func(body json.RawMessage) (any, error) {
+	h.registerAdmin("work_dir", "check_dir", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			Path string `json:"path"`
 		}
@@ -1025,7 +1026,7 @@ func (h *Handler) registerWorkDir() {
 		return api.CheckWorkDir(p.Path)
 	})
 
-	h.register("work_dir", "start_migration", func(body json.RawMessage) (any, error) {
+	h.register("work_dir", "start_migration", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ProjectID    string `json:"project_id"`
 			NewWorkDirID uint   `json:"new_work_dir_id"`
@@ -1033,10 +1034,10 @@ func (h *Handler) registerWorkDir() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return nil, api.StartMigrateProjectWorkDir(p.ProjectID, p.NewWorkDirID)
+		return nil, api.StartMigrateProjectWorkDir(ctx, p.ProjectID, p.NewWorkDirID)
 	})
 
-	h.register("work_dir", "get_work_dir_stats", func(body json.RawMessage) (any, error) {
+	h.register("work_dir", "get_work_dir_stats", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ID uint `json:"id"`
 		}
@@ -1046,7 +1047,7 @@ func (h *Handler) registerWorkDir() {
 		return api.GetWorkDirStats(p.ID)
 	})
 
-	h.register("work_dir", "change_dir", func(body json.RawMessage) (any, error) {
+	h.registerAdmin("work_dir", "change_dir", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ID      uint   `json:"id"`
 			NewPath string `json:"new_path"`
@@ -1057,7 +1058,7 @@ func (h *Handler) registerWorkDir() {
 		return nil, api.StartChangeWorkDir(p.ID, p.NewPath)
 	})
 
-	h.register("work_dir", "get_project_disk_size", func(body json.RawMessage) (any, error) {
+	h.register("work_dir", "get_project_disk_size", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ProjectID string `json:"project_id"`
 		}
@@ -1071,19 +1072,19 @@ func (h *Handler) registerWorkDir() {
 // ── Codes ───────────────────────────────────────────────
 
 func (h *Handler) registerCodes() {
-	h.register("codes", "get_image_formats", func(_ json.RawMessage) (any, error) {
+	h.register("codes", "get_image_formats", func(ctx context.Context, _ json.RawMessage) (any, error) {
 		return code.GetImageFormats()
 	})
 
-	h.register("codes", "get_video_formats", func(_ json.RawMessage) (any, error) {
+	h.register("codes", "get_video_formats", func(ctx context.Context, _ json.RawMessage) (any, error) {
 		return code.GetVideoFormats()
 	})
 
-	h.register("codes", "get_resolution_presets", func(_ json.RawMessage) (any, error) {
+	h.register("codes", "get_resolution_presets", func(ctx context.Context, _ json.RawMessage) (any, error) {
 		return code.GetResolutionPresets()
 	})
 
-	h.register("codes", "save_image_formats", func(body json.RawMessage) (any, error) {
+	h.registerAdmin("codes", "save_image_formats", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			Items []code.ImageFormat `json:"items"`
 		}
@@ -1093,7 +1094,7 @@ func (h *Handler) registerCodes() {
 		return nil, code.SaveImageFormats(p.Items)
 	})
 
-	h.register("codes", "save_video_formats", func(body json.RawMessage) (any, error) {
+	h.registerAdmin("codes", "save_video_formats", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			Items []code.VideoFormat `json:"items"`
 		}
@@ -1103,7 +1104,7 @@ func (h *Handler) registerCodes() {
 		return nil, code.SaveVideoFormats(p.Items)
 	})
 
-	h.register("codes", "save_resolution_presets", func(body json.RawMessage) (any, error) {
+	h.registerAdmin("codes", "save_resolution_presets", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			Items []code.ResolutionPreset `json:"items"`
 		}
@@ -1113,7 +1114,7 @@ func (h *Handler) registerCodes() {
 		return nil, code.SaveResolutionPresets(p.Items)
 	})
 
-	h.register("codes", "generate_id", func(_ json.RawMessage) (any, error) {
+	h.register("codes", "generate_id", func(ctx context.Context, _ json.RawMessage) (any, error) {
 		id, err := uuid.NewV7()
 		if err != nil {
 			return nil, err
@@ -1121,15 +1122,15 @@ func (h *Handler) registerCodes() {
 		return id.String(), nil
 	})
 
-	h.register("codes", "reset_image_formats", func(_ json.RawMessage) (any, error) {
+	h.registerAdmin("codes", "reset_image_formats", func(ctx context.Context, _ json.RawMessage) (any, error) {
 		return nil, code.ResetImageFormats()
 	})
 
-	h.register("codes", "reset_video_formats", func(_ json.RawMessage) (any, error) {
+	h.registerAdmin("codes", "reset_video_formats", func(ctx context.Context, _ json.RawMessage) (any, error) {
 		return nil, code.ResetVideoFormats()
 	})
 
-	h.register("codes", "reset_resolution_presets", func(_ json.RawMessage) (any, error) {
+	h.registerAdmin("codes", "reset_resolution_presets", func(ctx context.Context, _ json.RawMessage) (any, error) {
 		return nil, code.ResetResolutionPresets()
 	})
 }
@@ -1137,11 +1138,11 @@ func (h *Handler) registerCodes() {
 // ── Tag ─────────────────────────────────────────────────
 
 func (h *Handler) registerTag() {
-	h.register("tag", "list_categories", func(_ json.RawMessage) (any, error) {
+	h.register("tag", "list_categories", func(ctx context.Context, _ json.RawMessage) (any, error) {
 		return api.ListTagCategories()
 	})
 
-	h.register("tag", "create_category", func(body json.RawMessage) (any, error) {
+	h.register("tag", "create_category", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			Name  string `json:"name"`
 			Color string `json:"color"`
@@ -1152,7 +1153,7 @@ func (h *Handler) registerTag() {
 		return api.CreateTagCategory(p.Name, p.Color)
 	})
 
-	h.register("tag", "update_category", func(body json.RawMessage) (any, error) {
+	h.register("tag", "update_category", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ID    uint   `json:"id"`
 			Name  string `json:"name"`
@@ -1164,7 +1165,7 @@ func (h *Handler) registerTag() {
 		return api.UpdateTagCategory(p.ID, p.Name, p.Color)
 	})
 
-	h.register("tag", "delete_category", func(body json.RawMessage) (any, error) {
+	h.register("tag", "delete_category", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ID uint `json:"id"`
 		}
@@ -1174,7 +1175,7 @@ func (h *Handler) registerTag() {
 		return nil, api.DeleteTagCategory(p.ID)
 	})
 
-	h.register("tag", "reorder_categories", func(body json.RawMessage) (any, error) {
+	h.register("tag", "reorder_categories", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			IDs []uint `json:"ids"`
 		}
@@ -1184,7 +1185,7 @@ func (h *Handler) registerTag() {
 		return nil, api.ReorderTagCategories(p.IDs)
 	})
 
-	h.register("tag", "merge_categories", func(body json.RawMessage) (any, error) {
+	h.register("tag", "merge_categories", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			SourceID uint `json:"source_id"`
 			TargetID uint `json:"target_id"`
@@ -1195,11 +1196,11 @@ func (h *Handler) registerTag() {
 		return nil, api.MergeTagCategories(p.SourceID, p.TargetID)
 	})
 
-	h.register("tag", "list_tags", func(_ json.RawMessage) (any, error) {
+	h.register("tag", "list_tags", func(ctx context.Context, _ json.RawMessage) (any, error) {
 		return api.ListTags()
 	})
 
-	h.register("tag", "create_tag", func(body json.RawMessage) (any, error) {
+	h.register("tag", "create_tag", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			Name       string `json:"name"`
 			CategoryID uint   `json:"category_id"`
@@ -1215,7 +1216,7 @@ func (h *Handler) registerTag() {
 		return api.CreateTag(p.Name, cid, p.Color)
 	})
 
-	h.register("tag", "update_tag", func(body json.RawMessage) (any, error) {
+	h.register("tag", "update_tag", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ID         uint   `json:"id"`
 			Name       string `json:"name"`
@@ -1232,7 +1233,7 @@ func (h *Handler) registerTag() {
 		return api.UpdateTag(p.ID, p.Name, cid, p.Color)
 	})
 
-	h.register("tag", "delete_tag", func(body json.RawMessage) (any, error) {
+	h.register("tag", "delete_tag", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ID uint `json:"id"`
 		}
@@ -1242,7 +1243,7 @@ func (h *Handler) registerTag() {
 		return nil, api.DeleteTag(p.ID)
 	})
 
-	h.register("tag", "set_tag_category", func(body json.RawMessage) (any, error) {
+	h.register("tag", "set_tag_category", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			TagID      uint `json:"tag_id"`
 			CategoryID uint `json:"category_id"`
@@ -1257,7 +1258,7 @@ func (h *Handler) registerTag() {
 		return nil, api.SetTagCategory(p.TagID, cid)
 	})
 
-	h.register("tag", "merge_tags", func(body json.RawMessage) (any, error) {
+	h.register("tag", "merge_tags", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			SourceID uint `json:"source_id"`
 			TargetID uint `json:"target_id"`
@@ -1268,7 +1269,7 @@ func (h *Handler) registerTag() {
 		return nil, api.MergeTags(p.SourceID, p.TargetID)
 	})
 
-	h.register("tag", "add_tag_to_file", func(body json.RawMessage) (any, error) {
+	h.register("tag", "add_tag_to_file", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ProjectFileID string `json:"project_file_id"`
 			TagID         uint   `json:"tag_id"`
@@ -1279,7 +1280,7 @@ func (h *Handler) registerTag() {
 		return nil, api.AddTagToFile(p.ProjectFileID, p.TagID)
 	})
 
-	h.register("tag", "remove_tag_from_file", func(body json.RawMessage) (any, error) {
+	h.register("tag", "remove_tag_from_file", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ProjectFileID string `json:"project_file_id"`
 			TagID         uint   `json:"tag_id"`
@@ -1290,7 +1291,7 @@ func (h *Handler) registerTag() {
 		return nil, api.RemoveTagFromFile(p.ProjectFileID, p.TagID)
 	})
 
-	h.register("tag", "get_file_tags", func(body json.RawMessage) (any, error) {
+	h.register("tag", "get_file_tags", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ProjectFileID string `json:"project_file_id"`
 		}
@@ -1300,7 +1301,7 @@ func (h *Handler) registerTag() {
 		return api.GetFileTags(p.ProjectFileID)
 	})
 
-	h.register("tag", "assign_tag_by_input", func(body json.RawMessage) (any, error) {
+	h.register("tag", "assign_tag_by_input", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ProjectFileID string `json:"project_file_id"`
 			Input         string `json:"input"`
@@ -1311,7 +1312,7 @@ func (h *Handler) registerTag() {
 		return api.AssignTagByInput(p.ProjectFileID, p.Input)
 	})
 
-	h.register("tag", "search_files", func(body json.RawMessage) (any, error) {
+	h.register("tag", "search_files", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			TagIDs   []uint `json:"tag_ids"`
 			Page     int    `json:"page"`
@@ -1328,10 +1329,10 @@ func (h *Handler) registerTag() {
 		if p.PageSize < 1 {
 			p.PageSize = 20
 		}
-		return api.SearchFiles(p.TagIDs, p.Page, p.PageSize, p.Sort, p.Dir, p.Untagged, p.Keyword)
+		return api.SearchFiles(ctx, p.TagIDs, p.Page, p.PageSize, p.Sort, p.Dir, p.Untagged, p.Keyword)
 	})
 
-	h.register("tag", "list_tag_usage_counts", func(_ json.RawMessage) (any, error) {
+	h.register("tag", "list_tag_usage_counts", func(ctx context.Context, _ json.RawMessage) (any, error) {
 		return api.ListTagUsageCounts()
 	})
 }
@@ -1339,11 +1340,11 @@ func (h *Handler) registerTag() {
 // ── Auth ───────────────────────────────────────────────────
 
 func (h *Handler) registerAuth() {
-	h.register("auth", "list_users", func(_ json.RawMessage) (any, error) {
+	h.register("auth", "list_users", func(ctx context.Context, _ json.RawMessage) (any, error) {
 		return api.ListUsers()
 	})
 
-	h.register("auth", "get_user", func(body json.RawMessage) (any, error) {
+	h.register("auth", "get_user", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ID string `json:"id"`
 		}
@@ -1353,7 +1354,7 @@ func (h *Handler) registerAuth() {
 		return api.GetUser(p.ID)
 	})
 
-	h.register("auth", "create_user", func(body json.RawMessage) (any, error) {
+	h.registerAdmin("auth", "create_user", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			Name        string `json:"name"`
 			DisplayName string `json:"display_name"`
@@ -1365,7 +1366,7 @@ func (h *Handler) registerAuth() {
 		return api.CreateUser(p.Name, p.DisplayName, p.Role)
 	})
 
-	h.register("auth", "update_user", func(body json.RawMessage) (any, error) {
+	h.registerAdmin("auth", "update_user", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ID          string `json:"id"`
 			Name        string `json:"name"`
@@ -1378,7 +1379,7 @@ func (h *Handler) registerAuth() {
 		return api.UpdateUser(p.ID, p.Name, p.DisplayName, p.Role)
 	})
 
-	h.register("auth", "delete_user", func(body json.RawMessage) (any, error) {
+	h.registerAdmin("auth", "delete_user", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ID string `json:"id"`
 		}
@@ -1388,11 +1389,11 @@ func (h *Handler) registerAuth() {
 		return nil, api.DeleteUser(p.ID)
 	})
 
-	h.register("auth", "list_groups", func(_ json.RawMessage) (any, error) {
+	h.register("auth", "list_groups", func(ctx context.Context, _ json.RawMessage) (any, error) {
 		return api.ListGroups()
 	})
 
-	h.register("auth", "get_group", func(body json.RawMessage) (any, error) {
+	h.register("auth", "get_group", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ID string `json:"id"`
 		}
@@ -1402,7 +1403,7 @@ func (h *Handler) registerAuth() {
 		return api.GetGroup(p.ID)
 	})
 
-	h.register("auth", "create_group", func(body json.RawMessage) (any, error) {
+	h.registerAdmin("auth", "create_group", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			DisplayName string `json:"display_name"`
 		}
@@ -1412,7 +1413,7 @@ func (h *Handler) registerAuth() {
 		return api.CreateGroup(p.DisplayName)
 	})
 
-	h.register("auth", "update_group", func(body json.RawMessage) (any, error) {
+	h.registerAdmin("auth", "update_group", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ID          string `json:"id"`
 			DisplayName string `json:"display_name"`
@@ -1423,7 +1424,7 @@ func (h *Handler) registerAuth() {
 		return api.UpdateGroup(p.ID, p.DisplayName)
 	})
 
-	h.register("auth", "delete_group", func(body json.RawMessage) (any, error) {
+	h.registerAdmin("auth", "delete_group", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			ID string `json:"id"`
 		}
@@ -1433,7 +1434,7 @@ func (h *Handler) registerAuth() {
 		return nil, api.DeleteGroup(p.ID)
 	})
 
-	h.register("auth", "list_groups_by_user", func(body json.RawMessage) (any, error) {
+	h.register("auth", "list_groups_by_user", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			UserID string `json:"user_id"`
 		}
@@ -1443,7 +1444,7 @@ func (h *Handler) registerAuth() {
 		return api.ListGroupsByUser(p.UserID)
 	})
 
-	h.register("auth", "list_users_by_group", func(body json.RawMessage) (any, error) {
+	h.register("auth", "list_users_by_group", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			GroupID string `json:"group_id"`
 		}
@@ -1453,7 +1454,7 @@ func (h *Handler) registerAuth() {
 		return api.ListUsersByGroup(p.GroupID)
 	})
 
-	h.register("auth", "add_user_to_group", func(body json.RawMessage) (any, error) {
+	h.registerAdmin("auth", "add_user_to_group", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			UserID  string `json:"user_id"`
 			GroupID string `json:"group_id"`
@@ -1464,7 +1465,7 @@ func (h *Handler) registerAuth() {
 		return nil, api.AddUserToGroup(p.UserID, p.GroupID)
 	})
 
-	h.register("auth", "remove_user_from_group", func(body json.RawMessage) (any, error) {
+	h.registerAdmin("auth", "remove_user_from_group", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			UserID  string `json:"user_id"`
 			GroupID string `json:"group_id"`
@@ -1475,11 +1476,11 @@ func (h *Handler) registerAuth() {
 		return nil, api.RemoveUserFromGroup(p.UserID, p.GroupID)
 	})
 
-	h.register("auth", "list_users_with_status", func(_ json.RawMessage) (any, error) {
+	h.registerAdmin("auth", "list_users_with_status", func(ctx context.Context, _ json.RawMessage) (any, error) {
 		return api.ListUsersWithStatus()
 	})
 
-	h.register("auth", "get_active_reset_token", func(body json.RawMessage) (any, error) {
+	h.registerAdmin("auth", "get_active_reset_token", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			UserID string `json:"user_id"`
 		}
@@ -1489,7 +1490,7 @@ func (h *Handler) registerAuth() {
 		return api.GetActiveResetToken(p.UserID)
 	})
 
-	h.register("auth", "generate_reset_token", func(body json.RawMessage) (any, error) {
+	h.registerAdmin("auth", "generate_reset_token", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			UserID string `json:"user_id"`
 		}
@@ -1499,7 +1500,7 @@ func (h *Handler) registerAuth() {
 		return api.GenerateResetToken(p.UserID)
 	})
 
-	h.register("auth", "login", func(body json.RawMessage) (any, error) {
+	h.register("auth", "login", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			Name     string `json:"name"`
 			Password string `json:"password"`
@@ -1510,7 +1511,7 @@ func (h *Handler) registerAuth() {
 		return api.Login(p.Name, p.Password)
 	})
 
-	h.register("auth", "validate_session", func(body json.RawMessage) (any, error) {
+	h.register("auth", "validate_session", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			SessionID string `json:"session_id"`
 		}
@@ -1520,7 +1521,7 @@ func (h *Handler) registerAuth() {
 		return api.ValidateSession(p.SessionID)
 	})
 
-	h.register("auth", "logout", func(body json.RawMessage) (any, error) {
+	h.register("auth", "logout", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			SessionID string `json:"session_id"`
 		}
@@ -1530,7 +1531,7 @@ func (h *Handler) registerAuth() {
 		return nil, api.Logout(p.SessionID)
 	})
 
-	h.register("auth", "is_auth_enabled", func(_ json.RawMessage) (any, error) {
+	h.register("auth", "is_auth_enabled", func(ctx context.Context, _ json.RawMessage) (any, error) {
 		return api.IsAuthEnabled()
 	})
 }

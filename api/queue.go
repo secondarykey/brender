@@ -186,23 +186,23 @@ func notifyQueueChanged() {
 
 // RenderPreview はレンダリング実行前に解決された確定パラメータ
 type RenderPreview struct {
-	ProjectName   string `json:"project_name"`
-	WorkspaceName string `json:"workspace_name"`
-	ProjectFileID string `json:"project_file_id"`
-	BlenderPath   string `json:"blender_path"`
-	BlenderFile   string `json:"blender_file"`
-	Scene         string `json:"scene"`
-	Engine        string `json:"engine"`
-	StartFrame    int    `json:"start_frame"`
-	EndFrame      int    `json:"end_frame"`
-	FrameStep     int    `json:"frame_step"`
-	Thread        int    `json:"thread"`
-	Samples       int    `json:"samples"`
-	ResolutionX   int    `json:"resolution_x"`
-	ResolutionY   int    `json:"resolution_y"`
-	Camera        string `json:"camera"`
-	OutputFormat  string `json:"output_format"` // 解決済みフォーマット名（"PNG" / "JPEG"）
-	JobType       string `json:"job_type"`
+	ProjectName   string              `json:"project_name"`
+	WorkspaceName string              `json:"workspace_name"`
+	ProjectFileID string              `json:"project_file_id"`
+	BlenderPath   string              `json:"blender_path"`
+	BlenderFile   string              `json:"blender_file"`
+	Scene         string              `json:"scene"`
+	Engine        string              `json:"engine"`
+	StartFrame    int                 `json:"start_frame"`
+	EndFrame      int                 `json:"end_frame"`
+	FrameStep     int                 `json:"frame_step"`
+	Thread        int                 `json:"thread"`
+	Samples       int                 `json:"samples"`
+	ResolutionX   int                 `json:"resolution_x"`
+	ResolutionY   int                 `json:"resolution_y"`
+	Camera        string              `json:"camera"`
+	OutputFormat  string              `json:"output_format"` // 解決済みフォーマット名（"PNG" / "JPEG"）
+	JobType       string              `json:"job_type"`
 	Previous      *PreviousRenderInfo `json:"previous"`
 }
 
@@ -383,21 +383,14 @@ type TestRenderParams struct {
 
 // TestEnqueue は現在のフォーム値でサンプル8・中間1フレームのテストレンダリングをキューに追加する。
 // ワークスペースへの保存は行わない。
-func TestEnqueue(projectID, workspaceID string, params TestRenderParams) (*model.Queue, error) {
+func TestEnqueue(ctx context.Context, projectID, workspaceID string, params TestRenderParams) (*model.Queue, error) {
 	w, err := model.SelectWorkspace(projectID, workspaceID)
 	if err != nil || w == nil {
 		return nil, xerrors.Errorf("workspace not found: %w", err)
 	}
 	// runner 以上の権限が必要
-	userID := model.CurrentUser()
-	if userID != model.UserIDOwner && w.ProjectFileID != "" {
-		ok, err := model.HasFileRole(w.ProjectFileID, userID, []string{model.RoleOwner, model.RoleWorkspaceCreator, model.RoleEditor, model.RoleRunner})
-		if err != nil {
-			return nil, xerrors.Errorf("TestEnqueue permission check: %w", err)
-		}
-		if !ok {
-			return nil, xerrors.New("access denied")
-		}
+	if err := requireFileRole(ctx, w.ProjectFileID, rolesRunnerUp...); err != nil {
+		return nil, err
 	}
 	p, err := model.SelectProject(projectID)
 	if err != nil || p == nil {
@@ -507,20 +500,15 @@ func TestEnqueue(projectID, workspaceID string, params TestRenderParams) (*model
 		JobType:       model.JobTypeTest,
 	}
 
-	return EnqueueWithPreview(projectID, workspaceID, preview)
+	return EnqueueWithPreview(ctx, projectID, workspaceID, preview)
 }
 
 // EnqueueWithPreview は解決済みの RenderPreview を使ってジョブを作成・実行する。
-func EnqueueWithPreview(projectID, workspaceID string, preview *RenderPreview) (*model.Queue, error) {
+func EnqueueWithPreview(ctx context.Context, projectID, workspaceID string, preview *RenderPreview) (*model.Queue, error) {
 	// runner 以上の権限が必要
-	userID := model.CurrentUser()
-	if userID != model.UserIDOwner && preview != nil && preview.ProjectFileID != "" {
-		ok, err := model.HasFileRole(preview.ProjectFileID, userID, []string{model.RoleOwner, model.RoleWorkspaceCreator, model.RoleEditor, model.RoleRunner})
-		if err != nil {
-			return nil, xerrors.Errorf("EnqueueWithPreview permission check: %w", err)
-		}
-		if !ok {
-			return nil, xerrors.New("access denied")
+	if preview != nil {
+		if err := requireFileRole(ctx, preview.ProjectFileID, rolesRunnerUp...); err != nil {
+			return nil, err
 		}
 	}
 
@@ -630,32 +618,27 @@ func EnqueueWithPreview(projectID, workspaceID string, preview *RenderPreview) (
 }
 
 // Enqueue は PreviewRender + EnqueueWithPreview のショートカット（後方互換用）
-func Enqueue(projectID string, workspaceID string) (*model.Queue, error) {
+func Enqueue(ctx context.Context, projectID string, workspaceID string) (*model.Queue, error) {
 	preview, err := PreviewRender(projectID, workspaceID)
 	if err != nil {
 		return nil, err
 	}
-	return EnqueueWithPreview(projectID, workspaceID, preview)
+	return EnqueueWithPreview(ctx, projectID, workspaceID, preview)
 }
 
 // SamplesComparisonEnqueue はサンプル比較ジョブをキューに投入する。
 // frame が 0 以下の場合は中間フレームを自動選択する。
-func SamplesComparisonEnqueue(projectID, workspaceID string, sampleCounts []int, frame int) (*model.Queue, error) {
+func SamplesComparisonEnqueue(ctx context.Context, projectID, workspaceID string, sampleCounts []int, frame int) (*model.Queue, error) {
 	if len(sampleCounts) == 0 {
 		return nil, xerrors.New("サンプル数リストが空です")
 	}
 
 	// runner 以上の権限が必要
-	userID := model.CurrentUser()
-	if userID != model.UserIDOwner {
+	if !fullAccess(ctx) {
 		w, wErr := model.SelectWorkspace(projectID, workspaceID)
-		if wErr == nil && w != nil && w.ProjectFileID != "" {
-			ok, err := model.HasFileRole(w.ProjectFileID, userID, []string{model.RoleOwner, model.RoleWorkspaceCreator, model.RoleEditor, model.RoleRunner})
-			if err != nil {
-				return nil, xerrors.Errorf("SamplesComparisonEnqueue permission check: %w", err)
-			}
-			if !ok {
-				return nil, xerrors.New("access denied")
+		if wErr == nil && w != nil {
+			if err := requireFileRole(ctx, w.ProjectFileID, rolesRunnerUp...); err != nil {
+				return nil, err
 			}
 		}
 	}
@@ -1143,13 +1126,13 @@ func ListQueues() ([]*model.Queue, error) {
 	return model.ListQueues()
 }
 
-func ListQueueItems() ([]*QueueItem, error) {
+func ListQueueItems(ctx context.Context) ([]*QueueItem, error) {
 	queues, err := model.ListQueues()
 	if err != nil {
 		return nil, err
 	}
-	userID := model.CurrentUser()
-	isOwner := userID == model.UserIDOwner
+	userID := currentUser(ctx)
+	isOwner := fullAccess(ctx)
 	// ファイルIDごとのキャンセル権限キャッシュ（同一ファイルの複数キューで重複チェック回避）
 	cancelCache := map[string]bool{}
 
@@ -1224,25 +1207,20 @@ func GetQueue(id string) (*model.Queue, error) {
 	return model.GetQueue(id)
 }
 
-func CancelQueue(id string) error {
+func CancelQueue(ctx context.Context, id string) error {
 	q, err := model.GetQueue(id)
 	if err != nil {
 		return xerrors.Errorf("GetQueue: %w", err)
 	}
 	// runner 以上の権限が必要
-	userID := model.CurrentUser()
-	if userID != model.UserIDOwner {
+	if !fullAccess(ctx) {
 		j, err := model.GetJob(id)
 		if err != nil {
 			return xerrors.Errorf("CancelQueue GetJob: %w", err)
 		}
-		if j != nil && j.ProjectFileID != "" {
-			ok, err := model.HasFileRole(j.ProjectFileID, userID, []string{model.RoleOwner, model.RoleWorkspaceCreator, model.RoleEditor, model.RoleRunner})
-			if err != nil {
-				return xerrors.Errorf("CancelQueue permission check: %w", err)
-			}
-			if !ok {
-				return xerrors.New("access denied")
+		if j != nil {
+			if err := requireFileRole(ctx, j.ProjectFileID, rolesRunnerUp...); err != nil {
+				return err
 			}
 		}
 	}
@@ -1279,17 +1257,17 @@ func ListJobs() ([]*model.Job, error) {
 	return model.ListJobs()
 }
 
-func ListJobsPaged(filter *model.JobFilter, page, pageSize int) (*model.JobListResult, error) {
+func ListJobsPaged(ctx context.Context, filter *model.JobFilter, page, pageSize int) (*model.JobListResult, error) {
 	result, err := model.ListJobsPaged(filter, page, pageSize)
 	if err != nil {
 		return nil, err
 	}
-	userID := model.CurrentUser()
-	if userID == model.UserIDOwner {
+	if fullAccess(ctx) {
 		for _, j := range result.Jobs {
 			j.HasFileAccess = true
 		}
 	} else {
+		userID := currentUser(ctx)
 		cache := map[string]bool{}
 		for _, j := range result.Jobs {
 			if j.ProjectFileID == "" {
@@ -1310,40 +1288,28 @@ func ListJobsPaged(filter *model.JobFilter, page, pageSize int) (*model.JobListR
 	return result, nil
 }
 
-func UpdateJobMeta(id, name, note string) error {
+func UpdateJobMeta(ctx context.Context, id, name, note string) error {
 	// runner 以上の権限が必要
-	userID := model.CurrentUser()
-	if userID != model.UserIDOwner {
+	if !fullAccess(ctx) {
 		j, err := model.GetJob(id)
 		if err != nil {
 			return xerrors.Errorf("UpdateJobMeta GetJob: %w", err)
 		}
-		ok, err := model.HasFileRole(j.ProjectFileID, userID, []string{model.RoleOwner, model.RoleWorkspaceCreator, model.RoleEditor, model.RoleRunner})
-		if err != nil {
-			return xerrors.Errorf("UpdateJobMeta permission check: %w", err)
-		}
-		if !ok {
-			return xerrors.New("access denied")
+		if err := requireFileRole(ctx, j.ProjectFileID, rolesRunnerUp...); err != nil {
+			return err
 		}
 	}
 	return model.UpdateJobMeta(id, name, note)
 }
 
-func DeleteJob(id string) error {
+func DeleteJob(ctx context.Context, id string) error {
 	j, err := model.GetJob(id)
 	if err != nil {
 		return xerrors.Errorf("DeleteJob GetJob: %w", err)
 	}
 	// runner 以上の権限が必要
-	userID := model.CurrentUser()
-	if userID != model.UserIDOwner {
-		ok, err := model.HasFileRole(j.ProjectFileID, userID, []string{model.RoleOwner, model.RoleWorkspaceCreator, model.RoleEditor, model.RoleRunner})
-		if err != nil {
-			return xerrors.Errorf("DeleteJob permission check: %w", err)
-		}
-		if !ok {
-			return xerrors.New("access denied")
-		}
+	if err := requireFileRole(ctx, j.ProjectFileID, rolesRunnerUp...); err != nil {
+		return err
 	}
 	if j.DataStatus%2 == 1 {
 		return xerrors.New("ロック中のジョブは削除できません")
@@ -1363,7 +1329,15 @@ func DeleteJob(id string) error {
 // errorOnly=false のとき: ロックされていないジョブのうち最新 keepCount 件を残し残りを削除する。
 // dataOnly=true の場合は出力データのみ削除してジョブ履歴を残す（DataStatus を削除済みに更新）。
 // ロック済みジョブは常に保持される。削除件数を返す。
-func BulkDeleteJobsByWorkspace(projectID, workspaceID string, keepCount int, dataOnly bool, errorOnly bool) (int, error) {
+func BulkDeleteJobsByWorkspace(ctx context.Context, projectID, workspaceID string, keepCount int, dataOnly bool, errorOnly bool) (int, error) {
+	// runner 以上の権限が必要（ワークスペースのファイルで判定）
+	if !fullAccess(ctx) {
+		if w, wErr := model.SelectWorkspace(projectID, workspaceID); wErr == nil && w != nil {
+			if err := requireFileRole(ctx, w.ProjectFileID, rolesRunnerUp...); err != nil {
+				return 0, err
+			}
+		}
+	}
 	jobs, err := model.ListJobsByWorkspace(projectID, workspaceID)
 	if err != nil {
 		return 0, xerrors.Errorf("BulkDeleteJobsByWorkspace: %w", err)
@@ -1396,9 +1370,9 @@ func BulkDeleteJobsByWorkspace(projectID, workspaceID string, keepCount int, dat
 	for _, j := range toDelete {
 		var opErr error
 		if dataOnly {
-			opErr = DeleteJobData(j.ID)
+			opErr = DeleteJobData(ctx, j.ID)
 		} else {
-			opErr = DeleteJob(j.ID)
+			opErr = DeleteJob(ctx, j.ID)
 		}
 		if opErr != nil {
 			log.Error("BulkDeleteJobsByWorkspace: %v", opErr)
@@ -1409,21 +1383,14 @@ func BulkDeleteJobsByWorkspace(projectID, workspaceID string, keepCount int, dat
 	return deleted, nil
 }
 
-func DeleteJobData(id string) error {
+func DeleteJobData(ctx context.Context, id string) error {
 	j, err := model.GetJob(id)
 	if err != nil {
 		return xerrors.Errorf("DeleteJobData GetJob: %w", err)
 	}
 	// runner 以上の権限が必要
-	userID := model.CurrentUser()
-	if userID != model.UserIDOwner {
-		ok, err := model.HasFileRole(j.ProjectFileID, userID, []string{model.RoleOwner, model.RoleWorkspaceCreator, model.RoleEditor, model.RoleRunner})
-		if err != nil {
-			return xerrors.Errorf("DeleteJobData permission check: %w", err)
-		}
-		if !ok {
-			return xerrors.New("access denied")
-		}
+	if err := requireFileRole(ctx, j.ProjectFileID, rolesRunnerUp...); err != nil {
+		return err
 	}
 	if j.DataStatus%2 == 1 {
 		return xerrors.New("ロック中のジョブのデータは削除できません")
@@ -1438,10 +1405,14 @@ func DeleteJobData(id string) error {
 	return model.UpdateJobDataStatus(id, model.JobDataDeleted)
 }
 
-func LockJob(id string) error {
+func LockJob(ctx context.Context, id string) error {
 	j, err := model.GetJob(id)
 	if err != nil {
 		return xerrors.Errorf("LockJob GetJob: %w", err)
+	}
+	// runner 以上の権限が必要
+	if err := requireFileRole(ctx, j.ProjectFileID, rolesRunnerUp...); err != nil {
+		return err
 	}
 	if j.DataStatus%2 == 1 {
 		return nil // すでにロック済み
@@ -1449,10 +1420,14 @@ func LockJob(id string) error {
 	return model.UpdateJobDataStatus(id, j.DataStatus+1)
 }
 
-func UnlockJob(id string) error {
+func UnlockJob(ctx context.Context, id string) error {
 	j, err := model.GetJob(id)
 	if err != nil {
 		return xerrors.Errorf("UnlockJob GetJob: %w", err)
+	}
+	// runner 以上の権限が必要
+	if err := requireFileRole(ctx, j.ProjectFileID, rolesRunnerUp...); err != nil {
+		return err
 	}
 	if j.DataStatus%2 == 0 {
 		return nil // ロックされていない
@@ -1461,10 +1436,13 @@ func UnlockJob(id string) error {
 }
 
 // ListJobImages はジョブの出力ディレクトリにある画像ファイルのパス一覧を昇順で返す。
-func ListJobImages(id string) ([]string, error) {
+func ListJobImages(ctx context.Context, id string) ([]string, error) {
 	j, err := model.GetJob(id)
 	if err != nil {
 		return nil, xerrors.Errorf("ListJobImages GetJob: %w", err)
+	}
+	if err := requireFileAccess(ctx, j.ProjectFileID); err != nil {
+		return nil, err
 	}
 	if j.OutputDir == "" {
 		return nil, nil
@@ -1496,11 +1474,14 @@ type JobFileInfo struct {
 }
 
 // ListJobFiles はジョブの出力ディレクトリにある全ファイルの情報を返す。
-func ListJobFiles(id string) ([]*JobFileInfo, error) {
+func ListJobFiles(ctx context.Context, id string) ([]*JobFileInfo, error) {
 	j, err := model.GetJob(id)
 	if err != nil {
 		log.Error("[ListJobFiles] GetJob error: %v", err)
 		return nil, xerrors.Errorf("ListJobFiles GetJob: %w", err)
+	}
+	if err := requireFileAccess(ctx, j.ProjectFileID); err != nil {
+		return nil, err
 	}
 	log.Debug("[ListJobFiles] job=%s outputDir=%q dataStatus=%d", id, j.OutputDir, j.DataStatus)
 	if j.OutputDir == "" {
@@ -1535,7 +1516,11 @@ func ListJobFiles(id string) ([]*JobFileInfo, error) {
 }
 
 // GetImageBase64 は指定パスの画像を base64 データ URI として返す。
-func GetImageBase64(path string) (string, error) {
+// 任意ファイル読み取りを防ぐため、パスは登録済み作業ディレクトリ配下に限定する。
+func GetImageBase64(ctx context.Context, path string) (string, error) {
+	if err := validateWorkDirPath(path); err != nil {
+		return "", err
+	}
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return "", xerrors.Errorf("GetImageBase64: %w", err)
@@ -1548,20 +1533,13 @@ func GetImageBase64(path string) (string, error) {
 	return "data:" + mime + ";base64," + base64.StdEncoding.EncodeToString(data), nil
 }
 
-func GetJob(id string) (*model.Job, error) {
+func GetJob(ctx context.Context, id string) (*model.Job, error) {
 	j, err := model.GetJob(id)
 	if err != nil {
 		return nil, err
 	}
-	userID := model.CurrentUser()
-	if userID != model.UserIDOwner && j.ProjectFileID != "" {
-		ok, err := model.HasFileAccess(j.ProjectFileID, userID)
-		if err != nil {
-			return nil, xerrors.Errorf("GetJob permission check: %w", err)
-		}
-		if !ok {
-			return nil, xerrors.New("access denied")
-		}
+	if err := requireFileAccess(ctx, j.ProjectFileID); err != nil {
+		return nil, err
 	}
 	return j, nil
 }
@@ -1583,10 +1561,13 @@ func ListJobsByProjectFilePaged(projectID, projectFileID string, page, pageSize 
 }
 
 // ZipJobData は job の OutputDir 全体を ZIP 圧縮して savePath に書き出す。
-func ZipJobData(id string, savePath string) error {
+func ZipJobData(ctx context.Context, id string, savePath string) error {
 	j, err := model.GetJob(id)
 	if err != nil {
 		return xerrors.Errorf("ZipJobData GetJob: %w", err)
+	}
+	if err := requireFileAccess(ctx, j.ProjectFileID); err != nil {
+		return err
 	}
 	// none(0/1) または deleted(4/5) はデータなし。modified(8/9) は一部残存のため許可。
 	if j.DataStatus == model.JobDataNone || j.DataStatus == model.JobDataNoneLocked ||
@@ -1633,10 +1614,13 @@ func ZipJobData(id string, savePath string) error {
 
 // GetJobLog は job の OutputDir にある render.log の内容を返す。
 // ファイルが存在しない場合は空文字を返す。
-func GetJobLog(id string) (string, error) {
+func GetJobLog(ctx context.Context, id string) (string, error) {
 	j, err := model.GetJob(id)
 	if err != nil {
 		return "", xerrors.Errorf("GetJobLog GetJob: %w", err)
+	}
+	if err := requireFileAccess(ctx, j.ProjectFileID); err != nil {
+		return "", err
 	}
 	if j.OutputDir == "" {
 		return "", nil
@@ -1653,10 +1637,18 @@ func GetJobLog(id string) (string, error) {
 }
 
 // ZipJobSelectedFiles は job の OutputDir 内の指定ファイルのみを ZIP 圧縮して savePath に書き出す。
-func ZipJobSelectedFiles(id string, filePaths []string, savePath string) error {
+// OutputDir 外を指すパスは無視する（任意ファイルの吸い出しを防ぐ）。
+func ZipJobSelectedFiles(ctx context.Context, id string, filePaths []string, savePath string) error {
 	j, err := model.GetJob(id)
 	if err != nil {
 		return xerrors.Errorf("ZipJobSelectedFiles GetJob: %w", err)
+	}
+	if err := requireFileAccess(ctx, j.ProjectFileID); err != nil {
+		return err
+	}
+	absOut, err := filepath.Abs(j.OutputDir)
+	if err != nil {
+		return xerrors.Errorf("ZipJobSelectedFiles Abs: %w", err)
 	}
 	f, err := os.Create(savePath)
 	if err != nil {
@@ -1666,9 +1658,13 @@ func ZipJobSelectedFiles(id string, filePaths []string, savePath string) error {
 	zw := zip.NewWriter(f)
 	defer zw.Close()
 	for _, path := range filePaths {
-		rel, relErr := filepath.Rel(j.OutputDir, path)
-		if relErr != nil {
-			rel = filepath.Base(path)
+		absP, absErr := filepath.Abs(path)
+		if absErr != nil {
+			continue
+		}
+		rel, relErr := filepath.Rel(absOut, absP)
+		if relErr != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+			continue // OutputDir 外は無視
 		}
 		w, err := zw.Create(filepath.ToSlash(rel))
 		if err != nil {
@@ -1690,21 +1686,14 @@ func ZipJobSelectedFiles(id string, filePaths []string, savePath string) error {
 // DeleteJobFiles は job の OutputDir 内の指定ファイルを削除する。
 // ロック中のジョブは削除不可。OutputDir 外のパスは無視する。
 // 削除後、ファイルが残っていれば JobDataModified、全削除なら JobDataDeleted にステータスを更新する。
-func DeleteJobFiles(id string, filePaths []string) error {
+func DeleteJobFiles(ctx context.Context, id string, filePaths []string) error {
 	j, err := model.GetJob(id)
 	if err != nil {
 		return xerrors.Errorf("DeleteJobFiles GetJob: %w", err)
 	}
 	// runner 以上の権限が必要
-	userID := model.CurrentUser()
-	if userID != model.UserIDOwner {
-		ok, err := model.HasFileRole(j.ProjectFileID, userID, []string{model.RoleOwner, model.RoleWorkspaceCreator, model.RoleEditor, model.RoleRunner})
-		if err != nil {
-			return xerrors.Errorf("DeleteJobFiles permission check: %w", err)
-		}
-		if !ok {
-			return xerrors.New("access denied")
-		}
+	if err := requireFileRole(ctx, j.ProjectFileID, rolesRunnerUp...); err != nil {
+		return err
 	}
 	if j.DataStatus%2 == 1 {
 		return xerrors.New("ロック中のジョブのファイルは削除できません")
@@ -1767,15 +1756,18 @@ func GetCleanableJobStats(filter *model.CleanFilter) (*model.CleanableJobStats, 
 }
 
 // CleanJobData はフィルタ条件に合致するジョブの出力データを削除する（履歴は残す）。
-// 削除件数を返す。
-func CleanJobData(filter *model.CleanFilter) (int, error) {
+// プロジェクト横断のクリーンアップのため admin 権限を要求する。削除件数を返す。
+func CleanJobData(ctx context.Context, filter *model.CleanFilter) (int, error) {
+	if err := requireAdmin(ctx); err != nil {
+		return 0, err
+	}
 	jobs, err := model.ListCleanableJobs(filter)
 	if err != nil {
 		return 0, xerrors.Errorf("CleanJobData: %w", err)
 	}
 	deleted := 0
 	for _, j := range jobs {
-		if err := DeleteJobData(j.ID); err != nil {
+		if err := DeleteJobData(ctx, j.ID); err != nil {
 			log.Error("CleanJobData: %v", err)
 			continue
 		}
@@ -1813,4 +1805,3 @@ func measureDirSize(dir string) int64 {
 	})
 	return total
 }
-

@@ -66,9 +66,9 @@ _cmd/brender/  (Wails3 desktop app)
     main.go
         ↓
 api/wails/     (Wails サービス層 — thin wrappers registered in main.go)
-api/rest/      (REST サービス層 — サーバモード用、未実装)
+api/rest/      (REST サービス層 — サーバモード用。認証・SSE・admin ガード込みで実装済み)
         ↓
-api/           (business logic, framework-agnostic)
+api/           (business logic, framework-agnostic。権限判定は context.Context 経由のユーザで行う)
         ↓
 model/         (GORM models + CRUD, SQLite via glebarez/sqlite)
 exec/          (Blender subprocess management + output parsing)
@@ -271,8 +271,14 @@ On startup, `App.jsx` calls `EnvironmentApi.get()`. If `ProjectRoot` is not set,
 サーバモードで複数ユーザが利用する場合のアクセス制御。3階層のロールシステムで構成される。
 
 #### 前提: ユーザ管理の有効条件
-権限チェックは `Environment.Server=true` かつ `Environment.ServerAuth=true` のときのみ有効。
+権限チェックは `Environment.Server=true` かつ `Environment.ServerAuth=true` のときのみ有効（`api/access.go` の `authActive()` が判定）。
 いずれかが `false`（Wails デスクトップモード、またはサーバモードでユーザ管理オフ）の場合、**全ての権限チェックをバイパス**し全員フルアクセスとなる。
+
+判定は `api/access.go` の共通ヘルパーに集約されている（各 api 関数は自前で `if userID != owner {...}` を書かない）:
+- `fullAccess(ctx)` — owner、またはアクセス制御無効ならチェック不要。
+- `requireProjectRole` / `requireProjectAccess` / `requireFileRole` / `requireFileAccess` — 指定ロール/参照権限を要求。
+- `requireAdmin(ctx)` — admin ロールを要求（設定変更・Blender 登録・ユーザ管理など）。
+- `requireCreateProject(ctx)` — プロジェクト作成権限を要求。
 
 #### 1. アプリレベルロール (`User.Role`)
 ユーザ単位の全体権限。プロジェクト作成や管理操作を制御する。
@@ -324,12 +330,19 @@ On startup, `App.jsx` calls `EnvironmentApi.get()`. If `ProjectRoot` is not set,
 - 複数のロールがマッチした場合、**最上位のロールを採用**（`GetUserProjectRole` / `GetUserFileRole`）
 - `HasProjectAccess` / `HasFileAccess` — いずれかの権限があるかの bool 判定
 
-#### ユーザ識別 (`model/user.go`)
+#### ユーザ識別 (`model/user.go`, `api/access.go`)
+
+**権限判定の唯一の情報源は `context.Context` に載せた操作ユーザ**。api 層の関数は第1引数に `ctx` を受け取り、`currentUser(ctx)`（未設定時は `usr_owner` にフォールバック）で解決する。
+
 ```go
-model.CurrentUser() // → ユーザID
+model.WithUser(ctx, userID)      // ctx にユーザを紐付ける
+model.UserFromContext(ctx)       // ctx からユーザを取り出す
 ```
-- **REST モード**: goroutine-local storage から取得（認証ミドルウェアがセット）
-- **Wails モード**: グローバルデフォルト `usr_owner` を返す
+
+- **REST モード**: 認証ミドルウェア（`api/rest/auth.go`）がセッション検証後に `r = r.WithContext(model.WithUser(...))` で ctx へ注入。ハンドラは `r.Context()` を api 層へ渡す。
+- **Wails モード**: 各サービスラッパーが `api.WailsContext()`（= 常に `usr_owner`）を渡す。デスクトップは単一ユーザ運用のため常にフルアクセス。
+
+**`model.CurrentUser()` / goroutine-local storage** は監査カラム（`CreatedBy` / `UpdatedBy`）専用のベストエフォート機構に格下げされた。権限判定には使わない（そちらは ctx が唯一の情報源）。GORM の監査コールバックはクエリ ctx のユーザを優先し、なければ goroutine-local にフォールバックする（`model.auditUser`）。
 
 #### フロントエンドの権限制御
 
@@ -346,6 +359,15 @@ model.CurrentUser() // → ユーザID
 **ジョブ履歴のファイルアクセス制御** (`QueuePage.jsx`, `JobManagement.jsx`):
 - `Job.HasFileAccess` (`gorm:"-"` フィールド) — `ListJobsPaged` で API 層がファイルID ごとにキャッシュして設定
 - `has_file_access === false` のジョブ → 行クリック・ダイアログ・ナビゲーションを抑制、ファイル名をリンクではなく淡色テキストで表示
+
+#### REST エンドポイントのガード (`api/rest/`)
+
+サーバモードの REST は全操作を無差別公開せず、以下で保護する。
+
+- **admin 限定エンドポイント**: `Handler.registerAdmin`（`api/rest/rest.go`）でラップし、ハンドラ実行前に `api.RequireAdmin(ctx)` を通す。対象は設定変更（`environment/set_*`）、Blender 登録・削除・並べ替え・GUI 起動（`blender register/delete/reorder/open_file`）、作業ディレクトリ管理（`work_dir create/update/reorder/delete/change_dir/check_dir`）、コード管理（`codes save_*/reset_*`）、`queue/kill_running`、ユーザ・グループ管理系（`auth` の create/update/delete/add/remove、リセットトークン、`list_users_with_status`）。
+- **プロジェクト/ファイル owner 限定**: 権限付与・剥奪（`project set_permission` / `remove_permission` / `set_file_permission` / `remove_file_permission`）は `api.SetProjectPermission` 等の中で `requireProjectRole(owner)` / `requireFileRole(owner)` を通す（admin ではなく対象リソースの owner）。
+- **リソースの認証**: `/_movie`（ローカルファイル配信）と `/events`（SSE）は SPA ではなくリソースのため、未認証時は SPA を返さず 401 を返す（`handleUnauthorized`）。
+- **生パスの検証**: 生ファイルパスを受け取る口は登録済み作業ディレクトリ配下に限定する。`queue/get_image_base64` は `validateWorkDirPath`、サーバモード `/_movie` は `api.ValidateWorkDirPath` で検証。`zip_job_selected_files` は OutputDir 外のパスを無視する。
 
 ### 起動設定ファイル (`config/`, `~/.brender/brender.ini`)
 

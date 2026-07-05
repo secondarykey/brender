@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"image"
 	stdDraw "image/draw"
@@ -18,7 +19,7 @@ import (
 	"golang.org/x/xerrors"
 )
 
-func CreateThumbnailWorkspace(projectID string, file *model.ProjectFile) error {
+func CreateThumbnailWorkspace(ctx context.Context, projectID string, file *model.ProjectFile) error {
 	blenderPath, err := resolveBlenderPath(file.BlenderInstallID, 0)
 	if err != nil {
 		return err
@@ -37,7 +38,7 @@ func CreateThumbnailWorkspace(projectID string, file *model.ProjectFile) error {
 		return err
 	}
 
-	_, err = TestEnqueue(projectID, ws.ID, TestRenderParams{
+	_, err = TestEnqueue(ctx, projectID, ws.ID, TestRenderParams{
 		StartFrame: mid,
 		EndFrame:   mid,
 	})
@@ -214,17 +215,10 @@ func SetFileThumbnail(projectID, fileID, imagePath string) (string, error) {
 }
 
 // SetWorkspaceThumbnail は imagePath の画像を 640x360 JPEG に変換してワークスペースサムネイルとして保存し、base64 データURIを返す。
-func SetWorkspaceThumbnail(projectID, fileID, workspaceID, imagePath string) (string, error) {
+func SetWorkspaceThumbnail(ctx context.Context, projectID, fileID, workspaceID, imagePath string) (string, error) {
 	// editor 以上の権限が必要（サムネイル設定）
-	userID := model.CurrentUser()
-	if userID != model.UserIDOwner {
-		ok, err := model.HasFileRole(fileID, userID, []string{model.RoleOwner, model.RoleWorkspaceCreator, model.RoleEditor})
-		if err != nil {
-			return "", xerrors.Errorf("SetWorkspaceThumbnail permission check: %w", err)
-		}
-		if !ok {
-			return "", xerrors.New("access denied")
-		}
+	if err := requireFileRole(ctx, fileID, rolesEditorUp...); err != nil {
+		return "", err
 	}
 	baseDir, err := GetProjectBaseDir(projectID)
 	if err != nil {
@@ -239,17 +233,10 @@ func SetWorkspaceThumbnail(projectID, fileID, workspaceID, imagePath string) (st
 }
 
 // SetFileThumbnailFromWorkspace はワークスペースのサムネイル（またはジョブ出力）をファイルサムネイルとして保存し、base64 データURIを返す。
-func SetFileThumbnailFromWorkspace(projectID, fileID, workspaceID string) (string, error) {
+func SetFileThumbnailFromWorkspace(ctx context.Context, projectID, fileID, workspaceID string) (string, error) {
 	// editor 以上の権限が必要（サムネイル設定）
-	userID := model.CurrentUser()
-	if userID != model.UserIDOwner {
-		ok, err := model.HasFileRole(fileID, userID, []string{model.RoleOwner, model.RoleWorkspaceCreator, model.RoleEditor})
-		if err != nil {
-			return "", xerrors.Errorf("SetFileThumbnailFromWorkspace permission check: %w", err)
-		}
-		if !ok {
-			return "", xerrors.New("access denied")
-		}
+	if err := requireFileRole(ctx, fileID, rolesEditorUp...); err != nil {
+		return "", err
 	}
 	baseDir, err := GetProjectBaseDir(projectID)
 	if err != nil {
