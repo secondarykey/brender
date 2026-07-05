@@ -208,17 +208,21 @@ Services are registered in `_cmd/brender/main.go`. After adding or changing a se
 **PID 誤殺の防止** (`killQueueProcess` / `isBlenderProcess`):
 保存済み PID は OS に再利用され別プロセスへ割り当てられている可能性がある。`Kill()` する前に gopsutil（`process.NewProcess`）で実行ファイルを検証し、記録された Blender パスと一致するか実行ファイル名に "blender" を含む場合のみ kill する。検証できない場合は kill をスキップ（無関係なプロセスの誤殺より orphan 残存を許容）。`RecoverStaleQueues` / `CancelQueue` / `KillRunningQueues` の3箇所で共通利用する。
 
-### Queue changed hook (`api/queue.go`)
+### イベント配信フック (`api/*.go` の `XxxHook` + `main.go` の `emit`)
+`api` 層は各種イベントを `var XxxHook func(...)` の関数変数で公開する（`QueueChangedHook` / `BlenderWarningHook` / `MigrationHook` / `MovieCreatedHook` / `WorkDirChangeDirHook` / `SystemStatsHook`）。キューの件数が変化したとき（Enqueue・finishJob・CancelQueue 後）に `QueueChangedHook` が呼ばれる、といった具合。
+
+`main.go` はこれらのフックを**単一の `emit(name, data)` クロージャ**にまとめて設定する。`emit` は Wails Event へ送り、サーバモードなら SSE broker（`rest.SSEBroker.Emit`）へも配る：
 ```go
-var QueueChangedHook func(count int64)
-```
-キューの件数が変化したとき（Enqueue・finishJob・CancelQueue 後）に呼ばれる。`main.go` で Wails イベント送信にセットしている：
-```go
-api.QueueChangedHook = func(count int64) {
-    application.Get().Event.Emit("queue:changed", count)
+emit := func(name string, data any) {
+    application.Get().Event.Emit(name, data)
+    if broker != nil { broker.Emit(name, data) }
 }
+api.QueueChangedHook = func(count int64) { emit("queue:changed", count) }
+// ...他のフックも同様に emit を通す
 ```
-将来のサーバモードでは SSE ブロードキャストに差し替えるだけで `api/queue.go` 本体は変更不要。
+新しいイベントを足すときも `emit` を経由すれば、Wails と SSE の両トランスポートへ確実に届く（フックごとに SSE ラップを書くと漏れる）。`broker` はフック設定より前に生成しておく。
+
+**ヘッドレス運用は不可**: サーバモードの HTTP サーバは Wails アプリのプロセス内（`app.Run()` が前提）で起動する。GUI なしの純ヘッドレスサーバとしては動かせない（設計上の制約）。
 
 ### Job deletion (`api/queue.go`)
 `DeleteJob(id)` — ジョブの `OutputDir` を `os.RemoveAll` で削除してから DB レコードを削除する（ディレクトリが存在する場合のみ）。

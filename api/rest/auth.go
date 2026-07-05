@@ -128,12 +128,14 @@ func handleUnauthorized(w http.ResponseWriter, r *http.Request, path string) boo
 }
 
 // setSessionCookie はセッション Cookie をセットする。
-func setSessionCookie(w http.ResponseWriter, sessionID string) {
+// secure は HTTPS 経由のリクエストのときだけ true にする（HTTP の LAN 運用でも動くように）。
+func setSessionCookie(w http.ResponseWriter, sessionID string, secure bool) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     sessionCookieName,
 		Value:    sessionID,
 		Path:     "/",
 		HttpOnly: true,
+		Secure:   secure,
 		SameSite: http.SameSiteLaxMode,
 		MaxAge:   30 * 24 * 60 * 60, // 30日
 	})
@@ -172,7 +174,7 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	setSessionCookie(w, result.SessionID)
+	setSessionCookie(w, result.SessionID, r.TLS != nil)
 	writeJSON(w, http.StatusOK, map[string]any{"data": result.User})
 }
 

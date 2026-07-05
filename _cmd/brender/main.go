@@ -165,113 +165,77 @@ func run() error {
 		application.Get().Quit()
 	})
 
-	// キュー変化イベントをフロントエンドへ通知
+	// サーバモードなら先に HTTP サーバ（と SSE broker）を用意する。
+	// broker はイベント配信フックより前に確定させ、全イベントが SSE へ届くようにする。
+	var restServer *rest.Server
+	var broker *rest.SSEBroker
+	var serverPort int
+	if env, err := model.GetEnv(); err == nil && env != nil && env.Server {
+		serverPort = env.ServerPort
+		if serverPort < 1 || serverPort > 65535 {
+			serverPort = 8080
+		}
+		rest.SetVersionInfo(strings.TrimSpace(appVersion), dev)
+		restServer = rest.NewServer(assets, env.ServerHost, serverPort)
+		broker = restServer.Broker()
+	}
+
+	// イベント配信を一元化する。Wails Event へ送り、サーバモードなら SSE へも配る。
+	// 新しいイベントを足す場合もこの emit を通せば両トランスポートへ確実に届く。
+	emit := func(name string, data any) {
+		application.Get().Event.Emit(name, data)
+		if broker != nil {
+			broker.Emit(name, data)
+		}
+	}
+
+	// キュー変化イベント
 	api.QueueChangedHook = func(count int64) {
-		application.Get().Event.Emit("queue:changed", count)
+		emit("queue:changed", count)
 	}
-
-	// リカバリされたキューのスケジューリングを開始
-	api.StartRecoveredQueues()
-
-	// 登録済み Blender のバージョン検証（バックグラウンド）
+	// 登録済み Blender のバージョン検証結果
 	api.BlenderWarningHook = func(warnings []string) {
-		application.Get().Event.Emit("blender:warning", warnings)
+		emit("blender:warning", warnings)
 	}
-	go api.VerifyBlenderInstalls()
-
-	// 移行進捗イベントをフロントエンドへ通知
+	// 移行進捗イベント
 	api.MigrationHook = func(projectID string, status string, pct float64) {
-		application.Get().Event.Emit("workdir:migrate", map[string]interface{}{
+		emit("workdir:migrate", map[string]interface{}{
 			"project_id": projectID,
 			"status":     status,
 			"pct":        pct,
 		})
 	}
-
-	// 動画作成完了イベントをフロントエンドへ通知
+	// 動画作成完了イベント
 	api.MovieCreatedHook = func(jobID string, path string, errMsg string) {
-		application.Get().Event.Emit("movie:created", map[string]interface{}{
+		emit("movie:created", map[string]interface{}{
 			"job_id": jobID,
 			"path":   path,
 			"error":  errMsg,
 		})
 	}
-
-	// パス変更進捗イベントをフロントエンドへ通知
+	// パス変更進捗イベント
 	api.WorkDirChangeDirHook = func(workDirID uint, status string, pct float64) {
-		application.Get().Event.Emit("workdir:changedir", map[string]interface{}{
+		emit("workdir:changedir", map[string]interface{}{
 			"work_dir_id": workDirID,
 			"status":      status,
 			"pct":         pct,
 		})
 	}
-
-	// システムモニタリング開始（CPU/GPU 使用率をフロントエンドへ通知）
+	// システムモニタリング（CPU/GPU 使用率）
 	api.SystemStatsHook = func(stats sysmon.Stats) {
-		application.Get().Event.Emit("system:stats", stats)
+		emit("system:stats", stats)
 	}
+
+	// フック設定後にスケジューラ・モニタ・検証を開始する
+	api.StartRecoveredQueues()
+	go api.VerifyBlenderInstalls()
 	api.StartSystemMonitor()
 
-	// サーバモードの起動
-	var restServer *rest.Server
-	if env, err := model.GetEnv(); err == nil && env != nil && env.Server {
-		host := env.ServerHost
-		port := env.ServerPort
-		if port < 1 || port > 65535 {
-			port = 8080
-		}
-		rest.SetVersionInfo(strings.TrimSpace(appVersion), dev)
-		restServer = rest.NewServer(assets, host, port)
-		broker := restServer.Broker()
-
-		origQueueHook := api.QueueChangedHook
-		api.QueueChangedHook = func(count int64) {
-			if origQueueHook != nil {
-				origQueueHook(count)
-			}
-			broker.Emit("queue:changed", count)
-		}
-
-		origMigrationHook := api.MigrationHook
-		api.MigrationHook = func(projectID string, status string, pct float64) {
-			if origMigrationHook != nil {
-				origMigrationHook(projectID, status, pct)
-			}
-			broker.Emit("workdir:migrate", map[string]interface{}{
-				"project_id": projectID,
-				"status":     status,
-				"pct":        pct,
-			})
-		}
-
-		origChangeDirHook := api.WorkDirChangeDirHook
-		api.WorkDirChangeDirHook = func(workDirID uint, status string, pct float64) {
-			if origChangeDirHook != nil {
-				origChangeDirHook(workDirID, status, pct)
-			}
-			broker.Emit("workdir:changedir", map[string]interface{}{
-				"work_dir_id": workDirID,
-				"status":      status,
-				"pct":         pct,
-			})
-		}
-
-		origMovieHook := api.MovieCreatedHook
-		api.MovieCreatedHook = func(jobID string, path string, errMsg string) {
-			if origMovieHook != nil {
-				origMovieHook(jobID, path, errMsg)
-			}
-			broker.Emit("movie:created", map[string]interface{}{
-				"job_id": jobID,
-				"path":   path,
-				"error":  errMsg,
-			})
-		}
-
+	if restServer != nil {
 		if err := restServer.Start(); err != nil {
 			log.Error("Failed to start HTTP server: %v", err)
 		} else {
-			log.Notice("= HTTP Server started on port %d", port)
+			log.Notice("= HTTP Server started on port %d", serverPort)
 		}
 	}
 
