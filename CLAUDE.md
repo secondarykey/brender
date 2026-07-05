@@ -161,12 +161,16 @@ Services are registered in `_cmd/brender/main.go`. After adding or changing a se
 ### Async rendering flow (`api/queue.go`)
 `Enqueue()` → `PreviewRender()` でパラメータ解決 → `EnqueueWithPreview()` でジョブ作成・キュー投入。
 
+**パラメータ解決** (`resolveRenderBase` / `fileOverrides`):
+- Blender/シーン/エンジン/カメラの解決は「固定フラグ付きファイル指定 → 呼び出し側の指定（ワークスペース or テスト params）→ ファイル指定 → シーンのデフォルト」の優先順位。
+- このフォールバックは `resolveRenderBase()` に集約されており、`PreviewRender()` と `TestEnqueue()` が共用する（`fileOverrides` がファイルの固定フラグ+値を保持し、`resolveScene/Engine/Camera/BlenderID` メソッドで各項目を解決）。優先順位を変える場合はここ一箇所を直す。
+
 **同時実行制御**:
 - `getMaxConcurrentJobs()` が `model.GetEnv().MaxConcurrentJobs` を読む（デフォルト 1、0 以下も 1 扱い）。設定画面の Blender タブで変更可能。
 - `scheduleMu sync.Mutex` でスケジューラのレース防止
 - 投入時: 実行中キュー数が上限未満なら `MarkQueueStarting()`（DB で status を running に変更）してから `go executeQueue()` を起動。上限以上なら `waiting` のまま保留。
 - 完了・キャンセル時: `startNextWaiting()` を呼び出し、最古の `waiting` ジョブを昇格して起動。
-- 同一ワークスペースの重複投入禁止: `ExistsQueueByWorkspace` で事前チェック。
+- 同一ワークスペースの重複投入禁止: `ExistsQueueByWorkspace` で事前チェック。ダブルクリック等の競合を防ぐため、この重複チェックから `CreateQueue` までを `enqueueMu sync.Mutex` で直列化する（`scheduleMu` とは別ロック、順序が交差しないためデッドロックしない）。
 
 **`executeQueue` の流れ**:
 1. `ProcessingWriter` 作成、`exec.RegisterProgress` 登録
@@ -182,7 +186,7 @@ Services are registered in `_cmd/brender/main.go`. After adding or changing a se
 
 **フロー**（`main.go` の `initDB()` 直後に呼ばれる）:
 1. `running` 状態の Queue を全件取得
-2. 孤立プロセスが生きていれば `Kill()` する（Mac では生存する場合がある）
+2. 孤立プロセスが生きていれば `killQueueProcess()` で `Kill()` する（Mac では生存する場合がある）
 3. 旧ジョブを `interrupted`（中断）ステータスで閉じる — 途中の render.log やフレーム出力が履歴として残る
 4. 同じパラメータで新しい Job + Queue を `recovering` ステータスで作成（出力ディレクトリは新規）
 5. `QueueChangedHook` 設定後に `StartRecoveredQueues()` でスケジューラを起動し、再実行を開始
@@ -200,6 +204,9 @@ Services are registered in `_cmd/brender/main.go`. After adding or changing a se
 - Windows: 親プロセス終了時に子プロセス（Blender）も終了する
 - Mac/Linux: 子プロセスは orphan として生存する（init に引き取られる）
 - いずれの場合も stdout パイプは切断され再接続不可のため、新ジョブで再実行する
+
+**PID 誤殺の防止** (`killQueueProcess` / `isBlenderProcess`):
+保存済み PID は OS に再利用され別プロセスへ割り当てられている可能性がある。`Kill()` する前に gopsutil（`process.NewProcess`）で実行ファイルを検証し、記録された Blender パスと一致するか実行ファイル名に "blender" を含む場合のみ kill する。検証できない場合は kill をスキップ（無関係なプロセスの誤殺より orphan 残存を許容）。`RecoverStaleQueues` / `CancelQueue` / `KillRunningQueues` の3箇所で共通利用する。
 
 ### Queue changed hook (`api/queue.go`)
 ```go
