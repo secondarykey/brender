@@ -18,8 +18,46 @@ import (
 	"github.com/ikascrew/brender/exec"
 	"github.com/ikascrew/brender/log"
 	"github.com/ikascrew/brender/model"
+	"github.com/shirou/gopsutil/v4/process"
 	"golang.org/x/xerrors"
 )
+
+// killQueueProcess は pid のプロセスが Blender の場合のみ強制終了する。
+// 保存済み PID が OS に再利用され別プロセスに割り当てられている可能性があるため、
+// 実行ファイルを検証してから kill し、無関係なプロセスの誤殺を防ぐ。
+// expectedPath はジョブに記録された Blender 実行ファイルパス（不明なら空文字）。
+func killQueueProcess(pid int, expectedPath string) {
+	if pid <= 0 {
+		return
+	}
+	proc, err := process.NewProcess(int32(pid))
+	if err != nil {
+		return // プロセスが存在しない
+	}
+	if !isBlenderProcess(proc, expectedPath) {
+		log.Notice("killQueueProcess: pid %d is not blender (reused PID?), skip kill", pid)
+		return
+	}
+	if osProc, err := os.FindProcess(pid); err == nil {
+		osProc.Kill()
+	}
+}
+
+// isBlenderProcess は proc が Blender プロセスかを判定する。
+// 実行ファイルパスが expectedPath と一致するか、実行ファイル名に "blender" を含めば真。
+func isBlenderProcess(proc *process.Process, expectedPath string) bool {
+	if exe, err := proc.Exe(); err == nil && exe != "" {
+		if expectedPath != "" && strings.EqualFold(filepath.Clean(exe), filepath.Clean(expectedPath)) {
+			return true
+		}
+		return strings.Contains(strings.ToLower(filepath.Base(exe)), "blender")
+	}
+	// Exe が取得できない場合はプロセス名で判定
+	if name, err := proc.Name(); err == nil {
+		return strings.Contains(strings.ToLower(name), "blender")
+	}
+	return false
+}
 
 func getMaxConcurrentJobs() int64 {
 	env, err := model.GetEnv()
@@ -48,13 +86,15 @@ func RecoverStaleQueues() {
 	}
 	var recovered int
 	for _, q := range queues {
-		if q.ProcessID > 0 {
-			if proc, err := os.FindProcess(q.ProcessID); err == nil {
-				proc.Kill()
-			}
-		}
-
 		oldJob, err := model.GetJob(q.ID)
+
+		// 孤立プロセスが生きていれば kill（Blender であることを検証してから）
+		expectedPath := ""
+		if oldJob != nil {
+			expectedPath = oldJob.BlenderPath
+		}
+		killQueueProcess(q.ProcessID, expectedPath)
+
 		if err != nil || oldJob == nil {
 			log.Notice("RecoverStaleQueues: job %s not found, deleting orphan queue", q.ID)
 			model.DeleteQueue(q.ID)
@@ -149,12 +189,11 @@ func KillRunningQueues() {
 		return
 	}
 	for _, q := range queues {
-		if q.ProcessID > 0 {
-			if proc, err := os.FindProcess(q.ProcessID); err == nil {
-				proc.Kill()
-				log.Notice("KillRunningQueues: killed process %d (queue %s)", q.ProcessID, q.ID)
-			}
+		expectedPath := ""
+		if j, err := model.GetJob(q.ID); err == nil && j != nil {
+			expectedPath = j.BlenderPath
 		}
+		killQueueProcess(q.ProcessID, expectedPath)
 	}
 }
 
@@ -171,6 +210,10 @@ func StartRecoveredQueues() {
 
 // scheduleMu はキューの起動判定と DB 更新をアトミックに行うためのミューテックス。
 var scheduleMu sync.Mutex
+
+// enqueueMu は投入時の重複チェック（ExistsQueueByWorkspace）からキュー作成（CreateQueue）
+// までをアトミックにし、ダブルクリック等での同一ワークスペース二重投入を防ぐ。
+var enqueueMu sync.Mutex
 
 // QueueChangedHook はキューの件数が変化したときに呼ばれるフック。
 // 呼び出し元（Wails サービス層など）で設定する。
@@ -219,6 +262,126 @@ type PreviousRenderInfo struct {
 	OutputFormat string `json:"output_format"`
 }
 
+// fileOverrides はプロジェクトファイルの固定設定（固定フラグ + 値）を保持する。
+// 固定フラグ付きファイル指定はワークスペース/テストの指定より優先される。
+type fileOverrides struct {
+	blenderID    uint
+	blenderFixed bool
+	scene        string
+	sceneFixed   bool
+	camera       string
+	cameraFixed  bool
+	engine       string
+	engineFixed  bool
+}
+
+// loadFileOverrides はプロジェクトファイルの固定設定を取得する。
+// projectFileID が空、または取得失敗時はゼロ値（固定なし）を返す。
+func loadFileOverrides(projectFileID string) fileOverrides {
+	if projectFileID == "" {
+		return fileOverrides{}
+	}
+	pf, err := model.GetProjectFile(projectFileID)
+	if err != nil || pf == nil {
+		return fileOverrides{}
+	}
+	return fileOverrides{
+		blenderID:    pf.BlenderInstallID,
+		blenderFixed: pf.BlenderFixed,
+		scene:        pf.Scene,
+		sceneFixed:   pf.SceneFixed,
+		camera:       pf.Camera,
+		cameraFixed:  pf.CameraFixed,
+		engine:       pf.Engine,
+		engineFixed:  pf.EngineFixed,
+	}
+}
+
+// blenderID: 固定フラグありファイル指定を優先し、なければ requested を使う。
+func (fo fileOverrides) resolveBlenderID(requested uint) uint {
+	if fo.blenderFixed && fo.blenderID != 0 {
+		return fo.blenderID
+	}
+	return requested
+}
+
+// scene: 固定フラグありファイル指定 → requested → ファイル指定。
+func (fo fileOverrides) resolveScene(requested string) string {
+	if fo.sceneFixed && fo.scene != "" {
+		return fo.scene
+	}
+	if requested != "" {
+		return requested
+	}
+	return fo.scene
+}
+
+// engine: 固定フラグありファイル指定 → requested → ファイル指定 → シーンのデフォルト。
+func (fo fileOverrides) resolveEngine(requested, sceneDefault string) string {
+	if fo.engineFixed && fo.engine != "" {
+		return fo.engine
+	}
+	if requested != "" {
+		return requested
+	}
+	if fo.engine != "" {
+		return fo.engine
+	}
+	return sceneDefault
+}
+
+// camera: 固定フラグありファイル指定 → requested → ファイル指定 → シーンのデフォルト。
+func (fo fileOverrides) resolveCamera(requested, sceneDefault string) string {
+	if fo.cameraFixed && fo.camera != "" {
+		return fo.camera
+	}
+	if requested != "" {
+		return requested
+	}
+	if fo.camera != "" {
+		return fo.camera
+	}
+	return sceneDefault
+}
+
+// resolvedBase はファイル固定・要求値・シーン解析を突き合わせた確定パラメータ。
+type resolvedBase struct {
+	BlenderPath string
+	BlenderFile string
+	Scene       *exec.SceneTool // ツール解析結果（フレーム範囲・サンプル既定値など）
+	Engine      string
+	Camera      string
+}
+
+// resolveRenderBase は Blender パス/ファイル、シーン解析、エンジン、カメラを解決する。
+// reqBlenderID/reqScene/reqEngine/reqCamera は呼び出し側（ワークスペース or テスト params）の要求値。
+// PreviewRender と TestEnqueue の共通の解決ロジックを担う。
+func resolveRenderBase(projectID, projectFileID string, reqBlenderID uint, reqScene, reqEngine, reqCamera string) (*resolvedBase, error) {
+	fo := loadFileOverrides(projectFileID)
+
+	blenderPath, err := resolveBlenderPath(fo.resolveBlenderID(reqBlenderID), fo.blenderID)
+	if err != nil {
+		return nil, xerrors.Errorf("resolveBlenderPath: %w", err)
+	}
+	blenderFile, err := resolveBlenderFile(projectFileID, projectID)
+	if err != nil {
+		return nil, xerrors.Errorf("resolveBlenderFile: %w", err)
+	}
+
+	st, err := exec.ResolveScene(blenderPath, blenderFile, fo.resolveScene(reqScene))
+	if err != nil {
+		return nil, xerrors.Errorf("レンダリング前検証エラー: %w", err)
+	}
+
+	return &resolvedBase{
+		BlenderPath: blenderPath,
+		BlenderFile: blenderFile,
+		Scene:       st,
+		Engine:      fo.resolveEngine(reqEngine, st.Engine),
+		Camera:      fo.resolveCamera(reqCamera, st.Camera),
+	}, nil
+}
+
 // PreviewRender はToolを実行してレンダリングパラメータを解決・検証する。
 // シーン名が存在しない場合などはここでエラーを返す。
 func PreviewRender(projectID, workspaceID string) (*RenderPreview, error) {
@@ -231,57 +394,15 @@ func PreviewRender(projectID, workspaceID string) (*RenderPreview, error) {
 		return nil, xerrors.Errorf("project not found: %w", err)
 	}
 
-	var fileBlenderID uint
-	var fileBlenderFixed bool
-	var fileScene string
-	var fileSceneFixed bool
-	var fileCamera string
-	var fileCameraFixed bool
-	var fileEngine string
-	var fileEngineFixed bool
-	if w.ProjectFileID != "" {
-		pf, pfErr := model.GetProjectFile(w.ProjectFileID)
-		if pfErr == nil && pf != nil {
-			fileBlenderID = pf.BlenderInstallID
-			fileBlenderFixed = pf.BlenderFixed
-			fileScene = pf.Scene
-			fileSceneFixed = pf.SceneFixed
-			fileCamera = pf.Camera
-			fileCameraFixed = pf.CameraFixed
-			fileEngine = pf.Engine
-			fileEngineFixed = pf.EngineFixed
-		}
-	}
-
-	// Blender: 固定フラグありファイル指定はワークスペース設定を無視
-	wsBlenderID := w.BlenderInstallID
-	if fileBlenderFixed && fileBlenderID != 0 {
-		wsBlenderID = fileBlenderID
-	}
-	blenderPath, err := resolveBlenderPath(wsBlenderID, fileBlenderID)
+	base, err := resolveRenderBase(projectID, w.ProjectFileID, w.BlenderInstallID, w.Scene, w.Engine, w.Camera)
 	if err != nil {
-		return nil, xerrors.Errorf("resolveBlenderPath: %w", err)
+		return nil, err
 	}
-	blenderFile, err := resolveBlenderFile(w.ProjectFileID, projectID)
-	if err != nil {
-		return nil, xerrors.Errorf("resolveBlenderFile: %w", err)
-	}
-
-	// シーン: 固定フラグありファイル指定 → ワークスペース指定 → ファイル指定
-	var scene string
-	if fileSceneFixed && fileScene != "" {
-		scene = fileScene
-	} else if w.Scene != "" {
-		scene = w.Scene
-	} else {
-		scene = fileScene
-	}
-
-	// Tool を実行してシーンを検証し、フレーム範囲を取得
-	st, toolErr := exec.ResolveScene(blenderPath, blenderFile, scene)
-	if toolErr != nil {
-		return nil, xerrors.Errorf("レンダリング前検証エラー: %w", toolErr)
-	}
+	blenderPath := base.BlenderPath
+	blenderFile := base.BlenderFile
+	st := base.Scene
+	engine := base.Engine
+	camera := base.Camera
 
 	// フレーム範囲: 未指定 (0,-1) はツール結果を使用、明示指定はそのまま
 	startFrame := w.StartFrame
@@ -289,30 +410,6 @@ func PreviewRender(projectID, workspaceID string) (*RenderPreview, error) {
 	if startFrame == 0 && endFrame == -1 {
 		startFrame = st.Start
 		endFrame = st.End
-	}
-
-	// エンジン: 固定フラグありファイル指定 → ワークスペース指定 → ファイル指定 → シーンのデフォルト
-	var engine string
-	if fileEngineFixed && fileEngine != "" {
-		engine = fileEngine
-	} else if w.Engine != "" {
-		engine = w.Engine
-	} else if fileEngine != "" {
-		engine = fileEngine
-	} else {
-		engine = st.Engine
-	}
-
-	// カメラ: 固定フラグありファイル指定 → ワークスペース指定 → ファイル指定 → シーンのデフォルト
-	var camera string
-	if fileCameraFixed && fileCamera != "" {
-		camera = fileCamera
-	} else if w.Camera != "" {
-		camera = w.Camera
-	} else if fileCamera != "" {
-		camera = fileCamera
-	} else {
-		camera = st.Camera
 	}
 
 	samples := w.Samples
@@ -397,54 +494,11 @@ func TestEnqueue(ctx context.Context, projectID, workspaceID string, params Test
 		return nil, xerrors.Errorf("project not found: %w", err)
 	}
 
-	var fileBlenderID uint
-	var fileBlenderFixed bool
-	var fileScene string
-	var fileSceneFixed bool
-	var fileCamera string
-	var fileCameraFixed bool
-	var fileEngine string
-	var fileEngineFixed bool
-	if w.ProjectFileID != "" {
-		pf, pfErr := model.GetProjectFile(w.ProjectFileID)
-		if pfErr == nil && pf != nil {
-			fileBlenderID = pf.BlenderInstallID
-			fileBlenderFixed = pf.BlenderFixed
-			fileScene = pf.Scene
-			fileSceneFixed = pf.SceneFixed
-			fileCamera = pf.Camera
-			fileCameraFixed = pf.CameraFixed
-			fileEngine = pf.Engine
-			fileEngineFixed = pf.EngineFixed
-		}
-	}
-
-	wsBlenderID := params.BlenderInstallID
-	if fileBlenderFixed && fileBlenderID != 0 {
-		wsBlenderID = fileBlenderID
-	}
-	blenderPath, err := resolveBlenderPath(wsBlenderID, fileBlenderID)
+	base, err := resolveRenderBase(projectID, w.ProjectFileID, params.BlenderInstallID, params.Scene, params.Engine, params.Camera)
 	if err != nil {
-		return nil, xerrors.Errorf("resolveBlenderPath: %w", err)
+		return nil, err
 	}
-	blenderFile, err := resolveBlenderFile(w.ProjectFileID, projectID)
-	if err != nil {
-		return nil, xerrors.Errorf("resolveBlenderFile: %w", err)
-	}
-
-	var scene string
-	if fileSceneFixed && fileScene != "" {
-		scene = fileScene
-	} else if params.Scene != "" {
-		scene = params.Scene
-	} else {
-		scene = fileScene
-	}
-
-	st, toolErr := exec.ResolveScene(blenderPath, blenderFile, scene)
-	if toolErr != nil {
-		return nil, xerrors.Errorf("レンダリング前検証エラー: %w", toolErr)
-	}
+	st := base.Scene
 
 	// フレーム範囲: 未指定 (0,-1) はシーンのデフォルトを使用
 	startFrame := params.StartFrame
@@ -457,38 +511,14 @@ func TestEnqueue(ctx context.Context, projectID, workspaceID string, params Test
 	// 中間フレーム1枚のみレンダリング
 	testFrame := (startFrame + endFrame) / 2
 
-	// エンジン: 固定フラグありファイル指定 → params指定 → ファイル指定 → シーンのデフォルト
-	var engine string
-	if fileEngineFixed && fileEngine != "" {
-		engine = fileEngine
-	} else if params.Engine != "" {
-		engine = params.Engine
-	} else if fileEngine != "" {
-		engine = fileEngine
-	} else {
-		engine = st.Engine
-	}
-
-	// カメラ: 固定フラグありファイル指定 → params指定 → ファイル指定 → シーンのデフォルト
-	var camera string
-	if fileCameraFixed && fileCamera != "" {
-		camera = fileCamera
-	} else if params.Camera != "" {
-		camera = params.Camera
-	} else if fileCamera != "" {
-		camera = fileCamera
-	} else {
-		camera = st.Camera
-	}
-
 	preview := &RenderPreview{
 		ProjectName:   p.Name,
 		WorkspaceName: w.Name + " (Test)",
 		ProjectFileID: w.ProjectFileID,
-		BlenderPath:   blenderPath,
-		BlenderFile:   blenderFile,
+		BlenderPath:   base.BlenderPath,
+		BlenderFile:   base.BlenderFile,
 		Scene:         st.Name,
-		Engine:        engine,
+		Engine:        base.Engine,
 		StartFrame:    testFrame,
 		EndFrame:      testFrame,
 		FrameStep:     1,
@@ -496,7 +526,7 @@ func TestEnqueue(ctx context.Context, projectID, workspaceID string, params Test
 		Samples:       8,
 		ResolutionX:   params.ResolutionX,
 		ResolutionY:   params.ResolutionY,
-		Camera:        camera,
+		Camera:        base.Camera,
 		JobType:       model.JobTypeTest,
 	}
 
@@ -529,6 +559,10 @@ func EnqueueWithPreview(ctx context.Context, projectID, workspaceID string, prev
 	if wd.Status == model.WorkDirStatusLock {
 		return nil, xerrors.New("作業ディレクトリがロックされています。移行後に実行してください")
 	}
+
+	// 重複チェックからキュー作成までを直列化し、二重投入を防ぐ
+	enqueueMu.Lock()
+	defer enqueueMu.Unlock()
 
 	exists, err := model.ExistsQueueByWorkspace(projectID, workspaceID)
 	if err != nil {
@@ -676,6 +710,10 @@ func SamplesComparisonEnqueue(ctx context.Context, projectID, workspaceID string
 	if wd.Status == model.WorkDirStatusLock {
 		return nil, xerrors.New("作業ディレクトリがロックされています。移行後に実行してください")
 	}
+
+	// 重複チェックからキュー作成までを直列化し、二重投入を防ぐ
+	enqueueMu.Lock()
+	defer enqueueMu.Unlock()
 
 	exists, err := model.ExistsQueueByWorkspace(projectID, workspaceID)
 	if err != nil {
@@ -1227,14 +1265,13 @@ func CancelQueue(ctx context.Context, id string) error {
 	if q.Status != model.QueueRunning && q.Status != model.QueueWaiting && q.Status != model.QueueRecovering {
 		return xerrors.New("実行中または待機中のジョブではありません")
 	}
-	if q.ProcessID > 0 {
-		proc, err := os.FindProcess(q.ProcessID)
-		if err == nil {
-			proc.Kill()
-		}
-	}
 	now := time.Now()
 	j, _ := model.GetJob(q.ID)
+	expectedPath := ""
+	if j != nil {
+		expectedPath = j.BlenderPath
+	}
+	killQueueProcess(q.ProcessID, expectedPath)
 	var diskSize int64
 	if j != nil {
 		diskSize = calcDirSize(j.OutputDir)
@@ -1544,19 +1581,43 @@ func GetJob(ctx context.Context, id string) (*model.Job, error) {
 	return j, nil
 }
 
-func ListJobsByWorkspace(projectID string, workspaceID string) ([]*model.Job, error) {
+// workspaceFileAccess はワークスペースのファイルに対する参照権限を確認する。
+func workspaceFileAccess(ctx context.Context, projectID, workspaceID string) error {
+	if fullAccess(ctx) {
+		return nil
+	}
+	w, err := model.SelectWorkspace(projectID, workspaceID)
+	if err != nil || w == nil {
+		return xerrors.Errorf("workspace not found: %w", err)
+	}
+	return requireFileAccess(ctx, w.ProjectFileID)
+}
+
+func ListJobsByWorkspace(ctx context.Context, projectID string, workspaceID string) ([]*model.Job, error) {
+	if err := workspaceFileAccess(ctx, projectID, workspaceID); err != nil {
+		return nil, err
+	}
 	return model.ListJobsByWorkspace(projectID, workspaceID)
 }
 
-func ListJobsByWorkspacePaged(projectID, workspaceID string, page, pageSize int) (*model.JobPagedResult, error) {
+func ListJobsByWorkspacePaged(ctx context.Context, projectID, workspaceID string, page, pageSize int) (*model.JobPagedResult, error) {
+	if err := workspaceFileAccess(ctx, projectID, workspaceID); err != nil {
+		return nil, err
+	}
 	return model.ListJobsByWorkspacePaged(projectID, workspaceID, page, pageSize)
 }
 
-func ListJobsByProjectFile(projectID string, projectFileID string) ([]*model.Job, error) {
+func ListJobsByProjectFile(ctx context.Context, projectID string, projectFileID string) ([]*model.Job, error) {
+	if err := requireFileAccess(ctx, projectFileID); err != nil {
+		return nil, err
+	}
 	return model.ListJobsByProjectFile(projectID, projectFileID)
 }
 
-func ListJobsByProjectFilePaged(projectID, projectFileID string, page, pageSize int) (*model.JobPagedResult, error) {
+func ListJobsByProjectFilePaged(ctx context.Context, projectID, projectFileID string, page, pageSize int) (*model.JobPagedResult, error) {
+	if err := requireFileAccess(ctx, projectFileID); err != nil {
+		return nil, err
+	}
 	return model.ListJobsByProjectFilePaged(projectID, projectFileID, page, pageSize)
 }
 

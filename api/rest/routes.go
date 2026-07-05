@@ -744,7 +744,7 @@ func (h *Handler) registerQueue() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.ListJobsByWorkspace(p.ProjectID, p.WorkspaceID)
+		return api.ListJobsByWorkspace(ctx, p.ProjectID, p.WorkspaceID)
 	})
 
 	h.register("queue", "list_jobs_by_workspace_paged", func(ctx context.Context, body json.RawMessage) (any, error) {
@@ -757,7 +757,7 @@ func (h *Handler) registerQueue() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.ListJobsByWorkspacePaged(p.ProjectID, p.WorkspaceID, p.Page, p.PageSize)
+		return api.ListJobsByWorkspacePaged(ctx, p.ProjectID, p.WorkspaceID, p.Page, p.PageSize)
 	})
 
 	h.register("queue", "list_jobs_by_project_file", func(ctx context.Context, body json.RawMessage) (any, error) {
@@ -768,7 +768,7 @@ func (h *Handler) registerQueue() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.ListJobsByProjectFile(p.ProjectID, p.FileID)
+		return api.ListJobsByProjectFile(ctx, p.ProjectID, p.FileID)
 	})
 
 	h.register("queue", "list_jobs_by_project_file_paged", func(ctx context.Context, body json.RawMessage) (any, error) {
@@ -781,7 +781,7 @@ func (h *Handler) registerQueue() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.ListJobsByProjectFilePaged(p.ProjectID, p.FileID, p.Page, p.PageSize)
+		return api.ListJobsByProjectFilePaged(ctx, p.ProjectID, p.FileID, p.Page, p.PageSize)
 	})
 
 	h.register("queue", "get_job", func(ctx context.Context, body json.RawMessage) (any, error) {

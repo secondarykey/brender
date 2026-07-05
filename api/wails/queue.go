@@ -72,19 +72,19 @@ func (s *Queue) ListJobsPaged(filter *model.JobFilter, page int, pageSize int) (
 }
 
 func (s *Queue) ListJobsByWorkspace(projectID string, workspaceID string) ([]*model.Job, error) {
-	return api.ListJobsByWorkspace(projectID, workspaceID)
+	return api.ListJobsByWorkspace(api.WailsContext(), projectID, workspaceID)
 }
 
 func (s *Queue) ListJobsByWorkspacePaged(projectID string, workspaceID string, page int, pageSize int) (*model.JobPagedResult, error) {
-	return api.ListJobsByWorkspacePaged(projectID, workspaceID, page, pageSize)
+	return api.ListJobsByWorkspacePaged(api.WailsContext(), projectID, workspaceID, page, pageSize)
 }
 
 func (s *Queue) ListJobsByProjectFile(projectID string, fileID string) ([]*model.Job, error) {
-	return api.ListJobsByProjectFile(projectID, fileID)
+	return api.ListJobsByProjectFile(api.WailsContext(), projectID, fileID)
 }
 
 func (s *Queue) ListJobsByProjectFilePaged(projectID string, fileID string, page int, pageSize int) (*model.JobPagedResult, error) {
-	return api.ListJobsByProjectFilePaged(projectID, fileID, page, pageSize)
+	return api.ListJobsByProjectFilePaged(api.WailsContext(), projectID, fileID, page, pageSize)
 }
 
 func (s *Queue) GetJob(id string) (*model.Job, error) {
