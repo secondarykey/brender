@@ -47,6 +47,9 @@ jobs:
       - name: Install Wails3
         run: go install github.com/wailsapp/wails/v3/cmd/wails3@${{ env.WAILS_VERSION }}
 
+      - name: Check Wails version consistency
+        run: go run _cmd/wails3_check.go
+
       - name: Determine and Bump Version
         id: versioning
         run: |

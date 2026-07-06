@@ -72,6 +72,9 @@ jobs:
           wails3 version
           wails3 doctor
 
+      - name: Check Wails version consistency
+        run: go run _cmd/wails3_check.go
+
       - name: Build or Package
         working-directory: ./_cmd/brender
         shell: bash
