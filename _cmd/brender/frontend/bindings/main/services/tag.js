@@ -8,10 +8,10 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as api$0 from "../models.js";
+import * as api$0 from "../../github.com/ikascrew/brender/api/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as model$0 from "../../model/models.js";
+import * as model$0 from "../../github.com/ikascrew/brender/model/models.js";
 
 /**
  * @param {string} projectFileID
@@ -19,7 +19,7 @@ import * as model$0 from "../../model/models.js";
  * @returns {$CancellablePromise<void>}
  */
 export function AddTagToFile(projectFileID, tagID) {
-    return $Call.ByID(2886070386, projectFileID, tagID);
+    return $Call.ByID(3230393581, projectFileID, tagID);
 }
 
 /**
@@ -28,7 +28,7 @@ export function AddTagToFile(projectFileID, tagID) {
  * @returns {$CancellablePromise<model$0.TagWithCategory | null>}
  */
 export function AssignTagByInput(projectFileID, input) {
-    return $Call.ByID(2555470114, projectFileID, input).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(2331023361, projectFileID, input).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType1($result);
     }));
 }
@@ -39,7 +39,7 @@ export function AssignTagByInput(projectFileID, input) {
  * @returns {$CancellablePromise<model$0.TagCategory | null>}
  */
 export function CreateCategory(name, color) {
-    return $Call.ByID(563703096, name, color).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(2773400015, name, color).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType3($result);
     }));
 }
@@ -51,7 +51,7 @@ export function CreateCategory(name, color) {
  * @returns {$CancellablePromise<model$0.Tag | null>}
  */
 export function CreateTag(name, categoryID, color) {
-    return $Call.ByID(2518349504, name, categoryID, color).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(4042360697, name, categoryID, color).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType5($result);
     }));
 }
@@ -61,7 +61,7 @@ export function CreateTag(name, categoryID, color) {
  * @returns {$CancellablePromise<void>}
  */
 export function DeleteCategory(id) {
-    return $Call.ByID(399458355, id);
+    return $Call.ByID(576308864, id);
 }
 
 /**
@@ -69,7 +69,7 @@ export function DeleteCategory(id) {
  * @returns {$CancellablePromise<void>}
  */
 export function DeleteTag(id) {
-    return $Call.ByID(4279199221, id);
+    return $Call.ByID(2158138488, id);
 }
 
 /**
@@ -77,7 +77,7 @@ export function DeleteTag(id) {
  * @returns {$CancellablePromise<(model$0.TagWithCategory | null)[]>}
  */
 export function GetFileTags(projectFileID) {
-    return $Call.ByID(3278455807, projectFileID).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(3199903718, projectFileID).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType6($result);
     }));
 }
@@ -86,7 +86,7 @@ export function GetFileTags(projectFileID) {
  * @returns {$CancellablePromise<(model$0.TagCategory | null)[]>}
  */
 export function ListCategories() {
-    return $Call.ByID(1005222816).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(1734717887).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType7($result);
     }));
 }
@@ -95,7 +95,7 @@ export function ListCategories() {
  * @returns {$CancellablePromise<(model$0.TagUsageCount | null)[]>}
  */
 export function ListTagUsageCounts() {
-    return $Call.ByID(264889883).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(1293252056).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType10($result);
     }));
 }
@@ -104,7 +104,7 @@ export function ListTagUsageCounts() {
  * @returns {$CancellablePromise<(model$0.TagWithCategory | null)[]>}
  */
 export function ListTags() {
-    return $Call.ByID(310202341).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(2467942486).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType6($result);
     }));
 }
@@ -115,7 +115,7 @@ export function ListTags() {
  * @returns {$CancellablePromise<void>}
  */
 export function MergeCategories(sourceID, targetID) {
-    return $Call.ByID(896093412, sourceID, targetID);
+    return $Call.ByID(3819759129, sourceID, targetID);
 }
 
 /**
@@ -124,7 +124,7 @@ export function MergeCategories(sourceID, targetID) {
  * @returns {$CancellablePromise<void>}
  */
 export function MergeTags(sourceID, targetID) {
-    return $Call.ByID(1560699617, sourceID, targetID);
+    return $Call.ByID(3448003316, sourceID, targetID);
 }
 
 /**
@@ -133,7 +133,7 @@ export function MergeTags(sourceID, targetID) {
  * @returns {$CancellablePromise<void>}
  */
 export function RemoveTagFromFile(projectFileID, tagID) {
-    return $Call.ByID(1585610722, projectFileID, tagID);
+    return $Call.ByID(837912699, projectFileID, tagID);
 }
 
 /**
@@ -141,7 +141,7 @@ export function RemoveTagFromFile(projectFileID, tagID) {
  * @returns {$CancellablePromise<void>}
  */
 export function ReorderCategories(ids) {
-    return $Call.ByID(115393659, ids);
+    return $Call.ByID(3298434666, ids);
 }
 
 /**
@@ -155,7 +155,7 @@ export function ReorderCategories(ids) {
  * @returns {$CancellablePromise<api$0.FileSearchResponse | null>}
  */
 export function SearchFiles(tagIDs, page, pageSize, sort, dir, untagged, keyword) {
-    return $Call.ByID(2666950391, tagIDs, page, pageSize, sort, dir, untagged, keyword).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(159713098, tagIDs, page, pageSize, sort, dir, untagged, keyword).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType12($result);
     }));
 }
@@ -166,7 +166,7 @@ export function SearchFiles(tagIDs, page, pageSize, sort, dir, untagged, keyword
  * @returns {$CancellablePromise<void>}
  */
 export function SetTagCategory(tagID, categoryID) {
-    return $Call.ByID(2049370860, tagID, categoryID);
+    return $Call.ByID(2945766531, tagID, categoryID);
 }
 
 /**
@@ -176,7 +176,7 @@ export function SetTagCategory(tagID, categoryID) {
  * @returns {$CancellablePromise<model$0.TagCategory | null>}
  */
 export function UpdateCategory(id, name, color) {
-    return $Call.ByID(829201793, id, name, color).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(3926416370, id, name, color).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType3($result);
     }));
 }
@@ -189,7 +189,7 @@ export function UpdateCategory(id, name, color) {
  * @returns {$CancellablePromise<model$0.Tag | null>}
  */
 export function UpdateTag(id, name, categoryID, color) {
-    return $Call.ByID(2261911107, id, name, categoryID, color).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(2744578882, id, name, categoryID, color).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType5($result);
     }));
 }

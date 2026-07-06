@@ -8,10 +8,10 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as api$0 from "../models.js";
+import * as api$0 from "../../github.com/ikascrew/brender/api/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as model$0 from "../../model/models.js";
+import * as model$0 from "../../github.com/ikascrew/brender/model/models.js";
 
 /**
  * @param {string} projectID
@@ -19,7 +19,7 @@ import * as model$0 from "../../model/models.js";
  * @returns {$CancellablePromise<model$0.ProjectFile | null>}
  */
 export function AddFile(projectID, path) {
-    return $Call.ByID(3555975532, projectID, path).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(1576401929, projectID, path).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType1($result);
     }));
 }
@@ -30,7 +30,7 @@ export function AddFile(projectID, path) {
  * @returns {$CancellablePromise<api$0.AddDirResult | null>}
  */
 export function AddFilesFromDir(projectID, dir) {
-    return $Call.ByID(1202928748, projectID, dir).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(1811423857, projectID, dir).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType3($result);
     }));
 }
@@ -40,7 +40,7 @@ export function AddFilesFromDir(projectID, dir) {
  * @returns {$CancellablePromise<model$0.ProjectDetail | null>}
  */
 export function Create(name) {
-    return $Call.ByID(1643296919, name).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(1791516952, name).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType5($result);
     }));
 }
@@ -51,7 +51,7 @@ export function Create(name) {
  * @returns {$CancellablePromise<void>}
  */
 export function Delete(id, force) {
-    return $Call.ByID(4167210284, id, force);
+    return $Call.ByID(3514389447, id, force);
 }
 
 /**
@@ -60,7 +60,7 @@ export function Delete(id, force) {
  * @returns {$CancellablePromise<void>}
  */
 export function DeleteFile(fileID, force) {
-    return $Call.ByID(1985671226, fileID, force);
+    return $Call.ByID(325673241, fileID, force);
 }
 
 /**
@@ -68,7 +68,7 @@ export function DeleteFile(fileID, force) {
  * @returns {$CancellablePromise<model$0.ProjectDetail | null>}
  */
 export function Get(id) {
-    return $Call.ByID(1926978505, id).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(2474484664, id).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType5($result);
     }));
 }
@@ -78,7 +78,7 @@ export function Get(id) {
  * @returns {$CancellablePromise<model$0.ProjectFile | null>}
  */
 export function GetFile(fileID) {
-    return $Call.ByID(3336844271, fileID).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(1943865646, fileID).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType1($result);
     }));
 }
@@ -89,7 +89,7 @@ export function GetFile(fileID) {
  * @returns {$CancellablePromise<string>}
  */
 export function GetFileThumbnail(projectID, fileID) {
-    return $Call.ByID(2482383365, projectID, fileID);
+    return $Call.ByID(3080877638, projectID, fileID);
 }
 
 /**
@@ -97,7 +97,7 @@ export function GetFileThumbnail(projectID, fileID) {
  * @returns {$CancellablePromise<string>}
  */
 export function GetProjectThumbnail(projectID) {
-    return $Call.ByID(2529761418, projectID);
+    return $Call.ByID(847747151, projectID);
 }
 
 /**
@@ -106,7 +106,7 @@ export function GetProjectThumbnail(projectID) {
  * @returns {$CancellablePromise<string>}
  */
 export function GetUserFileRole(fileID, userID) {
-    return $Call.ByID(1799871168, fileID, userID);
+    return $Call.ByID(3113944873, fileID, userID);
 }
 
 /**
@@ -115,7 +115,7 @@ export function GetUserFileRole(fileID, userID) {
  * @returns {$CancellablePromise<string>}
  */
 export function GetUserRole(projectID, userID) {
-    return $Call.ByID(3985835934, projectID, userID);
+    return $Call.ByID(3909395551, projectID, userID);
 }
 
 /**
@@ -124,7 +124,7 @@ export function GetUserRole(projectID, userID) {
  * @returns {$CancellablePromise<(model$0.ProjectDetail | null)[]>}
  */
 export function List(sort, dir) {
-    return $Call.ByID(3125621303, sort, dir).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(356639508, sort, dir).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType6($result);
     }));
 }
@@ -133,7 +133,7 @@ export function List(sort, dir) {
  * @returns {$CancellablePromise<(model$0.ProjectFile | null)[]>}
  */
 export function ListAllFiles() {
-    return $Call.ByID(652541797).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(551547990).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType7($result);
     }));
 }
@@ -143,7 +143,7 @@ export function ListAllFiles() {
  * @returns {$CancellablePromise<(api$0.PermissionEntry | null)[]>}
  */
 export function ListFilePermissions(fileID) {
-    return $Call.ByID(2330826063, fileID).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(1272169490, fileID).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType10($result);
     }));
 }
@@ -153,7 +153,7 @@ export function ListFilePermissions(fileID) {
  * @returns {$CancellablePromise<(api$0.PermissionEntry | null)[]>}
  */
 export function ListPermissions(projectID) {
-    return $Call.ByID(396037249, projectID).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(3199966088, projectID).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType10($result);
     }));
 }
@@ -163,7 +163,7 @@ export function ListPermissions(projectID) {
  * @returns {$CancellablePromise<void>}
  */
 export function RemoveFile(fileID) {
-    return $Call.ByID(2574066893, fileID);
+    return $Call.ByID(472143306, fileID);
 }
 
 /**
@@ -172,7 +172,7 @@ export function RemoveFile(fileID) {
  * @returns {$CancellablePromise<void>}
  */
 export function RemoveFilePermission(fileID, targetID) {
-    return $Call.ByID(2289113306, fileID, targetID);
+    return $Call.ByID(4116262829, fileID, targetID);
 }
 
 /**
@@ -181,7 +181,7 @@ export function RemoveFilePermission(fileID, targetID) {
  * @returns {$CancellablePromise<void>}
  */
 export function RemovePermission(projectID, targetID) {
-    return $Call.ByID(924510580, projectID, targetID);
+    return $Call.ByID(3704179555, projectID, targetID);
 }
 
 /**
@@ -191,7 +191,7 @@ export function RemovePermission(projectID, targetID) {
  * @returns {$CancellablePromise<void>}
  */
 export function SetFilePermission(fileID, targetID, role) {
-    return $Call.ByID(2837561044, fileID, targetID, role);
+    return $Call.ByID(1590651621, fileID, targetID, role);
 }
 
 /**
@@ -201,7 +201,7 @@ export function SetFilePermission(fileID, targetID, role) {
  * @returns {$CancellablePromise<string>}
  */
 export function SetFileThumbnail(projectID, fileID, imagePath) {
-    return $Call.ByID(72181641, projectID, fileID, imagePath);
+    return $Call.ByID(1127330714, projectID, fileID, imagePath);
 }
 
 /**
@@ -211,7 +211,7 @@ export function SetFileThumbnail(projectID, fileID, imagePath) {
  * @returns {$CancellablePromise<string>}
  */
 export function SetFileThumbnailFromWorkspace(projectID, fileID, workspaceID) {
-    return $Call.ByID(3596304418, projectID, fileID, workspaceID);
+    return $Call.ByID(1600021647, projectID, fileID, workspaceID);
 }
 
 /**
@@ -221,7 +221,7 @@ export function SetFileThumbnailFromWorkspace(projectID, fileID, workspaceID) {
  * @returns {$CancellablePromise<void>}
  */
 export function SetPermission(projectID, targetID, role) {
-    return $Call.ByID(2541738386, projectID, targetID, role);
+    return $Call.ByID(3431666491, projectID, targetID, role);
 }
 
 /**
@@ -230,7 +230,7 @@ export function SetPermission(projectID, targetID, role) {
  * @returns {$CancellablePromise<string>}
  */
 export function SetProjectThumbnail(projectID, imagePath) {
-    return $Call.ByID(2139017766, projectID, imagePath);
+    return $Call.ByID(3777526891, projectID, imagePath);
 }
 
 /**
@@ -239,7 +239,7 @@ export function SetProjectThumbnail(projectID, imagePath) {
  * @returns {$CancellablePromise<string>}
  */
 export function SetProjectThumbnailFromFile(projectID, fileID) {
-    return $Call.ByID(3135202372, projectID, fileID);
+    return $Call.ByID(1736658361, projectID, fileID);
 }
 
 /**
@@ -249,7 +249,7 @@ export function SetProjectThumbnailFromFile(projectID, fileID) {
  * @returns {$CancellablePromise<model$0.ProjectDetail | null>}
  */
 export function Update(id, name, note) {
-    return $Call.ByID(2080245374, id, name, note).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(1559580365, id, name, note).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType5($result);
     }));
 }
@@ -269,7 +269,7 @@ export function Update(id, name, note) {
  * @returns {$CancellablePromise<model$0.ProjectFile | null>}
  */
 export function UpdateFile(fileID, name, note, blenderInstallID, blenderFixed, scene, sceneFixed, camera, cameraFixed, engine, engineFixed) {
-    return $Call.ByID(2556186200, fileID, name, note, blenderInstallID, blenderFixed, scene, sceneFixed, camera, cameraFixed, engine, engineFixed).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(3678461899, fileID, name, note, blenderInstallID, blenderFixed, scene, sceneFixed, camera, cameraFixed, engine, engineFixed).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType1($result);
     }));
 }

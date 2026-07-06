@@ -1,6 +1,6 @@
 import { isWails, serverCall } from './_client'
 
-const svc = () => import('../../../bindings/github.com/ikascrew/brender/api/wails/queue')
+const svc = () => import('../../../bindings/main/services/queue')
 
 export const QueueApi = {
   /** レンダリング前パラメータをプレビュー解決

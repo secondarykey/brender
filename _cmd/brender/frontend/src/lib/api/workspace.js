@@ -1,6 +1,6 @@
 import { isWails, serverCall } from './_client'
 
-const svc = () => import('../../../bindings/github.com/ikascrew/brender/api/wails/workspace')
+const svc = () => import('../../../bindings/main/services/workspace')
 
 export const WorkspaceApi = {
   /** プロジェクト内のワークスペース一覧をファイルごとに取得

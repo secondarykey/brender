@@ -8,10 +8,10 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as api$0 from "../models.js";
+import * as api$0 from "../../github.com/ikascrew/brender/api/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as model$0 from "../../model/models.js";
+import * as model$0 from "../../github.com/ikascrew/brender/model/models.js";
 
 /**
  * @param {string} projectID
@@ -22,7 +22,7 @@ import * as model$0 from "../../model/models.js";
  * @returns {$CancellablePromise<number>}
  */
 export function BulkDeleteJobsByWorkspace(projectID, workspaceID, keepCount, dataOnly, errorOnly) {
-    return $Call.ByID(2537010940, projectID, workspaceID, keepCount, dataOnly, errorOnly);
+    return $Call.ByID(1654811481, projectID, workspaceID, keepCount, dataOnly, errorOnly);
 }
 
 /**
@@ -30,7 +30,7 @@ export function BulkDeleteJobsByWorkspace(projectID, workspaceID, keepCount, dat
  * @returns {$CancellablePromise<void>}
  */
 export function Cancel(id) {
-    return $Call.ByID(4091358631, id);
+    return $Call.ByID(2708398780, id);
 }
 
 /**
@@ -38,14 +38,14 @@ export function Cancel(id) {
  * @returns {$CancellablePromise<number>}
  */
 export function CleanJobData(filter) {
-    return $Call.ByID(1048288085, filter);
+    return $Call.ByID(3513214490, filter);
 }
 
 /**
  * @returns {$CancellablePromise<void>}
  */
 export function CloseMiniMonitor() {
-    return $Call.ByID(2818214222);
+    return $Call.ByID(4022606689);
 }
 
 /**
@@ -53,7 +53,7 @@ export function CloseMiniMonitor() {
  * @returns {$CancellablePromise<void>}
  */
 export function DeleteJob(id) {
-    return $Call.ByID(3837319329, id);
+    return $Call.ByID(1544275432, id);
 }
 
 /**
@@ -61,7 +61,7 @@ export function DeleteJob(id) {
  * @returns {$CancellablePromise<void>}
  */
 export function DeleteJobData(id) {
-    return $Call.ByID(2294952497, id);
+    return $Call.ByID(1160515792, id);
 }
 
 /**
@@ -70,7 +70,7 @@ export function DeleteJobData(id) {
  * @returns {$CancellablePromise<void>}
  */
 export function DeleteJobFiles(id, filePaths) {
-    return $Call.ByID(2677202332, id, filePaths);
+    return $Call.ByID(1499454743, id, filePaths);
 }
 
 /**
@@ -79,7 +79,7 @@ export function DeleteJobFiles(id, filePaths) {
  * @returns {$CancellablePromise<model$0.Queue | null>}
  */
 export function Enqueue(projectID, workspaceID) {
-    return $Call.ByID(321240905, projectID, workspaceID).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(1337091208, projectID, workspaceID).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType1($result);
     }));
 }
@@ -91,7 +91,7 @@ export function Enqueue(projectID, workspaceID) {
  * @returns {$CancellablePromise<model$0.Queue | null>}
  */
 export function EnqueueWithPreview(projectID, workspaceID, preview) {
-    return $Call.ByID(1039318383, projectID, workspaceID, preview).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(50576260, projectID, workspaceID, preview).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType1($result);
     }));
 }
@@ -101,7 +101,7 @@ export function EnqueueWithPreview(projectID, workspaceID, preview) {
  * @returns {$CancellablePromise<model$0.Queue | null>}
  */
 export function Get(id) {
-    return $Call.ByID(468661419, id).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(2781388834, id).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType1($result);
     }));
 }
@@ -111,7 +111,7 @@ export function Get(id) {
  * @returns {$CancellablePromise<model$0.CleanableJobStats | null>}
  */
 export function GetCleanableJobStats(filter) {
-    return $Call.ByID(3948659350, filter).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(2543357953, filter).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType3($result);
     }));
 }
@@ -121,7 +121,7 @@ export function GetCleanableJobStats(filter) {
  * @returns {$CancellablePromise<string>}
  */
 export function GetImageBase64(path) {
-    return $Call.ByID(1202128375, path);
+    return $Call.ByID(538610528, path);
 }
 
 /**
@@ -129,7 +129,7 @@ export function GetImageBase64(path) {
  * @returns {$CancellablePromise<model$0.Job | null>}
  */
 export function GetJob(id) {
-    return $Call.ByID(1771650178, id).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(1672213813, id).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType5($result);
     }));
 }
@@ -139,21 +139,21 @@ export function GetJob(id) {
  * @returns {$CancellablePromise<string>}
  */
 export function GetJobLog(id) {
-    return $Call.ByID(891375752, id);
+    return $Call.ByID(2629479553, id);
 }
 
 /**
  * @returns {$CancellablePromise<void>}
  */
 export function KillRunning() {
-    return $Call.ByID(3579055668);
+    return $Call.ByID(1148526169);
 }
 
 /**
  * @returns {$CancellablePromise<(model$0.Queue | null)[]>}
  */
 export function List() {
-    return $Call.ByID(3165860213).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(1664618514).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType6($result);
     }));
 }
@@ -164,7 +164,7 @@ export function List() {
  * @returns {$CancellablePromise<(model$0.Queue | null)[]>}
  */
 export function ListByWorkspace(projectID, workspaceID) {
-    return $Call.ByID(1462409681, projectID, workspaceID).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(3400348992, projectID, workspaceID).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType6($result);
     }));
 }
@@ -173,7 +173,7 @@ export function ListByWorkspace(projectID, workspaceID) {
  * @returns {$CancellablePromise<(api$0.QueueItem | null)[]>}
  */
 export function ListItems() {
-    return $Call.ByID(305390015).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(1773623470).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType9($result);
     }));
 }
@@ -183,7 +183,7 @@ export function ListItems() {
  * @returns {$CancellablePromise<(api$0.JobFileInfo | null)[]>}
  */
 export function ListJobFiles(id) {
-    return $Call.ByID(324552011, id).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(2244443824, id).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType12($result);
     }));
 }
@@ -193,7 +193,7 @@ export function ListJobFiles(id) {
  * @returns {$CancellablePromise<string[]>}
  */
 export function ListJobImages(id) {
-    return $Call.ByID(1978976334, id).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(1579611723, id).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType13($result);
     }));
 }
@@ -202,7 +202,7 @@ export function ListJobImages(id) {
  * @returns {$CancellablePromise<(model$0.Job | null)[]>}
  */
 export function ListJobs() {
-    return $Call.ByID(1456638637).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(114258178).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType14($result);
     }));
 }
@@ -213,7 +213,7 @@ export function ListJobs() {
  * @returns {$CancellablePromise<(model$0.Job | null)[]>}
  */
 export function ListJobsByProjectFile(projectID, fileID) {
-    return $Call.ByID(774568071, projectID, fileID).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(2220538238, projectID, fileID).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType14($result);
     }));
 }
@@ -226,7 +226,7 @@ export function ListJobsByProjectFile(projectID, fileID) {
  * @returns {$CancellablePromise<model$0.JobPagedResult | null>}
  */
 export function ListJobsByProjectFilePaged(projectID, fileID, page, pageSize) {
-    return $Call.ByID(1288114456, projectID, fileID, page, pageSize).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(330495827, projectID, fileID, page, pageSize).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType16($result);
     }));
 }
@@ -237,7 +237,7 @@ export function ListJobsByProjectFilePaged(projectID, fileID, page, pageSize) {
  * @returns {$CancellablePromise<(model$0.Job | null)[]>}
  */
 export function ListJobsByWorkspace(projectID, workspaceID) {
-    return $Call.ByID(1990300201, projectID, workspaceID).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(3196017712, projectID, workspaceID).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType14($result);
     }));
 }
@@ -250,7 +250,7 @@ export function ListJobsByWorkspace(projectID, workspaceID) {
  * @returns {$CancellablePromise<model$0.JobPagedResult | null>}
  */
 export function ListJobsByWorkspacePaged(projectID, workspaceID, page, pageSize) {
-    return $Call.ByID(3022983018, projectID, workspaceID, page, pageSize).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(2578441357, projectID, workspaceID, page, pageSize).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType16($result);
     }));
 }
@@ -262,7 +262,7 @@ export function ListJobsByWorkspacePaged(projectID, workspaceID, page, pageSize)
  * @returns {$CancellablePromise<model$0.JobListResult | null>}
  */
 export function ListJobsPaged(filter, page, pageSize) {
-    return $Call.ByID(119962030, filter, page, pageSize).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(1248888887, filter, page, pageSize).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType18($result);
     }));
 }
@@ -272,7 +272,7 @@ export function ListJobsPaged(filter, page, pageSize) {
  * @returns {$CancellablePromise<void>}
  */
 export function LockJob(id) {
-    return $Call.ByID(4279433993, id);
+    return $Call.ByID(2781883512, id);
 }
 
 /**
@@ -280,7 +280,7 @@ export function LockJob(id) {
  * @returns {$CancellablePromise<number>}
  */
 export function MeasureFilteredDiskSize(filter) {
-    return $Call.ByID(298852784, filter);
+    return $Call.ByID(1228038845, filter);
 }
 
 /**
@@ -288,14 +288,14 @@ export function MeasureFilteredDiskSize(filter) {
  * @returns {$CancellablePromise<void>}
  */
 export function OpenLogWindow(jobID) {
-    return $Call.ByID(673859361, jobID);
+    return $Call.ByID(2510016272, jobID);
 }
 
 /**
  * @returns {$CancellablePromise<void>}
  */
 export function OpenMiniMonitor() {
-    return $Call.ByID(3062403308);
+    return $Call.ByID(2265730325);
 }
 
 /**
@@ -303,7 +303,7 @@ export function OpenMiniMonitor() {
  * @returns {$CancellablePromise<void>}
  */
 export function OpenMovieWindow(videoPath) {
-    return $Call.ByID(3755692383, videoPath);
+    return $Call.ByID(703354378, videoPath);
 }
 
 /**
@@ -312,7 +312,7 @@ export function OpenMovieWindow(videoPath) {
  * @returns {$CancellablePromise<api$0.RenderPreview | null>}
  */
 export function PreviewRender(projectID, workspaceID) {
-    return $Call.ByID(2094811495, projectID, workspaceID).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(132454062, projectID, workspaceID).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType20($result);
     }));
 }
@@ -325,7 +325,7 @@ export function PreviewRender(projectID, workspaceID) {
  * @returns {$CancellablePromise<model$0.Queue | null>}
  */
 export function SamplesComparisonEnqueue(projectID, workspaceID, sampleCounts, frame) {
-    return $Call.ByID(873339169, projectID, workspaceID, sampleCounts, frame).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(364369806, projectID, workspaceID, sampleCounts, frame).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType1($result);
     }));
 }
@@ -337,7 +337,7 @@ export function SamplesComparisonEnqueue(projectID, workspaceID, sampleCounts, f
  * @returns {$CancellablePromise<model$0.Queue | null>}
  */
 export function TestEnqueue(projectID, workspaceID, params) {
-    return $Call.ByID(3172873857, projectID, workspaceID, params).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(1072827408, projectID, workspaceID, params).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType1($result);
     }));
 }
@@ -347,7 +347,7 @@ export function TestEnqueue(projectID, workspaceID, params) {
  * @returns {$CancellablePromise<void>}
  */
 export function UnlockJob(id) {
-    return $Call.ByID(1952234080, id);
+    return $Call.ByID(3722426805, id);
 }
 
 /**
@@ -357,7 +357,7 @@ export function UnlockJob(id) {
  * @returns {$CancellablePromise<void>}
  */
 export function UpdateJobMeta(id, name, note) {
-    return $Call.ByID(3201027894, id, name, note);
+    return $Call.ByID(321746635, id, name, note);
 }
 
 /**
@@ -366,7 +366,7 @@ export function UpdateJobMeta(id, name, note) {
  * @returns {$CancellablePromise<void>}
  */
 export function ZipJobData(id, savePath) {
-    return $Call.ByID(1421143595, id, savePath);
+    return $Call.ByID(1426353524, id, savePath);
 }
 
 /**
@@ -376,7 +376,7 @@ export function ZipJobData(id, savePath) {
  * @returns {$CancellablePromise<void>}
  */
 export function ZipJobSelectedFiles(id, filePaths, savePath) {
-    return $Call.ByID(2285115237, id, filePaths, savePath);
+    return $Call.ByID(3815477232, id, filePaths, savePath);
 }
 
 // Private type creation functions

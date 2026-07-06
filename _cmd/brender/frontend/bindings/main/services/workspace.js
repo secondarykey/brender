@@ -8,10 +8,10 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as api$0 from "../models.js";
+import * as api$0 from "../../github.com/ikascrew/brender/api/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as model$0 from "../../model/models.js";
+import * as model$0 from "../../github.com/ikascrew/brender/model/models.js";
 
 /**
  * @param {string} projectID
@@ -20,7 +20,7 @@ import * as model$0 from "../../model/models.js";
  * @returns {$CancellablePromise<model$0.Workspace | null>}
  */
 export function Copy(projectID, workspaceID, newName) {
-    return $Call.ByID(4115345662, projectID, workspaceID, newName).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(4086260361, projectID, workspaceID, newName).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType1($result);
     }));
 }
@@ -32,7 +32,7 @@ export function Copy(projectID, workspaceID, newName) {
  * @returns {$CancellablePromise<model$0.Workspace | null>}
  */
 export function Create(projectID, projectFileID, name) {
-    return $Call.ByID(534786391, projectID, projectFileID, name).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(3245924112, projectID, projectFileID, name).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType1($result);
     }));
 }
@@ -44,7 +44,7 @@ export function Create(projectID, projectFileID, name) {
  * @returns {$CancellablePromise<(model$0.Workspace | null)[]>}
  */
 export function CreateBatch(projectID, projectFileID, specs) {
-    return $Call.ByID(812410825, projectID, projectFileID, specs).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(242367496, projectID, projectFileID, specs).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType2($result);
     }));
 }
@@ -63,7 +63,7 @@ export function CreateBatch(projectID, projectFileID, specs) {
  * @returns {$CancellablePromise<void>}
  */
 export function CreateMovie(projectID, fileID, workspaceID, jobID, fps, outext, extraArgs) {
-    return $Call.ByID(711210437, projectID, fileID, workspaceID, jobID, fps, outext, extraArgs);
+    return $Call.ByID(3271697556, projectID, fileID, workspaceID, jobID, fps, outext, extraArgs);
 }
 
 /**
@@ -73,7 +73,7 @@ export function CreateMovie(projectID, fileID, workspaceID, jobID, fps, outext, 
  * @returns {$CancellablePromise<void>}
  */
 export function Delete(projectID, workspaceID, force) {
-    return $Call.ByID(4225591020, projectID, workspaceID, force);
+    return $Call.ByID(1174436719, projectID, workspaceID, force);
 }
 
 /**
@@ -82,7 +82,7 @@ export function Delete(projectID, workspaceID, force) {
  * @returns {$CancellablePromise<model$0.WorkspaceDetail | null>}
  */
 export function Get(projectID, workspaceID) {
-    return $Call.ByID(1108603273, projectID, workspaceID).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(708487680, projectID, workspaceID).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType4($result);
     }));
 }
@@ -94,7 +94,7 @@ export function Get(projectID, workspaceID) {
  * @returns {$CancellablePromise<string>}
  */
 export function GetThumbnail(projectID, fileID, workspaceID) {
-    return $Call.ByID(1938393227, projectID, fileID, workspaceID);
+    return $Call.ByID(401030204, projectID, fileID, workspaceID);
 }
 
 /**
@@ -104,7 +104,7 @@ export function GetThumbnail(projectID, fileID, workspaceID) {
  * @returns {$CancellablePromise<(model$0.WorkspacesByFile | null)[]>}
  */
 export function ListByProject(projectID, sort, dir) {
-    return $Call.ByID(2381232515, projectID, sort, dir).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(1294125250, projectID, sort, dir).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType7($result);
     }));
 }
@@ -117,7 +117,7 @@ export function ListByProject(projectID, sort, dir) {
  * @returns {$CancellablePromise<string>}
  */
 export function SetThumbnail(projectID, fileID, workspaceID, imagePath) {
-    return $Call.ByID(3409619191, projectID, fileID, workspaceID, imagePath);
+    return $Call.ByID(3026999448, projectID, fileID, workspaceID, imagePath);
 }
 
 /**
@@ -143,7 +143,7 @@ export function SetThumbnail(projectID, fileID, workspaceID, imagePath) {
  * @returns {$CancellablePromise<model$0.WorkspaceDetail | null>}
  */
 export function Update(projectID, workspaceID, name, note, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY, outputFormat, autoLock, autoLockMinSize, autoLockKeep) {
-    return $Call.ByID(971734846, projectID, workspaceID, name, note, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY, outputFormat, autoLock, autoLockMinSize, autoLockKeep).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(3853146629, projectID, workspaceID, name, note, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY, outputFormat, autoLock, autoLockMinSize, autoLockKeep).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType4($result);
     }));
 }

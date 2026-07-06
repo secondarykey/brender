@@ -8,20 +8,20 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as code$0 from "../../code/models.js";
+import * as code$0 from "../../github.com/ikascrew/brender/code/models.js";
 
 /**
  * @returns {$CancellablePromise<string>}
  */
 export function GenerateID() {
-    return $Call.ByID(3586256300);
+    return $Call.ByID(3338696663);
 }
 
 /**
  * @returns {$CancellablePromise<code$0.ImageFormat[]>}
  */
 export function GetImageFormats() {
-    return $Call.ByID(3648121609).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(3601437612).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType1($result);
     }));
 }
@@ -30,7 +30,7 @@ export function GetImageFormats() {
  * @returns {$CancellablePromise<code$0.ResolutionPreset[]>}
  */
 export function GetResolutionPresets() {
-    return $Call.ByID(1961915884).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(3622900527).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType3($result);
     }));
 }
@@ -39,7 +39,7 @@ export function GetResolutionPresets() {
  * @returns {$CancellablePromise<code$0.VideoFormat[]>}
  */
 export function GetVideoFormats() {
-    return $Call.ByID(1959442431).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(3328922742).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType5($result);
     }));
 }
@@ -48,21 +48,21 @@ export function GetVideoFormats() {
  * @returns {$CancellablePromise<void>}
  */
 export function ResetImageFormats() {
-    return $Call.ByID(3771829114);
+    return $Call.ByID(3071499459);
 }
 
 /**
  * @returns {$CancellablePromise<void>}
  */
 export function ResetResolutionPresets() {
-    return $Call.ByID(2147383693);
+    return $Call.ByID(1884304262);
 }
 
 /**
  * @returns {$CancellablePromise<void>}
  */
 export function ResetVideoFormats() {
-    return $Call.ByID(4096317864);
+    return $Call.ByID(3478207637);
 }
 
 /**
@@ -70,7 +70,7 @@ export function ResetVideoFormats() {
  * @returns {$CancellablePromise<void>}
  */
 export function SaveImageFormats(items) {
-    return $Call.ByID(1871674216, items);
+    return $Call.ByID(3729258427, items);
 }
 
 /**
@@ -78,7 +78,7 @@ export function SaveImageFormats(items) {
  * @returns {$CancellablePromise<void>}
  */
 export function SaveResolutionPresets(items) {
-    return $Call.ByID(1148764939, items);
+    return $Call.ByID(17743582, items);
 }
 
 /**
@@ -86,7 +86,7 @@ export function SaveResolutionPresets(items) {
  * @returns {$CancellablePromise<void>}
  */
 export function SaveVideoFormats(items) {
-    return $Call.ByID(2610292266, items);
+    return $Call.ByID(1848372429, items);
 }
 
 // Private type creation functions

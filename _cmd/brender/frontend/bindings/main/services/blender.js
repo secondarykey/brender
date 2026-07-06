@@ -8,24 +8,24 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as exec$0 from "../../exec/models.js";
+import * as exec$0 from "../../github.com/ikascrew/brender/exec/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as model$0 from "../../model/models.js";
+import * as model$0 from "../../github.com/ikascrew/brender/model/models.js";
 
 /**
  * @param {number} id
  * @returns {$CancellablePromise<void>}
  */
 export function Delete(id) {
-    return $Call.ByID(505165703, id);
+    return $Call.ByID(1397662588, id);
 }
 
 /**
  * @returns {$CancellablePromise<number>}
  */
 export function GetCPUCount() {
-    return $Call.ByID(4125144201);
+    return $Call.ByID(2649506908);
 }
 
 /**
@@ -34,7 +34,7 @@ export function GetCPUCount() {
  * @returns {$CancellablePromise<(exec$0.CameraTool | null)[]>}
  */
 export function GetCameras(installID, fileID) {
-    return $Call.ByID(909400876, installID, fileID).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(569593075, installID, fileID).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType2($result);
     }));
 }
@@ -44,7 +44,7 @@ export function GetCameras(installID, fileID) {
  * @returns {$CancellablePromise<string[]>}
  */
 export function GetEngines(installID) {
-    return $Call.ByID(2944509355, installID).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(187648156, installID).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType3($result);
     }));
 }
@@ -55,7 +55,7 @@ export function GetEngines(installID) {
  * @returns {$CancellablePromise<string[]>}
  */
 export function GetScenes(installID, fileID) {
-    return $Call.ByID(1000048201, installID, fileID).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(3137013436, installID, fileID).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType3($result);
     }));
 }
@@ -66,7 +66,7 @@ export function GetScenes(installID, fileID) {
  * @returns {$CancellablePromise<exec$0.Tool | null>}
  */
 export function GetToolData(installID, fileID) {
-    return $Call.ByID(282637138, installID, fileID).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(746142195, installID, fileID).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType5($result);
     }));
 }
@@ -75,7 +75,7 @@ export function GetToolData(installID, fileID) {
  * @returns {$CancellablePromise<(model$0.BlenderInstall | null)[]>}
  */
 export function List() {
-    return $Call.ByID(2583559636).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(1829039847).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType8($result);
     }));
 }
@@ -86,7 +86,7 @@ export function List() {
  * @returns {$CancellablePromise<void>}
  */
 export function OpenFile(installID, filePath) {
-    return $Call.ByID(1002287226, installID, filePath);
+    return $Call.ByID(1260856317, installID, filePath);
 }
 
 /**
@@ -94,7 +94,7 @@ export function OpenFile(installID, filePath) {
  * @returns {$CancellablePromise<model$0.BlenderInstall | null>}
  */
 export function Register(path) {
-    return $Call.ByID(3243524325, path).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(4016063346, path).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType7($result);
     }));
 }
@@ -104,7 +104,7 @@ export function Register(path) {
  * @returns {$CancellablePromise<void>}
  */
 export function Reorder(ids) {
-    return $Call.ByID(2974685599, ids);
+    return $Call.ByID(117922830, ids);
 }
 
 // Private type creation functions

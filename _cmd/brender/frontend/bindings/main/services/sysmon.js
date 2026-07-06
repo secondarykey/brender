@@ -8,13 +8,13 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as sysmon$0 from "../../sysmon/models.js";
+import * as sysmon$0 from "../../github.com/ikascrew/brender/sysmon/models.js";
 
 /**
  * @returns {$CancellablePromise<sysmon$0.Stats>}
  */
 export function Get() {
-    return $Call.ByID(2861547725).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(945412598).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType0($result);
     }));
 }

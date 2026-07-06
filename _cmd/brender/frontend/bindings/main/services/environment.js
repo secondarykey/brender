@@ -8,7 +8,7 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as model$0 from "../../model/models.js";
+import * as model$0 from "../../github.com/ikascrew/brender/model/models.js";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
@@ -18,7 +18,7 @@ import * as $models from "./models.js";
  * @returns {$CancellablePromise<model$0.Environment | null>}
  */
 export function Get() {
-    return $Call.ByID(868116245).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(451318436).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType1($result);
     }));
 }
@@ -27,7 +27,7 @@ export function Get() {
  * @returns {$CancellablePromise<$models.LicenseInfo>}
  */
 export function GetLicenses() {
-    return $Call.ByID(1561641605).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(2896115316).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType2($result);
     }));
 }
@@ -37,7 +37,7 @@ export function GetLicenses() {
  * @returns {$CancellablePromise<string>}
  */
 export function GetLogLevel() {
-    return $Call.ByID(3040438249);
+    return $Call.ByID(1175987204);
 }
 
 /**
@@ -45,7 +45,7 @@ export function GetLogLevel() {
  * @returns {$CancellablePromise<string[]>}
  */
 export function GetLogLevels() {
-    return $Call.ByID(3814594414).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(3472975701).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType3($result);
     }));
 }
@@ -55,14 +55,14 @@ export function GetLogLevels() {
  * @returns {$CancellablePromise<string>}
  */
 export function GetSystemLog() {
-    return $Call.ByID(1191007214);
+    return $Call.ByID(1468922969);
 }
 
 /**
  * @returns {$CancellablePromise<$models.VersionInfo>}
  */
 export function GetVersion() {
-    return $Call.ByID(325055367).then(/** @type {($result: any) => any} */(($result) => {
+    return $Call.ByID(364591928).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType4($result);
     }));
 }
@@ -73,7 +73,7 @@ export function GetVersion() {
  * @returns {$CancellablePromise<void>}
  */
 export function OpenSystemLogWindow() {
-    return $Call.ByID(588714768);
+    return $Call.ByID(1191805093);
 }
 
 /**
@@ -84,7 +84,7 @@ export function OpenSystemLogWindow() {
  * @returns {$CancellablePromise<void>}
  */
 export function SetFfmpeg(cmd, fps, outExt, args) {
-    return $Call.ByID(1734480084, cmd, fps, outExt, args);
+    return $Call.ByID(1149199297, cmd, fps, outExt, args);
 }
 
 /**
@@ -93,7 +93,7 @@ export function SetFfmpeg(cmd, fps, outExt, args) {
  * @returns {$CancellablePromise<void>}
  */
 export function SetLogLevel(level) {
-    return $Call.ByID(3317708141, level);
+    return $Call.ByID(720176008, level);
 }
 
 /**
@@ -101,7 +101,7 @@ export function SetLogLevel(level) {
  * @returns {$CancellablePromise<void>}
  */
 export function SetMaxConcurrentJobs(n) {
-    return $Call.ByID(4180283252, n);
+    return $Call.ByID(1597512259, n);
 }
 
 /**
@@ -109,7 +109,7 @@ export function SetMaxConcurrentJobs(n) {
  * @returns {$CancellablePromise<void>}
  */
 export function SetOutputFormat(format) {
-    return $Call.ByID(1766674691, format);
+    return $Call.ByID(2362126018, format);
 }
 
 /**
@@ -120,7 +120,7 @@ export function SetOutputFormat(format) {
  * @returns {$CancellablePromise<void>}
  */
 export function SetServer(enabled, host, port, auth) {
-    return $Call.ByID(3725997998, enabled, host, port, auth);
+    return $Call.ByID(1822013539, enabled, host, port, auth);
 }
 
 // Private type creation functions
