@@ -13,8 +13,8 @@ type moduleCheck struct {
 	module string
 }
 
+// wails3 依存は _cmd/brender にのみ存在する（root/brenderパッケージはwails非依存を維持する）。
 var checks = []moduleCheck{
-	{name: "root", dir: ".", module: "github.com/wailsapp/wails/v3"},
 	{name: "brender", dir: "./_cmd/brender", module: "github.com/wailsapp/wails/v3"},
 }
 

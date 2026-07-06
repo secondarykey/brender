@@ -63,12 +63,12 @@ _cmd/brender/  (Wails3 desktop app)
         src/lib/api/       ← API ラッパー層（Wails/HTTP 切り替え）
         src/lib/appEvents.js ← イベントバス（Wails Events/SSE 切り替え）
         ↕ Wails3 JS bindings (frontend/bindings/)
+    services/  (Wails サービス層 — thin wrappers registered in main.go。wails3依存はこのモジュール内に閉じる)
     main.go
         ↓
-api/wails/     (Wails サービス層 — thin wrappers registered in main.go)
 api/rest/      (REST サービス層 — サーバモード用。認証・SSE・admin ガード込みで実装済み)
         ↓
-api/           (business logic, framework-agnostic。権限判定は context.Context 経由のユーザで行う)
+api/           (business logic, framework-agnostic。権限判定は context.Context 経由のユーザで行う。wails3非依存)
         ↓
 model/         (GORM models + CRUD, SQLite via glebarez/sqlite)
 exec/          (Blender subprocess management + output parsing)
@@ -77,22 +77,25 @@ _cmd/brender-tool/  (CLI, uses exec/ + api/ directly)
 ```
 
 ### Module layout
-- Root module `github.com/ikascrew/brender` (`go.mod` at project root) is authoritative.
-- `_cmd/brender/` has its own `go.mod` (`github.com/ikascrew/brender/cmd/brender`) with a `replace` directive pointing to the root module.
+- Root モジュール `github.com/ikascrew/brender`（プロジェクトルートの `go.mod`）が正。`exec/`・`model/`・`api/`（`api/rest/` 含む）はwails3に依存しない。
+- `_cmd/brender/` は独自の `go.mod`（`module main`）を持ち、root モジュールへの `replace` ディレクティブでローカル参照する。**wails3への依存はこのモジュール内（`_cmd/brender/services/` 等）にのみ許可する** — rootパッケージにwails3 importを持ち込まない。
 
-### Wails3 services (`api/wails/`)
+### Wails3 services (`_cmd/brender/services/`)
 | File | Type | Wraps |
 |---|---|---|
-| `api/wails/blender.go` | `Blender` | `api/blender.go` |
-| `api/wails/environment.go` | `Environment` | `api/environment.go` |
-| `api/wails/project.go` | `Project` | `api/project.go` + `api/thumbnail.go` |
-| `api/wails/workspace.go` | `Workspace` | `api/workspace.go` |
-| `api/wails/queue.go` | `Queue` | `api/queue.go` |
-| `api/wails/work_dir.go` | `WorkDir` | `api/work_dir.go` |
+| `services/blender.go` | `Blender` | `api/blender.go` |
+| `services/environment.go` | `Environment` | `api/environment.go` |
+| `services/project.go` | `Project` | `api/project.go` + `api/thumbnail.go` |
+| `services/workspace.go` | `Workspace` | `api/workspace.go` |
+| `services/queue.go` | `Queue` | `api/queue.go` |
+| `services/work_dir.go` | `WorkDir` | `api/work_dir.go` |
 
-Services are registered in `_cmd/brender/main.go`. After adding or changing a service, run `wails3 generate bindings` to update the frontend JS bindings.
+Services are registered in `_cmd/brender/main.go`（`main/services` としてimport）。After adding or changing a service, run `wails3 generate bindings` to update the frontend JS bindings.
 
-`wails.Blender.OpenFile(installID, filePath)` — Blender を GUI モードで起動（`-b` なし、`cmd.Start()` で非同期）。
+`services.Blender.OpenFile(installID, filePath)` — Blender を GUI モードで起動（`-b` なし、`cmd.Start()` で非同期）。
+
+### wails3バージョン整合性チェック (`_cmd/wails3_check.go`)
+`go run _cmd/wails3_check.go` — インストール済み `wails3` CLI と `_cmd/brender/go.mod` のwails3バージョンを比較し、ズレていれば修正コマンドを提示して非ゼロ終了する。`.github/workflows/release.yml`・`versionup.yml` のCLIインストール直後に組み込み済み（CLIバージョンは `.github/variables.env` の `WAILS_VERSION` で固定）。
 
 ## Data Model
 
@@ -584,7 +587,7 @@ code.GetVideoFormats()      // []code.VideoFormat
 code.GetResolutionPresets() // []code.ResolutionPreset
 ```
 
-Wails サービス `api/wails/Codes` 経由でフロントエンドに公開。
+Wails サービス `_cmd/brender/services/Codes` 経由でフロントエンドに公開。
 
 ### フロントエンド
 
@@ -606,7 +609,7 @@ CodesApi.getResolutionPresets() // Promise<ResolutionPreset[]>
 
 1. `code/_assets/{name}.json` を作成（`code` / `label` + カテゴリ固有フィールド）
 2. `code/code.go` に型と `Get{Name}()` 関数を追加
-3. `api/wails/codes.go` にメソッドを追加
+3. `_cmd/brender/services/codes.go` にメソッドを追加
 4. `wails3 generate bindings` を実行
 5. `src/lib/api/codes.js` にラッパーを追加
 

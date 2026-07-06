@@ -14,12 +14,13 @@ import (
 
 	"github.com/ikascrew/brender/api"
 	"github.com/ikascrew/brender/api/rest"
-	"github.com/ikascrew/brender/api/wails"
 	"github.com/ikascrew/brender/config"
 	"github.com/ikascrew/brender/log"
 	"github.com/ikascrew/brender/model"
 	"github.com/ikascrew/brender/sysmon"
 	"golang.org/x/xerrors"
+
+	"main/services"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/events"
@@ -113,16 +114,16 @@ func run() error {
 		Description: "Blender rendering manager",
 		Logger:      logger,
 		Services: []application.Service{
-			application.NewService(wails.NewBlender()),
-			application.NewService(wails.NewEnvironment()),
-			application.NewService(wails.NewProject()),
-			application.NewService(wails.NewWorkspace()),
-			application.NewService(wails.NewQueue()),
-			application.NewService(wails.NewWorkDir()),
-			application.NewService(wails.NewCodes()),
-			application.NewService(wails.NewTag()),
-			application.NewService(wails.NewAuth()),
-			application.NewService(wails.NewSysMon()),
+			application.NewService(services.NewBlender()),
+			application.NewService(services.NewEnvironment()),
+			application.NewService(services.NewProject()),
+			application.NewService(services.NewWorkspace()),
+			application.NewService(services.NewQueue()),
+			application.NewService(services.NewWorkDir()),
+			application.NewService(services.NewCodes()),
+			application.NewService(services.NewTag()),
+			application.NewService(services.NewAuth()),
+			application.NewService(services.NewSysMon()),
 		},
 		Assets: application.AssetOptions{
 			Handler: &movieAwareHandler{fallback: application.AssetFileServerFS(assets)},
@@ -132,9 +133,9 @@ func run() error {
 		},
 	})
 
-	wails.AppVersion = strings.TrimSpace(appVersion)
+	services.AppVersion = strings.TrimSpace(appVersion)
 	dev := app.Env.Info().Debug
-	wails.DevMode = dev
+	services.DevMode = dev
 	if dev {
 		log.SetLevel(slog.LevelInfo)
 		//ログをInfoに落とす

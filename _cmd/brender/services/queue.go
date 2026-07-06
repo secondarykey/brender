@@ -1,4 +1,4 @@
-package wails
+package services
 
 import (
 	"fmt"
