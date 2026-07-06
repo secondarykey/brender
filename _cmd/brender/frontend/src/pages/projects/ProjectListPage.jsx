@@ -4,6 +4,7 @@ import { ProjectApi, WorkDirApi, BlenderApi, AuthApi } from '../../lib/api'
 import { isWails } from '../../lib/api/_client'
 import { useMessage } from '../../lib/toast'
 import SortSelect from '../../components/SortSelect'
+import { MdViewList, MdViewModule, MdViewComfy } from 'react-icons/md'
 
 function WorkDirBadge({ status, t }) {
   if (status === 'lock') {
@@ -157,17 +158,17 @@ function ProjectListPage({ navigate }) {
                 className={`file-view-btn${viewMode === 'list' ? ' active' : ''}`}
                 onClick={() => { setViewMode('list'); localStorage.setItem('viewMode:projects', 'list') }}
                 title={t('workspace.listView')}
-              >☰</button>
+              ><MdViewList /></button>
               <button
                 className={`file-view-btn${viewMode === 'card' ? ' active' : ''}`}
                 onClick={() => { setViewMode('card'); localStorage.setItem('viewMode:projects', 'card') }}
                 title={t('workspace.cardView')}
-              >⊞</button>
+              ><MdViewModule /></button>
               <button
                 className={`file-view-btn${viewMode === 'card-sm' ? ' active' : ''}`}
                 onClick={() => { setViewMode('card-sm'); localStorage.setItem('viewMode:projects', 'card-sm') }}
                 title={t('workspace.smallCardView')}
-              >▦</button>
+              ><MdViewComfy /></button>
               <SortSelect value={sort} onChange={handleSortChange} dir={dir} onDirChange={handleDirChange} />
             </div>
           )}

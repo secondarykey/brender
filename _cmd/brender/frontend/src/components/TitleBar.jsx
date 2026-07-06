@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import appIcon from './appicon.png'
 import { QueueApi, EnvironmentApi } from '../lib/api'
 import ConfirmDialog from './ConfirmDialog'
+import { MdRemove, MdCropSquare, MdClose } from 'react-icons/md'
 
 function TitleBar() {
   const { t } = useTranslation()
@@ -69,9 +70,9 @@ function TitleBar() {
         )}
         {!isMac && (
           <div className="titlebar-controls">
-            <button className="titlebar-btn titlebar-btn-min"   onClick={() => Window.Minimise()}       title={t('title.minimum')}>&#8211;</button>
-            <button className="titlebar-btn titlebar-btn-max"   onClick={() => Window.ToggleMaximise()} title={t('title.maximum')}>&#9744;</button>
-            <button className="titlebar-btn titlebar-btn-close" onClick={handleClose}                   title={t('title.close')}>&#10005;</button>
+            <button className="titlebar-btn titlebar-btn-min"   onClick={() => Window.Minimise()}       title={t('title.minimum')}><MdRemove /></button>
+            <button className="titlebar-btn titlebar-btn-max"   onClick={() => Window.ToggleMaximise()} title={t('title.maximum')}><MdCropSquare /></button>
+            <button className="titlebar-btn titlebar-btn-close" onClick={handleClose}                   title={t('title.close')}><MdClose /></button>
           </div>
         )}
       </div>

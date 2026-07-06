@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TagApi } from '../lib/api'
+import { MdClose } from 'react-icons/md'
 
 function tagColor(tag) {
   return tag.color || tag.category_color || '#555'
@@ -131,7 +132,7 @@ function TagInput({ projectFileID, tags, onTagsChanged }) {
       {(tags || []).map(tag => (
         <span key={tag.id} className={`tag-chip${pendingDeleteID === tag.id ? ' tag-chip-pending' : ''}`} style={{ backgroundColor: tagColor(tag) }}>
           <span className="tag-chip-label">{tagLabel(tag)}</span>
-          <button className="tag-chip-remove" onClick={() => removeTag(tag.id)}>×</button>
+          <button className="tag-chip-remove" onClick={() => removeTag(tag.id)}><MdClose /></button>
         </span>
       ))}
       <div className="tag-input-wrapper">

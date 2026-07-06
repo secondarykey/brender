@@ -5,6 +5,7 @@ import { isWails } from '../lib/api/_client'
 import { useToast, useMessage } from '../lib/toast'
 import Dialog from './Dialog'
 import ConfirmDialog from './ConfirmDialog'
+import { MdArrowDropDown, MdArrowRight, MdClose } from 'react-icons/md'
 
 const PROJECT_ROLES = ['owner', 'editor', 'file_register', 'viewer']
 const FILE_ROLES    = ['owner', 'workspace_creator', 'editor', 'runner', 'viewer']
@@ -179,7 +180,7 @@ function PermissionSection({ mode = 'project', resourceID }) {
         style={{ cursor: 'pointer', userSelect: 'none' }}
         onClick={() => setOpen(v => !v)}
       >
-        {open ? '▾' : '▸'} {t('permission.title')}
+        {open ? <MdArrowDropDown /> : <MdArrowRight />} {t('permission.title')}
       </h3>
 
       {open && (
@@ -232,7 +233,7 @@ function PermissionSection({ mode = 'project', resourceID }) {
                             title={t('common.delete')}
                             onClick={() => setRemoveTarget({ target_id: p.target_id, target_name: p.target_name })}
                           >
-                            &times;
+                            <MdClose />
                           </button>
                         )}
                       </td>

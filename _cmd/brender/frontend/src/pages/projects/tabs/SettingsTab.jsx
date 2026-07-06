@@ -9,6 +9,7 @@ import Dialog from '../../../components/Dialog'
 import ConfirmDialog from '../../../components/ConfirmDialog'
 import NoteSection from '../../../components/NoteSection'
 import PermissionSection from '../../../components/PermissionSection'
+import { MdArrowDropDown, MdArrowRight } from 'react-icons/md'
 
 const IMAGE_FILTER = [{ DisplayName: 'Image', Pattern: '*.jpg;*.jpeg;*.png;*.bmp;*.webp' }]
 
@@ -121,7 +122,7 @@ function WorkDirSection({ projectID, workDir, workDirs, onMigrated }) {
         style={{ cursor: 'pointer', userSelect: 'none' }}
         onClick={() => setOpen(v => !v)}
       >
-        {open ? '▾' : '▸'} {t('project.workDir')}
+        {open ? <MdArrowDropDown /> : <MdArrowRight />} {t('project.workDir')}
       </h3>
       {open && (
         <>

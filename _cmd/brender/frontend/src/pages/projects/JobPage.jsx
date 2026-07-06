@@ -11,6 +11,7 @@ import { formatDate as fmt, formatDateFull, formatDateShort } from '../../lib/da
 import { isWails } from '../../lib/api/_client'
 import MoviePlayer from '../../components/MoviePlayer'
 import AccessDenied from '../../components/AccessDenied'
+import { MdLoop, MdFolder, MdPlayArrow, MdImage } from 'react-icons/md'
 
 const VIDEO_EXTS = new Set(['.mp4', '.mov', '.avi', '.mkv', '.webm', '.m4v'])
 const IMAGE_EXTS = new Set(['.png', '.jpg', '.jpeg', '.exr', '.tiff', '.tif', '.bmp', '.hdr', '.webp', '.tga'])
@@ -451,7 +452,7 @@ function RenderResultTab({ job, role }) {
           <button
             className={`btn btn-sm ${loop ? '' : 'btn-ghost'} image-viewer-loop-btn`}
             onClick={toggleLoop} disabled={images.length <= 1} title={t('common.loop')}
-          >⟳ {t('common.loop')}</button>
+          ><MdLoop /> {t('common.loop')}</button>
           {moviePath && (
             <button className="btn btn-sm" onClick={() => handlePlayMovie()}>
               {t('viewer.playMovie')}
@@ -789,7 +790,10 @@ function DataViewTab({ job, role }) {
                     />
                   )}
                 </td>
-                <td>{f.is_dir ? '📁 ' : canPlay ? '▶ ' : canView ? '🖼 ' : ''}{f.name}</td>
+                <td style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  {f.is_dir ? <MdFolder /> : canPlay ? <MdPlayArrow /> : canView ? <MdImage /> : null}
+                  {f.name}
+                </td>
                 <td style={{ textAlign: 'right' }}>{f.is_dir ? '—' : formatBytes(f.size)}</td>
                 <td className="date-cell">{fmt(f.mod_time)}</td>
               </tr>

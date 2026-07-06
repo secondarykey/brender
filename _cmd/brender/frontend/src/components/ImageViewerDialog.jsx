@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { QueueApi, WorkspaceApi } from '../lib/api'
 import Dialog from './Dialog'
+import { MdLoop } from 'react-icons/md'
 
 function ImageViewerDialog({ job, onClose }) {
   const { t } = useTranslation()
@@ -165,7 +166,7 @@ function ImageViewerDialog({ job, onClose }) {
             onClick={toggleLoop}
             disabled={images.length <= 1}
             title={t('common.loop')}
-          >⟳ {t('common.loop')}</button>
+          ><MdLoop /> {t('common.loop')}</button>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
 

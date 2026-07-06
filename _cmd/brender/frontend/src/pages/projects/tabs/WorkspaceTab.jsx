@@ -6,6 +6,7 @@ import { onAppEvent } from '../../../lib/appEvents'
 import { useToast, useMessage } from '../../../lib/toast'
 import SortSelect from '../../../components/SortSelect'
 import { isWails } from '../../../lib/api/_client'
+import { MdViewList, MdViewModule, MdViewComfy } from 'react-icons/md'
 
 // サーバモード時にファイルパスが {projectID}/{fileID}/{fileID}.blend でなければ非対応
 function isServerIncompatible(file) {
@@ -196,17 +197,17 @@ function WorkspaceTab({ projectID, navigate, projectName, role }) {
               className={`file-view-btn${viewMode === 'list' ? ' active' : ''}`}
               onClick={() => { setViewMode('list'); localStorage.setItem('viewMode:files', 'list') }}
               title={t('workspace.listView')}
-            >☰</button>
+            ><MdViewList /></button>
             <button
               className={`file-view-btn${viewMode === 'card' ? ' active' : ''}`}
               onClick={() => { setViewMode('card'); localStorage.setItem('viewMode:files', 'card') }}
               title={t('workspace.cardView')}
-            >⊞</button>
+            ><MdViewModule /></button>
             <button
               className={`file-view-btn${viewMode === 'card-sm' ? ' active' : ''}`}
               onClick={() => { setViewMode('card-sm'); localStorage.setItem('viewMode:files', 'card-sm') }}
               title={t('workspace.smallCardView')}
-            >▦</button>
+            ><MdViewComfy /></button>
             <SortSelect value={sort} onChange={handleSortChange} dir={dir} onDirChange={handleDirChange} options={['display_order', 'name', 'created_at', 'processed_at', 'file_modified_at']} />
           </>
         )}

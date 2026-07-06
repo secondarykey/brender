@@ -16,6 +16,7 @@ import TagInput from '../../components/TagInput'
 import PermissionSection from '../../components/PermissionSection'
 import AccessDenied from '../../components/AccessDenied'
 import { isWails } from '../../lib/api/_client'
+import { MdViewList, MdViewModule, MdViewComfy, MdPlayArrow } from 'react-icons/md'
 
 
 // ── ワークスペースカード（サムネイル表示） ──────────────────
@@ -69,7 +70,7 @@ function WorkspaceCard({ projectID, fileID, ws, navigate, projectName, fileName,
             onClick={e => { e.stopPropagation(); onRunClick(ws) }}
             disabled={resolvingWsId !== null || workDirLocked}
           >
-            ▶ {t('common.run')}
+            <MdPlayArrow /> {t('common.run')}
           </button>
         </div>
       )}
@@ -188,17 +189,17 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
             className={`file-view-btn${viewMode === 'list' ? ' active' : ''}`}
             onClick={() => { setViewMode('list'); localStorage.setItem('viewMode:workspaces', 'list') }}
             title={t('workspace.listView')}
-          >☰</button>
+          ><MdViewList /></button>
           <button
             className={`file-view-btn${viewMode === 'card' ? ' active' : ''}`}
             onClick={() => { setViewMode('card'); localStorage.setItem('viewMode:workspaces', 'card') }}
             title={t('workspace.cardView')}
-          >⊞</button>
+          ><MdViewModule /></button>
           <button
             className={`file-view-btn${viewMode === 'card-sm' ? ' active' : ''}`}
             onClick={() => { setViewMode('card-sm'); localStorage.setItem('viewMode:workspaces', 'card-sm') }}
             title={t('workspace.smallCardView')}
-          >▦</button>
+          ><MdViewComfy /></button>
           <SortSelect value={sort} onChange={handleSortChange} dir={dir} onDirChange={handleDirChange} />
           {canSetThumbnail && (
           <button
@@ -235,7 +236,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
                     onClick={() => handleRunClick(ws)}
                     disabled={resolvingWsId !== null || workDirLocked}
                   >
-                    ▶ {t('common.run')}
+                    <MdPlayArrow /> {t('common.run')}
                   </button>
                 )}
                 <div

@@ -5,6 +5,7 @@ import TitleBar from '../components/TitleBar'
 import { useTranslation } from "react-i18next"
 import { useToast, useMessage } from '../lib/toast'
 import { isWails } from '../lib/api/_client'
+import { MdGridView, MdSearch, MdSchedule, MdPerson, MdSettings } from 'react-icons/md'
 
 
 function NavItem({ label, icon, active, onClick, badge }) {
@@ -55,16 +56,16 @@ function MainLayout({ currentPage, onNavigate, children }) {
   }, [])
 
   const topNav = [
-    { id: 'projects', label: t('menu.project'), icon: '▦' },
-    { id: 'search',   label: t('menu.search'),  icon: '⌕' },
-    { id: 'queue',    label: t('menu.queue'),    icon: '⏱', badge: queueCount },
+    { id: 'projects', label: t('menu.project'), icon: <MdGridView /> },
+    { id: 'search',   label: t('menu.search'),  icon: <MdSearch /> },
+    { id: 'queue',    label: t('menu.queue'),    icon: <MdSchedule />, badge: queueCount },
   ]
 
   const bottomNav = [
     ...(serverMode ? [
-      { id: 'users', label: t('menu.users'), icon: '👤' },
+      { id: 'users', label: t('menu.users'), icon: <MdPerson /> },
     ] : []),
-    { id: 'settings', label: t('menu.settings'), icon: '⚙' },
+    { id: 'settings', label: t('menu.settings'), icon: <MdSettings /> },
   ]
 
   return (

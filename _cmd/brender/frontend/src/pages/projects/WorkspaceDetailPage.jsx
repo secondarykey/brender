@@ -12,6 +12,7 @@ import HoldButton from '../../components/HoldButton'
 import Breadcrumb from '../../components/Breadcrumb'
 import NoteSection from '../../components/NoteSection'
 import AccessDenied from '../../components/AccessDenied'
+import { MdLock, MdSwapHoriz, MdPlayArrow } from 'react-icons/md'
 
 
 const isFrameDefault      = (start, end) => start === 0 && end === -1
@@ -655,7 +656,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
           <label className="form-label">
             {t('workspace.blender')}
             {fileBlenderFixed
-              ? <span className="form-lock-tag">🔒 {lockedBlenderName}</span>
+              ? <span className="form-lock-tag"><MdLock /> {lockedBlenderName}</span>
               : <DefaultTag value={blenderDefault} t={t} />
             }
           </label>
@@ -680,7 +681,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
           <label className="form-label">
             {t('workspace.renderEngine')}
             {fileEngineFixed
-              ? <span className="form-lock-tag">🔒 {fileEngine || sceneInfo?.Engine || t('common.notSet')}</span>
+              ? <span className="form-lock-tag"><MdLock /> {fileEngine || sceneInfo?.Engine || t('common.notSet')}</span>
               : <DefaultTag value={engineDefault} t={t} />
             }
           </label>
@@ -719,7 +720,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
           <label className="form-label">
             {t('workspace.scene')}
             {fileSceneFixed
-              ? <span className="form-lock-tag">🔒 {fileScene || activeScene?.Name || t('common.notSet')}</span>
+              ? <span className="form-lock-tag"><MdLock /> {fileScene || activeScene?.Name || t('common.notSet')}</span>
               : <DefaultTag value={sceneDefault} t={t} />
             }
           </label>
@@ -739,7 +740,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
           <label className="form-label">
             {t('workspace.camera')}
             {fileCameraFixed
-              ? <span className="form-lock-tag">🔒 {fileCamera || sceneInfo?.Camera || t('common.notSet')}</span>
+              ? <span className="form-lock-tag"><MdLock /> {fileCamera || sceneInfo?.Camera || t('common.notSet')}</span>
               : <DefaultTag value={cameraDefault} t={t} />
             }
           </label>
@@ -800,7 +801,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
                 onClick={() => setForm(prev => ({ ...prev, resolutionX: prev.resolutionY, resolutionY: prev.resolutionX }))}
                 disabled={readOnly}
               >
-                ⇄
+                <MdSwapHoriz />
               </button>
             </div>
             <div className="form-field">
@@ -909,7 +910,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
           )}
           {canRun && (
           <button className="btn btn-run" onClick={handleRenderClick} disabled={resolvingRender || workDirLocked || isFormDirty}>
-            {resolvingRender ? t('common.processing') : `▶ ${t('common.run')}`}
+            {resolvingRender ? t('common.processing') : <><MdPlayArrow /> {t('common.run')}</>}
           </button>
           )}
           {canSave && (
@@ -932,7 +933,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
           <>
             <button className="btn btn-ghost" onClick={() => setRenderConfirm(null)}>{t('common.cancel')}</button>
             <button className="btn btn-run" onClick={handleRenderEnqueue} disabled={renderEnqueuing}>
-              {renderEnqueuing ? t('common.enqueueing') : `▶ ${t('common.run')}`}
+              {renderEnqueuing ? t('common.enqueueing') : <><MdPlayArrow /> {t('common.run')}</>}
             </button>
           </>
         }
@@ -990,7 +991,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
           <>
             <button className="btn btn-ghost" onClick={() => setSamplesDialogOpen(false)}>{t('common.cancel')}</button>
             <button className="btn btn-run" onClick={handleSamplesComparison} disabled={samplesEnqueuing}>
-              {samplesEnqueuing ? t('common.enqueueing') : `▶ ${t('common.run')}`}
+              {samplesEnqueuing ? t('common.enqueueing') : <><MdPlayArrow /> {t('common.run')}</>}
             </button>
           </>
         }

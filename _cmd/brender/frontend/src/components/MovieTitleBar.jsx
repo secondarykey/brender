@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { isWails } from '../lib/api/_client'
+import { MdInfoOutline, MdRemove, MdCropSquare, MdClose } from 'react-icons/md'
 
 function MovieTitleBar({ title, showInfo, onToggleInfo }) {
   const { t } = useTranslation()
@@ -39,16 +40,16 @@ function MovieTitleBar({ title, showInfo, onToggleInfo }) {
         className={`titlebar-btn movie-info-toggle${showInfo ? ' active' : ''}`}
         onClick={onToggleInfo}
         title="情報を表示/非表示"
-      >ⓘ</button>
+      ><MdInfoOutline /></button>
       {!isMac && (
         <div className="titlebar-controls">
           {wails && (
             <>
-              <button className="titlebar-btn titlebar-btn-min"   onClick={handleMinimise}  title={t('title.minimum')}>&#8211;</button>
-              <button className="titlebar-btn titlebar-btn-max"   onClick={handleMaximise}  title={t('title.maximum')}>&#9744;</button>
+              <button className="titlebar-btn titlebar-btn-min"   onClick={handleMinimise}  title={t('title.minimum')}><MdRemove /></button>
+              <button className="titlebar-btn titlebar-btn-max"   onClick={handleMaximise}  title={t('title.maximum')}><MdCropSquare /></button>
             </>
           )}
-          <button className="titlebar-btn titlebar-btn-close" onClick={handleClose} title={t('title.close')}>&#10005;</button>
+          <button className="titlebar-btn titlebar-btn-close" onClick={handleClose} title={t('title.close')}><MdClose /></button>
         </div>
       )}
     </div>
