@@ -9,9 +9,6 @@ import { Create as $Create } from "@wailsio/runtime";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
 import * as gorm$0 from "../../../../gorm.io/gorm/models.js";
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore: Unused imports
-import * as time$0 from "../../../../time/models.js";
 
 export class BlenderInstall {
     /**
@@ -57,14 +54,14 @@ export class BlenderInstall {
         if (!("created_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["created_at"] = null;
         }
         if (!("updated_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["updated_at"] = null;
         }
@@ -271,14 +268,14 @@ export class Environment {
         if (!("created_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["created_at"] = null;
         }
         if (!("updated_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["updated_at"] = null;
         }
@@ -430,7 +427,7 @@ export class FileSearchResult {
         if (!("file_modified_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["file_modified_at"] = null;
         }
@@ -459,21 +456,21 @@ export class FileSearchResult {
         if (!("processed_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["processed_at"] = null;
         }
         if (!("created_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["created_at"] = null;
         }
         if (!("updated_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["updated_at"] = null;
         }
@@ -551,14 +548,14 @@ export class Group {
         if (!("created_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["created_at"] = null;
         }
         if (!("updated_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["updated_at"] = null;
         }
@@ -819,14 +816,14 @@ export class Job {
         if (!("started_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["started_at"] = null;
         }
         if (!("completed_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["completed_at"] = null;
         }
@@ -834,7 +831,7 @@ export class Job {
             /**
              * キュー登録時刻
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["enqueued_at"] = null;
         }
@@ -1043,21 +1040,21 @@ export class Project {
         if (!("processed_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["processed_at"] = null;
         }
         if (!("created_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["created_at"] = null;
         }
         if (!("updated_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["updated_at"] = null;
         }
@@ -1263,7 +1260,7 @@ export class ProjectFile {
         if (!("file_modified_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["file_modified_at"] = null;
         }
@@ -1292,21 +1289,21 @@ export class ProjectFile {
         if (!("processed_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["processed_at"] = null;
         }
         if (!("created_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["created_at"] = null;
         }
         if (!("updated_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["updated_at"] = null;
         }
@@ -1392,14 +1389,14 @@ export class Queue {
         if (!("started_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["started_at"] = null;
         }
         if (!("created_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["created_at"] = null;
         }
@@ -1462,14 +1459,14 @@ export class Tag {
         if (!("created_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["created_at"] = null;
         }
         if (!("updated_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["updated_at"] = null;
         }
@@ -1546,14 +1543,14 @@ export class TagCategory {
         if (!("created_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["created_at"] = null;
         }
         if (!("updated_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["updated_at"] = null;
         }
@@ -1738,14 +1735,14 @@ export class User {
         if (!("created_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["created_at"] = null;
         }
         if (!("updated_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["updated_at"] = null;
         }
@@ -1822,14 +1819,14 @@ export class WorkDir {
         if (!("created_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["created_at"] = null;
         }
         if (!("updated_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["updated_at"] = null;
         }
@@ -2043,21 +2040,21 @@ export class Workspace {
         if (!("processed_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["processed_at"] = null;
         }
         if (!("created_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["created_at"] = null;
         }
         if (!("updated_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["updated_at"] = null;
         }

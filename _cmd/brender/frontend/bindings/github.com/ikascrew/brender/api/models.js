@@ -12,9 +12,6 @@ import * as model$0 from "../model/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
 import * as gorm$0 from "../../../../gorm.io/gorm/models.js";
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore: Unused imports
-import * as time$0 from "../../../../time/models.js";
 
 export class AddDirResult {
     /**
@@ -134,9 +131,9 @@ export class JobFileInfo {
         if (!("mod_time" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time}
+             * @type {string}
              */
-            this["mod_time"] = null;
+            this["mod_time"] = "0001-01-01T00:00:00.000Z";
         }
         if (!("is_dir" in $$source)) {
             /**
@@ -392,14 +389,14 @@ export class QueueItem {
         if (!("started_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["started_at"] = null;
         }
         if (!("created_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["created_at"] = null;
         }
@@ -428,7 +425,7 @@ export class QueueItem {
         if (/** @type {any} */(false)) {
             /**
              * @member
-             * @type {time$0.Time | null | undefined}
+             * @type {string | null | undefined}
              */
             this["expected_at"] = undefined;
         }
@@ -834,14 +831,14 @@ export class UserWithStatus {
         if (!("created_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["created_at"] = null;
         }
         if (!("updated_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["updated_at"] = null;
         }
