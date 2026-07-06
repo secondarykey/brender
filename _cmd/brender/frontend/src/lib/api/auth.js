@@ -1,6 +1,6 @@
 import { isWails, serverCall } from './_client'
 
-const svc = () => import('../../../bindings/github.com/ikascrew/brender/api/wails/auth')
+const svc = () => import('../../../bindings/main/services/auth')
 
 export const AuthApi = {
   // ── User ──────────────────────────────────────────────
