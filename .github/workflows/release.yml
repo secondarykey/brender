@@ -25,6 +25,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
+      - name: Load variables
+        shell: bash
+        run: cat .github/variables.env >> "$GITHUB_ENV"
+
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
         run: |
@@ -61,7 +65,7 @@ jobs:
           npm -v
 
       - name: Install Wails CLI
-        run: go install github.com/wailsapp/wails/v3/cmd/wails3@latest
+        run: go install github.com/wailsapp/wails/v3/cmd/wails3@${{ env.WAILS_VERSION }}
 
       - name: Wails doctor
         run: |
