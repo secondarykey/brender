@@ -1,6 +1,6 @@
 import { isWails, serverCall } from './_client'
 
-const svc = () => import('../../../bindings/github.com/ikascrew/brender/api/wails/environment');
+const svc = () => import('../../../bindings/main/services/environment');
 
 export const EnvironmentApi = {
   /** 環境設定を取得 */
@@ -34,6 +34,11 @@ export const EnvironmentApi = {
   setLogLevel: ({ level }) =>
     isWails() ? svc().then(s => s.SetLogLevel(level))
               : serverCall('environment', 'set_log_level', { level }),
+
+  /** サーバモードの設定を保存 */
+  setServer: ({ enabled, host, port, auth }) =>
+    isWails() ? svc().then(s => s.SetServer(enabled, host, port, auth))
+              : serverCall('environment', 'set_server', { enabled, host, port, auth }),
 
   /** レンダリング出力フォーマットを設定（"PNG" / "JPEG"） */
   setOutputFormat: ({ format }) =>

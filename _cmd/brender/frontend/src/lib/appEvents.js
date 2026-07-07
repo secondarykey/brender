@@ -13,7 +13,7 @@
  *   }, [])
  */
 
-const isWails = () => Boolean(window._wails)
+import { isWails } from './api/_client'
 
 // ── SSE シングルトン管理 ──────────────────────────────────
 // Web モード時に複数コンポーネントが onAppEvent を呼んでも

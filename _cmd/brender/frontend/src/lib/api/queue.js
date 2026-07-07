@@ -1,6 +1,6 @@
 import { isWails, serverCall } from './_client'
 
-const svc = () => import('../../../bindings/github.com/ikascrew/brender/api/wails/queue')
+const svc = () => import('../../../bindings/main/services/queue')
 
 export const QueueApi = {
   /** レンダリング前パラメータをプレビュー解決
@@ -170,14 +170,14 @@ export const QueueApi = {
    */
   openLogWindow: ({ id }) =>
     isWails() ? svc().then(s => s.OpenLogWindow(id))
-              : serverCall('queue', 'open_log_window', { id }),
+              : Promise.resolve(window.open(`?log=${encodeURIComponent(id)}`, '_blank')),
 
   /** 動画ファイルを別ウィンドウで再生
    * @param {{ path: string }} args
    */
   openMovieWindow: ({ path }) =>
     isWails() ? svc().then(s => s.OpenMovieWindow(path))
-              : serverCall('queue', 'open_movie_window', { path }),
+              : Promise.resolve(window.open(`?movie=${encodeURIComponent(path)}`, '_blank')),
 
   /** 出力ディレクトリ全体を ZIP 圧縮して指定パスに保存
    * @param {{ id: string, savePath: string }} args

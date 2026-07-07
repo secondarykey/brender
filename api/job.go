@@ -9,7 +9,14 @@ import (
 	"golang.org/x/xerrors"
 )
 
-func CreateMovie(projectID string, fileID string, workspaceID string, jobID string, fps int, outext string, extraArgs string) (string, chan error, error) {
+// MovieCreatedHook は動画作成完了時に呼ばれる。jobID, path, error を受け取る。
+var MovieCreatedHook func(jobID string, path string, errMsg string)
+
+func CreateMovie(ctx context.Context, projectID string, fileID string, workspaceID string, jobID string, fps int, outext string, extraArgs string) (string, chan error, error) {
+	// runner 以上の権限が必要
+	if err := requireFileRole(ctx, fileID, rolesRunnerUp...); err != nil {
+		return "", nil, err
+	}
 
 	baseDir, err := GetProjectBaseDir(projectID)
 	if err != nil {

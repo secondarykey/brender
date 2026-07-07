@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { MdArrowUpward, MdArrowDownward } from 'react-icons/md'
 
 const DEFAULT_OPTIONS = ['display_order', 'name', 'created_at', 'processed_at']
 
@@ -23,7 +24,7 @@ export default function SortSelect({ value, onChange, dir = 'asc', onDirChange, 
           onClick={() => onDirChange(dir === 'asc' ? 'desc' : 'asc')}
           title={t(dir === 'asc' ? 'sort.asc' : 'sort.desc')}
         >
-          {dir === 'asc' ? '↑' : '↓'}
+          {dir === 'asc' ? <MdArrowUpward /> : <MdArrowDownward />}
         </button>
       )}
     </>

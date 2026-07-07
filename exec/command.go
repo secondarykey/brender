@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"os/exec"
+	"strings"
 
 	"github.com/ikascrew/brender/log"
 	"golang.org/x/xerrors"
@@ -17,7 +18,7 @@ func runCommand(ctx context.Context, w, ew io.Writer, name string, args ...strin
 	cmd.Stdout = w
 	cmd.Stderr = ew
 
-	log.Info("Command:%s Arguments:%v", name, args)
+	log.Info("Command:%s %v", name, strings.Join(args, " "))
 
 	err := cmd.Start()
 	if err != nil {

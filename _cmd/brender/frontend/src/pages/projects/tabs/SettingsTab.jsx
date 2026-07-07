@@ -2,11 +2,14 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
 import { ProjectApi, WorkDirApi } from '../../../lib/api'
+import { isWails } from '../../../lib/api/_client'
 import { onAppEvent } from '../../../lib/appEvents'
 import { useToast, useMessage } from '../../../lib/toast'
 import Dialog from '../../../components/Dialog'
 import ConfirmDialog from '../../../components/ConfirmDialog'
 import NoteSection from '../../../components/NoteSection'
+import PermissionSection from '../../../components/PermissionSection'
+import { MdArrowDropDown, MdArrowRight } from 'react-icons/md'
 
 const IMAGE_FILTER = [{ DisplayName: 'Image', Pattern: '*.jpg;*.jpeg;*.png;*.bmp;*.webp' }]
 
@@ -119,7 +122,7 @@ function WorkDirSection({ projectID, workDir, workDirs, onMigrated }) {
         style={{ cursor: 'pointer', userSelect: 'none' }}
         onClick={() => setOpen(v => !v)}
       >
-        {open ? '▾' : '▸'} {t('project.workDir')}
+        {open ? <MdArrowDropDown /> : <MdArrowRight />} {t('project.workDir')}
       </h3>
       {open && (
         <>
@@ -188,7 +191,7 @@ function WorkDirSection({ projectID, workDir, workDirs, onMigrated }) {
   )
 }
 
-function SettingsTab({ detail, focusName, workDir, workDirs, onUpdated, onDeleted }) {
+function SettingsTab({ detail, focusName, workDir, workDirs, role, onUpdated, onDeleted }) {
   const { t } = useTranslation()
   const { showToast } = useToast()
   const { showError } = useMessage()
@@ -203,6 +206,13 @@ function SettingsTab({ detail, focusName, workDir, workDirs, onUpdated, onDelete
   const [dirLoading, setDirLoading] = useState(false)
   const nameRef = useRef(null)
   const hasFocused = useRef(false)
+
+  const isOwner        = role === 'owner'
+  const isEditor       = role === 'editor'
+  const isFileRegister = role === 'file_register'
+  const canEdit        = isOwner || isEditor           // editor 以上は保存可能
+  const canAddFiles    = isOwner || isEditor || isFileRegister  // file_register 以上はファイル追加可能
+  const readOnly       = !canEdit                      // viewer / file_register は設定閲覧のみ
 
   useEffect(() => {
     setForm({ name: detail.project.name })
@@ -273,30 +283,38 @@ function SettingsTab({ detail, focusName, workDir, workDirs, onUpdated, onDelete
               className="form-input"
               value={form.name}
               onChange={e => set('name', e.target.value)}
+              disabled={readOnly}
             />
           </div>
 
           {error && <div className="error-msg">{error}</div>}
 
-          <NoteSection value={note} onChange={setNote} />
+          <NoteSection value={note} onChange={setNote} disabled={readOnly} />
 
-          <div className="form-actions">
+          {canEdit && (
+          <div className="form-actions" style={isOwner ? undefined : { justifyContent: 'flex-end' }}>
+            {isOwner && (
             <button className="btn btn-danger" onClick={() => { setForceDel(false); setConfirm(true) }}>
               {t('common.delete')}
             </button>
+            )}
             <button className="btn btn-green" onClick={handleSave} disabled={saving}>
               {saving ? t('common.saving') : t('common.save')}
             </button>
           </div>
+          )}
         </div>
 
+        {isOwner && (
         <WorkDirSection
           projectID={detail.project.id}
           workDir={workDir}
           workDirs={workDirs || []}
           onMigrated={onUpdated}
         />
+        )}
 
+        {canAddFiles && isWails() && (
         <div style={{ marginTop: 16 }}>
           <button
             className="btn btn-sm btn-outline"
@@ -326,7 +344,13 @@ function SettingsTab({ detail, focusName, workDir, workDirs, onUpdated, onDelete
           </button>
           {dirMsg && <div className="success-msg" style={{ marginTop: 6 }}>{dirMsg}</div>}
         </div>
+        )}
 
+        {isOwner && (
+        <PermissionSection mode="project" resourceID={detail.project.id} />
+        )}
+
+        {isOwner && (
         <ConfirmDialog
           open={confirm}
           hold
@@ -345,6 +369,7 @@ function SettingsTab({ detail, focusName, workDir, workDirs, onUpdated, onDelete
             {t('project.forceDeleteLabel')}
           </label>
         </ConfirmDialog>
+        )}
       </div>
 
       <div className="ws-detail-right">

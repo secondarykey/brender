@@ -36,8 +36,10 @@ type ProjectFile struct {
 	CameraFixed      bool       `json:"camera_fixed"`   // true = ワークスペースで変更不可
 	Engine           string     `json:"engine"`
 	EngineFixed      bool       `json:"engine_fixed"`   // true = ワークスペースで変更不可
+	Packed           *bool      `json:"packed"`          // nil=未検査, true=パック済み, false=未パック
 	FileModifiedAt   *time.Time `gorm:"-" json:"file_modified_at"`
 	FileExists       bool       `gorm:"-" json:"file_exists"`
+	MyRole           string     `gorm:"-" json:"my_role,omitempty"` // API層で設定
 	DisplayOrder     int        `gorm:"default:99999" json:"display_order"`
 	ProcessedAt      *time.Time `json:"processed_at"`
 	MetaFields       `gorm:"embedded"`
@@ -46,6 +48,7 @@ type ProjectFile struct {
 type ProjectDetail struct {
 	Project *Project       `json:"project"`
 	Files   []*ProjectFile `json:"files"`
+	MyRole  string         `json:"my_role,omitempty"` // API層で設定（CurrentUser のロール）
 }
 
 func newProjectID() string {
@@ -64,10 +67,47 @@ func newFileID() string {
 	return id.String()
 }
 
+// NewFileID は外部パッケージ用の公開ラッパー。
+func NewFileID() string { return newFileID() }
+
+// InsertProjectFile は既にフィールドが埋まった ProjectFile を DB に挿入する。
+func InsertProjectFile(f *ProjectFile) error {
+	if res := db.Create(f); res.Error != nil {
+		return xerrors.Errorf("InsertProjectFile: %w", res.Error)
+	}
+	return nil
+}
+
 func ListProjects(sort, dir string) ([]*ProjectDetail, error) {
 	var projects []*Project
 	if res := db.Order(resolveOrder(sort, dir)).Find(&projects); res.Error != nil {
 		return nil, xerrors.Errorf("ListProjects: %w", res.Error)
+	}
+
+	details := make([]*ProjectDetail, 0, len(projects))
+	for _, p := range projects {
+		d, err := loadProjectDetail(p)
+		if err != nil {
+			return nil, err
+		}
+		details = append(details, d)
+	}
+	return details, nil
+}
+
+// ListProjectsForUser はユーザがアクセス可能なプロジェクトのみを返す。
+func ListProjectsForUser(userID, sort, dir string) ([]*ProjectDetail, error) {
+	projectIDs, err := ListAccessibleProjectIDs(userID)
+	if err != nil {
+		return nil, err
+	}
+	if len(projectIDs) == 0 {
+		return []*ProjectDetail{}, nil
+	}
+
+	var projects []*Project
+	if res := db.Where("id IN ?", projectIDs).Order(resolveOrder(sort, dir)).Find(&projects); res.Error != nil {
+		return nil, xerrors.Errorf("ListProjectsForUser: %w", res.Error)
 	}
 
 	details := make([]*ProjectDetail, 0, len(projects))
@@ -102,6 +142,33 @@ func loadProjectDetail(p *Project) (*ProjectDetail, error) {
 		populateFileInfo(f)
 	}
 	return &ProjectDetail{Project: p, Files: files}, nil
+}
+
+// GetProjectForUser はユーザがアクセス可能なファイルのみを含むプロジェクト詳細を返す。
+func GetProjectForUser(id, userID string) (*ProjectDetail, error) {
+	var p Project
+	res := db.First(&p, "id = ?", id)
+	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if res.Error != nil {
+		return nil, xerrors.Errorf("GetProjectForUser: %w", res.Error)
+	}
+	fileIDs, err := ListAccessibleFileIDs(userID)
+	if err != nil {
+		return nil, err
+	}
+	if len(fileIDs) == 0 {
+		return &ProjectDetail{Project: &p, Files: []*ProjectFile{}}, nil
+	}
+	var files []*ProjectFile
+	if res := db.Where("project_id = ? AND id IN ?", p.ID, fileIDs).Find(&files); res.Error != nil {
+		return nil, xerrors.Errorf("GetProjectForUser files: %w", res.Error)
+	}
+	for _, f := range files {
+		populateFileInfo(f)
+	}
+	return &ProjectDetail{Project: &p, Files: files}, nil
 }
 
 // SelectProject は exec パッケージとの互換性のために残す
@@ -219,6 +286,25 @@ func UpdateProjectProcessedAt(id string, t *time.Time) error {
 func UpdateProjectFileProcessedAt(id string, t *time.Time) error {
 	if res := db.Model(&ProjectFile{}).Where("id = ?", id).Update("processed_at", t); res.Error != nil {
 		return xerrors.Errorf("UpdateProjectFileProcessedAt: %w", res.Error)
+	}
+	return nil
+}
+
+// ListAllProjectFiles は全プロジェクトの全ファイルを返す。
+func ListAllProjectFiles() ([]*ProjectFile, error) {
+	var files []*ProjectFile
+	if res := db.Find(&files); res.Error != nil {
+		return nil, xerrors.Errorf("ListAllProjectFiles: %w", res.Error)
+	}
+	for _, f := range files {
+		populateFileInfo(f)
+	}
+	return files, nil
+}
+
+func UpdateProjectFilePacked(id string, packed bool) error {
+	if res := db.Model(&ProjectFile{}).Where("id = ?", id).Update("packed", packed); res.Error != nil {
+		return xerrors.Errorf("UpdateProjectFilePacked: %w", res.Error)
 	}
 	return nil
 }

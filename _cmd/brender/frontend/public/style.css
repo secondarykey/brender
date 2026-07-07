@@ -524,6 +524,18 @@ body {
   vertical-align: middle;
 }
 
+.user-group-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  background: rgba(var(--fg), 0.1);
+  color: rgba(var(--fg), 0.7);
+  border-radius: 3px;
+  padding: 1px 5px;
+  margin-right: 4px;
+  margin-bottom: 2px;
+  vertical-align: middle;
+}
+
 /* ── Notice banner ── */
 .notice-banner {
   display: flex;
@@ -593,6 +605,26 @@ body {
   color: rgba(var(--fg),0.35);
   font-size: 0.88rem;
   margin-top: 12px;
+}
+
+/* ── Access Denied ── */
+.access-denied {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 64px 24px;
+}
+.access-denied-icon {
+  font-size: 48px;
+  color: #c0392b;
+  line-height: 1;
+}
+.access-denied-message {
+  font-size: 1.1rem;
+  color: rgba(var(--fg), 0.7);
+  margin: 0;
 }
 
 /* ── Breadcrumb ── */
@@ -835,6 +867,35 @@ body {
   text-overflow: ellipsis;
 }
 .file-missing { color: #c0392b; }
+
+.file-tile-pack-warning {
+  font-size: 0.7rem;
+  color: #e67e22;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+.file-tile-not-packed {
+  border: 2px solid #e67e22;
+}
+
+.file-item-pack-warning {
+  font-size: 0.75rem;
+  color: #e67e22;
+  display: block;
+}
+
+.pack-warning-bar {
+  background: rgba(230, 126, 34, 0.15);
+  border: 1px solid #e67e22;
+  color: #e67e22;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  margin-bottom: 12px;
+}
 
 /* 小サムネイルタイル (190px) */
 .file-tile-grid--sm {
@@ -1276,7 +1337,8 @@ textarea.form-input {
   bottom: 16px;
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
+  align-items: center;
+  gap: 12px;
   pointer-events: none;
   padding-top: 8px;
 }
@@ -1588,6 +1650,8 @@ textarea.form-input {
 
 /* ジョブ詳細ダイアログ */
 .dialog-wide { width: 560px; max-width: 90vw; }
+.movie-player-dialog-body { padding: 0; aspect-ratio: 16/9; min-height: 360px; }
+.dialog:has(.movie-player-dialog-body) { width: 80vw; max-width: 1280px; }
 .job-detail-body { display: flex; flex-direction: column; gap: 16px; }
 .job-detail-section {
   display: flex;
@@ -2779,3 +2843,292 @@ html[data-theme="light"] .data-status-deleted   { background: rgba(180,80,20,0.1
 html[data-theme="light"] .data-status-corrupted { background: rgba(160,40,40,0.2);   color: #7a1010; }
 html[data-theme="light"] .data-status-modified  { background: rgba(190,110,20,0.18); color: #7a4a00; }
 html[data-theme="light"] .data-status-locked    { background: rgba(170,140,10,0.2);  color: #6a5200; }
+
+/* ── Login page ── */
+.login-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: var(--bg);
+  padding: 20px;
+}
+.login-card {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 40px;
+  max-width: 380px;
+  width: 100%;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+}
+.login-title {
+  font-size: 1.8rem;
+  text-align: center;
+  color: rgba(var(--fg), 0.87);
+  margin-bottom: 4px;
+}
+.login-subtitle {
+  text-align: center;
+  color: rgba(var(--fg), 0.4);
+  font-size: 0.85rem;
+  margin-bottom: 28px;
+}
+.login-error {
+  background: rgba(192,57,43,0.15);
+  color: #e74c3c;
+  padding: 10px 14px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+}
+.login-btn {
+  width: 100%;
+  height: 42px;
+  margin-top: 20px;
+  font-size: 1rem;
+}
+
+/* ── Password badges ── */
+.pw-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  border-radius: 3px;
+  padding: 2px 6px;
+}
+.pw-set {
+  background: rgba(39,174,96,0.18);
+  color: #27ae60;
+}
+.pw-unset {
+  background: rgba(var(--fg), 0.06);
+  color: rgba(var(--fg), 0.35);
+}
+
+/* ── ユーザロールバッジ ── */
+.user-role-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  border-radius: 3px;
+  padding: 2px 6px;
+}
+.user-role-admin {
+  background: rgba(74,124,220,0.18);
+  color: #4a7cdc;
+}
+.user-role-creator {
+  background: rgba(39,174,96,0.18);
+  color: #27ae60;
+}
+.user-role-viewer {
+  background: rgba(var(--fg), 0.06);
+  color: rgba(var(--fg), 0.5);
+}
+
+html[data-theme="light"] .login-error {
+  background: rgba(192,57,43,0.1);
+}
+html[data-theme="light"] .pw-set {
+  background: rgba(39,174,96,0.15);
+  color: #1a6e3a;
+}
+html[data-theme="light"] .pw-unset {
+  background: rgba(0,0,0,0.05);
+  color: rgba(0,0,0,0.3);
+}
+
+/* ── Permission table ── */
+.perm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.perm-table th {
+  text-align: left;
+  font-weight: 500;
+  color: rgba(var(--fg), 0.5);
+  padding: 6px 8px;
+  border-bottom: 1px solid rgba(var(--fg), 0.1);
+  font-size: 0.8rem;
+}
+.perm-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid rgba(var(--fg), 0.06);
+  vertical-align: middle;
+}
+.perm-table tr:last-child td {
+  border-bottom: none;
+}
+.perm-table select.form-select-sm {
+  height: 28px;
+  font-size: 0.8rem;
+  padding: 2px 8px;
+}
+.perm-type-badge {
+  display: inline-block;
+  font-size: 0.65rem;
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-right: 6px;
+  vertical-align: middle;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.perm-type-user {
+  background: rgba(74,124,220,0.15);
+  color: #6b9df5;
+}
+.perm-type-group {
+  background: rgba(39,174,96,0.15);
+  color: #5ec989;
+}
+.perm-system-badge {
+  display: inline-block;
+  font-size: 0.6rem;
+  padding: 1px 4px;
+  border-radius: 3px;
+  margin-left: 6px;
+  background: rgba(var(--fg), 0.08);
+  color: rgba(var(--fg), 0.35);
+  vertical-align: middle;
+}
+.btn-icon-danger {
+  background: none;
+  border: none;
+  color: rgba(var(--fg), 0.3);
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 2px 6px;
+  border-radius: 3px;
+  line-height: 1;
+}
+.btn-icon-danger:hover {
+  color: #e74c3c;
+  background: rgba(231,76,60,0.1);
+}
+
+/* ── Permission candidate list (add dialog) ── */
+.perm-candidate-list {
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid rgba(var(--fg), 0.1);
+  border-radius: 6px;
+}
+.perm-candidate-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(var(--fg), 0.05);
+  font-size: 0.85rem;
+  transition: background 0.1s;
+}
+.perm-candidate-row:last-child {
+  border-bottom: none;
+}
+.perm-candidate-row:hover {
+  background: rgba(var(--fg), 0.04);
+}
+.perm-candidate-selected {
+  background: rgba(74,124,220,0.1);
+}
+.perm-candidate-selected:hover {
+  background: rgba(74,124,220,0.15);
+}
+.perm-candidate-row input[type="checkbox"] {
+  flex-shrink: 0;
+  accent-color: #4a7cdc;
+}
+.perm-candidate-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html[data-theme="light"] .perm-candidate-row:hover {
+  background: rgba(0,0,0,0.04);
+}
+html[data-theme="light"] .perm-candidate-selected {
+  background: rgba(74,124,220,0.08);
+}
+html[data-theme="light"] .perm-candidate-selected:hover {
+  background: rgba(74,124,220,0.12);
+}
+
+html[data-theme="light"] .perm-type-user {
+  background: rgba(74,124,220,0.12);
+  color: #3a6cc7;
+}
+html[data-theme="light"] .perm-type-group {
+  background: rgba(39,174,96,0.12);
+  color: #1a8a4a;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   System Monitor (CPU / GPU usage bars)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+.sysmon-container {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 16px;
+  border-top: 1px solid rgba(var(--fg), 0.08);
+  flex-wrap: wrap;
+}
+
+.sysmon-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.sysmon-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(var(--fg), 0.5);
+  white-space: nowrap;
+  min-width: 32px;
+}
+
+.sysmon-track {
+  width: 80px;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(var(--fg), 0.08);
+  overflow: hidden;
+}
+
+.sysmon-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.sysmon-pct {
+  font-size: 0.72rem;
+  color: rgba(var(--fg), 0.6);
+  min-width: 28px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.sysmon-detail {
+  font-size: 0.68rem;
+  color: rgba(var(--fg), 0.4);
+  white-space: nowrap;
+}
+
+.sysmon-gpu-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sysmon-temp {
+  font-size: 0.72rem;
+  color: rgba(var(--fg), 0.5);
+  white-space: nowrap;
+}

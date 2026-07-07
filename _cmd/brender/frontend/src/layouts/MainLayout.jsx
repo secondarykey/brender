@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
-import { QueueApi } from '../lib/api'
+import { QueueApi, EnvironmentApi } from '../lib/api'
 import { onAppEvent } from '../lib/appEvents'
 import TitleBar from '../components/TitleBar'
 import { useTranslation } from "react-i18next"
 import { useToast, useMessage } from '../lib/toast'
+import { isWails } from '../lib/api/_client'
+import { MdGridView, MdSearch, MdSchedule, MdPerson, MdSettings } from 'react-icons/md'
 
 
 function NavItem({ label, icon, active, onClick, badge }) {
@@ -25,6 +27,7 @@ function MainLayout({ currentPage, onNavigate, children }) {
   const { toast } = useToast()
   const { error, clearError, showError } = useMessage()
   const [queueCount, setQueueCount] = useState(0)
+  const [serverMode, setServerMode] = useState(false)
 
   useEffect(() => {
     // 初期件数取得
@@ -32,6 +35,14 @@ function MainLayout({ currentPage, onNavigate, children }) {
     // イベント購読
     const off = onAppEvent('queue:changed', data => setQueueCount(Number(data) || 0))
     return off
+  }, [])
+
+  useEffect(() => {
+    if (isWails()) {
+      EnvironmentApi.get()
+        .then(env => { if (env?.server && env?.server_auth) setServerMode(true) })
+        .catch(() => {})
+    }
   }, [])
 
   useEffect(() => {
@@ -45,18 +56,21 @@ function MainLayout({ currentPage, onNavigate, children }) {
   }, [])
 
   const topNav = [
-    { id: 'projects', label: t('menu.project'), icon: '▦' },
-    { id: 'search',   label: t('menu.search'),  icon: '⌕' },
-    { id: 'queue',    label: t('menu.queue'),    icon: '⏱', badge: queueCount },
+    { id: 'projects', label: t('menu.project'), icon: <MdGridView /> },
+    { id: 'search',   label: t('menu.search'),  icon: <MdSearch /> },
+    { id: 'queue',    label: t('menu.queue'),    icon: <MdSchedule />, badge: queueCount },
   ]
 
   const bottomNav = [
-    { id: 'settings', label: t('menu.settings'), icon: '⚙' },
+    ...(serverMode ? [
+      { id: 'users', label: t('menu.users'), icon: <MdPerson /> },
+    ] : []),
+    { id: 'settings', label: t('menu.settings'), icon: <MdSettings /> },
   ]
 
   return (
     <div className="app-frame">
-      <TitleBar />
+      {isWails() && <TitleBar />}
       {error && (
         <div className="app-message-bar">
           <span className="app-message-text" style={{ whiteSpace: 'pre-line' }}>{error}</span>

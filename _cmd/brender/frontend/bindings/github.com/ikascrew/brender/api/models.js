@@ -11,7 +11,7 @@ import { Create as $Create } from "@wailsio/runtime";
 import * as model$0 from "../model/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as time$0 from "../../../../time/models.js";
+import * as gorm$0 from "../../../../gorm.io/gorm/models.js";
 
 export class AddDirResult {
     /**
@@ -131,9 +131,9 @@ export class JobFileInfo {
         if (!("mod_time" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time}
+             * @type {string}
              */
-            this["mod_time"] = null;
+            this["mod_time"] = "0001-01-01T00:00:00.000Z";
         }
         if (!("is_dir" in $$source)) {
             /**
@@ -154,6 +154,65 @@ export class JobFileInfo {
     static createFrom($$source = {}) {
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         return new JobFileInfo(/** @type {Partial<JobFileInfo>} */($$parsedSource));
+    }
+}
+
+/**
+ * PermissionEntry は権限一覧表示用（ターゲットの表示名を付与）。
+ */
+export class PermissionEntry {
+    /**
+     * Creates a new PermissionEntry instance.
+     * @param {Partial<PermissionEntry>} [$$source = {}] - The source object to create the PermissionEntry.
+     */
+    constructor($$source = {}) {
+        if (!("project_id" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["project_id"] = "";
+        }
+        if (!("target_id" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["target_id"] = "";
+        }
+        if (!("target_name" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["target_name"] = "";
+        }
+        if (!("target_is_system" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["target_is_system"] = false;
+        }
+        if (!("role" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["role"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new PermissionEntry instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {PermissionEntry}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new PermissionEntry(/** @type {Partial<PermissionEntry>} */($$parsedSource));
     }
 }
 
@@ -278,6 +337,13 @@ export class QueueItem {
              */
             this["project_id"] = "";
         }
+        if (!("project_file_id" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["project_file_id"] = "";
+        }
         if (!("workspace_id" in $$source)) {
             /**
              * @member
@@ -323,14 +389,14 @@ export class QueueItem {
         if (!("started_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["started_at"] = null;
         }
         if (!("created_at" in $$source)) {
             /**
              * @member
-             * @type {time$0.Time | null}
+             * @type {string | null}
              */
             this["created_at"] = null;
         }
@@ -340,6 +406,13 @@ export class QueueItem {
              * @type {string}
              */
             this["job_type"] = "";
+        }
+        if (!("can_cancel" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["can_cancel"] = false;
         }
         if (!("now_frame" in $$source)) {
             /**
@@ -352,7 +425,7 @@ export class QueueItem {
         if (/** @type {any} */(false)) {
             /**
              * @member
-             * @type {time$0.Time | null | undefined}
+             * @type {string | null | undefined}
              */
             this["expected_at"] = undefined;
         }
@@ -583,6 +656,45 @@ export class RenderPreview {
 }
 
 /**
+ * ResetTokenInfo は既存トークンの情報。
+ */
+export class ResetTokenInfo {
+    /**
+     * Creates a new ResetTokenInfo instance.
+     * @param {Partial<ResetTokenInfo>} [$$source = {}] - The source object to create the ResetTokenInfo.
+     */
+    constructor($$source = {}) {
+        if (!("url_path" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["url_path"] = "";
+        }
+        if (!("expires_at" in $$source)) {
+            /**
+             * ISO 8601
+             * @member
+             * @type {string}
+             */
+            this["expires_at"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new ResetTokenInfo instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {ResetTokenInfo}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new ResetTokenInfo(/** @type {Partial<ResetTokenInfo>} */($$parsedSource));
+    }
+}
+
+/**
  * TestRenderParams はテストレンダリングのインラインパラメータ（ワークスペースへの保存は行わない）
  */
 export class TestRenderParams {
@@ -666,6 +778,110 @@ export class TestRenderParams {
     static createFrom($$source = {}) {
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         return new TestRenderParams(/** @type {Partial<TestRenderParams>} */($$parsedSource));
+    }
+}
+
+/**
+ * UserWithStatus はユーザ情報にパスワード設定状態を付加した構造体。
+ */
+export class UserWithStatus {
+    /**
+     * Creates a new UserWithStatus instance.
+     * @param {Partial<UserWithStatus>} [$$source = {}] - The source object to create the UserWithStatus.
+     */
+    constructor($$source = {}) {
+        if (!("id" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["id"] = "";
+        }
+        if (!("name" in $$source)) {
+            /**
+             * ログインID（ASCII限定）
+             * @member
+             * @type {string}
+             */
+            this["name"] = "";
+        }
+        if (!("display_name" in $$source)) {
+            /**
+             * 表示名
+             * @member
+             * @type {string}
+             */
+            this["display_name"] = "";
+        }
+        if (!("role" in $$source)) {
+            /**
+             * アプリレベルロール（admin/creator/viewer）
+             * @member
+             * @type {string}
+             */
+            this["role"] = "";
+        }
+        if (!("is_system" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["is_system"] = false;
+        }
+        if (!("created_at" in $$source)) {
+            /**
+             * @member
+             * @type {string | null}
+             */
+            this["created_at"] = null;
+        }
+        if (!("updated_at" in $$source)) {
+            /**
+             * @member
+             * @type {string | null}
+             */
+            this["updated_at"] = null;
+        }
+        if (!("created_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["created_by"] = "";
+        }
+        if (!("updated_by" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["updated_by"] = "";
+        }
+        if (!("deleted_at" in $$source)) {
+            /**
+             * @member
+             * @type {gorm$0.DeletedAt}
+             */
+            this["deleted_at"] = null;
+        }
+        if (!("has_password" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["has_password"] = false;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new UserWithStatus instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {UserWithStatus}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new UserWithStatus(/** @type {Partial<UserWithStatus>} */($$parsedSource));
     }
 }
 

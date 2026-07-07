@@ -5,6 +5,7 @@ import (
 	"embed"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -12,6 +13,53 @@ import (
 
 	"golang.org/x/xerrors"
 )
+
+func scriptsPath() string {
+	return filepath.Join(os.TempDir(), "brender", "scripts")
+}
+
+func scriptDir() (string, error) {
+	dir := scriptsPath()
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return "", xerrors.Errorf("os.MkdirAll() error: %w", err)
+	}
+	return dir, nil
+}
+
+// ClearScripts は scripts ディレクトリを丸ごと削除する。
+// サーバモードは常駐するため、生成済みスクリプトの無制限な蓄積を防ぐ目的で
+// 起動時に1回呼ぶ。ディレクトリは次回の scriptDir() で再作成される。
+func ClearScripts() error {
+	if err := os.RemoveAll(scriptsPath()); err != nil {
+		return xerrors.Errorf("os.RemoveAll() error: %w", err)
+	}
+	return nil
+}
+
+// createScript は _assets 内のテンプレートを dto で展開し、
+// scripts ディレクトリに pattern 名で書き出してファイルパスを返す。
+func createScript(tmplName, pattern string, dto any) (string, error) {
+	tmpl, err := template.ParseFS(assetsEmb, "_assets/"+tmplName)
+	if err != nil {
+		return "", xerrors.Errorf("template.ParseFS() error: %w", err)
+	}
+
+	dir, err := scriptDir()
+	if err != nil {
+		return "", err
+	}
+
+	fp, err := os.CreateTemp(dir, pattern)
+	if err != nil {
+		return "", xerrors.Errorf("os.CreateTemp() error: %w", err)
+	}
+	defer fp.Close()
+
+	if err := tmpl.Execute(fp, dto); err != nil {
+		return "", xerrors.Errorf("tmpl.Execute() error: %w", err)
+	}
+	return fp.Name(), nil
+}
 
 //go:embed _assets
 var assetsEmb embed.FS
@@ -51,10 +99,11 @@ const (
 	SceneFlag   = "SCENES"
 	CameraFlag  = "CAMERA"
 	SamplesFlag = "SAMPLES"
+	PackFlag    = "PACK"
 	StartFlag   = "START"
 	StartStart  = "START"
 	EndFlag     = "END"
-	FileName    = "brender-tool_*.py"
+	FileName    = "tool_*.py"
 )
 
 var (
@@ -67,32 +116,15 @@ var parsers = []*parser{
 	newParser(SceneFlag, func(line string) interface{} { return parseScene(line) }),
 	newParser(CameraFlag, func(line string) interface{} { return parseCamera(line) }),
 	newParser(SamplesFlag, func(line string) interface{} { return parseSamples(line) }),
+	newParser(PackFlag, func(line string) interface{} { return parsePack(line) }),
 }
 
 /**
  * ツール用のPythonファイルを作成する
  */
 func createToolPythonFile() (string, error) {
-
-	tmpl, err := template.ParseFS(assetsEmb, "_assets/tools.tmpl")
-	if err != nil {
-		return "", xerrors.Errorf("template.ParseFS() error: %w", err)
-	}
-
 	//現状DTO なし
-	dto := struct{}{}
-
-	fp, err := os.CreateTemp("", FileName)
-	if err != nil {
-		return "", xerrors.Errorf("os.CreateTemp() error: %w", err)
-	}
-	defer fp.Close()
-
-	err = tmpl.Execute(fp, dto)
-	if err != nil {
-		return "", xerrors.Errorf("template.ParseFS() error: %w", err)
-	}
-	return fp.Name(), nil
+	return createScript("tools.tmpl", FileName, struct{}{})
 }
 
 type Tool struct {
@@ -101,6 +133,7 @@ type Tool struct {
 	Engines []string
 	Scenes  []*SceneTool
 	Cameras []*CameraTool
+	Pack    bool
 }
 
 func (t Tool) ActiveScene() *SceneTool {
@@ -186,6 +219,10 @@ func parseTool(stdout string) Tool {
 				} else if p.Name == SamplesFlag {
 					if v, ok := obj.([]string); ok {
 						setSamples(rtn.Scenes, v)
+					}
+				} else if p.Name == PackFlag {
+					if v, ok := obj.(bool); ok {
+						rtn.Pack = v
 					}
 				}
 			}
@@ -337,4 +374,8 @@ func parseCamera(line string) *CameraTool {
 	c.Scenes = strings.Split(csv[1], ",")
 
 	return c
+}
+
+func parsePack(line string) bool {
+	return strings.TrimSpace(line) == "True"
 }

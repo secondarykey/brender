@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -17,9 +16,48 @@ import (
 
 	"github.com/ikascrew/brender/code"
 	"github.com/ikascrew/brender/exec"
+	"github.com/ikascrew/brender/log"
 	"github.com/ikascrew/brender/model"
+	"github.com/shirou/gopsutil/v4/process"
 	"golang.org/x/xerrors"
 )
+
+// killQueueProcess は pid のプロセスが Blender の場合のみ強制終了する。
+// 保存済み PID が OS に再利用され別プロセスに割り当てられている可能性があるため、
+// 実行ファイルを検証してから kill し、無関係なプロセスの誤殺を防ぐ。
+// expectedPath はジョブに記録された Blender 実行ファイルパス（不明なら空文字）。
+func killQueueProcess(pid int, expectedPath string) {
+	if pid <= 0 {
+		return
+	}
+	proc, err := process.NewProcess(int32(pid))
+	if err != nil {
+		return // プロセスが存在しない
+	}
+	if !isBlenderProcess(proc, expectedPath) {
+		log.Notice("killQueueProcess: pid %d is not blender (reused PID?), skip kill", pid)
+		return
+	}
+	if osProc, err := os.FindProcess(pid); err == nil {
+		osProc.Kill()
+	}
+}
+
+// isBlenderProcess は proc が Blender プロセスかを判定する。
+// 実行ファイルパスが expectedPath と一致するか、実行ファイル名に "blender" を含めば真。
+func isBlenderProcess(proc *process.Process, expectedPath string) bool {
+	if exe, err := proc.Exe(); err == nil && exe != "" {
+		if expectedPath != "" && strings.EqualFold(filepath.Clean(exe), filepath.Clean(expectedPath)) {
+			return true
+		}
+		return strings.Contains(strings.ToLower(filepath.Base(exe)), "blender")
+	}
+	// Exe が取得できない場合はプロセス名で判定
+	if name, err := proc.Name(); err == nil {
+		return strings.Contains(strings.ToLower(name), "blender")
+	}
+	return false
+}
 
 func getMaxConcurrentJobs() int64 {
 	env, err := model.GetEnv()
@@ -29,12 +67,18 @@ func getMaxConcurrentJobs() int64 {
 	return int64(env.MaxConcurrentJobs)
 }
 
+// ClearScripts は起動時に生成済みの Python スクリプトを一掃する。
+// サーバモードは常駐するため、無制限な蓄積を防ぐ目的で呼ぶ。
+func ClearScripts() error {
+	return exec.ClearScripts()
+}
+
 // RecoverStaleQueues は起動時に running 状態のまま残ったキューを検出し、
 // 旧ジョブを interrupted で閉じて新しい Job+Queue を recovering で作成する。
 func RecoverStaleQueues() {
 	queues, err := model.ListRunningQueues()
 	if err != nil {
-		log.Println("RecoverStaleQueues: ListRunningQueues:", err)
+		log.Error("RecoverStaleQueues: ListRunningQueues: %v", err)
 		return
 	}
 	if len(queues) == 0 {
@@ -42,15 +86,17 @@ func RecoverStaleQueues() {
 	}
 	var recovered int
 	for _, q := range queues {
-		if q.ProcessID > 0 {
-			if proc, err := os.FindProcess(q.ProcessID); err == nil {
-				proc.Kill()
-			}
-		}
-
 		oldJob, err := model.GetJob(q.ID)
+
+		// 孤立プロセスが生きていれば kill（Blender であることを検証してから）
+		expectedPath := ""
+		if oldJob != nil {
+			expectedPath = oldJob.BlenderPath
+		}
+		killQueueProcess(q.ProcessID, expectedPath)
+
 		if err != nil || oldJob == nil {
-			log.Printf("RecoverStaleQueues: job %s not found, deleting orphan queue", q.ID)
+			log.Notice("RecoverStaleQueues: job %s not found, deleting orphan queue", q.ID)
 			model.DeleteQueue(q.ID)
 			continue
 		}
@@ -58,22 +104,22 @@ func RecoverStaleQueues() {
 		now := time.Now()
 		diskSize := calcDirSize(oldJob.OutputDir)
 		if err := model.UpdateJobDone(q.ID, model.JobInterrupted, "", &now, diskSize, model.JobDataCorrupted); err != nil {
-			log.Println("RecoverStaleQueues: UpdateJobDone:", err)
+			log.Error("RecoverStaleQueues: UpdateJobDone: %v", err)
 		}
 		if err := model.DeleteQueue(q.ID); err != nil {
-			log.Println("RecoverStaleQueues: DeleteQueue:", err)
+			log.Error("RecoverStaleQueues: DeleteQueue: %v", err)
 			continue
 		}
 
 		newID, err := model.NewQueueID()
 		if err != nil {
-			log.Println("RecoverStaleQueues: NewQueueID:", err)
+			log.Error("RecoverStaleQueues: NewQueueID: %v", err)
 			continue
 		}
 
 		newOutputDir := filepath.Join(filepath.Dir(oldJob.OutputDir), newID)
 		if err := os.MkdirAll(newOutputDir, 0755); err != nil {
-			log.Println("RecoverStaleQueues: MkdirAll:", err)
+			log.Error("RecoverStaleQueues: MkdirAll: %v", err)
 			continue
 		}
 
@@ -103,7 +149,7 @@ func RecoverStaleQueues() {
 			EnqueuedAt:    &now,
 		}
 		if err := model.CreateJob(newJob); err != nil {
-			log.Println("RecoverStaleQueues: CreateJob:", err)
+			log.Error("RecoverStaleQueues: CreateJob: %v", err)
 			continue
 		}
 
@@ -114,15 +160,15 @@ func RecoverStaleQueues() {
 			Status:      model.QueueRecovering,
 		}
 		if err := model.CreateQueue(newQueue); err != nil {
-			log.Println("RecoverStaleQueues: CreateQueue:", err)
+			log.Error("RecoverStaleQueues: CreateQueue: %v", err)
 			continue
 		}
 
-		log.Printf("RecoverStaleQueues: job %s interrupted, new queue %s created", q.ID, newID)
+		log.Notice("RecoverStaleQueues: job %s interrupted, new queue %s created", q.ID, newID)
 		recovered++
 	}
 	if recovered > 0 {
-		log.Printf("RecoverStaleQueues: %d queue(s) recovered", recovered)
+		log.Notice("RecoverStaleQueues: %d queue(s) recovered", recovered)
 	}
 }
 
@@ -139,16 +185,15 @@ func KillRunningQueues() {
 	shuttingDown.Store(true)
 	queues, err := model.ListRunningQueues()
 	if err != nil {
-		log.Println("KillRunningQueues: ListRunningQueues:", err)
+		log.Error("KillRunningQueues: ListRunningQueues: %v", err)
 		return
 	}
 	for _, q := range queues {
-		if q.ProcessID > 0 {
-			if proc, err := os.FindProcess(q.ProcessID); err == nil {
-				proc.Kill()
-				log.Printf("KillRunningQueues: killed process %d (queue %s)", q.ProcessID, q.ID)
-			}
+		expectedPath := ""
+		if j, err := model.GetJob(q.ID); err == nil && j != nil {
+			expectedPath = j.BlenderPath
 		}
+		killQueueProcess(q.ProcessID, expectedPath)
 	}
 }
 
@@ -166,6 +211,10 @@ func StartRecoveredQueues() {
 // scheduleMu はキューの起動判定と DB 更新をアトミックに行うためのミューテックス。
 var scheduleMu sync.Mutex
 
+// enqueueMu は投入時の重複チェック（ExistsQueueByWorkspace）からキュー作成（CreateQueue）
+// までをアトミックにし、ダブルクリック等での同一ワークスペース二重投入を防ぐ。
+var enqueueMu sync.Mutex
+
 // QueueChangedHook はキューの件数が変化したときに呼ばれるフック。
 // 呼び出し元（Wails サービス層など）で設定する。
 var QueueChangedHook func(count int64)
@@ -180,23 +229,23 @@ func notifyQueueChanged() {
 
 // RenderPreview はレンダリング実行前に解決された確定パラメータ
 type RenderPreview struct {
-	ProjectName   string `json:"project_name"`
-	WorkspaceName string `json:"workspace_name"`
-	ProjectFileID string `json:"project_file_id"`
-	BlenderPath   string `json:"blender_path"`
-	BlenderFile   string `json:"blender_file"`
-	Scene         string `json:"scene"`
-	Engine        string `json:"engine"`
-	StartFrame    int    `json:"start_frame"`
-	EndFrame      int    `json:"end_frame"`
-	FrameStep     int    `json:"frame_step"`
-	Thread        int    `json:"thread"`
-	Samples       int    `json:"samples"`
-	ResolutionX   int    `json:"resolution_x"`
-	ResolutionY   int    `json:"resolution_y"`
-	Camera        string `json:"camera"`
-	OutputFormat  string `json:"output_format"` // 解決済みフォーマット名（"PNG" / "JPEG"）
-	JobType       string `json:"job_type"`
+	ProjectName   string              `json:"project_name"`
+	WorkspaceName string              `json:"workspace_name"`
+	ProjectFileID string              `json:"project_file_id"`
+	BlenderPath   string              `json:"blender_path"`
+	BlenderFile   string              `json:"blender_file"`
+	Scene         string              `json:"scene"`
+	Engine        string              `json:"engine"`
+	StartFrame    int                 `json:"start_frame"`
+	EndFrame      int                 `json:"end_frame"`
+	FrameStep     int                 `json:"frame_step"`
+	Thread        int                 `json:"thread"`
+	Samples       int                 `json:"samples"`
+	ResolutionX   int                 `json:"resolution_x"`
+	ResolutionY   int                 `json:"resolution_y"`
+	Camera        string              `json:"camera"`
+	OutputFormat  string              `json:"output_format"` // 解決済みフォーマット名（"PNG" / "JPEG"）
+	JobType       string              `json:"job_type"`
 	Previous      *PreviousRenderInfo `json:"previous"`
 }
 
@@ -213,6 +262,126 @@ type PreviousRenderInfo struct {
 	OutputFormat string `json:"output_format"`
 }
 
+// fileOverrides はプロジェクトファイルの固定設定（固定フラグ + 値）を保持する。
+// 固定フラグ付きファイル指定はワークスペース/テストの指定より優先される。
+type fileOverrides struct {
+	blenderID    uint
+	blenderFixed bool
+	scene        string
+	sceneFixed   bool
+	camera       string
+	cameraFixed  bool
+	engine       string
+	engineFixed  bool
+}
+
+// loadFileOverrides はプロジェクトファイルの固定設定を取得する。
+// projectFileID が空、または取得失敗時はゼロ値（固定なし）を返す。
+func loadFileOverrides(projectFileID string) fileOverrides {
+	if projectFileID == "" {
+		return fileOverrides{}
+	}
+	pf, err := model.GetProjectFile(projectFileID)
+	if err != nil || pf == nil {
+		return fileOverrides{}
+	}
+	return fileOverrides{
+		blenderID:    pf.BlenderInstallID,
+		blenderFixed: pf.BlenderFixed,
+		scene:        pf.Scene,
+		sceneFixed:   pf.SceneFixed,
+		camera:       pf.Camera,
+		cameraFixed:  pf.CameraFixed,
+		engine:       pf.Engine,
+		engineFixed:  pf.EngineFixed,
+	}
+}
+
+// blenderID: 固定フラグありファイル指定を優先し、なければ requested を使う。
+func (fo fileOverrides) resolveBlenderID(requested uint) uint {
+	if fo.blenderFixed && fo.blenderID != 0 {
+		return fo.blenderID
+	}
+	return requested
+}
+
+// scene: 固定フラグありファイル指定 → requested → ファイル指定。
+func (fo fileOverrides) resolveScene(requested string) string {
+	if fo.sceneFixed && fo.scene != "" {
+		return fo.scene
+	}
+	if requested != "" {
+		return requested
+	}
+	return fo.scene
+}
+
+// engine: 固定フラグありファイル指定 → requested → ファイル指定 → シーンのデフォルト。
+func (fo fileOverrides) resolveEngine(requested, sceneDefault string) string {
+	if fo.engineFixed && fo.engine != "" {
+		return fo.engine
+	}
+	if requested != "" {
+		return requested
+	}
+	if fo.engine != "" {
+		return fo.engine
+	}
+	return sceneDefault
+}
+
+// camera: 固定フラグありファイル指定 → requested → ファイル指定 → シーンのデフォルト。
+func (fo fileOverrides) resolveCamera(requested, sceneDefault string) string {
+	if fo.cameraFixed && fo.camera != "" {
+		return fo.camera
+	}
+	if requested != "" {
+		return requested
+	}
+	if fo.camera != "" {
+		return fo.camera
+	}
+	return sceneDefault
+}
+
+// resolvedBase はファイル固定・要求値・シーン解析を突き合わせた確定パラメータ。
+type resolvedBase struct {
+	BlenderPath string
+	BlenderFile string
+	Scene       *exec.SceneTool // ツール解析結果（フレーム範囲・サンプル既定値など）
+	Engine      string
+	Camera      string
+}
+
+// resolveRenderBase は Blender パス/ファイル、シーン解析、エンジン、カメラを解決する。
+// reqBlenderID/reqScene/reqEngine/reqCamera は呼び出し側（ワークスペース or テスト params）の要求値。
+// PreviewRender と TestEnqueue の共通の解決ロジックを担う。
+func resolveRenderBase(projectID, projectFileID string, reqBlenderID uint, reqScene, reqEngine, reqCamera string) (*resolvedBase, error) {
+	fo := loadFileOverrides(projectFileID)
+
+	blenderPath, err := resolveBlenderPath(fo.resolveBlenderID(reqBlenderID), fo.blenderID)
+	if err != nil {
+		return nil, xerrors.Errorf("resolveBlenderPath: %w", err)
+	}
+	blenderFile, err := resolveBlenderFile(projectFileID, projectID)
+	if err != nil {
+		return nil, xerrors.Errorf("resolveBlenderFile: %w", err)
+	}
+
+	st, err := exec.ResolveScene(blenderPath, blenderFile, fo.resolveScene(reqScene))
+	if err != nil {
+		return nil, xerrors.Errorf("レンダリング前検証エラー: %w", err)
+	}
+
+	return &resolvedBase{
+		BlenderPath: blenderPath,
+		BlenderFile: blenderFile,
+		Scene:       st,
+		Engine:      fo.resolveEngine(reqEngine, st.Engine),
+		Camera:      fo.resolveCamera(reqCamera, st.Camera),
+	}, nil
+}
+
 // PreviewRender はToolを実行してレンダリングパラメータを解決・検証する。
 // シーン名が存在しない場合などはここでエラーを返す。
 func PreviewRender(projectID, workspaceID string) (*RenderPreview, error) {
@@ -225,57 +394,15 @@ func PreviewRender(projectID, workspaceID string) (*RenderPreview, error) {
 		return nil, xerrors.Errorf("project not found: %w", err)
 	}
 
-	var fileBlenderID uint
-	var fileBlenderFixed bool
-	var fileScene string
-	var fileSceneFixed bool
-	var fileCamera string
-	var fileCameraFixed bool
-	var fileEngine string
-	var fileEngineFixed bool
-	if w.ProjectFileID != "" {
-		pf, pfErr := model.GetProjectFile(w.ProjectFileID)
-		if pfErr == nil && pf != nil {
-			fileBlenderID = pf.BlenderInstallID
-			fileBlenderFixed = pf.BlenderFixed
-			fileScene = pf.Scene
-			fileSceneFixed = pf.SceneFixed
-			fileCamera = pf.Camera
-			fileCameraFixed = pf.CameraFixed
-			fileEngine = pf.Engine
-			fileEngineFixed = pf.EngineFixed
-		}
-	}
-
-	// Blender: 固定フラグありファイル指定はワークスペース設定を無視
-	wsBlenderID := w.BlenderInstallID
-	if fileBlenderFixed && fileBlenderID != 0 {
-		wsBlenderID = fileBlenderID
-	}
-	blenderPath, err := resolveBlenderPath(wsBlenderID, fileBlenderID)
+	base, err := resolveRenderBase(projectID, w.ProjectFileID, w.BlenderInstallID, w.Scene, w.Engine, w.Camera)
 	if err != nil {
-		return nil, xerrors.Errorf("resolveBlenderPath: %w", err)
+		return nil, err
 	}
-	blenderFile, err := resolveBlenderFile(w.ProjectFileID, projectID)
-	if err != nil {
-		return nil, xerrors.Errorf("resolveBlenderFile: %w", err)
-	}
-
-	// シーン: 固定フラグありファイル指定 → ワークスペース指定 → ファイル指定
-	var scene string
-	if fileSceneFixed && fileScene != "" {
-		scene = fileScene
-	} else if w.Scene != "" {
-		scene = w.Scene
-	} else {
-		scene = fileScene
-	}
-
-	// Tool を実行してシーンを検証し、フレーム範囲を取得
-	st, toolErr := exec.ResolveScene(blenderPath, blenderFile, scene)
-	if toolErr != nil {
-		return nil, xerrors.Errorf("レンダリング前検証エラー: %w", toolErr)
-	}
+	blenderPath := base.BlenderPath
+	blenderFile := base.BlenderFile
+	st := base.Scene
+	engine := base.Engine
+	camera := base.Camera
 
 	// フレーム範囲: 未指定 (0,-1) はツール結果を使用、明示指定はそのまま
 	startFrame := w.StartFrame
@@ -283,30 +410,6 @@ func PreviewRender(projectID, workspaceID string) (*RenderPreview, error) {
 	if startFrame == 0 && endFrame == -1 {
 		startFrame = st.Start
 		endFrame = st.End
-	}
-
-	// エンジン: 固定フラグありファイル指定 → ワークスペース指定 → ファイル指定 → シーンのデフォルト
-	var engine string
-	if fileEngineFixed && fileEngine != "" {
-		engine = fileEngine
-	} else if w.Engine != "" {
-		engine = w.Engine
-	} else if fileEngine != "" {
-		engine = fileEngine
-	} else {
-		engine = st.Engine
-	}
-
-	// カメラ: 固定フラグありファイル指定 → ワークスペース指定 → ファイル指定 → シーンのデフォルト
-	var camera string
-	if fileCameraFixed && fileCamera != "" {
-		camera = fileCamera
-	} else if w.Camera != "" {
-		camera = w.Camera
-	} else if fileCamera != "" {
-		camera = fileCamera
-	} else {
-		camera = st.Camera
 	}
 
 	samples := w.Samples
@@ -377,64 +480,25 @@ type TestRenderParams struct {
 
 // TestEnqueue は現在のフォーム値でサンプル8・中間1フレームのテストレンダリングをキューに追加する。
 // ワークスペースへの保存は行わない。
-func TestEnqueue(projectID, workspaceID string, params TestRenderParams) (*model.Queue, error) {
+func TestEnqueue(ctx context.Context, projectID, workspaceID string, params TestRenderParams) (*model.Queue, error) {
 	w, err := model.SelectWorkspace(projectID, workspaceID)
 	if err != nil || w == nil {
 		return nil, xerrors.Errorf("workspace not found: %w", err)
+	}
+	// runner 以上の権限が必要
+	if err := requireFileRole(ctx, w.ProjectFileID, rolesRunnerUp...); err != nil {
+		return nil, err
 	}
 	p, err := model.SelectProject(projectID)
 	if err != nil || p == nil {
 		return nil, xerrors.Errorf("project not found: %w", err)
 	}
 
-	var fileBlenderID uint
-	var fileBlenderFixed bool
-	var fileScene string
-	var fileSceneFixed bool
-	var fileCamera string
-	var fileCameraFixed bool
-	var fileEngine string
-	var fileEngineFixed bool
-	if w.ProjectFileID != "" {
-		pf, pfErr := model.GetProjectFile(w.ProjectFileID)
-		if pfErr == nil && pf != nil {
-			fileBlenderID = pf.BlenderInstallID
-			fileBlenderFixed = pf.BlenderFixed
-			fileScene = pf.Scene
-			fileSceneFixed = pf.SceneFixed
-			fileCamera = pf.Camera
-			fileCameraFixed = pf.CameraFixed
-			fileEngine = pf.Engine
-			fileEngineFixed = pf.EngineFixed
-		}
-	}
-
-	wsBlenderID := params.BlenderInstallID
-	if fileBlenderFixed && fileBlenderID != 0 {
-		wsBlenderID = fileBlenderID
-	}
-	blenderPath, err := resolveBlenderPath(wsBlenderID, fileBlenderID)
+	base, err := resolveRenderBase(projectID, w.ProjectFileID, params.BlenderInstallID, params.Scene, params.Engine, params.Camera)
 	if err != nil {
-		return nil, xerrors.Errorf("resolveBlenderPath: %w", err)
+		return nil, err
 	}
-	blenderFile, err := resolveBlenderFile(w.ProjectFileID, projectID)
-	if err != nil {
-		return nil, xerrors.Errorf("resolveBlenderFile: %w", err)
-	}
-
-	var scene string
-	if fileSceneFixed && fileScene != "" {
-		scene = fileScene
-	} else if params.Scene != "" {
-		scene = params.Scene
-	} else {
-		scene = fileScene
-	}
-
-	st, toolErr := exec.ResolveScene(blenderPath, blenderFile, scene)
-	if toolErr != nil {
-		return nil, xerrors.Errorf("レンダリング前検証エラー: %w", toolErr)
-	}
+	st := base.Scene
 
 	// フレーム範囲: 未指定 (0,-1) はシーンのデフォルトを使用
 	startFrame := params.StartFrame
@@ -447,38 +511,14 @@ func TestEnqueue(projectID, workspaceID string, params TestRenderParams) (*model
 	// 中間フレーム1枚のみレンダリング
 	testFrame := (startFrame + endFrame) / 2
 
-	// エンジン: 固定フラグありファイル指定 → params指定 → ファイル指定 → シーンのデフォルト
-	var engine string
-	if fileEngineFixed && fileEngine != "" {
-		engine = fileEngine
-	} else if params.Engine != "" {
-		engine = params.Engine
-	} else if fileEngine != "" {
-		engine = fileEngine
-	} else {
-		engine = st.Engine
-	}
-
-	// カメラ: 固定フラグありファイル指定 → params指定 → ファイル指定 → シーンのデフォルト
-	var camera string
-	if fileCameraFixed && fileCamera != "" {
-		camera = fileCamera
-	} else if params.Camera != "" {
-		camera = params.Camera
-	} else if fileCamera != "" {
-		camera = fileCamera
-	} else {
-		camera = st.Camera
-	}
-
 	preview := &RenderPreview{
 		ProjectName:   p.Name,
 		WorkspaceName: w.Name + " (Test)",
 		ProjectFileID: w.ProjectFileID,
-		BlenderPath:   blenderPath,
-		BlenderFile:   blenderFile,
+		BlenderPath:   base.BlenderPath,
+		BlenderFile:   base.BlenderFile,
 		Scene:         st.Name,
-		Engine:        engine,
+		Engine:        base.Engine,
 		StartFrame:    testFrame,
 		EndFrame:      testFrame,
 		FrameStep:     1,
@@ -486,15 +526,22 @@ func TestEnqueue(projectID, workspaceID string, params TestRenderParams) (*model
 		Samples:       8,
 		ResolutionX:   params.ResolutionX,
 		ResolutionY:   params.ResolutionY,
-		Camera:        camera,
+		Camera:        base.Camera,
 		JobType:       model.JobTypeTest,
 	}
 
-	return EnqueueWithPreview(projectID, workspaceID, preview)
+	return EnqueueWithPreview(ctx, projectID, workspaceID, preview)
 }
 
 // EnqueueWithPreview は解決済みの RenderPreview を使ってジョブを作成・実行する。
-func EnqueueWithPreview(projectID, workspaceID string, preview *RenderPreview) (*model.Queue, error) {
+func EnqueueWithPreview(ctx context.Context, projectID, workspaceID string, preview *RenderPreview) (*model.Queue, error) {
+	// runner 以上の権限が必要
+	if preview != nil {
+		if err := requireFileRole(ctx, preview.ProjectFileID, rolesRunnerUp...); err != nil {
+			return nil, err
+		}
+	}
+
 	baseDir, err := GetProjectBaseDir(projectID)
 	if err != nil {
 		return nil, xerrors.Errorf("GetProjectBaseDir: %w", err)
@@ -512,6 +559,10 @@ func EnqueueWithPreview(projectID, workspaceID string, preview *RenderPreview) (
 	if wd.Status == model.WorkDirStatusLock {
 		return nil, xerrors.New("作業ディレクトリがロックされています。移行後に実行してください")
 	}
+
+	// 重複チェックからキュー作成までを直列化し、二重投入を防ぐ
+	enqueueMu.Lock()
+	defer enqueueMu.Unlock()
 
 	exists, err := model.ExistsQueueByWorkspace(projectID, workspaceID)
 	if err != nil {
@@ -563,13 +614,13 @@ func EnqueueWithPreview(projectID, workspaceID string, preview *RenderPreview) (
 
 	if preview.JobType == model.JobTypeRender {
 		if err := model.UpdateWorkspaceProcessedAt(workspaceID, &now); err != nil {
-			log.Println("UpdateWorkspaceProcessedAt:", err)
+			log.Error("UpdateWorkspaceProcessedAt: %v", err)
 		}
 		if err := model.UpdateProjectFileProcessedAt(preview.ProjectFileID, &now); err != nil {
-			log.Println("UpdateProjectFileProcessedAt:", err)
+			log.Error("UpdateProjectFileProcessedAt: %v", err)
 		}
 		if err := model.UpdateProjectProcessedAt(projectID, &now); err != nil {
-			log.Println("UpdateProjectProcessedAt:", err)
+			log.Error("UpdateProjectProcessedAt: %v", err)
 		}
 	}
 
@@ -601,19 +652,29 @@ func EnqueueWithPreview(projectID, workspaceID string, preview *RenderPreview) (
 }
 
 // Enqueue は PreviewRender + EnqueueWithPreview のショートカット（後方互換用）
-func Enqueue(projectID string, workspaceID string) (*model.Queue, error) {
+func Enqueue(ctx context.Context, projectID string, workspaceID string) (*model.Queue, error) {
 	preview, err := PreviewRender(projectID, workspaceID)
 	if err != nil {
 		return nil, err
 	}
-	return EnqueueWithPreview(projectID, workspaceID, preview)
+	return EnqueueWithPreview(ctx, projectID, workspaceID, preview)
 }
 
 // SamplesComparisonEnqueue はサンプル比較ジョブをキューに投入する。
 // frame が 0 以下の場合は中間フレームを自動選択する。
-func SamplesComparisonEnqueue(projectID, workspaceID string, sampleCounts []int, frame int) (*model.Queue, error) {
+func SamplesComparisonEnqueue(ctx context.Context, projectID, workspaceID string, sampleCounts []int, frame int) (*model.Queue, error) {
 	if len(sampleCounts) == 0 {
 		return nil, xerrors.New("サンプル数リストが空です")
+	}
+
+	// runner 以上の権限が必要
+	if !fullAccess(ctx) {
+		w, wErr := model.SelectWorkspace(projectID, workspaceID)
+		if wErr == nil && w != nil {
+			if err := requireFileRole(ctx, w.ProjectFileID, rolesRunnerUp...); err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	preview, err := PreviewRender(projectID, workspaceID)
@@ -649,6 +710,10 @@ func SamplesComparisonEnqueue(projectID, workspaceID string, sampleCounts []int,
 	if wd.Status == model.WorkDirStatusLock {
 		return nil, xerrors.New("作業ディレクトリがロックされています。移行後に実行してください")
 	}
+
+	// 重複チェックからキュー作成までを直列化し、二重投入を防ぐ
+	enqueueMu.Lock()
+	defer enqueueMu.Unlock()
 
 	exists, err := model.ExistsQueueByWorkspace(projectID, workspaceID)
 	if err != nil {
@@ -782,10 +847,10 @@ func executeSamplesComparison(q *model.Queue, job *model.Job) {
 
 	now := time.Now()
 	if updateErr := model.UpdateQueueRunning(q.ID, pid); updateErr != nil {
-		log.Println("UpdateQueueRunning error:", updateErr)
+		log.Error("UpdateQueueRunning error: %v", updateErr)
 	}
 	if updateErr := model.UpdateJobStarted(q.ID, &now); updateErr != nil {
-		log.Println("UpdateJobStarted error:", updateErr)
+		log.Error("UpdateJobStarted error: %v", updateErr)
 	}
 
 	blenderErr := <-errCh
@@ -878,7 +943,7 @@ func executeQueue(q *model.Queue, job *model.Job) {
 	if runScript, rsErr := exec.GetRunPythonFile(run); rsErr == nil {
 		b.RunScript = runScript
 	} else {
-		log.Println("GetRunPythonFile error (rendering continues without script):", rsErr)
+		log.Warn("GetRunPythonFile error (rendering continues without script): %v", rsErr)
 	}
 
 	pw := exec.NewProcessingWriter(job.StartFrame, job.EndFrame)
@@ -904,10 +969,10 @@ func executeQueue(q *model.Queue, job *model.Job) {
 
 	now := time.Now()
 	if updateErr := model.UpdateQueueRunning(q.ID, pid); updateErr != nil {
-		log.Println("UpdateQueueRunning error:", updateErr)
+		log.Error("UpdateQueueRunning error: %v", updateErr)
 	}
 	if updateErr := model.UpdateJobStarted(q.ID, &now); updateErr != nil {
-		log.Println("UpdateJobStarted error:", updateErr)
+		log.Error("UpdateJobStarted error: %v", updateErr)
 	}
 
 	blenderErr := <-errCh
@@ -952,7 +1017,7 @@ func removeOutputDirs(dirs []string) {
 		}
 		if _, err := os.Stat(dir); err == nil {
 			if err := os.RemoveAll(dir); err != nil {
-				log.Println("removeOutputDirs:", err)
+				log.Error("removeOutputDirs: %v", err)
 			}
 		}
 	}
@@ -961,7 +1026,7 @@ func removeOutputDirs(dirs []string) {
 // finishJob updates the Job status, sets CompletedAt, then deletes the Queue record.
 func finishJob(id string, success bool, errMsg string, diskSize int64) {
 	if shuttingDown.Load() {
-		log.Printf("finishJob: skipped (shutting down) id=%s", id)
+		log.Notice("finishJob: skipped (shutting down) id=%s", id)
 		return
 	}
 	now := time.Now()
@@ -972,10 +1037,10 @@ func finishJob(id string, success bool, errMsg string, diskSize int64) {
 		dataStatus = model.JobDataCorrupted
 	}
 	if err := model.UpdateJobDone(id, status, errMsg, &now, diskSize, dataStatus); err != nil {
-		log.Println("UpdateJobDone error:", err)
+		log.Error("UpdateJobDone error: %v", err)
 	}
 	if err := model.DeleteQueue(id); err != nil {
-		log.Println("DeleteQueue error:", err)
+		log.Error("DeleteQueue error: %v", err)
 	}
 	if success {
 		applyAutoLock(id, diskSize)
@@ -1001,7 +1066,7 @@ func applyAutoLock(jobID string, diskSize int64) {
 		return
 	}
 	if err := model.UpdateJobDataStatus(jobID, model.JobDataAvailableLocked); err != nil {
-		log.Println("applyAutoLock lock error:", err)
+		log.Error("applyAutoLock lock error: %v", err)
 		return
 	}
 	keep := ws.AutoLockKeep
@@ -1010,7 +1075,7 @@ func applyAutoLock(jobID string, diskSize int64) {
 	}
 	count, err := model.CountAutoLockedJobs(ws.ID)
 	if err != nil {
-		log.Println("applyAutoLock count error:", err)
+		log.Error("applyAutoLock count error: %v", err)
 		return
 	}
 	for count > int64(keep) {
@@ -1019,7 +1084,7 @@ func applyAutoLock(jobID string, diskSize int64) {
 			break
 		}
 		if err := model.UpdateJobDataStatus(oldest.ID, model.JobDataAvailable); err != nil {
-			log.Println("applyAutoLock unlock error:", err)
+			log.Error("applyAutoLock unlock error: %v", err)
 			break
 		}
 		count--
@@ -1068,10 +1133,11 @@ func dispatchQueue(q *model.Queue, j *model.Job) {
 
 // QueueItem combines Queue (active state) with Job (parameters/names) for display.
 type QueueItem struct {
-	ID          string     `json:"id"`
-	Name        string     `json:"name"`
-	ProjectID   string     `json:"project_id"`
-	WorkspaceID string     `json:"workspace_id"`
+	ID            string     `json:"id"`
+	Name          string     `json:"name"`
+	ProjectID     string     `json:"project_id"`
+	ProjectFileID string     `json:"project_file_id"`
+	WorkspaceID   string     `json:"workspace_id"`
 	Engine        string     `json:"engine"`
 	StartFrame    int        `json:"start_frame"`
 	EndFrame      int        `json:"end_frame"`
@@ -1080,6 +1146,7 @@ type QueueItem struct {
 	StartedAt     *time.Time `json:"started_at"`
 	CreatedAt     *time.Time `json:"created_at"`
 	JobType       string     `json:"job_type"`
+	CanCancel     bool       `json:"can_cancel"`
 	// Progress (populated only while running)
 	NowFrame     int        `json:"now_frame"`
 	ExpectedAt   *time.Time `json:"expected_at,omitempty"`
@@ -1097,11 +1164,26 @@ func ListQueues() ([]*model.Queue, error) {
 	return model.ListQueues()
 }
 
-func ListQueueItems() ([]*QueueItem, error) {
+func ListQueueItems(ctx context.Context) ([]*QueueItem, error) {
 	queues, err := model.ListQueues()
 	if err != nil {
 		return nil, err
 	}
+	userID := currentUser(ctx)
+	isOwner := fullAccess(ctx)
+	// ファイルIDごとのキャンセル権限キャッシュ（同一ファイルの複数キューで重複チェック回避）
+	cancelCache := map[string]bool{}
+
+	// キューに対応する Job をまとめて1クエリで取得（N+1 回避）
+	jobIDs := make([]string, 0, len(queues))
+	for _, q := range queues {
+		jobIDs = append(jobIDs, q.ID)
+	}
+	jobs, err := model.GetJobsByIDs(jobIDs)
+	if err != nil {
+		return nil, err
+	}
+
 	items := make([]*QueueItem, 0, len(queues))
 	for _, q := range queues {
 		item := &QueueItem{
@@ -1112,16 +1194,30 @@ func ListQueueItems() ([]*QueueItem, error) {
 			ProcessID:   q.ProcessID,
 			StartedAt:   q.StartedAt,
 			CreatedAt:   q.CreatedAt,
+			CanCancel:   isOwner,
 		}
-		if j, err := model.GetJob(q.ID); err == nil && j != nil {
+		if j := jobs[q.ID]; j != nil {
 			item.Name = j.Name
 			item.Engine = j.Engine
 			item.StartFrame = j.StartFrame
 			item.EndFrame = j.EndFrame
 			item.JobType = j.JobType
+			item.ProjectFileID = j.ProjectFileID
 			if j.JobType == model.JobTypeSamplesComparison && j.SamplesList != "" {
 				item.EndFrame = len(exec.ParseSamplesList(j.SamplesList))
 				item.StartFrame = 0
+			}
+			// runner 以上がキャンセル可能
+			if !isOwner && j.ProjectFileID != "" {
+				if cached, ok := cancelCache[j.ProjectFileID]; ok {
+					item.CanCancel = cached
+				} else {
+					ok, err := model.HasFileRole(j.ProjectFileID, userID, []string{model.RoleOwner, model.RoleWorkspaceCreator, model.RoleEditor, model.RoleRunner})
+					if err == nil {
+						item.CanCancel = ok
+					}
+					cancelCache[j.ProjectFileID] = item.CanCancel
+				}
 			}
 		}
 		if pr := exec.GetProgress(q.ID); pr != nil {
@@ -1159,28 +1255,39 @@ func GetQueue(id string) (*model.Queue, error) {
 	return model.GetQueue(id)
 }
 
-func CancelQueue(id string) error {
+func CancelQueue(ctx context.Context, id string) error {
 	q, err := model.GetQueue(id)
 	if err != nil {
 		return xerrors.Errorf("GetQueue: %w", err)
 	}
+	// runner 以上の権限が必要
+	if !fullAccess(ctx) {
+		j, err := model.GetJob(id)
+		if err != nil {
+			return xerrors.Errorf("CancelQueue GetJob: %w", err)
+		}
+		if j != nil {
+			if err := requireFileRole(ctx, j.ProjectFileID, rolesRunnerUp...); err != nil {
+				return err
+			}
+		}
+	}
 	if q.Status != model.QueueRunning && q.Status != model.QueueWaiting && q.Status != model.QueueRecovering {
 		return xerrors.New("実行中または待機中のジョブではありません")
 	}
-	if q.ProcessID > 0 {
-		proc, err := os.FindProcess(q.ProcessID)
-		if err == nil {
-			proc.Kill()
-		}
-	}
 	now := time.Now()
 	j, _ := model.GetJob(q.ID)
+	expectedPath := ""
+	if j != nil {
+		expectedPath = j.BlenderPath
+	}
+	killQueueProcess(q.ProcessID, expectedPath)
 	var diskSize int64
 	if j != nil {
 		diskSize = calcDirSize(j.OutputDir)
 	}
 	if err := model.UpdateJobDone(q.ID, model.JobCancelled, "", &now, diskSize, model.JobDataCorrupted); err != nil {
-		log.Println("UpdateJobDone(cancelled) error:", err)
+		log.Error("UpdateJobDone(cancelled) error: %v", err)
 	}
 	wasRunning := q.Status == model.QueueRunning
 	if err := model.DeleteQueue(q.ID); err != nil {
@@ -1197,18 +1304,59 @@ func ListJobs() ([]*model.Job, error) {
 	return model.ListJobs()
 }
 
-func ListJobsPaged(filter *model.JobFilter, page, pageSize int) (*model.JobListResult, error) {
-	return model.ListJobsPaged(filter, page, pageSize)
+func ListJobsPaged(ctx context.Context, filter *model.JobFilter, page, pageSize int) (*model.JobListResult, error) {
+	result, err := model.ListJobsPaged(filter, page, pageSize)
+	if err != nil {
+		return nil, err
+	}
+	if fullAccess(ctx) {
+		for _, j := range result.Jobs {
+			j.HasFileAccess = true
+		}
+	} else {
+		userID := currentUser(ctx)
+		cache := map[string]bool{}
+		for _, j := range result.Jobs {
+			if j.ProjectFileID == "" {
+				j.HasFileAccess = true
+				continue
+			}
+			if v, ok := cache[j.ProjectFileID]; ok {
+				j.HasFileAccess = v
+				continue
+			}
+			ok, err := model.HasFileAccess(j.ProjectFileID, userID)
+			if err == nil {
+				j.HasFileAccess = ok
+			}
+			cache[j.ProjectFileID] = j.HasFileAccess
+		}
+	}
+	return result, nil
 }
 
-func UpdateJobMeta(id, name, note string) error {
+func UpdateJobMeta(ctx context.Context, id, name, note string) error {
+	// runner 以上の権限が必要
+	if !fullAccess(ctx) {
+		j, err := model.GetJob(id)
+		if err != nil {
+			return xerrors.Errorf("UpdateJobMeta GetJob: %w", err)
+		}
+		if err := requireFileRole(ctx, j.ProjectFileID, rolesRunnerUp...); err != nil {
+			return err
+		}
+	}
 	return model.UpdateJobMeta(id, name, note)
 }
 
-func DeleteJob(id string) error {
+func DeleteJob(ctx context.Context, id string) error {
 	j, err := model.GetJob(id)
 	if err != nil {
 		return xerrors.Errorf("DeleteJob GetJob: %w", err)
+	}
+	// runner 以上の権限が必要
+	if err := requireFileRole(ctx, j.ProjectFileID, rolesRunnerUp...); err != nil {
+		return err
 	}
 	if j.DataStatus%2 == 1 {
 		return xerrors.New("ロック中のジョブは削除できません")
@@ -1216,7 +1364,7 @@ func DeleteJob(id string) error {
 	if j.OutputDir != "" {
 		if _, statErr := os.Stat(j.OutputDir); statErr == nil {
 			if rmErr := os.RemoveAll(j.OutputDir); rmErr != nil {
-				log.Println("DeleteJob RemoveAll:", rmErr)
+				log.Error("DeleteJob RemoveAll: %v", rmErr)
 			}
 		}
 	}
@@ -1228,7 +1376,15 @@ func DeleteJob(id string) error {
 // errorOnly=false のとき: ロックされていないジョブのうち最新 keepCount 件を残し残りを削除する。
 // dataOnly=true の場合は出力データのみ削除してジョブ履歴を残す（DataStatus を削除済みに更新）。
 // ロック済みジョブは常に保持される。削除件数を返す。
-func BulkDeleteJobsByWorkspace(projectID, workspaceID string, keepCount int, dataOnly bool, errorOnly bool) (int, error) {
+func BulkDeleteJobsByWorkspace(ctx context.Context, projectID, workspaceID string, keepCount int, dataOnly bool, errorOnly bool) (int, error) {
+	// runner 以上の権限が必要（ワークスペースのファイルで判定）
+	if !fullAccess(ctx) {
+		if w, wErr := model.SelectWorkspace(projectID, workspaceID); wErr == nil && w != nil {
+			if err := requireFileRole(ctx, w.ProjectFileID, rolesRunnerUp...); err != nil {
+				return 0, err
+			}
+		}
+	}
 	jobs, err := model.ListJobsByWorkspace(projectID, workspaceID)
 	if err != nil {
 		return 0, xerrors.Errorf("BulkDeleteJobsByWorkspace: %w", err)
@@ -1261,12 +1417,12 @@ func BulkDeleteJobsByWorkspace(projectID, workspaceID string, keepCount int, dat
 	for _, j := range toDelete {
 		var opErr error
 		if dataOnly {
-			opErr = DeleteJobData(j.ID)
+			opErr = DeleteJobData(ctx, j.ID)
 		} else {
-			opErr = DeleteJob(j.ID)
+			opErr = DeleteJob(ctx, j.ID)
 		}
 		if opErr != nil {
-			log.Println("BulkDeleteJobsByWorkspace:", opErr)
+			log.Error("BulkDeleteJobsByWorkspace: %v", opErr)
 			continue
 		}
 		deleted++
@@ -1274,10 +1430,14 @@ func BulkDeleteJobsByWorkspace(projectID, workspaceID string, keepCount int, dat
 	return deleted, nil
 }
 
-func DeleteJobData(id string) error {
+func DeleteJobData(ctx context.Context, id string) error {
 	j, err := model.GetJob(id)
 	if err != nil {
 		return xerrors.Errorf("DeleteJobData GetJob: %w", err)
+	}
+	// runner 以上の権限が必要
+	if err := requireFileRole(ctx, j.ProjectFileID, rolesRunnerUp...); err != nil {
+		return err
 	}
 	if j.DataStatus%2 == 1 {
 		return xerrors.New("ロック中のジョブのデータは削除できません")
@@ -1292,10 +1452,14 @@ func DeleteJobData(id string) error {
 	return model.UpdateJobDataStatus(id, model.JobDataDeleted)
 }
 
-func LockJob(id string) error {
+func LockJob(ctx context.Context, id string) error {
 	j, err := model.GetJob(id)
 	if err != nil {
 		return xerrors.Errorf("LockJob GetJob: %w", err)
+	}
+	// runner 以上の権限が必要
+	if err := requireFileRole(ctx, j.ProjectFileID, rolesRunnerUp...); err != nil {
+		return err
 	}
 	if j.DataStatus%2 == 1 {
 		return nil // すでにロック済み
@@ -1303,10 +1467,14 @@ func LockJob(id string) error {
 	return model.UpdateJobDataStatus(id, j.DataStatus+1)
 }
 
-func UnlockJob(id string) error {
+func UnlockJob(ctx context.Context, id string) error {
 	j, err := model.GetJob(id)
 	if err != nil {
 		return xerrors.Errorf("UnlockJob GetJob: %w", err)
+	}
+	// runner 以上の権限が必要
+	if err := requireFileRole(ctx, j.ProjectFileID, rolesRunnerUp...); err != nil {
+		return err
 	}
 	if j.DataStatus%2 == 0 {
 		return nil // ロックされていない
@@ -1315,10 +1483,13 @@ func UnlockJob(id string) error {
 }
 
 // ListJobImages はジョブの出力ディレクトリにある画像ファイルのパス一覧を昇順で返す。
-func ListJobImages(id string) ([]string, error) {
+func ListJobImages(ctx context.Context, id string) ([]string, error) {
 	j, err := model.GetJob(id)
 	if err != nil {
 		return nil, xerrors.Errorf("ListJobImages GetJob: %w", err)
+	}
+	if err := requireFileAccess(ctx, j.ProjectFileID); err != nil {
+		return nil, err
 	}
 	if j.OutputDir == "" {
 		return nil, nil
@@ -1350,17 +1521,24 @@ type JobFileInfo struct {
 }
 
 // ListJobFiles はジョブの出力ディレクトリにある全ファイルの情報を返す。
-func ListJobFiles(id string) ([]*JobFileInfo, error) {
+func ListJobFiles(ctx context.Context, id string) ([]*JobFileInfo, error) {
 	j, err := model.GetJob(id)
 	if err != nil {
+		log.Error("[ListJobFiles] GetJob error: %v", err)
 		return nil, xerrors.Errorf("ListJobFiles GetJob: %w", err)
 	}
+	if err := requireFileAccess(ctx, j.ProjectFileID); err != nil {
+		return nil, err
+	}
+	log.Debug("[ListJobFiles] job=%s outputDir=%q dataStatus=%d", id, j.OutputDir, j.DataStatus)
 	if j.OutputDir == "" {
+		log.Debug("[ListJobFiles] outputDir is empty, returning nil")
 		return nil, nil
 	}
 	entries, err := os.ReadDir(j.OutputDir)
 	if err != nil {
 		if os.IsNotExist(err) {
+			log.Debug("[ListJobFiles] dir not found: %s", j.OutputDir)
 			return nil, nil
 		}
 		return nil, xerrors.Errorf("ListJobFiles ReadDir: %w", err)
@@ -1371,6 +1549,7 @@ func ListJobFiles(id string) ([]*JobFileInfo, error) {
 		if err != nil {
 			continue
 		}
+		log.Debug("[ListJobFiles] file: %s (isDir=%v, size=%d)", e.Name(), e.IsDir(), info.Size())
 		list = append(list, &JobFileInfo{
 			Name:    e.Name(),
 			Path:    filepath.Join(j.OutputDir, e.Name()),
@@ -1379,11 +1558,16 @@ func ListJobFiles(id string) ([]*JobFileInfo, error) {
 			IsDir:   e.IsDir(),
 		})
 	}
+	log.Debug("[ListJobFiles] returning %d files", len(list))
 	return list, nil
 }
 
 // GetImageBase64 は指定パスの画像を base64 データ URI として返す。
-func GetImageBase64(path string) (string, error) {
+// 任意ファイル読み取りを防ぐため、パスは登録済み作業ディレクトリ配下に限定する。
+func GetImageBase64(ctx context.Context, path string) (string, error) {
+	if err := validateWorkDirPath(path); err != nil {
+		return "", err
+	}
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return "", xerrors.Errorf("GetImageBase64: %w", err)
@@ -1396,27 +1580,65 @@ func GetImageBase64(path string) (string, error) {
 	return "data:" + mime + ";base64," + base64.StdEncoding.EncodeToString(data), nil
 }
 
-func ListJobsByWorkspace(projectID string, workspaceID string) ([]*model.Job, error) {
+func GetJob(ctx context.Context, id string) (*model.Job, error) {
+	j, err := model.GetJob(id)
+	if err != nil {
+		return nil, err
+	}
+	if err := requireFileAccess(ctx, j.ProjectFileID); err != nil {
+		return nil, err
+	}
+	return j, nil
+}
+
+// workspaceFileAccess はワークスペースのファイルに対する参照権限を確認する。
+func workspaceFileAccess(ctx context.Context, projectID, workspaceID string) error {
+	if fullAccess(ctx) {
+		return nil
+	}
+	w, err := model.SelectWorkspace(projectID, workspaceID)
+	if err != nil || w == nil {
+		return xerrors.Errorf("workspace not found: %w", err)
+	}
+	return requireFileAccess(ctx, w.ProjectFileID)
+}
+
+func ListJobsByWorkspace(ctx context.Context, projectID string, workspaceID string) ([]*model.Job, error) {
+	if err := workspaceFileAccess(ctx, projectID, workspaceID); err != nil {
+		return nil, err
+	}
 	return model.ListJobsByWorkspace(projectID, workspaceID)
 }
 
-func ListJobsByWorkspacePaged(projectID, workspaceID string, page, pageSize int) (*model.JobPagedResult, error) {
+func ListJobsByWorkspacePaged(ctx context.Context, projectID, workspaceID string, page, pageSize int) (*model.JobPagedResult, error) {
+	if err := workspaceFileAccess(ctx, projectID, workspaceID); err != nil {
+		return nil, err
+	}
 	return model.ListJobsByWorkspacePaged(projectID, workspaceID, page, pageSize)
 }
 
-func ListJobsByProjectFile(projectID string, projectFileID string) ([]*model.Job, error) {
+func ListJobsByProjectFile(ctx context.Context, projectID string, projectFileID string) ([]*model.Job, error) {
+	if err := requireFileAccess(ctx, projectFileID); err != nil {
+		return nil, err
+	}
 	return model.ListJobsByProjectFile(projectID, projectFileID)
 }
 
-func ListJobsByProjectFilePaged(projectID, projectFileID string, page, pageSize int) (*model.JobPagedResult, error) {
+func ListJobsByProjectFilePaged(ctx context.Context, projectID, projectFileID string, page, pageSize int) (*model.JobPagedResult, error) {
+	if err := requireFileAccess(ctx, projectFileID); err != nil {
+		return nil, err
+	}
 	return model.ListJobsByProjectFilePaged(projectID, projectFileID, page, pageSize)
 }
 
 // ZipJobData は job の OutputDir 全体を ZIP 圧縮して savePath に書き出す。
-func ZipJobData(id string, savePath string) error {
+func ZipJobData(ctx context.Context, id string, savePath string) error {
 	j, err := model.GetJob(id)
 	if err != nil {
 		return xerrors.Errorf("ZipJobData GetJob: %w", err)
+	}
+	if err := requireFileAccess(ctx, j.ProjectFileID); err != nil {
+		return err
 	}
 	// none(0/1) または deleted(4/5) はデータなし。modified(8/9) は一部残存のため許可。
 	if j.DataStatus == model.JobDataNone || j.DataStatus == model.JobDataNoneLocked ||
@@ -1463,10 +1685,13 @@ func ZipJobData(id string, savePath string) error {
 
 // GetJobLog は job の OutputDir にある render.log の内容を返す。
 // ファイルが存在しない場合は空文字を返す。
-func GetJobLog(id string) (string, error) {
+func GetJobLog(ctx context.Context, id string) (string, error) {
 	j, err := model.GetJob(id)
 	if err != nil {
 		return "", xerrors.Errorf("GetJobLog GetJob: %w", err)
+	}
+	if err := requireFileAccess(ctx, j.ProjectFileID); err != nil {
+		return "", err
 	}
 	if j.OutputDir == "" {
 		return "", nil
@@ -1483,10 +1708,18 @@ func GetJobLog(id string) (string, error) {
 }
 
 // ZipJobSelectedFiles は job の OutputDir 内の指定ファイルのみを ZIP 圧縮して savePath に書き出す。
-func ZipJobSelectedFiles(id string, filePaths []string, savePath string) error {
+// OutputDir 外を指すパスは無視する（任意ファイルの吸い出しを防ぐ）。
+func ZipJobSelectedFiles(ctx context.Context, id string, filePaths []string, savePath string) error {
 	j, err := model.GetJob(id)
 	if err != nil {
 		return xerrors.Errorf("ZipJobSelectedFiles GetJob: %w", err)
+	}
+	if err := requireFileAccess(ctx, j.ProjectFileID); err != nil {
+		return err
+	}
+	absOut, err := filepath.Abs(j.OutputDir)
+	if err != nil {
+		return xerrors.Errorf("ZipJobSelectedFiles Abs: %w", err)
 	}
 	f, err := os.Create(savePath)
 	if err != nil {
@@ -1496,9 +1729,13 @@ func ZipJobSelectedFiles(id string, filePaths []string, savePath string) error {
 	zw := zip.NewWriter(f)
 	defer zw.Close()
 	for _, path := range filePaths {
-		rel, relErr := filepath.Rel(j.OutputDir, path)
-		if relErr != nil {
-			rel = filepath.Base(path)
+		absP, absErr := filepath.Abs(path)
+		if absErr != nil {
+			continue
+		}
+		rel, relErr := filepath.Rel(absOut, absP)
+		if relErr != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+			continue // OutputDir 外は無視
 		}
 		w, err := zw.Create(filepath.ToSlash(rel))
 		if err != nil {
@@ -1520,10 +1757,14 @@ func ZipJobSelectedFiles(id string, filePaths []string, savePath string) error {
 // DeleteJobFiles は job の OutputDir 内の指定ファイルを削除する。
 // ロック中のジョブは削除不可。OutputDir 外のパスは無視する。
 // 削除後、ファイルが残っていれば JobDataModified、全削除なら JobDataDeleted にステータスを更新する。
-func DeleteJobFiles(id string, filePaths []string) error {
+func DeleteJobFiles(ctx context.Context, id string, filePaths []string) error {
 	j, err := model.GetJob(id)
 	if err != nil {
 		return xerrors.Errorf("DeleteJobFiles GetJob: %w", err)
+	}
+	// runner 以上の権限が必要
+	if err := requireFileRole(ctx, j.ProjectFileID, rolesRunnerUp...); err != nil {
+		return err
 	}
 	if j.DataStatus%2 == 1 {
 		return xerrors.New("ロック中のジョブのファイルは削除できません")
@@ -1586,16 +1827,19 @@ func GetCleanableJobStats(filter *model.CleanFilter) (*model.CleanableJobStats, 
 }
 
 // CleanJobData はフィルタ条件に合致するジョブの出力データを削除する（履歴は残す）。
-// 削除件数を返す。
-func CleanJobData(filter *model.CleanFilter) (int, error) {
+// プロジェクト横断のクリーンアップのため admin 権限を要求する。削除件数を返す。
+func CleanJobData(ctx context.Context, filter *model.CleanFilter) (int, error) {
+	if err := requireAdmin(ctx); err != nil {
+		return 0, err
+	}
 	jobs, err := model.ListCleanableJobs(filter)
 	if err != nil {
 		return 0, xerrors.Errorf("CleanJobData: %w", err)
 	}
 	deleted := 0
 	for _, j := range jobs {
-		if err := DeleteJobData(j.ID); err != nil {
-			log.Println("CleanJobData:", err)
+		if err := DeleteJobData(ctx, j.ID); err != nil {
+			log.Error("CleanJobData: %v", err)
 			continue
 		}
 		deleted++
@@ -1632,4 +1876,3 @@ func measureDirSize(dir string) int64 {
 	})
 	return total
 }
-

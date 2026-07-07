@@ -65,9 +65,11 @@ type Job struct {
 	JobType       string     `json:"job_type"`      // "" = 通常, "samples_comparison"
 	SamplesList   string     `json:"samples_list"`  // カンマ区切りサンプル数
 	DiskSize      int64      `json:"disk_size"`     // 出力フォルダの容量（バイト）
-	StartedAt     *time.Time `json:"started_at"`
-	CompletedAt   *time.Time `json:"completed_at"`
-	EnqueuedAt    *time.Time `json:"enqueued_at"` // キュー登録時刻
+	StartedAt      *time.Time `json:"started_at"`
+	CompletedAt    *time.Time `json:"completed_at"`
+	EnqueuedAt     *time.Time `json:"enqueued_at"` // キュー登録時刻
+	CreatedBy      string     `json:"created_by"`
+	HasFileAccess  bool       `gorm:"-" json:"has_file_access"` // API 層で設定（DB 非保存）
 }
 
 func CreateJob(j *Job) error {
@@ -97,6 +99,26 @@ func GetJob(id string) (*Job, error) {
 		return nil, xerrors.Errorf("GetJob: %w", res.Error)
 	}
 	return &j, nil
+}
+
+// GetJobsByIDs は複数のジョブを1クエリでまとめて取得し、ID → *Job のマップで返す。
+// N+1 を避けたい一覧処理（キュー表示など）で使う。
+func GetJobsByIDs(ids []string) (map[string]*Job, error) {
+	result := make(map[string]*Job, len(ids))
+	if len(ids) == 0 {
+		return result, nil
+	}
+	var jobs []*Job
+	res := db.Select("jobs.*, project_files.name AS file_name").
+		Joins("LEFT JOIN project_files ON project_files.id = jobs.project_file_id").
+		Where("jobs.id IN ?", ids).Find(&jobs)
+	if res.Error != nil {
+		return nil, xerrors.Errorf("GetJobsByIDs: %w", res.Error)
+	}
+	for _, j := range jobs {
+		result[j.ID] = j
+	}
+	return result, nil
 }
 
 func ListJobs() ([]*Job, error) {

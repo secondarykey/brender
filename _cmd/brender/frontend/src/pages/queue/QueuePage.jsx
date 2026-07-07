@@ -7,6 +7,8 @@ import JobDetailDialog from '../../components/JobDetailDialog'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import Pagination from '../../components/Pagination'
 import { formatDate, formatDateFull } from '../../lib/dateFormat'
+import { isWails } from '../../lib/api/_client'
+import SystemStats from '../../components/SystemStats'
 
 function StatusBadge({ status }) {
   const { t } = useTranslation()
@@ -191,6 +193,7 @@ function ActiveTab({ navigate }) {
                   <button
                     className="btn btn-danger btn-sm"
                     onClick={() => setConfirmId(q.id)}
+                    disabled={q.can_cancel === false}
                   >
                     {t('common.cancelAction')}
                   </button>
@@ -279,8 +282,10 @@ function HistoryTab({ navigate }) {
               </tr>
             </thead>
             <tbody>
-              {pageJobs.map(j => (
-                <tr key={j.id} className={`${j.status === 'error' ? 'row-error' : ''} row-clickable`} onClick={() => setSelected(j)}>
+              {pageJobs.map(j => {
+                const accessible = j.has_file_access !== false
+                return (
+                <tr key={j.id} className={`${j.status === 'error' ? 'row-error' : ''}${accessible ? ' row-clickable' : ''}`} onClick={() => accessible && setSelected(j)}>
                   <td className="col-c">
                     <StatusBadge status={j.status || 'running'} />
                     {j.status === 'error' && j.error_msg && (
@@ -290,14 +295,18 @@ function HistoryTab({ navigate }) {
                     )}
                   </td>
                   <td>
-                    <button className="link-btn" onClick={e => { e.stopPropagation(); navigate && navigate('job', {
-                      job: j,
-                      initialTab: 'render',
-                      backPage: 'queue',
-                      backParams: {},
-                    })}}>
-                      {j.name || '—'}
-                    </button>
+                    {accessible ? (
+                      <button className="link-btn" onClick={e => { e.stopPropagation(); navigate && navigate('job', {
+                        job: j,
+                        initialTab: 'render',
+                        backPage: 'queue',
+                        backParams: {},
+                      })}}>
+                        {j.name || '—'}
+                      </button>
+                    ) : (
+                      <span style={{ opacity: 0.5 }}>{j.name || '—'}</span>
+                    )}
                   </td>
                   <td className="col-c">{j.engine || '—'}</td>
                   <td className="col-c">{j.scene  || '—'}</td>
@@ -309,7 +318,7 @@ function HistoryTab({ navigate }) {
                   <td className="col-c date-cell">{formatDateFull(j.completed_at)}</td>
                   <td className="duration-cell">{duration(j.started_at, j.completed_at, t)}</td>
                 </tr>
-              ))}
+              )})}
             </tbody>
           </table>
           <Pagination page={currentPage} totalPages={totalPages} onChange={handlePageChange} pageSize={pageSize} onPageSizeChange={p => { setPageSize(p); setPage(1) }} total={total} />
@@ -344,19 +353,22 @@ function QueuePage({ navigate }) {
         >
           {t('tabs.history')}
         </button>
-        <button
-          className="btn btn-outline btn-sm"
-          style={{ marginLeft: 'auto' }}
-          onClick={() => QueueApi.openMiniMonitor()}
-        >
-          {t('menu.miniMonitor')}
-        </button>
+        {isWails() && (
+          <button
+            className="btn btn-outline btn-sm"
+            style={{ marginLeft: 'auto' }}
+            onClick={() => QueueApi.openMiniMonitor()}
+          >
+            {t('menu.miniMonitor')}
+          </button>
+        )}
       </div>
 
       <div className="tab-content">
         {tab === 'active'  && <ActiveTab  navigate={navigate} />}
         {tab === 'history' && <HistoryTab navigate={navigate} />}
       </div>
+      <SystemStats />
     </div>
   )
 }

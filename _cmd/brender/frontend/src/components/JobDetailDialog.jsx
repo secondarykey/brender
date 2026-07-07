@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { QueueApi } from '../lib/api'
+import { QueueApi, ProjectApi } from '../lib/api'
 import Dialog from './Dialog'
 import ConfirmDialog from './ConfirmDialog'
 import { formatDateFull as fmt } from '../lib/dateFormat'
@@ -66,14 +66,25 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged, navigate })
   const [locking, setLocking]   = useState(false)
   const [error, setError]       = useState('')
   const [dataStatus, setDataStatus] = useState(job?.data_status ?? 0)
+  const [fileRole, setFileRole] = useState('owner')
   useEffect(() => {
     if (job) setDataStatus(job.data_status ?? 0)
   }, [job])
+  useEffect(() => {
+    if (!job?.project_file_id) return
+    ProjectApi.getFile({ fileID: job.project_file_id })
+      .then(f => { if (f?.my_role) setFileRole(f.my_role) })
+      .catch(() => {})
+  }, [job?.project_file_id])
 
   if (!job) return null
 
   const status   = job.status || 'running'
+  const isRunning = !job.status || job.status === 'running' || job.status === 'waiting' || job.status === 'recovering'
   const isLocked = dataStatus % 2 === 1
+
+  // runner 以上が削除可能
+  const canDelete = ['owner', 'workspace_creator', 'editor', 'runner'].includes(fileRole)
 
   const handleLock = async () => {
     setLocking(true)
@@ -124,7 +135,7 @@ function JobDetailDialog({ job, onClose, onDeleted, onStatusChanged, navigate })
         bodyClassName="job-detail-body"
         actions={
           <>
-            <button className="btn btn-danger" style={{ marginRight: 'auto' }} onClick={() => setConfirm(true)} disabled={isLocked}>{t('common.delete')}</button>
+            <button className="btn btn-danger" style={{ marginRight: 'auto' }} onClick={() => setConfirm(true)} disabled={isLocked || isRunning || !canDelete}>{t('common.delete')}</button>
             <button className="btn btn-ghost" onClick={onClose}>{t('common.close')}</button>
           </>
         }

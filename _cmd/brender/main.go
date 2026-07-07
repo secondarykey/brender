@@ -10,12 +10,17 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/ikascrew/brender/api"
-	"github.com/ikascrew/brender/api/wails"
+	"github.com/ikascrew/brender/api/rest"
+	"github.com/ikascrew/brender/config"
 	"github.com/ikascrew/brender/log"
 	"github.com/ikascrew/brender/model"
+	"github.com/ikascrew/brender/sysmon"
 	"golang.org/x/xerrors"
+
+	"main/services"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/events"
@@ -29,16 +34,21 @@ var appVersion string
 
 func initDB() error {
 
-	home, err := os.UserHomeDir()
+	dir, err := config.Dir()
 	if err != nil {
 		return err
 	}
-	dir := filepath.Join(home, ".brender")
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err
 	}
 
-	return model.Init(filepath.Join(dir, "brender.db"))
+	// DB パスは brender.ini の db_path を優先。未設定なら ~/.brender/brender.db。
+	dbPath := config.Get().DBPath
+	if dbPath == "" {
+		dbPath = filepath.Join(dir, "brender.db")
+	}
+
+	return model.Init(dbPath)
 }
 
 func initLocale() error {
@@ -87,6 +97,11 @@ func run() error {
 		return xerrors.Errorf("initDB() error: %w", err)
 	}
 
+	// 常駐中に溜まった生成済みスクリプトを起動時に一掃する
+	if err := api.ClearScripts(); err != nil {
+		log.Notice("ClearScripts: %v", err)
+	}
+
 	// 前回終了時に running のまま残ったキューを waiting に戻す
 	api.RecoverStaleQueues()
 
@@ -99,14 +114,16 @@ func run() error {
 		Description: "Blender rendering manager",
 		Logger:      logger,
 		Services: []application.Service{
-			application.NewService(wails.NewBlender()),
-			application.NewService(wails.NewEnvironment()),
-			application.NewService(wails.NewProject()),
-			application.NewService(wails.NewWorkspace()),
-			application.NewService(wails.NewQueue()),
-			application.NewService(wails.NewWorkDir()),
-			application.NewService(wails.NewCodes()),
-			application.NewService(wails.NewTag()),
+			application.NewService(services.NewBlender()),
+			application.NewService(services.NewEnvironment()),
+			application.NewService(services.NewProject()),
+			application.NewService(services.NewWorkspace()),
+			application.NewService(services.NewQueue()),
+			application.NewService(services.NewWorkDir()),
+			application.NewService(services.NewCodes()),
+			application.NewService(services.NewTag()),
+			application.NewService(services.NewAuth()),
+			application.NewService(services.NewSysMon()),
 		},
 		Assets: application.AssetOptions{
 			Handler: &movieAwareHandler{fallback: application.AssetFileServerFS(assets)},
@@ -116,9 +133,9 @@ func run() error {
 		},
 	})
 
-	wails.AppVersion = strings.TrimSpace(appVersion)
+	services.AppVersion = strings.TrimSpace(appVersion)
 	dev := app.Env.Info().Debug
-	wails.DevMode = dev
+	services.DevMode = dev
 	if dev {
 		log.SetLevel(slog.LevelInfo)
 		//ログをInfoに落とす
@@ -143,45 +160,95 @@ func run() error {
 	})
 	// メインウィンドウが閉じられたらアプリ全体を終了する（ログウィンドウも閉じる）
 	mainWin.RegisterHook(events.Common.WindowClosing, func(_ *application.WindowEvent) {
+		api.StopSystemMonitor()
 		api.KillRunningQueues()
 		model.Close()
 		application.Get().Quit()
 	})
 
-	// キュー変化イベントをフロントエンドへ通知
+	// サーバモードなら先に HTTP サーバ（と SSE broker）を用意する。
+	// broker はイベント配信フックより前に確定させ、全イベントが SSE へ届くようにする。
+	var restServer *rest.Server
+	var broker *rest.SSEBroker
+	var serverPort int
+	if env, err := model.GetEnv(); err == nil && env != nil && env.Server {
+		serverPort = env.ServerPort
+		if serverPort < 1 || serverPort > 65535 {
+			serverPort = 8080
+		}
+		rest.SetVersionInfo(strings.TrimSpace(appVersion), dev)
+		restServer = rest.NewServer(assets, env.ServerHost, serverPort)
+		broker = restServer.Broker()
+	}
+
+	// イベント配信を一元化する。Wails Event へ送り、サーバモードなら SSE へも配る。
+	// 新しいイベントを足す場合もこの emit を通せば両トランスポートへ確実に届く。
+	emit := func(name string, data any) {
+		application.Get().Event.Emit(name, data)
+		if broker != nil {
+			broker.Emit(name, data)
+		}
+	}
+
+	// キュー変化イベント
 	api.QueueChangedHook = func(count int64) {
-		application.Get().Event.Emit("queue:changed", count)
+		emit("queue:changed", count)
 	}
-
-	// リカバリされたキューのスケジューリングを開始
-	api.StartRecoveredQueues()
-
-	// 登録済み Blender のバージョン検証（バックグラウンド）
+	// 登録済み Blender のバージョン検証結果
 	api.BlenderWarningHook = func(warnings []string) {
-		application.Get().Event.Emit("blender:warning", warnings)
+		emit("blender:warning", warnings)
 	}
-	go api.VerifyBlenderInstalls()
-
-	// 移行進捗イベントをフロントエンドへ通知
+	// 移行進捗イベント
 	api.MigrationHook = func(projectID string, status string, pct float64) {
-		application.Get().Event.Emit("workdir:migrate", map[string]interface{}{
+		emit("workdir:migrate", map[string]interface{}{
 			"project_id": projectID,
 			"status":     status,
 			"pct":        pct,
 		})
 	}
-
-	// パス変更進捗イベントをフロントエンドへ通知
+	// 動画作成完了イベント
+	api.MovieCreatedHook = func(jobID string, path string, errMsg string) {
+		emit("movie:created", map[string]interface{}{
+			"job_id": jobID,
+			"path":   path,
+			"error":  errMsg,
+		})
+	}
+	// パス変更進捗イベント
 	api.WorkDirChangeDirHook = func(workDirID uint, status string, pct float64) {
-		application.Get().Event.Emit("workdir:changedir", map[string]interface{}{
+		emit("workdir:changedir", map[string]interface{}{
 			"work_dir_id": workDirID,
 			"status":      status,
 			"pct":         pct,
 		})
 	}
+	// システムモニタリング（CPU/GPU 使用率）
+	api.SystemStatsHook = func(stats sysmon.Stats) {
+		emit("system:stats", stats)
+	}
+
+	// フック設定後にスケジューラ・モニタ・検証を開始する
+	api.StartRecoveredQueues()
+	go api.VerifyBlenderInstalls()
+	api.StartSystemMonitor()
+
+	if restServer != nil {
+		if err := restServer.Start(); err != nil {
+			log.Error("Failed to start HTTP server: %v", err)
+		} else {
+			log.Notice("= HTTP Server started on port %d", serverPort)
+		}
+	}
 
 	if err := app.Run(); err != nil {
 		return xerrors.Errorf("app.Run() error: %w", err)
 	}
+
+	if restServer != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		restServer.Shutdown(ctx)
+	}
+
 	return nil
 }

@@ -1,6 +1,6 @@
 import { isWails, serverCall } from './_client'
 
-const svc = () => import('../../../bindings/github.com/ikascrew/brender/api/wails/workspace')
+const svc = () => import('../../../bindings/main/services/workspace')
 
 export const WorkspaceApi = {
   /** プロジェクト内のワークスペース一覧をファイルごとに取得
@@ -54,7 +54,7 @@ export const WorkspaceApi = {
     isWails() ? svc().then(s => s.Delete(projectID, workspaceID, force))
               : serverCall('workspace', 'delete', { project_id: projectID, workspace_id: workspaceID, force }),
 
-  /** ワークスペースのサムネイル画像を base64 データURIで取得
+  /** ワークスペースのサムネイルを取得。Wails は base64、サーバモードは配信URL。
    * @param {{ projectID: string, fileID: string, workspaceID: string }} args
    */
   getThumbnail: ({ projectID, fileID, workspaceID }) =>

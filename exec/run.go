@@ -1,11 +1,7 @@
 package exec
 
 import (
-	"os"
 	"strings"
-	"text/template"
-
-	"golang.org/x/xerrors"
 )
 
 // エンジン種別の内部キー。EngineFlags() の判定ロジックと対応。
@@ -129,20 +125,5 @@ func GetRunPythonFile(dto *Run) (string, error) {
  * レンダリング実行用のPythonファイルを作成する
  */
 func createRunPythonFile(dto *Run) (string, error) {
-
-	tmpl, err := template.ParseFS(assetsEmb, "_assets/run.tmpl")
-	if err != nil {
-		return "", xerrors.Errorf("template.ParseFS() error: %w", err)
-	}
-
-	fp, err := os.CreateTemp("", "brender-run_*.py")
-	if err != nil {
-		return "", xerrors.Errorf("os.CreateTemp() error: %w", err)
-	}
-	defer fp.Close()
-
-	if err = tmpl.Execute(fp, dto); err != nil {
-		return "", xerrors.Errorf("tmpl.Execute() error: %w", err)
-	}
-	return fp.Name(), nil
+	return createScript("run.tmpl", "run_*.py", dto)
 }

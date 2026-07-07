@@ -6,9 +6,12 @@ export {
     AddDirResult,
     FileSearchResponse,
     JobFileInfo,
+    PermissionEntry,
     PreviousRenderInfo,
     QueueItem,
     RenderPreview,
+    ResetTokenInfo,
     TestRenderParams,
+    UserWithStatus,
     WorkspaceBatchSpec
 } from "./models.js";

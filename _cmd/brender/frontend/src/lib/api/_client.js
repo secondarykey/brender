@@ -11,7 +11,7 @@
  *   エラー時は throw するため、呼び出し側は Wails モードと同じ try/catch で扱える。
  */
 
-export const isWails = () => Boolean(window._wails)
+export const isWails = () => Boolean(window._wails) && !window.__brender_server_mode
 
 /**
  * @param {string} service  - サービス名 (例: 'blender')
@@ -25,6 +25,11 @@ export async function serverCall(service, method, args = {}) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(args),
   })
+  // セッション期限切れ → ページリロードでログイン画面に遷移
+  if (res.status === 401) {
+    window.location.reload()
+    throw new Error('unauthorized')
+  }
   const json = await res.json()
   if (json.error) throw new Error(json.error)
   return json.data

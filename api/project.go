@@ -1,6 +1,8 @@
 package api
 
 import (
+	"context"
+	"io"
 	"io/fs"
 	"log/slog"
 	"os"
@@ -12,33 +14,162 @@ import (
 	"golang.org/x/xerrors"
 )
 
-func ListProjects(sort, dir string) ([]*model.ProjectDetail, error) {
-	return model.ListProjects(sort, dir)
+func ListProjects(ctx context.Context, sort, dir string) ([]*model.ProjectDetail, error) {
+	// Owner / アクセス制御無効時は全プロジェクトを参照可能
+	if fullAccess(ctx) {
+		return model.ListProjects(sort, dir)
+	}
+	return model.ListProjectsForUser(currentUser(ctx), sort, dir)
 }
 
-func GetProject(id string) (*model.ProjectDetail, error) {
-	return model.GetProject(id)
+func GetProject(ctx context.Context, id string) (*model.ProjectDetail, error) {
+	if !fullAccess(ctx) {
+		userID := currentUser(ctx)
+		if err := requireProjectAccess(ctx, id); err != nil {
+			return nil, err
+		}
+		// ファイル権限でフィルタしたプロジェクト詳細を返す
+		detail, err := model.GetProjectForUser(id, userID)
+		if err != nil {
+			return nil, err
+		}
+		// ユーザのロールを付与
+		role, _ := model.GetUserProjectRole(id, userID)
+		detail.MyRole = role
+		return detail, nil
+	}
+	detail, err := model.GetProject(id)
+	if err != nil {
+		return nil, err
+	}
+	detail.MyRole = model.RoleOwner
+	return detail, nil
 }
 
-func UpdateProject(id, name, note string) (*model.ProjectDetail, error) {
+func UpdateProject(ctx context.Context, id, name, note string) (*model.ProjectDetail, error) {
 	if name == "" {
 		return nil, xerrors.New("project name is required")
+	}
+	// Editor 以上の権限が必要
+	if err := requireProjectRole(ctx, id, model.RoleOwner, model.RoleEditor); err != nil {
+		return nil, err
 	}
 	return model.UpdateProject(id, name, note)
 }
 
-func UpdateProjectFile(fileID string, name string, note string, blenderInstallID uint, blenderFixed bool, scene string, sceneFixed bool, camera string, cameraFixed bool, engine string, engineFixed bool) (*model.ProjectFile, error) {
+func UpdateProjectFile(ctx context.Context, fileID string, name string, note string, blenderInstallID uint, blenderFixed bool, scene string, sceneFixed bool, camera string, cameraFixed bool, engine string, engineFixed bool) (*model.ProjectFile, error) {
 	if name == "" {
 		return nil, xerrors.New("file name is required")
+	}
+	// Editor 以上の権限が必要（workspace_creator も含む）
+	if err := requireFileRole(ctx, fileID, rolesEditorUp...); err != nil {
+		return nil, err
 	}
 	return model.UpdateProjectFile(fileID, name, note, blenderInstallID, blenderFixed, scene, sceneFixed, camera, cameraFixed, engine, engineFixed)
 }
 
-func GetFile(fileID string) (*model.ProjectFile, error) {
-	return model.GetProjectFile(fileID)
+func GetFile(ctx context.Context, fileID string) (*model.ProjectFile, error) {
+	if !fullAccess(ctx) {
+		if err := requireFileAccess(ctx, fileID); err != nil {
+			return nil, err
+		}
+		f, err := model.GetProjectFile(fileID)
+		if err != nil {
+			return nil, err
+		}
+		role, _ := model.GetUserFileRole(fileID, currentUser(ctx))
+		f.MyRole = role
+		return f, nil
+	}
+	f, err := model.GetProjectFile(fileID)
+	if err != nil {
+		return nil, err
+	}
+	f.MyRole = model.RoleOwner
+	return f, nil
 }
 
-func AddProjectFile(projectID, path string) (*model.ProjectFile, error) {
+// ListAllProjectFiles は全プロジェクトの全ファイルを返す（設定画面の一括確認用）。
+func ListAllProjectFiles() ([]*model.ProjectFile, error) {
+	return model.ListAllProjectFiles()
+}
+
+// UploadProjectFile はアップロードされたファイルを保存し、ProjectFile を登録する。
+// 保存先: {workDir}/{projectID}/{fileID}/{fileID}.blend
+// 登録後に非同期でPackチェックを行い、Pack済みならサムネイル自動生成を開始する。
+func UploadProjectFile(ctx context.Context, projectID string, filename string, r io.Reader) (*model.ProjectFile, error) {
+	// file_register 以上（ファイル追加登録）の権限が必要
+	if err := requireProjectRole(ctx, projectID, model.RoleOwner, model.RoleEditor, model.RoleFileRegister); err != nil {
+		return nil, err
+	}
+	baseDir, err := GetProjectBaseDir(projectID)
+	if err != nil {
+		return nil, err
+	}
+	// ファイルIDを先に生成してパスを決定
+	f := &model.ProjectFile{
+		ID:        model.NewFileID(),
+		ProjectID: projectID,
+		Name:      filename,
+	}
+	dir := filepath.Join(baseDir, projectID, f.ID)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return nil, xerrors.Errorf("UploadProjectFile MkdirAll: %w", err)
+	}
+	savePath := filepath.Join(dir, f.ID+".blend")
+	out, err := os.Create(savePath)
+	if err != nil {
+		return nil, xerrors.Errorf("UploadProjectFile Create: %w", err)
+	}
+	if _, err := io.Copy(out, r); err != nil {
+		out.Close()
+		return nil, xerrors.Errorf("UploadProjectFile Copy: %w", err)
+	}
+	out.Close()
+
+	f.Path = savePath
+	if err := model.InsertProjectFile(f); err != nil {
+		return nil, err
+	}
+	now := time.Now()
+	if err := model.UpdateProjectFileProcessedAt(f.ID, &now); err != nil {
+		slog.Error("UploadProjectFile: UpdateProjectFileProcessedAt", "error", err)
+	}
+	touchProjectProcessedAt(projectID)
+	// プロジェクトの権限をファイルにコピー
+	if err := model.CopyProjectPermissionsToFile(projectID, f.ID); err != nil {
+		slog.Error("UploadProjectFile: CopyProjectPermissionsToFile", "error", err)
+	}
+	// 非同期でPackチェック → Pack済みならサムネイル自動生成（バックグラウンドは owner 権限で実行）
+	go checkPackAndThumbnail(WailsContext(), projectID, f)
+	return f, nil
+}
+
+// checkPackAndThumbnail はツール実行でPack状態を検査し、DB に保存する。
+// Pack 済みの場合はサムネイル自動生成を開始する。
+func checkPackAndThumbnail(ctx context.Context, projectID string, f *model.ProjectFile) {
+	tool, err := GetToolData(0, f.ID)
+	if err != nil {
+		slog.Error("checkPackAndThumbnail: GetToolData", "fileID", f.ID, "error", err)
+		return
+	}
+	if err := model.UpdateProjectFilePacked(f.ID, tool.Pack); err != nil {
+		slog.Error("checkPackAndThumbnail: UpdateProjectFilePacked", "fileID", f.ID, "error", err)
+	}
+	if tool.Pack {
+		if err := CreateThumbnailWorkspace(ctx, projectID, f); err != nil {
+			slog.Error("checkPackAndThumbnail: thumbnail creation failed", "fileID", f.ID, "error", err)
+		}
+	} else {
+		slog.Warn("uploaded file is not packed", "fileID", f.ID, "name", f.Name)
+	}
+}
+
+func AddProjectFile(ctx context.Context, projectID, path string) (*model.ProjectFile, error) {
+	// file_register 以上（ファイル追加登録）の権限が必要
+	if err := requireProjectRole(ctx, projectID, model.RoleOwner, model.RoleEditor, model.RoleFileRegister); err != nil {
+		return nil, err
+	}
 	if _, err := os.Stat(path); err != nil {
 		return nil, xerrors.Errorf("file not found: %s", path)
 	}
@@ -51,8 +182,14 @@ func AddProjectFile(projectID, path string) (*model.ProjectFile, error) {
 		slog.Error("AddProjectFile: UpdateProjectFileProcessedAt", "error", err)
 	}
 	touchProjectProcessedAt(projectID)
+	// プロジェクトの権限をファイルにコピー
+	if err := model.CopyProjectPermissionsToFile(projectID, f.ID); err != nil {
+		slog.Error("AddProjectFile: CopyProjectPermissionsToFile", "error", err)
+	}
+	// サムネイル自動生成はバックグラウンドで owner 権限として実行する
+	bgCtx := WailsContext()
 	go func() {
-		if err := CreateThumbnailWorkspace(projectID, f); err != nil {
+		if err := CreateThumbnailWorkspace(bgCtx, projectID, f); err != nil {
 			slog.Error("thumbnail workspace creation failed", "fileID", f.ID, "error", err)
 		}
 	}()
@@ -65,7 +202,11 @@ type AddDirResult struct {
 	Errors  []string `json:"errors,omitempty"`
 }
 
-func AddFilesFromDirectory(projectID, dir string) (*AddDirResult, error) {
+func AddFilesFromDirectory(ctx context.Context, projectID, dir string) (*AddDirResult, error) {
+	// file_register 以上（ファイル追加登録）の権限が必要
+	if err := requireProjectRole(ctx, projectID, model.RoleOwner, model.RoleEditor, model.RoleFileRegister); err != nil {
+		return nil, err
+	}
 	if _, err := os.Stat(dir); err != nil {
 		return nil, xerrors.Errorf("directory not found: %s", dir)
 	}
@@ -93,7 +234,7 @@ func AddFilesFromDirectory(projectID, dir string) (*AddDirResult, error) {
 			result.Skipped++
 			return nil
 		}
-		if _, err := AddProjectFile(projectID, absPath); err != nil {
+		if _, err := AddProjectFile(ctx, projectID, absPath); err != nil {
 			result.Errors = append(result.Errors, filepath.Base(path)+": "+err.Error())
 			return nil
 		}
@@ -108,7 +249,11 @@ func RemoveProjectFile(fileID string) error {
 	return model.RemoveProjectFile(fileID)
 }
 
-func DeleteProjectFile(fileID string, force bool) error {
+func DeleteProjectFile(ctx context.Context, fileID string, force bool) error {
+	// Owner のみ削除可能
+	if err := requireFileRole(ctx, fileID, model.RoleOwner); err != nil {
+		return err
+	}
 	if !force {
 		locked, err := model.HasLockedJobsByProjectFile(fileID)
 		if err != nil {
@@ -147,10 +292,17 @@ func DeleteProjectFile(fileID string, force bool) error {
 	if err := model.DeleteWorkspacesByProjectFile(fileID); err != nil {
 		return xerrors.Errorf("DeleteProjectFile workspaces: %w", err)
 	}
+	if err := model.DeleteFilePermissions(fileID); err != nil {
+		return xerrors.Errorf("DeleteProjectFile permissions: %w", err)
+	}
 	return model.RemoveProjectFile(fileID)
 }
 
-func DeleteProject(id string, force bool) error {
+func DeleteProject(ctx context.Context, id string, force bool) error {
+	// Owner のみ削除可能
+	if err := requireProjectRole(ctx, id, model.RoleOwner); err != nil {
+		return err
+	}
 	if !force {
 		locked, err := model.HasLockedJobsByProject(id)
 		if err != nil {
@@ -186,12 +338,19 @@ func DeleteProject(id string, force bool) error {
 	if err := model.DeleteWorkspacesByProject(id); err != nil {
 		return xerrors.Errorf("DeleteProject workspaces: %w", err)
 	}
+	if err := model.DeleteProjectPermissions(id); err != nil {
+		return xerrors.Errorf("DeleteProject permissions: %w", err)
+	}
 	return model.DeleteProject(id)
 }
 
-func CreateProject(name string) (*model.ProjectDetail, error) {
+func CreateProject(ctx context.Context, name string) (*model.ProjectDetail, error) {
 	if name == "" {
 		return nil, xerrors.New("project name is required")
+	}
+	// プロジェクト作成権限チェック
+	if err := requireCreateProject(ctx); err != nil {
+		return nil, err
 	}
 	p := &model.Project{}
 	if err := AssignDefaultWorkDir(p); err != nil {
@@ -204,6 +363,11 @@ func CreateProject(name string) (*model.ProjectDetail, error) {
 	now := time.Now()
 	if err := model.UpdateProjectProcessedAt(d.Project.ID, &now); err != nil {
 		slog.Error("CreateProject: UpdateProjectProcessedAt", "error", err)
+	}
+	// デフォルト権限を設定（作成者 + BrenderOwner → owner, All → viewer）
+	creatorID := currentUser(ctx)
+	if err := model.SetDefaultProjectPermissions(d.Project.ID, creatorID); err != nil {
+		slog.Error("CreateProject: SetDefaultProjectPermissions", "error", err)
 	}
 	return d, nil
 }

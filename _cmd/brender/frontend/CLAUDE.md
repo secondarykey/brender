@@ -44,7 +44,7 @@ QueuePage の進捗バー計算式・ProcessingWriter 由来の進捗フィー�
 - 「+ .blend ファイルを追加」ボタン: `.list-fab`（`position: sticky; bottom: 16px`）で画面下部に常時表示
 - 「ディレクトリからファイルを追加」機能: プロジェクト設定タブ（SettingsTab）の作業ディレクトリセクション下に配置
 - タイルサイズ: 幅 320px、縦レイアウト（サムネイル上 180px + 名称のみ下）
-- サムネイル: `ProjectApi.getFileThumbnail({ projectID, fileID })` で base64 data URI を取得して表示
+- サムネイル: `ProjectApi.getFileThumbnail({ projectID, fileID })` で取得（Wails は base64、サーバモードは配信URL）して `<img src>` に渡す（消費側コードはモード非依存）
 
 ### サイドバー
 - アイコンのみ表示（ラベルなし）、`title` 属性でツールチップ
@@ -56,6 +56,12 @@ QueuePage の進捗バー計算式・ProcessingWriter 由来の進捗フィー�
 - `page`, `totalPages`, `onChange` に加えて `pageSize`, `onPageSizeChange`, `total` を受け付ける
 - `pageSize` / `onPageSizeChange` が渡された場合、左端に表示件数セレクタ（5/10/20/100）と全件数を表示
 - `totalPages` が 1 でもページ情報行は常に表示
+
+### 権限によるUI制御
+サーバモード（`Server` + `ServerAuth` 有効時）のロール体系と UI 制御の詳細は Skill `brender-access-control` を参照。要点:
+- `PermissionSection.jsx`（`mode='project'` / `mode='file'`）— Wails モードでは `server && server_auth` が無効なら `return null`
+- `ProjectListPage.jsx` — ブラウザモードで `AuthApi.me()` のロールを確認（`viewer` は作成不可、`me()` が `null` = 認証無効ならフルアクセス）
+- `QueuePage.jsx` / `JobManagement.jsx` — `has_file_access === false` のジョブは行クリック・ナビゲーションを抑制し、ファイル名を淡色テキスト表示
 
 ### Environment setup guard
 On startup, `App.jsx` calls `EnvironmentApi.get()`. If `ProjectRoot` is not set, it automatically navigates to the settings page. `ProjectListPage` also shows a warning banner and disables project creation until a root directory is configured.
