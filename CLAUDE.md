@@ -12,6 +12,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | レンダリングパイプライン詳細（キュー実行・リカバリ・ProcessingWriter・進捗・ETA・サムネイル生成・CLI 表示） | Skill `brender-render-pipeline` | 該当作業時に Skill を参照 |
 | コード管理 `code/`（フォーマット・解像度プリセット、新カテゴリ追加手順） | Skill `brender-codes` | 該当作業時に Skill を参照 |
 
+Skill の正本はメインリポジトリの `.claude/skills/` に置く（git 未追跡）。ワークツリー作成時に自動コピーされる。ワークツリー内で Skill を更新した場合はメイン側へ手動で書き戻すこと。
+
 ## Project Overview
 
 **Brender** is a Blender rendering management system. It has two runtime modes that share a common library:
