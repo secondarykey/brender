@@ -2,6 +2,16 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## ドキュメント分割
+
+このファイルには常時必要な情報のみを置く。詳細は以下に分割されている:
+
+| 内容 | 場所 | ロードのされ方 |
+|---|---|---|
+| フロントエンド規約（ページ構成・API ラッパー層・イベントバス・ダイアログ・トースト・i18n・テーマ・CSS） | `_cmd/brender/frontend/CLAUDE.md` | frontend 配下のファイルを扱うと自動ロード |
+| レンダリングパイプライン詳細（キュー実行・リカバリ・ProcessingWriter・進捗・ETA・サムネイル生成・CLI 表示） | Skill `brender-render-pipeline` | 該当作業時に Skill を参照 |
+| コード管理 `code/`（フォーマット・解像度プリセット、新カテゴリ追加手順） | Skill `brender-codes` | 該当作業時に Skill を参照 |
+
 ## Project Overview
 
 **Brender** is a Blender rendering management system. It has two runtime modes that share a common library:
@@ -16,50 +26,34 @@ Both modes share the root-module packages (`exec/`, `model/`, `api/`).
 ### Desktop app (Wails3)
 ```bash
 cd _cmd/brender
-
-# Development (hot reload)
-wails3 dev
-
-# Production build
-wails3 build
-
-# Regenerate Go<->JS bindings after adding/changing services
-wails3 generate bindings
+wails3 dev                 # Development (hot reload)
+wails3 build               # Production build
+wails3 generate bindings   # Regenerate Go<->JS bindings after adding/changing services
 ```
 
 The DB is stored at `~/.brender/brender.db` (SQLite, created automatically on first run).
 
 ### CLI tool
 ```bash
-# Build
 go build -o brender-tool ./_cmd/brender-tool/
 
-# Usage
 brender-tool [-b <blender>] [-S <scene>] [-E <engine>] [-s <start>] [-e <end>] [-o <outdir>] [-v] [-a] <file.blend>
-
-# Flags
 #   -b   Blender executable path (default: $BRENDER_BLENDER, then "blender")
-#   -S   Scene name
-#   -E   Render engine (e.g. CYCLES, BLENDER_EEVEE)
+#   -S   Scene name / -E   Render engine (e.g. CYCLES, BLENDER_EEVEE)
 #   -s/-e  Start/end frame (default: read from .blend via --tool)
 #   -o   Output directory
 #   -v   Verbose: pipe all Blender stdout directly to terminal
 #   -a   Analysis mode: render a 3-frame sample to estimate time
-#   --engines  List available render engines and exit
-#   --scenes   List scenes in the .blend file and exit
+#   --engines / --scenes  List engines / scenes and exit
 ```
 
 ### HTTP server (legacy / server mode)
 ```bash
-# Run
-go run ./server/_cmd/
-
-# Build binary
-go build -o brender-server ./server/_cmd/
+go run ./server/_cmd/                          # Run (listens on :8080)
+go build -o brender-server ./server/_cmd/      # Build binary
 ```
 
-The server listens on `:8080`. On startup it clears all lock files from prior runs.
-The server's DB path is hardcoded to `../test4.db` (relative to `server/`) — known issue, not yet migrated.
+The server's DB path is hardcoded to `../test4.db` (relative to `server/`) — known issue, not yet migrated. On startup it clears all lock files from prior runs.
 **Note:** `server/handler/api/` references removed model fields and does not build with `./...`. Build with `go build ./exec/... ./api/... ./model/...` to avoid server errors.
 
 ### Tests
@@ -106,6 +100,7 @@ server/        (legacy HTTP server, still functional but handler/api/ is stale)
 | `api/wails/workspace.go` | `Workspace` | `api/workspace.go` |
 | `api/wails/queue.go` | `Queue` | `api/queue.go` |
 | `api/wails/work_dir.go` | `WorkDir` | `api/work_dir.go` |
+| `api/wails/codes.go` | `Codes` | `code/`（Skill `brender-codes` 参照） |
 
 Services are registered in `_cmd/brender/main.go`. After adding or changing a service, run `wails3 generate bindings` to update the frontend JS bindings.
 
@@ -125,19 +120,17 @@ Services are registered in `_cmd/brender/main.go`. After adding or changing a se
 - `ProjectFile`: `ID string` (UUID v4), `ProjectID`, `Path`, `Name`, `BlenderInstallID uint`, `Scene string`, `FileModifiedAt *time.Time`. `FileModifiedAt` is set from `os.Stat().ModTime()` on add.
 - `Workspace`: `ID string` (UUID v4), `ProjectFileID string` (固定、Update では変更不可), `BlenderInstallID=0` means use project default, `IsSystem bool` (サムネイル自動生成ワークスペースは `true`)。
 - `Job`: permanent history record. Shares UUID v7 with its `Queue` record. Has `ProjectFileID string` for direct file-based query.
-  - `Status`: `completed` / `error` / `cancelled`
+  - `Status`: `completed` / `error` / `cancelled` / `interrupted`（システム中断）
   - `DiskSize int64`: 完了時に出力ディレクトリの容量を保存
   - `DataStatus int`: `0`=none / `1`=none+locked / `2`=available / `3`=available+locked / `4`=deleted / `5`=deleted+locked
   - `OutputDir string`: 出力先ディレクトリパス
 - `Queue`: ephemeral active-execution record. Deleted by `finishJob()` on completion/error/cancel.
-  - `Status`: `waiting` / `running`
+  - `Status`: `waiting` / `recovering`（リカバリ再実行待ち） / `running`
 
 ### UUID 発行ルール
 | エンティティ | 関数 | バージョン |
 |---|---|---|
-| ProjectID | `uuid.NewRandom()` | v4 |
-| ProjectFileID | `uuid.NewRandom()` | v4 |
-| WorkspaceID | `uuid.NewRandom()` | v4 |
+| ProjectID / ProjectFileID / WorkspaceID | `uuid.NewRandom()` | v4 |
 | QueueID / JobID | `uuid.NewV7()` | v7（時刻順ソート可） |
 
 ### ディレクトリ構造
@@ -152,511 +145,19 @@ Services are registered in `_cmd/brender/main.go`. After adding or changing a se
           render.log         ← Blender 標準出力ログ
 ```
 
-### Navigation hierarchy (frontend)
-プロジェクト一覧 → プロジェクト詳細（ファイル一覧タブ） → ファイル詳細（ワークスペース左/履歴右の分割レイアウト・設定タブ） → ワークスペース設定（設定左/履歴右の分割レイアウト）
+## Key Concepts（要約）
 
-## Key Concepts
+詳細（実行フロー・パース仕様・ETA 計算・進捗バー計算式・リカバリ手順）は Skill `brender-render-pipeline` を参照。
 
-### サムネイル自動生成 (`api/thumbnail.go`)
-ファイル登録時（`AddProjectFile`）に非同期で `CreateThumbnailWorkspace` を呼び出す。
-
-**フロー**:
-1. `IsSystem=true` のワークスペース「`ファイル名 Thumbnail`」を作成
-2. Blender で `.blend` のデフォルトシーンを解析し、中間フレーム（`(start+end)/2`）を1枚レンダリング
-3. 出力 PNG を `convertToJPEG` で 640×360 JPEG に変換して `thumbnail.jpg` として保存
-4. エラーはログ出力のみ（ファイル登録をブロックしない）
-
-**変換ロジック** (`convertToJPEG`):
-- キャンバス 640×360（黒背景）
-- 元画像をアスペクト比保持でキャンバスに収まる最大サイズに縮小（長辺基準 `min(W/srcW, H/srcH)`）
-- 中央配置、JPEG quality 85
-
-`GetFileThumbnail(projectID, fileID)` — `thumbnail.jpg` を base64 data URI で返す。存在しない場合は `IsSystem` ワークスペースの完了ジョブから画像を検索して変換・保存してから返す。
-
-**IsSystem ワークスペース**: 現在はワークスペース一覧に表示したまま。将来 `ListWorkspacesByProject` の WHERE 句に `is_system = false` を追加して除外する予定。
-
-### Async rendering flow (`api/queue.go`)
-`Enqueue()` → `PreviewRender()` でパラメータ解決 → `EnqueueWithPreview()` でジョブ作成・キュー投入。
-
-**同時実行制御**:
-- `getMaxConcurrentJobs()` が `model.GetEnv().MaxConcurrentJobs` を読む（デフォルト 1、0 以下も 1 扱い）。設定画面の Blender タブで変更可能。
-- `scheduleMu sync.Mutex` でスケジューラのレース防止
-- 投入時: 実行中キュー数が上限未満なら `MarkQueueStarting()`（DB で status を running に変更）してから `go executeQueue()` を起動。上限以上なら `waiting` のまま保留。
-- 完了・キャンセル時: `startNextWaiting()` を呼び出し、最古の `waiting` ジョブを昇格して起動。
-- 同一ワークスペースの重複投入禁止: `ExistsQueueByWorkspace` で事前チェック。
-
-**`executeQueue` の流れ**:
-1. `ProcessingWriter` 作成、`exec.RegisterProgress` 登録
-2. `render.log` を出力ディレクトリに作成（stdout/stderr を MultiWriter で書き込む）
-3. `b.RunWithPID()` で Blender 起動
-4. `model.UpdateQueueRunning(id, pid)` で PID・開始時刻を記録
-5. `errCh` から完了を待ち、`finishJob()` を呼ぶ
-
-`finishJob()` は完了時に `calcDirSize()` で出力ディレクトリ容量を計算して `Job.DiskSize` に保存、Queue レコードを削除後 `startNextWaiting()` → `notifyQueueChanged()` を呼ぶ。
-
-### 起動時キューリカバリ (`api/queue.go`)
-アプリがクラッシュや強制終了した場合、Queue テーブルに `running` 状態のレコードが残る。次回起動時に `RecoverStaleQueues()` がこれを検出してリカバリする。
-
-**フロー**（`main.go` の `initDB()` 直後に呼ばれる）:
-1. `running` 状態の Queue を全件取得
-2. 孤立プロセスが生きていれば `Kill()` する（Mac では生存する場合がある）
-3. 旧ジョブを `interrupted`（中断）ステータスで閉じる — 途中の render.log やフレーム出力が履歴として残る
-4. 同じパラメータで新しい Job + Queue を `recovering` ステータスで作成（出力ディレクトリは新規）
-5. `QueueChangedHook` 設定後に `StartRecoveredQueues()` でスケジューラを起動し、再実行を開始
-
-**Queue ステータス**:
-- `waiting` — 通常の実行待ち
-- `recovering` — リカバリによる再実行待ち（フロントエンドでは「再実行待ち」バッジ、オレンジ）
-- `running` — 実行中
-
-**Job ステータス**:
-- `completed` / `error` / `cancelled` — 既存
-- `interrupted` — システム中断（フロントエンドでは「中断」バッジ、紫）
-
-**プロセス生存の OS 差異**:
-- Windows: 親プロセス終了時に子プロセス（Blender）も終了する
-- Mac/Linux: 子プロセスは orphan として生存する（init に引き取られる）
-- いずれの場合も stdout パイプは切断され再接続不可のため、新ジョブで再実行する
-
-### Queue changed hook (`api/queue.go`)
-```go
-var QueueChangedHook func(count int64)
-```
-キューの件数が変化したとき（Enqueue・finishJob・CancelQueue 後）に呼ばれる。`main.go` で Wails イベント送信にセットしている：
-```go
-api.QueueChangedHook = func(count int64) {
-    application.Get().Event.Emit("queue:changed", count)
-}
-```
-将来のサーバモードでは SSE ブロードキャストに差し替えるだけで `api/queue.go` 本体は変更不要。
-
-### Job deletion (`api/queue.go`)
-`DeleteJob(id)` — ジョブの `OutputDir` を `os.RemoveAll` で削除してから DB レコードを削除する（ディレクトリが存在する場合のみ）。
-
-### ProcessingWriter (`exec/writer.go`)
-Parses Blender's stdout/stderr in real time. Thread-safe — `Result()` returns a `ProcessingResult` snapshot.
-
-**Blender output format compatibility:**
-- Blender 4.x (`formatLegacy`): `Fra:N Mem:... | Time:... | ...`
-- Blender 5.x (`formatStructured`): `HH:MM.SS  category  | Fra: N | Mem: ... | detail`
-
-**Engine-specific frame detection:**
-- **Cycles / EEVEE**: `Fra: N` segment → `parseLog()` → resets sub-frame state, sets `everSawFra=true`
-- **Workbench**: `Rendering frame N` segment → `parseWorkbenchFrame()` (no `Fra:` lines at all)
-- **EEVEE**: outputs BOTH `Rendering frame N` (frame transition) AND `Fra: N | Rendering M/K samples`
-
-**Sub-frame progress tracking (`NowTile`, `TotalTiles`, `NowSample`, `TotalSamples`):**
-- Cycles (tiles): `Rendered N/M Tiles, Sample P/Q` — completed tiles + sample within current tile
-- Cycles (no tiles): `Sample N/M`
-- EEVEE: `Rendering N / M samples`
-- Workbench: no sub-frame data
-
-**`frameActive` / `everSawFra` flags:**
-- `everSawFra`: sticky flag, set `true` on first `Fra:` line, never reset. Distinguishes Workbench (never set) from Cycles/EEVEE (set during frame 1 sync).
-- `frameActive`: `false` during Cycles init/sync phase (before first sample), `true` once sub-frame data arrives. For Workbench, set `true` immediately in `parseWorkbenchFrame`. On EEVEE/Cycles frame transitions (`Rendering frame N` with `everSawFra=true`): resets samples but keeps `frameActive` as-is (no "準備中..." flicker between frames).
-- Frontend uses `q.frame_active` to show "準備中..." vs frame number.
-
-**ETA calculation:**
-- Frame-complete ETA: `updateAverageTime()` — averages per-frame `Time:` values, scales by remaining frames.
-- Sub-frame ETA: `updateExpectedFromSubFrame()` — called on each sample update; uses `elapsed / overallPct` where `overallPct = (framesDone + subPct) / totalFrames`. Provides ETA during long single-frame Cycles renders.
-
-### Progress tracking (`exec/progress.go`)
-`RegisterProgress(id, pw)` / `GetProgress(id)` / `UnregisterProgress(id)` — in-memory map keyed by Queue ID. `ListQueueItems()` in `api/queue.go` attaches live progress fields (`NowFrame`, `NowTile`, `TotalTiles`, `NowSample`, `TotalSamples`, `FrameActive`, `AverageSec`, `ExpectedAt`, `Log1`, `Log2`) to `QueueItem` for the frontend.
-
-### Frontend progress bar (`QueuePage.jsx`)
-```js
-// Sub-frame progress 0.0–1.0
-function subFramePct(q) {
-  if (q.total_tiles > 0 && q.total_samples > 0)
-    return (q.now_tile * q.total_samples + q.now_sample) / (q.total_tiles * q.total_samples)
-  if (q.total_samples > 0)
-    return q.now_sample / q.total_samples
-  return 0
-}
-// Overall % (capped at 99.99 while running)
-pct = ((framesDone + subFramePct(q)) / totalFrames) * 100
-```
-Progress displays with 2 decimal places. Log text (`q.log2`) is shown as-is from Blender output.
-
-### Environment setup guard
-On startup, `App.jsx` calls `EnvironmentApi.get()`. If `ProjectRoot` is not set, it automatically navigates to the settings page. `ProjectListPage` also shows a warning banner and disables project creation until a root directory is configured.
-
-`EnvironmentApi.getWorkDir()` returns `os.Getwd()` for use as the default directory in the folder picker dialog.
+- **非同期レンダリング** (`api/queue.go`): `Enqueue()` → `PreviewRender()` → `EnqueueWithPreview()`。`MaxConcurrentJobs`（デフォルト 1）で同時実行制御、`scheduleMu` でレース防止、同一ワークスペースの重複投入は禁止。
+- **起動時キューリカバリ**: クラッシュ後に残った `running` Queue を `RecoverStaleQueues()` が検出。旧 Job を `interrupted` で閉じ、新 Job+Queue（`recovering`）を作成して `StartRecoveredQueues()` で再実行する。
+- **Queue changed hook**: `api.QueueChangedHook func(count int64)` — キュー件数変化時に呼ばれる。`main.go` で Wails イベント `queue:changed` の Emit にセット。サーバモードでは SSE に差し替え予定。
+- **Job deletion**: `DeleteJob(id)` は `OutputDir` を `os.RemoveAll` してから DB レコードを削除する。
+- **ProcessingWriter** (`exec/writer.go`): Blender stdout/stderr をリアルタイムパース。Blender 4.x/5.x 両対応、Cycles/EEVEE/Workbench のエンジン別検出、スレッドセーフ（`Result()` でスナップショット取得）。
+- **進捗トラッキング** (`exec/progress.go`): Queue ID キーの in-memory map。`ListQueueItems()` が進捗フィールドを `QueueItem` に付与してフロントエンドへ渡す。
+- **サムネイル自動生成** (`api/thumbnail.go`): `AddProjectFile` 時に非同期で `IsSystem=true` ワークスペースを作成し、中間フレームを 1 枚レンダリング → 640×360 JPEG で `thumbnail.jpg` に保存。
 
 ### Scene / engine discovery
 - `BlenderApi.getScenes({ installID, fileID })` — runs `exec.RunTool()` (Python `--tool` script) on the `.blend` file to extract scene names.
 - `BlenderApi.getEngines({ installID })` — runs `blender -E help -b` and parses the engine list.
 - Both fall back to `model.FirstBlender()` when `installID == 0`.
-
-### CLI terminal display (`_cmd/brender-tool/main.go`)
-`runTerminalDisplay` polls `pw.Result()` every 200ms and calls `printTerminal` to render a fixed-height status block using ANSI cursor-up escape sequences. `exec.Terminal` handles line width and refresh. No JSON is output — the terminal display IS the output.
-
-## Frontend Page Structure
-
-```
-App.jsx
-  MainLayout (sidebar nav + queue badge)
-    ProjectListPage        (/projects)
-      プロジェクト新規作成: 「New Project」デフォルト値・フォーカス・全選択状態
-    ProjectDetailPage      (/project/:id)
-      tabs: ファイル一覧 / 設定
-    FileDetailPage         (/file)
-      tab: ワークスペース → 左右分割
-        左: ワークスペース一覧（各行に「▶ 実行」・名称・›）
-             新規作成: 「New Workspace」デフォルト値・全選択状態
-        右: 実行履歴（HistoryTab）
-      tab: 設定 → 左右分割
-        左: ファイル設定フォーム
-        右: ThumbnailPanel（thumbnail.jpg 表示）
-    WorkspaceDetailPage    (/workspace)
-      左右分割（左: 設定フォーム, 右: 実行履歴）
-      ※ props に fileID/fileName がない場合、detail.project_files から補完してパンクズに表示
-    QueuePage              (/queue)
-      tabs: キュー（waiting/running 一覧、登録順昇順） / 実行履歴
-    SettingsPage           (/settings)
-      tabs: 環境 / Blender
-```
-
-Breadcrumb: プロジェクト › プロジェクト名 › ファイル名 › ワークスペース名
-
-After `Enqueue()` succeeds, the app navigates to the queue page (`navigate('queue')`).
-
-### ファイル一覧タイル表示 (`WorkspaceTab.jsx`)
-- デフォルト表示: カード（タイル）表示
-- 表示切り替えボタン: 左寄せ
-- 「+ .blend ファイルを追加」ボタン: `.list-fab`（`position: sticky; bottom: 16px`）で画面下部に常時表示
-- 「ディレクトリからファイルを追加」機能: プロジェクト設定タブ（SettingsTab）の作業ディレクトリセクション下に配置
-- タイルサイズ: 幅 320px、縦レイアウト（サムネイル上 180px + 名称のみ下）
-- サムネイル: `ProjectApi.getFileThumbnail({ projectID, fileID })` で base64 data URI を取得して表示
-
-### サイドバー
-- アイコンのみ表示（ラベルなし）、`title` 属性でツールチップ
-- アイコンサイズ 32px、ナビアイテム 48×48px
-- キューアイコン右上に実行中件数バッジ（オレンジ丸）を表示
-  - 初期値は `QueueApi.list()` で取得、以後 `queue:changed` イベントで更新
-
-### ページネーション (`src/components/Pagination.jsx`)
-- `page`, `totalPages`, `onChange` に加えて `pageSize`, `onPageSizeChange`, `total` を受け付ける
-- `pageSize` / `onPageSizeChange` が渡された場合、左端に表示件数セレクタ（5/10/20/100）と全件数を表示
-- `totalPages` が 1 でもページ情報行は常に表示
-
-## Internationalization (`src/languages.jsx`, `src/locale/`)
-
-フロントエンドは `react-i18next` で国際化されている。
-
-### 対応言語
-| コード | 表示名 | 言語ファイル |
-|---|---|---|
-| `ja` | 日本語 | `src/locale/languages/ja.json` |
-| `en` | English | `src/locale/languages/en.json` |
-
-### 言語の切り替えと永続化
-- 設定画面の「環境」タブにセレクタを表示
-- `i18n.changeLanguage(code)` を呼ぶと即座に全UIが切り替わる
-- 選択言語は `localStorage`（キー: `brender-language`）に自動保存
-- 起動時は localStorage の値を読み込む。未設定の場合デフォルトは `ja`
-
-### 使い方（コンポーネント内）
-```js
-import { useTranslation } from 'react-i18next'
-
-function MyComponent() {
-  const { t, i18n } = useTranslation()
-  // t('common.save') → "保存" / "Save"
-  // i18n.language     → "ja" / "en"
-}
-```
-
-### 翻訳キー構造 (`src/locale/languages/*.json`)
-| セクション | 用途 |
-|---|---|
-| `common` | 汎用ラベル（保存・削除・キャンセルなど） |
-| `menu` | サイドバーナビゲーション |
-| `title` | タイトルバーボタン（最小化・最大化・閉じる） |
-| `status` | ジョブ実行ステータス（waiting/running/completed/error/cancelled） |
-| `dataStatus` | データ状態バッジ（none/locked/available/deleted） |
-| `tabs` | タブラベル（ファイル一覧・設定・キュー・履歴・環境・Blender） |
-| `breadcrumb` | パンくずリスト |
-| `project` | プロジェクト操作 |
-| `file` | ファイル（.blend）設定 |
-| `workspace` | ワークスペース設定（フレーム・スレッド・サンプル数など） |
-| `queue` | キュー画面 |
-| `job` | ジョブ詳細・削除操作 |
-| `dialog` | ダイアログ内ラベル（ステータス・フレーム・Blenderパスなど） |
-| `settings` | 設定画面（言語・作業ディレクトリ・Blender登録など） |
-| `table` | テーブルヘッダ |
-| `time` | 時間単位（秒・分・時間） |
-| `pagination` | ページネーション |
-| `viewer` | 画像ビューア（再生・停止） |
-| `render` | レンダリング確認ダイアログ |
-
-### 新しいキーを追加するとき
-1. `en.json` と `ja.json` の両方に同じキーを追加する
-2. コンポーネントで `t('section.key')` を使う
-3. 言語ファイルは Vite の動的 `import()` で読み込まれる（ビルド時にバンドル済み）
-
-### `LANGUAGES` 定数
-`src/languages.jsx` からエクスポートされる配列。設定画面のセレクタで使用。
-```js
-export const LANGUAGES = [
-  { code: "ja", label: "日本語" },
-  { code: "en", label: "English" },
-]
-```
-新しい言語を追加する場合はここに追記し、対応する JSON ファイルを `src/locale/languages/` に置く。
-
-## コード管理（`code/`）
-
-ユーザがカスタマイズできる選択肢リストを JSON で管理する仕組み。
-
-### ディレクトリ構成
-
-```
-code/
-  _assets/              ← アプリバイナリに //go:embed で埋め込まれるデフォルト値
-    image_formats.json
-    video_formats.json
-    resolution_presets.json
-  code.go               ← 型定義 + ロード関数（package code）
-```
-
-### ユーザ編集ファイル
-
-`~/.brender/code/{filename}.json` を置くと、そのカテゴリのデフォルトを上書きする。  
-ファイルが存在しないカテゴリはバイナリ埋め込みのデフォルトをそのまま使用。  
-→ バージョンアップで新カテゴリが追加されても、ユーザ側の対応不要。
-
-### JSON スキーマ
-
-全アイテムに共通フィールド `code`（カテゴリ内一意）と `label`（表示名）を持つ。
-
-| ファイル | 追加フィールド | 用途 |
-|---|---|---|
-| `image_formats.json` | `ext` (string) | Blender の `-F` 引数に渡すフォーマット名 → 出力拡張子のマッピング |
-| `video_formats.json` | `ext` (string) | ffmpeg の出力動画拡張子 |
-| `resolution_presets.json` | `width`, `height` (int) | 解像度プリセット |
-
-```jsonc
-// image_formats.json の例
-[
-  { "code": "PNG",  "label": "PNG",  "ext": "png" },
-  { "code": "JPEG", "label": "JPEG", "ext": "jpg" }
-]
-```
-
-### Go API
-
-```go
-code.GetImageFormats()      // []code.ImageFormat
-code.GetVideoFormats()      // []code.VideoFormat
-code.GetResolutionPresets() // []code.ResolutionPreset
-```
-
-Wails サービス `api/wails/Codes` 経由でフロントエンドに公開。
-
-### フロントエンド
-
-```js
-import { CodesApi } from '../../lib/api'
-
-CodesApi.getImageFormats()      // Promise<ImageFormat[]>
-CodesApi.getVideoFormats()      // Promise<VideoFormat[]>
-CodesApi.getResolutionPresets() // Promise<ResolutionPreset[]>
-```
-
-**利用箇所**:
-- `BlenderSettings.jsx` — システムデフォルト出力フォーマット（`image_formats`）
-- `WorkspaceDetailPage.jsx` — ワークスペース出力フォーマット（`image_formats`）、解像度プリセット（`resolution_presets`）
-- `VideoSettings.jsx` — ffmpeg 出力拡張子（`video_formats`）
-- `JobPage.jsx` — 動画作成ダイアログの出力拡張子（`video_formats`）
-
-### 新カテゴリの追加手順
-
-1. `code/_assets/{name}.json` を作成（`code` / `label` + カテゴリ固有フィールド）
-2. `code/code.go` に型と `Get{Name}()` 関数を追加
-3. `api/wails/codes.go` にメソッドを追加
-4. `wails3 generate bindings` を実行
-5. `src/lib/api/codes.js` にラッパーを追加
-
-## Frontend API Layer (`src/lib/api/`)
-
-**重要**: フロントエンドから Wails Service を直接呼ばないこと。必ずこのラッパー経由で呼ぶ。
-
-```
-src/lib/api/
-  _client.js      isWails() 判定 + serverCall() fetch ヘルパー
-  blender.js      BlenderApi
-  environment.js  EnvironmentApi
-  project.js      ProjectApi  ← getFileThumbnail({ projectID, fileID }) を含む
-  workspace.js    WorkspaceApi
-  queue.js        QueueApi
-  work_dir.js     WorkDirApi
-  codes.js        CodesApi  ← コード管理（フォーマット・解像度プリセット）
-  index.js        re-export
-```
-
-- **Wailsモード** (`window._wails` が存在): `@wailsio/runtime` を動的インポートして既存 Service を呼ぶ
-- **サーバモード**: `POST /api/{service}/{method}` + JSON ボディ、レスポンス `{ data } | { error }` 形式
-- 引数は常にオブジェクト形式: `ProjectApi.get({ id })`, `QueueApi.cancel({ id })` など
-- サーバモードの REST エンドポイントは snake_case: `list_by_project`, `get_engines` など
-
-## Event Bus (`src/lib/appEvents.js`)
-
-```js
-import { onAppEvent } from '../lib/appEvents'
-const off = onAppEvent('queue:changed', data => { ... })
-return off  // useEffect cleanup
-```
-
-- **Wailsモード**: `@wailsio/runtime` の `Events.On` を動的インポートして使用
-- **サーバモード**: `EventSource('/events')` のシングルトンを維持し SSE で受信
-  - 複数コンポーネントが `onAppEvent` を呼んでも接続は 1 本のみ
-- 現在使用しているイベント名:
-  - `queue:changed` (data: number — アクティブキュー件数)
-  - `workdir:migrate` (data: `{ project_id, status, pct }` — 移行進捗。status: `running`/`done`/`error`)
-
-## 共通ダイアログ (`src/components/Dialog.jsx`, `ConfirmDialog.jsx`)
-
-モーダルは共通コンポーネント経由で作る。`.dialog-overlay`+`.dialog` を各ページに直接書かない。
-
-### `Dialog`
-汎用ダイアログ。props:
-- `open` — false なら非描画
-- `title` / `children`（本文）/ `actions`（フッターに差し込むノード）
-- `onClose` — 背景クリック・Esc キーで呼ぶ（`closeOnBackdrop` が true のときのみ）
-- `closeOnBackdrop`（既定 true）— 処理実行中は false を渡し誤クローズを防ぐ
-- `message` + `messageSeverity`（`error`/`success`/`info`）— ダイアログ上部のメッセージ領域（`.dialog-message`）
-- `wide`（`.dialog-wide`）/ `className` / `bodyClassName`
-
-### `ConfirmDialog`
-`Dialog` を派生した確認ダイアログ。props: `open` / `title` / `onConfirm` / `onCancel` / `confirmLabel` / `cancelLabel`（既定 `common.cancel`）/ `confirmClassName`（既定 `btn btn-danger`）/ `busy`（処理中はボタン無効化＋背景クローズ無効）/ `message` / `children`。
-**削除操作には必ず確認ダイアログを挟む**（`window.confirm` は使わない）。
-
-## メッセージ表示 (`src/lib/toast.jsx`)
-
-`ToastProvider` が `App.jsx` 全体をラップし、2系統のフィードバックを管理する。
-
-- **成功・完了** → `useToast()` の `showToast(msg)`。画面下部トースト、2秒で自動消去。
-- **エラー（API/通信/操作失敗）** → `useMessage()` の `showError(msg)`。`MainLayout` 上部の全幅バー（`.app-message-bar`）に表示し、クリアまたは次のエラーで置換されるまで残る。`clearError()` または × ボタンで消える。`useMessage()` は `{ showError, clearError, error }` を返す。
-- **入力検証エラー**（特定フィールドに紐づくもの。「名前は必須」など）はグローバルバーに出さず、フィールド近くにインライン表示する。
-- **ダイアログ内のエラー** はグローバルバーではなく `Dialog`/`ConfirmDialog` の `message` prop に渡し、ダイアログ上部に表示する。
-- `LogViewerApp` / `MovieViewerApp` は `MainLayout` を持たない独立 Wails ウィンドウのため、グローバルバー対象外（ローカルにインライン表示）。
-
-## テーマシステム (`src/lib/theme.js`)
-
-アプリはダーク / ライト / システム設定準拠の 3 モードをサポートする。
-
-### 設定・保存
-- localStorage キー: `brender-theme`（値: `'system'` | `'dark'` | `'light'`、未設定は `'system'`）
-- `system` モードは `window.matchMedia('(prefers-color-scheme: light)')` で OS 設定を自動追従
-- アプリ起動時に `main.jsx` 内の `initTheme()` が `html` 要素への属性付与を行う
-
-### テーマ適用の仕組み
-- ライトモード: `document.documentElement.setAttribute('data-theme', 'light')`
-- ダークモード（デフォルト）: `data-theme` 属性なし
-
-### `useTheme` フック
-```js
-import { useTheme } from '../../lib/theme'
-const { preference, changeTheme } = useTheme()
-// preference: 'system' | 'dark' | 'light'
-// changeTheme('light')  → localStorage 保存 + 即時適用
-```
-
-### 設定画面
-設定 → 「基本設定」タブ → 言語セレクトの下にテーマセレクト。i18n キーは `settings.theme` / `settings.themes.{system|dark|light}`。
-
----
-
-## CSS Conventions (`frontend/public/style.css`)
-
-### カラー変数システム
-
-CSS Custom Properties でダーク/ライトを切り替える。**色をハードコードせず変数を使うこと。**
-
-| 変数 | ダーク | ライト | 用途 |
-|---|---|---|---|
-| `--fg` | `255, 255, 255` | `0, 0, 0` | 前景 RGB チャンネル（rgba の第1引数に使う） |
-| `--bg` | `#1a1a1a` | `#f2f2f2` | メイン背景 |
-| `--bg-panel` | `#111111` | `#e4e4e4` | サイドバー・タイトルバー |
-| `--bg-deep` | `#111` | `#d0d0d0` | サムネイル・画像ビューア等の深い背景 |
-| `--bg-card` | `#222` | `#eaeaea` | カード・タイル背景 |
-| `--bg-input` | `#1e1e1e` | `#ffffff` | フォーム入力・セレクト・ダイアログ |
-| `--bg-popup` | `#2a2a2a` | `#f8f8f8` | ポップアップ・オートコンプリート |
-| `--bg-overlay` | `rgba(26,26,26,0.78)` | `rgba(240,240,240,0.88)` | ワークスペース一覧のオーバーレイ |
-| `--bg-log-btn` | `rgba(30,30,30,0.92)` | `rgba(235,235,235,0.95)` | ログビューア浮遊ボタン |
-
-**前景色の使い方:**
-```css
-/* ✅ 正しい */
-color: rgba(var(--fg), 0.87);
-border: 1px solid rgba(var(--fg), 0.12);
-background: rgba(var(--fg), 0.06);
-
-/* ❌ ハードコード禁止 */
-color: rgba(255,255,255,0.87);
-background: #1a1a1a;
-```
-
-**アクセントカラー（テーマ非依存・固定値）:**
-- 青（ナビ・フォーカス）: `#4a7cdc`
-- 緑（保存・完了）: `#27ae60`
-- 赤（削除・エラー）: `#c0392b`
-- オレンジ（実行ボタン）: `#d15904` / hover `#e86a10`
-
-**例外:** `.movie-info-overlay` はビデオ背景が常に黒のため `rgba(255,255,255,0.88)` をライトモードでも維持（`html[data-theme="light"]` で明示的に上書き）。
-
-### レイアウトルール
-- `.page:has(.tab-nav)` → flex column, overflow hidden; `.tab-content` → flex:1, min-height:0, overflow-y:auto (タブコンテンツのみスクロール、ヘッダ固定)
-- `.page` without tabs → overflow-y:auto (ページ全体スクロール)
-- `.form-actions` → `justify-content: space-between` (削除ボタン左・保存ボタン右)
-- `#app, #root` must both have `width/height: 100%` for the height chain to work
-
-### フォームレイアウト
-設定フォームは以下のクラスを使う（`WorkspaceDetailPage` 等が基準）：
-
-```jsx
-<div className="form" style={{ maxWidth: 640 }}>
-  <div className="form-row">                    {/* 横並び行: display:flex; gap:16px */}
-    <div className="form-field" style={{ flex: 2 }}>   {/* 縦並びフィールド: flex-direction:column; gap:6px */}
-      <label className="form-label">ラベル</label>     {/* 0.85rem, 60%白 */}
-      <input className="form-input" style={{ width: '100%' }} />  {/* height:36px, 角丸 */}
-    </div>
-    <div className="form-field" style={{ flex: 1 }}>
-      <label className="form-label">ラベル</label>
-      <select className="form-select" />
-    </div>
-  </div>
-</div>
-```
-
-- `form-field` を単独で使う場合も同じ（`form-row` は省略可）
-- `textarea` には `textarea.form-input { height: auto; padding: 8px 10px }` が適用される。`minHeight` と `resize: vertical` をインラインで指定する
-- `input` / `textarea` は `width: 100%` を付けてカラム幅いっぱいに広げる（デフォルトは `width` 未指定）
-- `.form-hint` — 補足テキスト（11px, #888）
-- `.form-actions` — `justify-content: space-between`（削除ボタン左・保存ボタン右）
-
-### 左右分割レイアウト (`.ws-detail-split`)
-ファイル詳細・ワークスペース詳細で使用：
-```css
-.ws-detail-split  { display: flex; gap: 32px; flex: 1; min-height: 0; overflow: hidden; }
-.ws-detail-left   { flex: 3; min-width: 0; overflow-y: auto; }   /* 約60% */
-.ws-detail-right  { flex: 2; min-width: 0; overflow-y: auto; }   /* 約40% */
-```
-- `.page:has(.ws-detail-split)` → `display: flex; flex-direction: column; overflow: hidden`
-- `.tab-content:has(.ws-detail-split)` → `overflow: hidden; display: flex`
-- デフォルト比率は左 3 / 右 2。左が狭くていい場合はインラインで `style={{ flex: 2 }}` / `style={{ flex: 3 }}` で上書きする
-
-### ボタンスタイル（色は役割で統一）
-| 役割 | クラス | 色 |
-|---|---|---|
-| 表示系・ナビゲーション | `.btn` | 青 `#4a7cdc` |
-| 更新系（保存・作成など主要操作） | `.btn-green` | 緑 `#27ae60` |
-| 更新系（非主要・ツール用途） | `.btn-outline` | 透明＋白枠 |
-| 削除 | `.btn-danger` | 赤 `#c0392b` |
-| Blender 実行（レンダリング・ファイルを開く） | `.btn-run` | オレンジ `#d15904` |
-| ダイアログのキャンセル等 | `.btn-ghost` | 透明 |
-
-- `.btn-sm` は色クラスと併用する大きさ修飾（高さ 28px）
-- `.btn-outline-active` は選択モード等のトグル ON 状態用（青枠）
-- タブ (`.tab-btn`)・パンくず (`.breadcrumb-link`)・ページネーション (`.pagination-btn`)・表示切替トグル (`.file-view-btn`)・サイドバー (`.nav-item`)・タイトルバー (`.titlebar-btn`) はアクションボタンではないため色規約の対象外
