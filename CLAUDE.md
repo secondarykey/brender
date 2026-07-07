@@ -11,6 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | フロントエンド規約（ページ構成・API ラッパー層・イベントバス・ダイアログ・トースト・i18n・テーマ・CSS） | `_cmd/brender/frontend/CLAUDE.md` | frontend 配下のファイルを扱うと自動ロード |
 | レンダリングパイプライン詳細（キュー実行・リカバリ・ProcessingWriter・進捗・ETA・サムネイル生成・CLI 表示） | Skill `brender-render-pipeline` | 該当作業時に Skill を参照 |
 | 権限・アクセス制御（ロール体系・ctx ユーザ・REST ガード・フロント制御） | Skill `brender-access-control` | 該当作業時に Skill を参照 |
+| サーバモード（起動フロー・HTTP ルーティング・REST 追加手順・認証/セッション・SSE・考慮事項チェックリスト） | Skill `brender-server-mode` | 該当作業時に Skill を参照 |
 | コード管理 `code/`（フォーマット・解像度プリセット、新カテゴリ追加手順） | Skill `brender-codes` | 該当作業時に Skill を参照 |
 
 Skill の正本はメインリポジトリの `.claude/skills/` に置く（git 未追跡）。ワークツリー作成時に自動コピーされる。ワークツリー内で Skill を更新した場合はメイン側へ手動で書き戻すこと。

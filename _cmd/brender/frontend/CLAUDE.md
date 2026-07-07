@@ -85,8 +85,9 @@ src/lib/api/
   index.js        re-export
 ```
 
-- **Wailsモード** (`window._wails` が存在): `@wailsio/runtime` を動的インポートして既存 Service を呼ぶ
-- **サーバモード**: `POST /api/{service}/{method}` + JSON ボディ、レスポンス `{ data } | { error }` 形式
+- **モード判定**: `isWails()` は `window._wails && !window.__brender_server_mode`。サーバモードでもバンドル内の `@wailsio/runtime` が `window._wails` をセットするため、サーバ側が index.html に注入する `__brender_server_mode` フラグで区別する
+- **Wailsモード**: `@wailsio/runtime` を動的インポートして既存 Service を呼ぶ
+- **サーバモード**: `POST /api/{service}/{method}` + JSON ボディ、レスポンス `{ data } | { error }` 形式（業務エラーも HTTP 200）。401 は `window.location.reload()` でログイン画面へ。詳細は Skill `brender-server-mode`
 - 引数は常にオブジェクト形式: `ProjectApi.get({ id })`, `QueueApi.cancel({ id })` など
 - サーバモードの REST エンドポイントは snake_case: `list_by_project`, `get_engines` など
 
