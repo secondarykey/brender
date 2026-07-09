@@ -31,7 +31,17 @@ func collectGPU() (available bool, gpus []GPUStats) {
 		return false, nil
 	}
 
-	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
+	gpus = parseNvidiaSmiOutput(strings.TrimSpace(string(out)))
+	return len(gpus) > 0, gpus
+}
+
+func parseNvidiaSmiOutput(output string) []GPUStats {
+	if output == "" {
+		return nil
+	}
+
+	var gpus []GPUStats
+	lines := strings.Split(output, "\n")
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		if line == "" {
@@ -61,5 +71,5 @@ func collectGPU() (available bool, gpus []GPUStats) {
 		gpus = append(gpus, gs)
 	}
 
-	return len(gpus) > 0, gpus
+	return gpus
 }

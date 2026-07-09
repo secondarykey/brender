@@ -56,6 +56,14 @@ brender-tool [-b <blender>] [-S <scene>] [-E <engine>] [-s <start>] [-e <end>] [
 go test ./...
 go test ./exec/...
 ```
+`exec/` の `TestVersion`/`TestEngines` はローカルにハードコードされた Blender インストールパスに依存するため、実機に該当バージョンが無い環境では失敗する（既知の環境依存、CI 想定外）。
+
+フロントエンド（Vitest + Testing Library、`_cmd/brender/frontend/src/test/setup.js` で jsdom セットアップ）:
+```bash
+cd _cmd/brender/frontend
+npm test          # vitest run（CI 向け一括実行）
+npm run test:watch  # vitest（watch モード）
+```
 
 ## Architecture
 
