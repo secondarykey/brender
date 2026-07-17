@@ -10,8 +10,8 @@ info:
   productIdentifier: "com.github.ikascrew.brender" # The unique product identifier
   description: "Brender" # The application description
   copyright: "(c)2026, ikascrew" # Copyright text
-  comments: "Some Product Comments" # Comments
-  version: "0.2.0"
+  comments: "Blender rendering management system" # Comments
+  version: "0.3.0"
   # cfBundleIconName: "appicon" # The macOS icon name in Assets.car icon bundles (optional)
   #                               # Should match the name of your .icon file without the extension
   #                               # If not set and Assets.car exists, defaults to "appicon"

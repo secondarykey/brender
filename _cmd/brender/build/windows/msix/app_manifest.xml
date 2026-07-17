@@ -7,16 +7,16 @@
   xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
   IgnorableNamespaces="uap3">
   
-  <Identity 
-    Name="com.example.brender"
-    Publisher="CN=My Company"
-    Version="0.1.0.0" 
+  <Identity
+    Name="com.github.ikascrew.brender"
+    Publisher="CN=ikascrew"
+    Version="0.3.0.0"
     ProcessorArchitecture="x64" />
-  
+
   <Properties>
-    <DisplayName>My Product</DisplayName>
-    <PublisherDisplayName>My Company</PublisherDisplayName>
-    <Description>A brender application</Description>
+    <DisplayName>Brender</DisplayName>
+    <PublisherDisplayName>ikascrew</PublisherDisplayName>
+    <Description>Blender rendering management system</Description>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
   
@@ -29,10 +29,10 @@
   </Resources>
   
   <Applications>
-    <Application Id="com.example.brender" Executable="brender.exe" EntryPoint="Windows.FullTrustApplication">
+    <Application Id="com.github.ikascrew.brender" Executable="brender.exe" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements
-        DisplayName="My Product"
-        Description="A brender application"
+        DisplayName="Brender"
+        Description="Blender rendering management system"
         BackgroundColor="transparent"
         Square150x150Logo="Assets\Square150x150Logo.png"
         Square44x44Logo="Assets\Square44x44Logo.png">

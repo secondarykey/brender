@@ -71,7 +71,9 @@ jobs:
       - name: Update Build Assets
         run: |
           cd _cmd/brender
-          wails3 update build-assets -config build/config.yml -dir build
+          # -name/-binaryname は config.yml から読まれない。省略すると空文字で展開され
+          # インストーラ実行ファイル名・CFBundleExecutable・nfpm name 等が壊れる
+          wails3 update build-assets -name "brender" -binaryname "brender" -config build/config.yml -dir build
 
       - name: Commit and Pull Request
         run: |
