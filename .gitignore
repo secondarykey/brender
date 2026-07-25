@@ -1,4 +1,13 @@
 *.db
 *.exe
 .*
+!.gitignore
 !.github
+./core
+./client
+./server
+./ikasbox
+./pb
+./plugin
+./powermate
+./volumes
