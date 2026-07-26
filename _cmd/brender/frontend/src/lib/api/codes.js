@@ -1,6 +1,6 @@
 import { isWails, serverCall } from './_client'
 
-const svc = () => import('../../../bindings/github.com/ikascrew/brender/api/wails/codes');
+const svc = () => import('../../../bindings/main/services/codes');
 
 export const CodesApi = {
   getImageFormats: () =>

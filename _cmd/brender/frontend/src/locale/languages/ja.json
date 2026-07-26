@@ -1,6 +1,7 @@
 {
   "common": {
     "loading": "読み込み中...",
+    "experimental": "Experimental",
     "saving": "保存中...",
     "save": "保存",
     "saved": "保存しました",
@@ -51,6 +52,7 @@
     "search": "検索",
     "queue": "キュー",
     "miniMonitor": "ミニモニター",
+    "users": "ユーザ管理",
     "settings": "設定"
   },
   "title": {
@@ -61,7 +63,8 @@
     "download": "ログをダウンロード",
     "confirmClose": "アプリケーションの終了",
     "closeAnyway": "終了する",
-    "queueRunningWarning": "実行中または待機中のキューがあります。終了するとジョブは中断されますが、次回起動時に自動で再実行されます。"
+    "queueRunningWarning": "実行中または待機中のキューがあります。終了するとジョブは中断されますが、次回起動時に自動で再実行されます。",
+    "serverRunningWarning": "サーバモードが有効です。終了するとブラウザからのアクセスができなくなります。"
   },
   "status": {
     "waiting": "実行待ち",
@@ -110,10 +113,11 @@
     "video": "動画",
     "code": "コード",
     "tag": "タグ",
+    "server": "サーバ",
     "system": "システム",
-    "directory": "ディレクトリ設定",
-    "workDirs": "作業ディレクトリ",
-    "dataManagement": "データ管理",
+    "directory": "ファイル管理",
+    "workDirs": "ディレクトリ",
+    "dataManagement": "ジョブ管理",
     "jobManagement": "ジョブ管理",
     "jobResult": "実行結果",
     "renderResults": "レンダリング結果",
@@ -175,7 +179,9 @@
     "engineFixed": "固定",
     "engineFixedHint": "有効にすると、ワークスペースでエンジンを変更できなくなります",
     "fileChanged": "更新あり",
-    "fileChangedTooltip": "レンダリング後にファイルが更新されています"
+    "fileChangedTooltip": "レンダリング後にファイルが更新されています",
+    "notPacked": "外部参照が含まれています。サーバモードでは正常にレンダリングできません。Blender で「ファイル→外部データ→すべてパック」を実行してください。",
+    "serverIncompatible": "サーバモードに適していないデータです。アップロードされたファイルを使用してください。"
   },
   "workspace": {
     "name": "ワークスペース名",
@@ -184,6 +190,8 @@
     "empty": "ワークスペースがありません",
     "createNew": "+ ワークスペースを作成",
     "addFile": "+ .blend ファイルを追加",
+    "uploading": "アップロード中...",
+    "fileUploaded": "ファイルをアップロードしました",
     "addFilesFromDir": "+ ディレクトリからファイルを追加する",
     "addFilesFromDirResult": "{{added}}件追加、{{skipped}}件スキップ",
     "listView": "リスト表示",
@@ -373,6 +381,11 @@
       "dark": "ダークモード",
       "light": "ライトモード"
     },
+    "account": "アカウント",
+    "loginId": "ログインID",
+    "displayName": "表示名",
+    "logout": "ログアウト",
+    "loggingOut": "ログアウト中...",
     "selectFolder": "フォルダを選択",
     "selectFile": "ファイルを選択",
     "selectDirectory": "ディレクトリを選択",
@@ -402,7 +415,13 @@
       "projectsUnit": "件",
       "dataSize": "データサイズ",
       "destination": "移動先",
-      "current": "現在"
+      "current": "現在",
+      "checkAllFiles": "全ファイルを確認",
+      "checkingFiles": "ファイルを確認中...",
+      "checkComplete": "ファイル確認完了",
+      "checkResult": "{{total}}件中 — 存在: {{exists}}件, パック済み: {{packed}}件, 未パック: {{notPacked}}件, 不明: {{unknown}}件, 欠損: {{missing}}件",
+      "checkResultNoTool": "{{total}}件中 — 存在: {{exists}}件, 欠損: {{missing}}件",
+      "noFilesRegistered": "ファイルが登録されていません"
     },
     "addBlender": "+ Blender を追加",
     "noBlenders": "登録されたBlenderはありません",
@@ -419,6 +438,17 @@
     "ffmpegArgsHint": "ffmpeg に渡す追加の引数（省略可）",
     "maxConcurrentJobs": "最大同時実行数",
     "defaultOutputFormat": "デフォルト出力フォーマット",
+    "serverMode": "サーバモード",
+    "serverModeDesc": "有効にすると、アプリ起動時に HTTP サーバを同時に起動し、他のユーザがブラウザでアクセスできるようになります。",
+    "serverExperimentalNote": "サーバモードは実験的機能です。検証が十分ではないため、動作が不安定になる可能性があります。運用環境での利用は推奨しません。",
+    "serverEnabled": "サーバモードを有効にする",
+    "serverHost": "ホスト名",
+    "serverHostPlaceholder": "空欄 = すべてのインターフェース",
+    "serverHostHint": "ドメイン名、IP アドレス、localhost を指定できます。空欄にするとすべてのネットワークインターフェースで待ち受けます。",
+    "serverPort": "ポート番号",
+    "serverAuth": "ユーザ認証を有効にする",
+    "serverAuthHint": "無効の場合、Web からのアクセスは「Guest」ユーザとして扱われます",
+    "serverRestartRequired": "設定の反映にはアプリの再起動が必要です",
     "systemLog": "システムログ",
     "openSystemLog": "システムログを開く",
     "logLevel": "ログレベル"
@@ -553,5 +583,95 @@
   "system": {
     "license": "ライセンス",
     "thirdPartyLicenses": "サードパーティライセンス"
+  },
+  "users": {
+    "tabUsers": "ユーザ",
+    "tabGroups": "グループ",
+    "addUser": "+ ユーザを追加",
+    "addGroup": "+ グループを追加",
+    "editUser": "ユーザ編集",
+    "editGroup": "グループ編集",
+    "createUser": "ユーザ作成",
+    "createGroup": "グループ作成",
+    "loginId": "ログインID",
+    "loginIdHint": "ASCII文字のみ。空欄の場合はIDと同じ値が設定されます",
+    "loginIdPlaceholder": "空欄 = IDと同じ値",
+    "displayName": "表示名",
+    "displayNameRequired": "表示名を入力してください",
+    "id": "ID",
+    "system": "システム",
+    "systemBadge": "システム",
+    "noUsers": "ユーザがいません",
+    "noGroups": "グループがありません",
+    "confirmDeleteUser": "ユーザを削除しますか？",
+    "deleteUserWarning": "このユーザの権限設定も削除されます。この操作は取り消せません。",
+    "confirmDeleteGroup": "グループを削除しますか？",
+    "deleteGroupWarning": "このグループの権限設定やメンバーシップも削除されます。この操作は取り消せません。",
+    "members": "メンバー",
+    "memberCount": "{{count}}人",
+    "addMember": "メンバーを追加",
+    "removeMember": "除外",
+    "noMembers": "メンバーがいません",
+    "allGroupHint": "全ユーザが自動的に参加するグループです",
+    "groups": "所属グループ",
+    "password": "パスワード",
+    "pwSet": "設定済",
+    "pwUnset": "未設定",
+    "issueToken": "発行",
+    "issueTokenTitle": "パスワード設定URLを発行",
+    "resetTokenTitle": "パスワード設定URL",
+    "resetTokenHint": "このURLをユーザに共有してください。ユーザはこのURLからパスワードを設定できます。",
+    "resetTokenExpiryNew": "発行から24時間有効です。1回のみ使用できます。",
+    "resetTokenExpiryAt": "有効期限: {{time}}",
+    "noActiveToken": "有効なパスワード設定URLはありません。発行ボタンを押してURLを作成してください。",
+    "reissueHint": "再発行すると現在のURLは無効になります。",
+    "reissueToken": "再発行",
+    "copy": "コピー",
+    "copied": "コピー済",
+    "role": "ロール",
+    "roleDefault": "デフォルト（creator）",
+    "roleHint": "アプリ全体での操作権限。未設定の場合は creator として扱います",
+    "roles": {
+      "admin": "管理者",
+      "creator": "作成者",
+      "viewer": "閲覧者"
+    }
+  },
+  "permission": {
+    "title": "権限",
+    "target": "対象",
+    "role": "ロール",
+    "actions": "操作",
+    "roles": {
+      "owner": "オーナー",
+      "workspace_creator": "ワークスペース作成者",
+      "runner": "実行者",
+      "editor": "編集者",
+      "file_register": "ファイル登録者",
+      "viewer": "閲覧者"
+    },
+    "add": "+ 追加",
+    "addTitle": "権限を追加",
+    "addTarget": "対象を選択",
+    "user": "ユーザ",
+    "group": "グループ",
+    "noPermissions": "権限が設定されていません",
+    "noTargets": "追加できる対象がありません",
+    "addAction": "追加",
+    "confirmRemove": "この権限を削除しますか？",
+    "saved": "権限を保存しました",
+    "removed": "権限を削除しました",
+    "accessDenied": "権限がありません",
+    "accessDeniedLabel": "[アクセス拒否]"
+  },
+  "login": {
+    "subtitle": "ログインしてください",
+    "loginId": "ログインID",
+    "password": "パスワード",
+    "login": "ログイン",
+    "loggingIn": "ログイン中..."
+  },
+  "sysmon": {
+    "memory": "メモリ"
   }
 }

@@ -211,6 +211,12 @@ func (b *Blender) createArguments() []string {
 
 func (b *Blender) RunTool() error {
 
+	// 同一 .blend の解析結果はファイル更新時刻でキャッシュし、Blender の再起動を避ける
+	if t, ok := cachedTool(b.cmd, b.File); ok {
+		b.Tool = t
+		return nil
+	}
+
 	p, err := getToolPythonFile()
 	if err != nil {
 		return xerrors.Errorf("getToolPythonFile() error: %w", err)
@@ -234,6 +240,11 @@ func (b *Blender) RunTool() error {
 	// パース結果にシーンが含まれていれば成功とみなしエラーを無視する。
 	if err != nil && len(b.Tool.Scenes) == 0 {
 		return xerrors.Errorf("blender running error: %w", err)
+	}
+
+	// 解析成功時のみキャッシュ（シーンが取れていることを成功の条件とする）
+	if len(b.Tool.Scenes) > 0 {
+		storeTool(b.cmd, b.File, b.Tool)
 	}
 
 	return nil

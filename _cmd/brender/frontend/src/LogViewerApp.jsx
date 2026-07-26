@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { QueueApi, EnvironmentApi } from './lib/api'
 import LogTitleBar from './components/LogTitleBar'
+import { MdKeyboardArrowUp, MdKeyboardArrowDown, MdClose, MdContrast, MdSwapVert, MdArrowDownward } from 'react-icons/md'
 
 const TAIL_INTERVAL = 1000
 function detectLevelIdx(line, levels) {
@@ -298,9 +299,9 @@ function LogViewerApp() {
               {matchLines.length > 0 ? `${matchIndex + 1}/${matchLines.length}` : '0/0'}
             </span>
           )}
-          <button className="log-search-nav" onClick={goPrev} disabled={!matchLines.length} title={t('job.searchPrev')}>&#8593;</button>
-          <button className="log-search-nav" onClick={goNext} disabled={!matchLines.length} title={t('job.searchNext')}>&#8595;</button>
-          <button className="log-search-close" onClick={closeSearch}>&#10005;</button>
+          <button className="log-search-nav" onClick={goPrev} disabled={!matchLines.length} title={t('job.searchPrev')}><MdKeyboardArrowUp /></button>
+          <button className="log-search-nav" onClick={goNext} disabled={!matchLines.length} title={t('job.searchNext')}><MdKeyboardArrowDown /></button>
+          <button className="log-search-close" onClick={closeSearch}><MdClose /></button>
         </div>
       )}
       <button
@@ -308,21 +309,21 @@ function LogViewerApp() {
         onClick={() => setColorize(v => !v)}
         title={t('job.colorize')}
       >
-        ◑
+        <MdContrast />
       </button>
       <button
         className={`log-wrap-btn${wrap ? ' active' : ''}`}
         onClick={() => setWrap(v => !v)}
         title={t('job.wrap')}
       >
-        ⇌
+        <MdSwapVert />
       </button>
       <button
         className={`log-tail-btn${tail ? ' active' : ''}`}
         onClick={() => setTail(v => !v)}
         title={t('job.tail')}
       >
-        ↓
+        <MdArrowDownward />
       </button>
     </div>
   )

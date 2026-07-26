@@ -5,7 +5,7 @@
 !include "FileFunc.nsh"
 
 !ifndef INFO_PROJECTNAME
-    !define INFO_PROJECTNAME ""
+    !define INFO_PROJECTNAME "brender"
 !endif
 !ifndef INFO_COMPANYNAME
     !define INFO_COMPANYNAME "ikascrew"
@@ -14,7 +14,7 @@
     !define INFO_PRODUCTNAME "Brender"
 !endif
 !ifndef INFO_PRODUCTVERSION
-    !define INFO_PRODUCTVERSION "0.2.0"
+    !define INFO_PRODUCTVERSION "0.3.0"
 !endif
 !ifndef INFO_COPYRIGHT
     !define INFO_COPYRIGHT "(c)2026, ikascrew"

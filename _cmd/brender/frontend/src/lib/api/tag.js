@@ -1,6 +1,6 @@
 import { isWails, serverCall } from './_client'
 
-const svc = () => import('../../../bindings/github.com/ikascrew/brender/api/wails/tag')
+const svc = () => import('../../../bindings/main/services/tag')
 
 export const TagApi = {
   // ── TagCategory ────────────────────────────────────────

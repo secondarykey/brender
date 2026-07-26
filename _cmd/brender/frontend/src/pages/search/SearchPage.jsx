@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { TagApi, ProjectApi } from '../../lib/api'
 import { useMessage } from '../../lib/toast'
 import Pagination from '../../components/Pagination'
+import { MdViewList, MdViewModule, MdViewComfy } from 'react-icons/md'
 
 function SearchPage({ navigate }) {
   const { t } = useTranslation()
@@ -200,17 +201,17 @@ function SearchPage({ navigate }) {
                 className={`file-view-btn${viewMode === 'list' ? ' active' : ''}`}
                 onClick={() => { setViewMode('list'); localStorage.setItem('viewMode:search', 'list') }}
                 title={t('workspace.listView')}
-              >☰</button>
+              ><MdViewList /></button>
               <button
                 className={`file-view-btn${viewMode === 'card' ? ' active' : ''}`}
                 onClick={() => { setViewMode('card'); localStorage.setItem('viewMode:search', 'card') }}
                 title={t('workspace.cardView')}
-              >⊞</button>
+              ><MdViewModule /></button>
               <button
                 className={`file-view-btn${viewMode === 'card-sm' ? ' active' : ''}`}
                 onClick={() => { setViewMode('card-sm'); localStorage.setItem('viewMode:search', 'card-sm') }}
                 title={t('workspace.smallCardView')}
-              >▦</button>
+              ><MdViewComfy /></button>
             </div>
           </div>
 

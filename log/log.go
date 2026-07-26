@@ -3,7 +3,6 @@ package log
 import (
 	"context"
 	"fmt"
-	"io"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -11,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ikascrew/brender/config"
 	"golang.org/x/xerrors"
 )
 
@@ -37,7 +37,11 @@ func Init(ctx context.Context) (*slog.Logger, error) {
 
 	gCtx = ctx
 
-	dir := filepath.Join(os.TempDir(), "brender")
+	// 出力先は brender.ini の log_dir を優先。未設定なら temp 配下。
+	dir := config.Get().LogDir
+	if dir == "" {
+		dir = filepath.Join(os.TempDir(), "brender", "logs")
+	}
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return nil, xerrors.Errorf("os.MkdirAll() error: %w", err)
 	}
@@ -49,7 +53,7 @@ func Init(ctx context.Context) (*slog.Logger, error) {
 	}
 	logFile = f
 
-	handler := &simpleHandler{w: logFile, level: &logLevel}
+	handler := requestHandler{next: &simpleHandler{w: logFile, level: &logLevel}}
 	logger := slog.New(handler)
 	slog.SetDefault(logger)
 	gLogger = logger
@@ -59,45 +63,6 @@ func Init(ctx context.Context) (*slog.Logger, error) {
 
 func Enabled(lv slog.Level) bool {
 	return gLogger.Enabled(gCtx, lv)
-}
-
-// simpleHandler はデフォルトの log パッケージに近いシンプルな出力を行う slog.Handler。
-// 出力形式: 2006/01/02 15:04:05 [LEVEL] message
-type simpleHandler struct {
-	w     io.Writer
-	level *slog.LevelVar
-}
-
-func (h *simpleHandler) Enabled(_ context.Context, l slog.Level) bool {
-	return l >= h.level.Level()
-}
-
-func (h *simpleHandler) Handle(_ context.Context, r slog.Record) error {
-	t := r.Time.Format(time.RFC3339)
-	_, err := fmt.Fprintf(h.w, "%s [%s] %s\n", t, levelName(r.Level), r.Message)
-	return err
-}
-
-func (h *simpleHandler) WithAttrs(_ []slog.Attr) slog.Handler { return h }
-func (h *simpleHandler) WithGroup(_ string) slog.Handler      { return h }
-
-func levelName(l slog.Level) string {
-	switch {
-	case l <= LevelTrace:
-		return "TRACE "
-	case l <= slog.LevelDebug:
-		return "DEBUG "
-	case l < LevelNotice:
-		return "INFO  "
-	case l < slog.LevelWarn:
-		return "NOTICE"
-	case l < slog.LevelError:
-		return "WARN  "
-	case l < LevelEmergency:
-		return "ERROR "
-	default:
-		return "EMERGENCY"
-	}
 }
 
 // Close はログファイルを閉じる。
@@ -164,6 +129,36 @@ func put(ctx context.Context, lv slog.Level, format string, args ...interface{})
 		msg := fmt.Sprintf(format, args...)
 		slog.Log(ctx, lv, msg)
 	}
+}
+
+// ── Context 版 ───────────────────────────────────────────
+// 呼び出し側の ctx をそのまま渡し、requestHandler が ctx 内の相関情報
+// （request_id / user / job_id）を属性として付与する。グローバル gCtx に
+// 依存しないため、HTTP リクエストやジョブ単位のログ追跡に使う。
+// メッセージは既存の Info 等と同じ printf 形式。
+
+func TraceContext(ctx context.Context, msg string, args ...interface{}) {
+	put(ctx, LevelTrace, msg, args...)
+}
+
+func DebugContext(ctx context.Context, msg string, args ...interface{}) {
+	put(ctx, slog.LevelDebug, msg, args...)
+}
+
+func InfoContext(ctx context.Context, msg string, args ...interface{}) {
+	put(ctx, slog.LevelInfo, msg, args...)
+}
+
+func NoticeContext(ctx context.Context, msg string, args ...interface{}) {
+	put(ctx, LevelNotice, msg, args...)
+}
+
+func WarnContext(ctx context.Context, msg string, args ...interface{}) {
+	put(ctx, slog.LevelWarn, msg, args...)
+}
+
+func ErrorContext(ctx context.Context, msg string, args ...interface{}) {
+	put(ctx, slog.LevelError, msg, args...)
 }
 
 // 関数の開始地点に

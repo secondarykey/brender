@@ -403,6 +403,54 @@ func SearchFilesByTags(tagIDs []uint, page, pageSize int, sort, dir string, unta
 	return files, total, nil
 }
 
+// SearchFilesByTagsForUser はファイル権限でフィルタしたタグ検索を行う。
+func SearchFilesByTagsForUser(tagIDs []uint, page, pageSize int, sort, dir string, untagged bool, keyword string, userID string) ([]*FileSearchResult, int64, error) {
+	ids, err := collectTargetIDs(userID)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	query := db.Model(&ProjectFile{}).
+		Select("project_files.*, projects.name as project_name").
+		Joins("INNER JOIN projects ON projects.id = project_files.project_id").
+		Where("project_files.deleted_at IS NULL AND projects.deleted_at IS NULL").
+		Where("project_files.id IN (?)",
+			db.Model(&FilePermission{}).Select("file_id").Where("target_id IN ?", ids))
+
+	if keyword != "" {
+		like := "%" + keyword + "%"
+		query = query.Where("(project_files.name LIKE ? OR projects.name LIKE ?)", like, like)
+	}
+
+	if untagged {
+		query = query.Where("project_files.id NOT IN (?)",
+			db.Model(&ProjectFileTag{}).Select("project_file_id"))
+	} else if len(tagIDs) > 0 {
+		subQuery := db.Model(&ProjectFileTag{}).
+			Select("project_file_id").
+			Where("tag_id IN ?", tagIDs).
+			Group("project_file_id").
+			Having("COUNT(DISTINCT tag_id) = ?", len(tagIDs))
+		query = query.Where("project_files.id IN (?)", subQuery)
+	}
+
+	var total int64
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, xerrors.Errorf("SearchFilesByTagsForUser count: %w", err)
+	}
+
+	var files []*FileSearchResult
+	offset := (page - 1) * pageSize
+	if err := query.Order(resolveOrder(sort, dir)).Offset(offset).Limit(pageSize).Find(&files).Error; err != nil {
+		return nil, 0, xerrors.Errorf("SearchFilesByTagsForUser: %w", err)
+	}
+
+	for _, f := range files {
+		populateFileInfo(&f.ProjectFile)
+	}
+	return files, total, nil
+}
+
 // ── 集計 ─────────────────────────────────────────────────
 
 func ListTagUsageCounts() ([]*TagUsageCount, error) {

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"math/rand"
 	"strings"
 
@@ -181,7 +182,7 @@ type FileSearchResponse struct {
 	Total int64                     `json:"total"`
 }
 
-func SearchFiles(tagIDs []uint, page, pageSize int, sort, dir string, untagged bool, keyword string) (*FileSearchResponse, error) {
+func SearchFiles(ctx context.Context, tagIDs []uint, page, pageSize int, sort, dir string, untagged bool, keyword string) (*FileSearchResponse, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -189,7 +190,15 @@ func SearchFiles(tagIDs []uint, page, pageSize int, sort, dir string, untagged b
 		pageSize = 20
 	}
 	keyword = strings.TrimSpace(keyword)
-	files, total, err := model.SearchFilesByTags(tagIDs, page, pageSize, sort, dir, untagged, keyword)
+
+	var files []*model.FileSearchResult
+	var total int64
+	var err error
+	if fullAccess(ctx) {
+		files, total, err = model.SearchFilesByTags(tagIDs, page, pageSize, sort, dir, untagged, keyword)
+	} else {
+		files, total, err = model.SearchFilesByTagsForUser(tagIDs, page, pageSize, sort, dir, untagged, keyword, currentUser(ctx))
+	}
 	if err != nil {
 		return nil, err
 	}

@@ -13,10 +13,14 @@ import Breadcrumb from '../../components/Breadcrumb'
 import NoteSection from '../../components/NoteSection'
 import WorkspaceCreateDialog from '../../components/WorkspaceCreateDialog'
 import TagInput from '../../components/TagInput'
+import PermissionSection from '../../components/PermissionSection'
+import AccessDenied from '../../components/AccessDenied'
+import { isWails } from '../../lib/api/_client'
+import { MdViewList, MdViewModule, MdViewComfy, MdPlayArrow } from 'react-icons/md'
 
 
 // ── ワークスペースカード（サムネイル表示） ──────────────────
-function WorkspaceCard({ projectID, fileID, ws, navigate, projectName, fileName, onRunClick, resolvingWsId, thumbnailMode, onSetThumbnail, workDirLocked, small, stale }) {
+function WorkspaceCard({ projectID, fileID, ws, navigate, projectName, fileName, onRunClick, resolvingWsId, thumbnailMode, onSetThumbnail, workDirLocked, small, stale, canRun }) {
   const { t } = useTranslation()
   const [thumb, setThumb] = useState(null)
 
@@ -59,14 +63,14 @@ function WorkspaceCard({ projectID, fileID, ws, navigate, projectName, fileName,
           </div>
         )}
       </div>
-      {!thumbnailMode && !small && (
+      {!thumbnailMode && !small && canRun && (
         <div className="ws-tile-actions">
           <button
             className="btn btn-run btn-sm"
             onClick={e => { e.stopPropagation(); onRunClick(ws) }}
             disabled={resolvingWsId !== null || workDirLocked}
           >
-            ▶ {t('common.run')}
+            <MdPlayArrow /> {t('common.run')}
           </button>
         </div>
       )}
@@ -75,7 +79,7 @@ function WorkspaceCard({ projectID, fileID, ws, navigate, projectName, fileName,
 }
 
 // ── ワークスペースタブ ─────────────────────────────────────
-function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEnqueued, workDirLocked }) {
+function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEnqueued, workDirLocked, role }) {
   const { t } = useTranslation()
   const { showToast } = useToast()
   const { showError } = useMessage()
@@ -89,6 +93,15 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
   const [thumbnailMode, setThumbnailMode] = useState(false)
   const [sort, setSort]             = useState(() => localStorage.getItem('sort:workspaces') || 'display_order')
   const [dir, setDir]               = useState(() => localStorage.getItem('dir:workspaces') || '')
+
+  // Role-based permissions
+  const isOwner            = role === 'owner'
+  const isWorkspaceCreator = role === 'workspace_creator'
+  const isEditor           = role === 'editor'
+  const isRunner           = role === 'runner'
+  const canCreateWorkspace = isOwner || isWorkspaceCreator  // workspace_creator 以上
+  const canSetThumbnail    = isOwner || isWorkspaceCreator || isEditor  // editor 以上
+  const canRun             = isOwner || isWorkspaceCreator || isEditor || isRunner  // runner 以上
 
   const load = (s, d) => {
     WorkspaceApi.listByProject({ projectID, sort: s, dir: d })
@@ -176,18 +189,19 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
             className={`file-view-btn${viewMode === 'list' ? ' active' : ''}`}
             onClick={() => { setViewMode('list'); localStorage.setItem('viewMode:workspaces', 'list') }}
             title={t('workspace.listView')}
-          >☰</button>
+          ><MdViewList /></button>
           <button
             className={`file-view-btn${viewMode === 'card' ? ' active' : ''}`}
             onClick={() => { setViewMode('card'); localStorage.setItem('viewMode:workspaces', 'card') }}
             title={t('workspace.cardView')}
-          >⊞</button>
+          ><MdViewModule /></button>
           <button
             className={`file-view-btn${viewMode === 'card-sm' ? ' active' : ''}`}
             onClick={() => { setViewMode('card-sm'); localStorage.setItem('viewMode:workspaces', 'card-sm') }}
             title={t('workspace.smallCardView')}
-          >▦</button>
+          ><MdViewComfy /></button>
           <SortSelect value={sort} onChange={handleSortChange} dir={dir} onDirChange={handleDirChange} />
+          {canSetThumbnail && (
           <button
             className={`btn btn-sm${thumbnailMode ? ' btn-outline-active' : ' btn-outline'}`}
             style={{ marginLeft: 'auto' }}
@@ -195,6 +209,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
           >
             {t('workspace.setAsFileThumbnail')}
           </button>
+          )}
         </div>
       )}
 
@@ -215,13 +230,13 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
                 className={`ws-item ws-item-run${thumbnailMode ? ' file-item-thumb-select' : ''}`}
                 onClick={thumbnailMode ? () => handleSetThumbnail(ws.id) : undefined}
               >
-                {!thumbnailMode && (
+                {!thumbnailMode && canRun && (
                   <button
                     className="btn btn-run btn-sm ws-item-run-btn"
                     onClick={() => handleRunClick(ws)}
                     disabled={resolvingWsId !== null || workDirLocked}
                   >
-                    ▶ {t('common.run')}
+                    <MdPlayArrow /> {t('common.run')}
                   </button>
                 )}
                 <div
@@ -267,6 +282,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
                 workDirLocked={workDirLocked}
                 small={viewMode === 'card-sm'}
                 stale={isStale(ws)}
+                canRun={canRun}
               />
             ))}
           </div>
@@ -279,11 +295,13 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
       </div>
 
       <div className="list-spacer" />
+      {canCreateWorkspace && (
       <div className="list-fab">
         <button className="btn btn-green" onClick={handleCreateWorkspace}>
           {t('workspace.createNew')}
         </button>
       </div>
+      )}
 
       <WorkspaceCreateDialog
         open={createDialogOpen}
@@ -470,7 +488,7 @@ function DefaultTag({ value, t }) {
 }
 
 // ── 設定タブ ─────────────────────────────────────────────
-function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
+function SettingsTab({ projectID, fileID, fileName, role, onUpdated, onDeleted }) {
   const { t } = useTranslation()
   const { showToast } = useToast()
   const { showError } = useMessage()
@@ -498,6 +516,12 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
   const [missingEngine, setMissingEngine]     = useState('')
   const [convertedEngine, setConvertedEngine] = useState(null)
   const [fileTags, setFileTags]             = useState([])
+
+  const isOwner            = role === 'owner'
+  const isWorkspaceCreator = role === 'workspace_creator'
+  const isEditor           = role === 'editor'
+  const canEdit  = isOwner || isWorkspaceCreator || isEditor  // editor 以上は保存可能
+  const readOnly = !canEdit             // runner / viewer は設定閲覧のみ
 
   const fetchToolData = (installID) => {
     setToolLoading(true)
@@ -642,6 +666,13 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
     <div className="ws-detail-split">
       <div className="ws-detail-left">
         <div className="form workspace" style={{ maxWidth: 640 }}>
+          {!isWails() && filePath && (() => {
+            const norm = filePath.replace(/\\/g, '/')
+            const expected = `${projectID}/${fileID}/${fileID}.blend`
+            return !norm.endsWith(expected)
+          })() && (
+            <div className="pack-warning-bar">{t('file.serverIncompatible')}</div>
+          )}
           <div className="form-row">
             <div className="form-field" style={{ flex: 2 }}>
               <label className="form-label">{t('file.displayName')} <span className="required">*</span></label>
@@ -649,24 +680,27 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
                 className="form-input"
                 value={name}
                 onChange={e => setName(e.target.value)}
+                disabled={readOnly}
               />
-              <button
-                className="btn btn-run btn-sm"
-                style={{ marginTop: 6, alignSelf: 'flex-start' }}
-                disabled={openingFile || !filePath}
-                onClick={async () => {
-                  setOpeningFile(true)
-                  try {
-                    await BlenderApi.openFile({ installID: blenderInstallID || 0, filePath })
-                  } catch (e) {
-                    showError(e?.message ?? String(e))
-                  } finally {
-                    setOpeningFile(false)
-                  }
-                }}
-              >
-                {openingFile ? '...' : t('common.open')}
-              </button>
+              {isWails() && (
+                <button
+                  className="btn btn-run btn-sm"
+                  style={{ marginTop: 6, alignSelf: 'flex-start' }}
+                  disabled={openingFile || !filePath}
+                  onClick={async () => {
+                    setOpeningFile(true)
+                    try {
+                      await BlenderApi.openFile({ installID: blenderInstallID || 0, filePath })
+                    } catch (e) {
+                      showError(e?.message ?? String(e))
+                    } finally {
+                      setOpeningFile(false)
+                    }
+                  }}
+                >
+                  {openingFile ? '...' : t('common.open')}
+                </button>
+              )}
             </div>
             <div className="form-field" style={{ flex: 1 }}>
               <label className="form-label" style={{ whiteSpace: 'nowrap' }}>
@@ -680,6 +714,7 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
                   className="form-select"
                   value={blenderInstallID}
                   onChange={e => handleBlenderChange(Number(e.target.value))}
+                  disabled={readOnly}
                 >
                   <option value={0}>{t('common.notSet')}</option>
                   {blenders.map(b => (
@@ -688,7 +723,7 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
                 </select>
               )}
               <label className="form-checkbox-label" style={{ marginTop: 6 }}>
-                <input type="checkbox" checked={blenderFixed} onChange={e => setBlenderFixed(e.target.checked)} />
+                <input type="checkbox" checked={blenderFixed} onChange={e => setBlenderFixed(e.target.checked)} disabled={readOnly} />
                 <span style={{ marginLeft: 6 }}>{t('file.fixed')}</span>
               </label>
             </div>
@@ -705,7 +740,7 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
                   className="form-select"
                   value={engine}
                   onChange={e => { setEngine(e.target.value); setMissingEngine(''); setConvertedEngine(null) }}
-                  disabled={toolLoading}
+                  disabled={toolLoading || readOnly}
                 >
                   <option value="">{t('common.notSet')}</option>
                   {toolData.Engines.map(eng => <option key={eng} value={eng}>{eng}</option>)}
@@ -716,12 +751,13 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
                   value={engine}
                   onChange={e => setEngine(e.target.value)}
                   placeholder={t('workspace.enginePlaceholder')}
+                  disabled={readOnly}
                 />
               )}
               {missingEngine && <span className="form-hint" style={{ color: '#e74c3c' }}>{t('workspace.engineMissing', { name: missingEngine })}</span>}
               {convertedEngine && <span className="form-hint" style={{ color: '#e0a030' }}>{t('workspace.engineConverted', { from: convertedEngine.from, to: convertedEngine.to })}</span>}
               <label className="form-checkbox-label" style={{ marginTop: 6 }}>
-                <input type="checkbox" checked={engineFixed} onChange={e => setEngineFixed(e.target.checked)} />
+                <input type="checkbox" checked={engineFixed} onChange={e => setEngineFixed(e.target.checked)} disabled={readOnly} />
                 <span style={{ marginLeft: 6 }}>{t('file.fixed')}</span>
               </label>
             </div>
@@ -738,7 +774,7 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
                   className="form-select"
                   value={scene}
                   onChange={e => handleSceneChange(e.target.value)}
-                  disabled={toolLoading}
+                  disabled={toolLoading || readOnly}
                 >
                   <option value="">{t('common.notSet')}</option>
                   {scenes.map(s => <option key={s} value={s}>{s}</option>)}
@@ -749,11 +785,12 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
                   value={scene}
                   onChange={e => handleSceneChange(e.target.value)}
                   placeholder={t('common.notSetPlaceholder')}
+                  disabled={readOnly}
                 />
               )}
               {missingScene && <span className="form-hint" style={{ color: '#e74c3c' }}>{t('workspace.sceneMissing', { name: missingScene })}</span>}
               <label className="form-checkbox-label" style={{ marginTop: 6 }}>
-                <input type="checkbox" checked={sceneFixed} onChange={e => setSceneFixed(e.target.checked)} />
+                <input type="checkbox" checked={sceneFixed} onChange={e => setSceneFixed(e.target.checked)} disabled={readOnly} />
                 <span style={{ marginLeft: 6 }}>{t('file.fixed')}</span>
               </label>
             </div>
@@ -766,7 +803,7 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
                 className="form-select"
                 value={camera}
                 onChange={e => { setCamera(e.target.value); setMissingCamera('') }}
-                disabled={toolLoading}
+                disabled={toolLoading || readOnly}
               >
                 <option value="">{t('common.notSet')}</option>
                 {allCameras
@@ -776,22 +813,27 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
               </select>
               {missingCamera && <span className="form-hint" style={{ color: '#e74c3c' }}>{t('workspace.cameraMissing', { name: missingCamera })}</span>}
               <label className="form-checkbox-label" style={{ marginTop: 6 }}>
-                <input type="checkbox" checked={cameraFixed} onChange={e => setCameraFixed(e.target.checked)} />
+                <input type="checkbox" checked={cameraFixed} onChange={e => setCameraFixed(e.target.checked)} disabled={readOnly} />
                 <span style={{ marginLeft: 6 }}>{t('file.fixed')}</span>
               </label>
             </div>
           </div>
 
-          <NoteSection value={note} onChange={setNote} />
+          <NoteSection value={note} onChange={setNote} disabled={readOnly} />
 
-          <div className="form-actions">
+          {canEdit && (
+          <div className="form-actions" style={isOwner ? undefined : { justifyContent: 'flex-end' }}>
+            {isOwner && (
             <button className="btn btn-danger" onClick={() => { setForceDel(false); setConfirm(true) }}>{t('common.delete')}</button>
+            )}
             <button className="btn btn-green" onClick={handleSave} disabled={saving}>
               {saving ? t('common.saving') : t('common.save')}
             </button>
           </div>
+          )}
         </div>
 
+        {isOwner && (
         <ConfirmDialog
           open={confirm}
           hold
@@ -810,6 +852,11 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
             {t('file.forceDeleteLabel')}
           </label>
         </ConfirmDialog>
+        )}
+
+        {isOwner && (
+        <PermissionSection mode="file" resourceID={fileID} />
+        )}
       </div>
 
       <div className="ws-detail-right">
@@ -828,20 +875,41 @@ function SettingsTab({ projectID, fileID, fileName, onUpdated, onDeleted }) {
 }
 
 // ── ページ本体 ────────────────────────────────────────────
-function FileDetailPage({ projectID, projectName, fileID, fileName, initialTab, navigate }) {
+function FileDetailPage({ projectID, projectName: initialProjectName, fileID, fileName, initialTab, navigate }) {
   const { t } = useTranslation()
   const [tab, setTab] = useState(initialTab || 'workspace')
+  const [projectName, setProjectName] = useState(initialProjectName)
   const [currentFileName, setCurrentFileName] = useState(fileName)
   const [workDirStatus, setWorkDirStatus] = useState(null)
+  const [accessDenied, setAccessDenied] = useState(false)
+  const [fileRole, setFileRole] = useState('owner')
 
   useEffect(() => {
-    Promise.all([ProjectApi.get({ id: projectID }), WorkDirApi.list()])
-      .then(([d, dirs]) => {
-        const wd = (dirs || []).find(w => w.id === d?.project?.work_dir_id)
-        setWorkDirStatus(wd?.status || null)
+    // ファイル権限チェック + ロール取得
+    ProjectApi.getFile({ fileID })
+      .then(f => {
+        if (f?.my_role) setFileRole(f.my_role)
       })
-      .catch(() => {})
-  }, [projectID])
+      .catch(err => {
+        if (String(err).includes('access denied')) setAccessDenied(true)
+      })
+    // プロジェクト情報取得（パンくず名もAPIから取得して統一）
+    ProjectApi.get({ id: projectID })
+      .then(d => {
+        if (d?.project?.name) setProjectName(d.project.name)
+        WorkDirApi.list().then(dirs => {
+          const wd = (dirs || []).find(w => w.id === d?.project?.work_dir_id)
+          setWorkDirStatus(wd?.status || null)
+        }).catch(() => {})
+      })
+      .catch(err => {
+        if (String(err).includes('access denied')) setProjectName(t('permission.accessDeniedLabel'))
+      })
+  }, [projectID, fileID])
+
+  if (accessDenied) {
+    return <AccessDenied onBack={() => navigate('project', { id: projectID })} />
+  }
 
   const tabs = [
     { id: 'workspace', label: t('tabs.workspaceList') },
@@ -892,6 +960,7 @@ function FileDetailPage({ projectID, projectName, fileID, fileName, initialTab, 
                 navigate={navigate}
                 onEnqueued={() => navigate('queue')}
                 workDirLocked={workDirStatus === 'lock'}
+                role={fileRole}
               />
             </div>
             <div className="ws-detail-right">
@@ -911,6 +980,7 @@ function FileDetailPage({ projectID, projectName, fileID, fileName, initialTab, 
             projectID={projectID}
             fileID={fileID}
             fileName={currentFileName}
+            role={fileRole}
             onUpdated={f => setCurrentFileName(f.name)}
             onDeleted={() => navigate('project', { id: projectID })}
           />

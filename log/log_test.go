@@ -8,7 +8,7 @@ import (
 )
 
 func TestInit(t *testing.T) {
-	err := log.Init(context.Background())
+	_, err := log.Init(context.Background())
 	if err != nil {
 		t.Fatalf("log.Init() error: %v", err)
 	}

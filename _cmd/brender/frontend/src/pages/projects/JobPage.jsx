@@ -8,6 +8,10 @@ import ConfirmDialog from '../../components/ConfirmDialog'
 import Dialog from '../../components/Dialog'
 import Breadcrumb from '../../components/Breadcrumb'
 import { formatDate as fmt, formatDateFull, formatDateShort } from '../../lib/dateFormat'
+import { isWails } from '../../lib/api/_client'
+import MoviePlayer from '../../components/MoviePlayer'
+import AccessDenied from '../../components/AccessDenied'
+import { MdLoop, MdFolder, MdPlayArrow, MdImage } from 'react-icons/md'
 
 const VIDEO_EXTS = new Set(['.mp4', '.mov', '.avi', '.mkv', '.webm', '.m4v'])
 const IMAGE_EXTS = new Set(['.png', '.jpg', '.jpeg', '.exr', '.tiff', '.tif', '.bmp', '.hdr', '.webp', '.tga'])
@@ -15,6 +19,10 @@ const LOG_EXTS   = new Set(['.log'])
 function isVideoFile(name) {
   const ext = name.lastIndexOf('.')
   return ext !== -1 && VIDEO_EXTS.has(name.slice(ext).toLowerCase())
+}
+function isImageFile(name) {
+  const ext = name.lastIndexOf('.')
+  return ext !== -1 && IMAGE_EXTS.has(name.slice(ext).toLowerCase())
 }
 
 // ── ユーティリティ ────────────────────────────────────────
@@ -74,7 +82,7 @@ function Row({ label, value, selectable }) {
 }
 
 // ── 詳細タブ ──────────────────────────────────────────────
-function DetailTab({ job, onDeleted, onDataStatusChanged }) {
+function DetailTab({ job, onDeleted, onDataStatusChanged, role }) {
   const { t } = useTranslation()
   const { showToast } = useToast()
   const { showError } = useMessage()
@@ -86,6 +94,14 @@ function DetailTab({ job, onDeleted, onDataStatusChanged }) {
   const [metaNote, setMetaNote]         = useState(job?.note || '')
   const [savingMeta, setSavingMeta]     = useState(false)
   const savedMeta = useRef({ name: job?.name || '', note: job?.note || '' })
+
+  // runner 以上が削除・保存可能、viewer は読み取り専用
+  const isOwner            = role === 'owner'
+  const isWorkspaceCreator = role === 'workspace_creator'
+  const isEditor           = role === 'editor'
+  const isRunner           = role === 'runner'
+  const canModify          = isOwner || isWorkspaceCreator || isEditor || isRunner
+  const readOnly           = !canModify
 
   const isMetaDirty = metaName !== savedMeta.current.name || metaNote !== savedMeta.current.note
 
@@ -143,6 +159,7 @@ function DetailTab({ job, onDeleted, onDataStatusChanged }) {
               type="text" className="form-input" style={{ width: '100%' }}
               value={metaName}
               onChange={e => setMetaName(e.target.value)}
+              disabled={readOnly}
             />
           </div>
           <div className="form-field">
@@ -153,15 +170,18 @@ function DetailTab({ job, onDeleted, onDataStatusChanged }) {
               value={metaNote}
               onChange={e => setMetaNote(e.target.value)}
               placeholder={t('job.notePlaceholder')}
+              disabled={readOnly}
             />
           </div>
         </div>
-        <div className="form-actions" style={{ marginTop: 16 }}>
-          <button className="btn btn-danger" onClick={() => setConfirm(true)} disabled={isLocked}>{t('common.delete')}</button>
-          <button className="btn btn-green" onClick={handleSaveMeta} disabled={savingMeta || !isMetaDirty}>
-            {savingMeta ? t('common.saving') : t('common.save')}
-          </button>
-        </div>
+        {canModify && (
+          <div className="form-actions" style={{ marginTop: 16 }}>
+            <button className="btn btn-danger" onClick={() => setConfirm(true)} disabled={isLocked}>{t('common.delete')}</button>
+            <button className="btn btn-green" onClick={handleSaveMeta} disabled={savingMeta || !isMetaDirty}>
+              {savingMeta ? t('common.saving') : t('common.save')}
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="ws-detail-right" style={{ flex: 3 }}>
@@ -233,7 +253,7 @@ function DetailTab({ job, onDeleted, onDataStatusChanged }) {
 }
 
 // ── レンダリング結果タブ ───────────────────────────────────
-function RenderResultTab({ job }) {
+function RenderResultTab({ job, role }) {
   const { t } = useTranslation()
   const { showToast } = useToast()
   const { showError } = useMessage()
@@ -245,6 +265,14 @@ function RenderResultTab({ job }) {
   const [playing, setPlaying]           = useState(false)
   const [loop, setLoop]                 = useState(false)
   const [settingThumb, setSettingThumb] = useState(false)
+
+  // サムネイル設定: editor 以上、動画作成: runner 以上
+  const isOwner            = role === 'owner'
+  const isWorkspaceCreator = role === 'workspace_creator'
+  const isEditor           = role === 'editor'
+  const isRunner           = role === 'runner'
+  const canSetThumbnail    = isOwner || isWorkspaceCreator || isEditor
+  const canCreateMovie     = isOwner || isWorkspaceCreator || isEditor || isRunner
   const [moviePath, setMoviePath]           = useState('')
   const [creatingMovie, setCreatingMovie]   = useState(false)
   const [movieDialogOpen, setMovieDialogOpen] = useState(false)
@@ -252,6 +280,7 @@ function RenderResultTab({ job }) {
   const [movieOutext, setMovieOutext]       = useState('mp4')
   const [movieExtraArgs, setMovieExtraArgs] = useState('')
   const [videoFormats, setVideoFormats]     = useState([])
+  const [moviePlayerPath, setMoviePlayerPath] = useState('')
   const playingRef = useRef(false)
   const loopRef    = useRef(false)
 
@@ -261,18 +290,25 @@ function RenderResultTab({ job }) {
   useEffect(() => {
     if (!job) return
     stopPlay()
-    setLoadingList(true); setImages([]); setIndex(0); setImgSrc('')
+    setLoadingList(true); setImages([]); setIndex(0); setImgSrc(''); setMoviePath('')
     const hasData = [2, 3, 6, 7, 8, 9].includes(job.data_status)
-    if (!hasData) { setLoadingList(false); return }
-    QueueApi.listJobImages({ id: job.id })
-      .then(list => { setImages(list || []); setLoadingList(false) })
-      .catch(err => { showError(String(err)); setLoadingList(false) })
+    if (hasData) {
+      QueueApi.listJobImages({ id: job.id })
+        .then(list => { setImages(list || []); setLoadingList(false) })
+        .catch(err => { showError(String(err)); setLoadingList(false) })
+    } else {
+      setLoadingList(false)
+    }
+    // 動画ファイルは data_status に関係なく検索（画像削除後も動画だけ残っていれば再生可能）
+    console.log('[RenderResultTab] calling listJobFiles for job', job.id)
     QueueApi.listJobFiles({ id: job.id })
       .then(files => {
+        console.log('[RenderResultTab] listJobFiles result:', files)
         const movie = (files || []).find(f => !f.is_dir && isVideoFile(f.name))
+        console.log('[RenderResultTab] movie found:', movie)
         if (movie) setMoviePath(movie.path)
       })
-      .catch(() => {})
+      .catch(err => { console.error('[RenderResultTab] listJobFiles error:', err) })
   }, [job])
 
   useEffect(() => {
@@ -364,19 +400,27 @@ function RenderResultTab({ job }) {
     }
   }
 
-  const handlePlayMovie = () => {
-    if (moviePath) QueueApi.openMovieWindow({ path: moviePath })
+  const handlePlayMovie = (path) => {
+    const p = path || moviePath
+    if (!p) return
+    if (isWails()) {
+      QueueApi.openMovieWindow({ path: p })
+    } else {
+      setMoviePlayerPath(p)
+    }
   }
 
   const filename = images[index] ? images[index].replace(/\\/g, '/').split('/').pop() : ''
 
   return (
     <div className="job-page-viewer">
-      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-        <button className="btn btn-sm btn-outline" onClick={handleSetThumbnail} disabled={settingThumb || images.length === 0}>
-          {settingThumb ? '...' : t('viewer.setAsThumbnail')}
-        </button>
-      </div>
+      {canSetThumbnail && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+          <button className="btn btn-sm btn-outline" onClick={handleSetThumbnail} disabled={settingThumb || images.length === 0}>
+            {settingThumb ? '...' : t('viewer.setAsThumbnail')}
+          </button>
+        </div>
+      )}
 
       <div className="image-viewer-body">
         {loadingList && <div className="image-viewer-loading">{t('common.loading')}</div>}
@@ -400,7 +444,7 @@ function RenderResultTab({ job }) {
         </div>
       </div>
 
-      <div className="dialog-actions" style={{ justifyContent: 'space-between', visibility: images.length > 0 ? 'visible' : 'hidden', marginTop: 8 }}>
+      <div className="dialog-actions" style={{ justifyContent: 'space-between', visibility: images.length > 0 || moviePath ? 'visible' : 'hidden', marginTop: 8 }}>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn btn-sm btn-ghost" onClick={handleTogglePlay} disabled={images.length <= 1}>
             {playing ? t('viewer.stop') : t('viewer.play')}
@@ -408,18 +452,20 @@ function RenderResultTab({ job }) {
           <button
             className={`btn btn-sm ${loop ? '' : 'btn-ghost'} image-viewer-loop-btn`}
             onClick={toggleLoop} disabled={images.length <= 1} title={t('common.loop')}
-          >⟳ {t('common.loop')}</button>
+          ><MdLoop /> {t('common.loop')}</button>
           {moviePath && (
-            <button className="btn btn-sm" onClick={handlePlayMovie}>
+            <button className="btn btn-sm" onClick={() => handlePlayMovie()}>
               {t('viewer.playMovie')}
             </button>
           )}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button className="btn btn-sm btn-green" onClick={handleOpenMovieDialog} disabled={creatingMovie || images.length <= 1}>
-            {creatingMovie ? t('viewer.movieCreating') : t('viewer.createMovie')}
-          </button>
-        </div>
+        {canCreateMovie && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button className="btn btn-sm btn-green" onClick={handleOpenMovieDialog} disabled={creatingMovie || images.length <= 1}>
+              {creatingMovie ? t('viewer.movieCreating') : t('viewer.createMovie')}
+            </button>
+          </div>
+        )}
       </div>
 
       <Dialog
@@ -480,12 +526,22 @@ function RenderResultTab({ job }) {
 
         </div>
       </Dialog>
+
+      <Dialog
+        open={!!moviePlayerPath}
+        title={moviePlayerPath ? moviePlayerPath.replace(/\\/g, '/').split('/').pop() : ''}
+        onClose={() => setMoviePlayerPath('')}
+        wide
+        bodyClassName="movie-player-dialog-body"
+      >
+        {moviePlayerPath && <MoviePlayer moviePath={moviePlayerPath} />}
+      </Dialog>
     </div>
   )
 }
 
 // ── データ表示タブ ────────────────────────────────────────
-function DataViewTab({ job }) {
+function DataViewTab({ job, role }) {
   const { t } = useTranslation()
   const { showError } = useMessage()
   const [files, setFiles]               = useState([])
@@ -494,6 +550,35 @@ function DataViewTab({ job }) {
   const [downloading, setDownloading]   = useState(false)
   const [deleting, setDeleting]         = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+
+  // runner 以上がデータ削除可能
+  const isOwner            = role === 'owner'
+  const isWorkspaceCreator = role === 'workspace_creator'
+  const isEditor           = role === 'editor'
+  const isRunner           = role === 'runner'
+  const canDelete          = isOwner || isWorkspaceCreator || isEditor || isRunner
+  const [moviePlayerPath, setMoviePlayerPath] = useState('')
+  const [previewImgSrc, setPreviewImgSrc] = useState('')
+  const [previewImgName, setPreviewImgName] = useState('')
+  const [previewLoading, setPreviewLoading] = useState(false)
+
+  const handlePlayMovie = (path) => {
+    if (!path) return
+    if (isWails()) {
+      QueueApi.openMovieWindow({ path })
+    } else {
+      setMoviePlayerPath(path)
+    }
+  }
+
+  const handlePreviewImage = (path, name) => {
+    setPreviewImgName(name)
+    setPreviewImgSrc('')
+    setPreviewLoading(true)
+    QueueApi.getImageBase64({ path })
+      .then(src => { setPreviewImgSrc(src); setPreviewLoading(false) })
+      .catch(err => { showError(String(err)); setPreviewLoading(false); setPreviewImgName('') })
+  }
 
   useEffect(() => {
     if (!job) return
@@ -654,9 +739,11 @@ function DataViewTab({ job }) {
           <button className="btn btn-sm btn-ghost" onClick={() => selectByExts(VIDEO_EXTS)}>{t('job.filterVideo')}</button>
           <button className="btn btn-sm btn-ghost" onClick={() => selectByExts(LOG_EXTS)}>{t('job.filterLog')}</button>
         </div>
-        <button className="btn btn-sm btn-danger" onClick={() => setConfirmDelete(true)} disabled={deleting || isLocked || !someSelected}>
-          {deleting ? t('common.deleting') : `${t('common.deleteSelected')}${someSelected ? ` (${selected.size})` : ''}`}
-        </button>
+        {canDelete && (
+          <button className="btn btn-sm btn-danger" onClick={() => setConfirmDelete(true)} disabled={deleting || isLocked || !someSelected}>
+            {deleting ? t('common.deleting') : `${t('common.deleteSelected')}${someSelected ? ` (${selected.size})` : ''}`}
+          </button>
+        )}
       </div>
       <table className="queue-table">
         <thead>
@@ -678,13 +765,21 @@ function DataViewTab({ job }) {
         <tbody>
           {files.map(f => {
             const canPlay = !f.is_dir && isVideoFile(f.name)
+            const canView = !f.is_dir && isImageFile(f.name)
             const isSelected = !f.is_dir && selected.has(f.path)
+            const rowClick = canPlay ? () => handlePlayMovie(f.path)
+                           : canView ? () => handlePreviewImage(f.path, f.name)
+                           : undefined
+            const rowTitle = canPlay ? t('viewer.playMovie')
+                           : canView ? f.name
+                           : undefined
             return (
               <tr
                 key={f.name}
-                className={`${f.is_dir ? 'job-data-row-dir' : ''} ${canPlay ? 'job-data-row-video' : ''} ${isSelected ? 'job-data-row-selected' : ''}`.trim()}
-                onClick={canPlay ? () => QueueApi.openMovieWindow({ path: f.path }) : undefined}
-                title={canPlay ? t('viewer.playMovie') : undefined}
+                className={`${f.is_dir ? 'job-data-row-dir' : ''} ${canPlay ? 'job-data-row-video' : ''} ${canView ? 'job-data-row-image' : ''} ${isSelected ? 'job-data-row-selected' : ''}`.trim()}
+                onClick={rowClick}
+                title={rowTitle}
+                style={canView ? { cursor: 'pointer' } : undefined}
               >
                 <td style={{ textAlign: 'center' }} onClick={e => e.stopPropagation()}>
                   {!f.is_dir && (
@@ -695,7 +790,10 @@ function DataViewTab({ job }) {
                     />
                   )}
                 </td>
-                <td>{f.is_dir ? '📁 ' : canPlay ? '▶ ' : ''}{f.name}</td>
+                <td style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  {f.is_dir ? <MdFolder /> : canPlay ? <MdPlayArrow /> : canView ? <MdImage /> : null}
+                  {f.name}
+                </td>
                 <td style={{ textAlign: 'right' }}>{f.is_dir ? '—' : formatBytes(f.size)}</td>
                 <td className="date-cell">{fmt(f.mod_time)}</td>
               </tr>
@@ -714,6 +812,25 @@ function DataViewTab({ job }) {
       >
         <p>{t('common.confirmDeleteFiles')}</p>
       </ConfirmDialog>
+
+      {moviePlayerPath && (
+        <Dialog open={true} title={t('viewer.playMovie')} onClose={() => setMoviePlayerPath('')} wide>
+          <div className="movie-player-dialog-body">
+            <MoviePlayer moviePath={moviePlayerPath} />
+          </div>
+        </Dialog>
+      )}
+
+      {previewImgName && (
+        <Dialog open={true} title={previewImgName} onClose={() => { setPreviewImgName(''); setPreviewImgSrc('') }} wide>
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
+            {previewLoading
+              ? <span>{t('common.loading')}</span>
+              : previewImgSrc && <img src={previewImgSrc} alt={previewImgName} style={{ maxWidth: '100%', maxHeight: '70vh' }} />
+            }
+          </div>
+        </Dialog>
+      )}
     </div>
   )
 }
@@ -725,31 +842,44 @@ function JobPage({ job: initialJob, jobID: propJobID, navigate, backPage, backPa
   const [tab, setTab]       = useState(initialJob && [2, 3, 6, 7, 8, 9].includes(initialJob.data_status) ? 'render' : 'detail')
   const [job, setJob]       = useState(initialJob || null)
   const [names, setNames]   = useState({ project: '', file: '', workspace: '' })
+  const [accessDenied, setAccessDenied] = useState(false)
+  const [fileRole, setFileRole] = useState('owner')
 
   useLayoutEffect(() => {
     if (initialTab) setTab(initialTab)
   }, [])
 
   useEffect(() => {
-    if (!job) {
-      QueueApi.getJob({ id }).then(j => { if (j) setJob(j) }).catch(() => {})
-    }
+    // initialJob が渡されても権限チェックは行う
+    QueueApi.getJob({ id }).then(j => { if (j) setJob(j) }).catch(err => {
+      if (String(err).includes('access denied')) setAccessDenied(true)
+    })
   }, [id])
+
+  // ファイル権限のロール取得
+  useEffect(() => {
+    const fileID = initialJob?.project_file_id || job?.project_file_id
+    if (!fileID) return
+    ProjectApi.getFile({ fileID })
+      .then(f => { if (f?.my_role) setFileRole(f.my_role) })
+      .catch(() => {})
+  }, [job?.project_file_id, initialJob?.project_file_id])
 
   useEffect(() => {
     if (!job) return
-    const fetches = []
+    setNames(prev => ({ ...prev, file: job.file_name || '' }))
+    // 各名前を独立して取得（一方の権限拒否が他方に影響しない）
     if (job.project_id) {
-      fetches.push(ProjectApi.get({ id: job.project_id }).then(d => ({ project: d?.project?.name || '' })))
+      ProjectApi.get({ id: job.project_id })
+        .then(d => setNames(prev => ({ ...prev, project: d?.project?.name || '' })))
+        .catch(err => {
+          if (String(err).includes('access denied')) setNames(prev => ({ ...prev, project: t('permission.accessDeniedLabel') }))
+        })
     }
     if (job.project_id && job.workspace_id) {
-      fetches.push(WorkspaceApi.get({ projectID: job.project_id, workspaceID: job.workspace_id }).then(d => ({ workspace: d?.workspace?.name || '' })))
-    }
-    setNames(prev => ({ ...prev, file: job.file_name || '' }))
-    if (fetches.length > 0) {
-      Promise.all(fetches).then(results => {
-        setNames(prev => Object.assign({}, prev, ...results))
-      }).catch(() => {})
+      WorkspaceApi.get({ projectID: job.project_id, workspaceID: job.workspace_id })
+        .then(d => setNames(prev => ({ ...prev, workspace: d?.workspace?.name || '' })))
+        .catch(() => {})
     }
   }, [job?.project_id, job?.workspace_id, job?.file_name])
 
@@ -773,6 +903,10 @@ function JobPage({ job: initialJob, jobID: propJobID, navigate, backPage, backPa
     navigate(backPage || 'projects', backParams || {})
   }
 
+  if (accessDenied) {
+    return <AccessDenied onBack={() => navigate(backPage || 'projects', backParams || {})} />
+  }
+
   if (!job) {
     return <div className="page"><p className="setting-desc">{t('common.loading')}</p></div>
   }
@@ -788,11 +922,11 @@ function JobPage({ job: initialJob, jobID: propJobID, navigate, backPage, backPa
       <div className="page-header">
         <Breadcrumb items={[
           { label: t('breadcrumb.projects'), onClick: () => navigate('projects') },
-          names.project && { label: names.project, onClick: () => navigate('project', { id: job.project_id }) },
-          names.file && { label: names.file, onClick: () => navigate('file', { projectID: job.project_id, projectName: names.project, fileID: job.project_file_id, fileName: names.file }) },
-          names.workspace && { label: names.workspace, onClick: () => navigate('workspace', { projectID: job.project_id, projectName: names.project, fileID: job.project_file_id, fileName: names.file, workspaceID: job.workspace_id, workspaceName: names.workspace }) },
+          { label: names.project, onClick: () => navigate('project', { id: job.project_id }) },
+          { label: names.file, onClick: () => navigate('file', { projectID: job.project_id, projectName: names.project, fileID: job.project_file_id, fileName: names.file }) },
+          { label: names.workspace, onClick: () => navigate('workspace', { projectID: job.project_id, projectName: names.project, fileID: job.project_file_id, fileName: names.file, workspaceID: job.workspace_id, workspaceName: names.workspace }) },
           { label: t('breadcrumb.jobResult') },
-        ].filter(Boolean)} />
+        ]} />
       </div>
 
       <div className="tab-nav">
@@ -809,13 +943,14 @@ function JobPage({ job: initialJob, jobID: propJobID, navigate, backPage, backPa
             job={job}
             onDeleted={handleDeleted}
             onDataStatusChanged={handleDataStatusChanged}
+            role={fileRole}
           />
         )}
         {tab === 'render' && (
-          <RenderResultTab job={job} />
+          <RenderResultTab job={job} role={fileRole} />
         )}
         {tab === 'data' && (
-          <DataViewTab job={job} />
+          <DataViewTab job={job} role={fileRole} />
         )}
       </div>
     </div>

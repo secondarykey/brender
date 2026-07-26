@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { QueueApi } from './lib/api'
 import { onAppEvent } from './lib/appEvents'
 import { formatDate as formatFinishTime } from './lib/dateFormat'
+import { MdVerticalAlignTop, MdOpenInFull } from 'react-icons/md'
 
 function subFramePct(q) {
   const sample = Math.max(0, q.now_sample - 1)
@@ -85,12 +86,12 @@ function MiniMonitorApp() {
           className={`mini-monitor-icon-btn${pinned ? ' active' : ''}`}
           onClick={togglePin}
           title={t('title.alwaysOnTop')}
-        >&#8679;</button>
+        ><MdVerticalAlignTop /></button>
         <button
           className="mini-monitor-icon-btn"
           onClick={handleRestore}
           title={t('miniMonitor.restore')}
-        >&#x21A9;</button>
+        ><MdOpenInFull /></button>
       </div>
 
       {running ? (

@@ -5,6 +5,7 @@ import { useMessage } from '../../lib/toast'
 import WorkspaceTab from './tabs/WorkspaceTab'
 import SettingsTab from './tabs/SettingsTab'
 import Breadcrumb from '../../components/Breadcrumb'
+import AccessDenied from '../../components/AccessDenied'
 
 function ProjectDetailPage({ id, initialTab, focusName, navigate }) {
   const { t } = useTranslation()
@@ -14,6 +15,7 @@ function ProjectDetailPage({ id, initialTab, focusName, navigate }) {
   const [workDirs, setWorkDirs] = useState([])
   const [tab, setTab]         = useState(initialTab || 'workspace')
   const [loadError, setLoadError] = useState(false)
+  const [accessDenied, setAccessDenied] = useState(false)
 
   const tabs = [
     { id: 'workspace', label: t('tabs.fileList') },
@@ -28,10 +30,21 @@ function ProjectDetailPage({ id, initialTab, focusName, navigate }) {
         setWorkDirs(dirs)
         setWorkDir(dirs.find(w => w.id === d.project.work_dir_id) || null)
       })
-      .catch(err => { showError(String(err)); setLoadError(true) })
+      .catch(err => {
+        if (String(err).includes('access denied')) {
+          setAccessDenied(true)
+        } else {
+          showError(String(err))
+          setLoadError(true)
+        }
+      })
   }
 
   useEffect(() => { load() }, [id])
+
+  if (accessDenied) {
+    return <AccessDenied onBack={() => navigate('projects')} />
+  }
 
   if (loadError) {
     return <div className="page" />
@@ -79,6 +92,7 @@ function ProjectDetailPage({ id, initialTab, focusName, navigate }) {
             projectID={id}
             projectName={detail.project.name}
             navigate={navigate}
+            role={detail.my_role || 'owner'}
           />
         )}
         {tab === 'settings' && (
@@ -87,6 +101,7 @@ function ProjectDetailPage({ id, initialTab, focusName, navigate }) {
             focusName={focusName}
             workDir={workDir}
             workDirs={workDirs}
+            role={detail.my_role || 'owner'}
             onUpdated={load}
             onDeleted={() => navigate('projects')}
           />

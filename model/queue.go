@@ -23,6 +23,7 @@ type Queue struct {
 	Status      string     `json:"status"` // waiting / running
 	StartedAt   *time.Time `json:"started_at"`
 	CreatedAt   *time.Time `gorm:"autoCreateTime" json:"created_at"`
+	CreatedBy   string     `json:"created_by"`
 }
 
 func NewQueueID() (string, error) {

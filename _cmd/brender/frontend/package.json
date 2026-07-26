@@ -1,25 +1,33 @@
 {
-  "name": "frontend",
+  "name": "brender-frontend",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build:dev": "vite build --minify false --mode development",
     "build": "vite build --mode production",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@wailsio/runtime": "latest",
     "i18next": "^26.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-i18next": "^17.0.7"
+    "react-i18next": "^17.0.7",
+    "react-icons": "^5.5.0"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
     "@vitejs/plugin-react": "^6.0.1",
-    "vite": "^8.0.11"
+    "jsdom": "^29.1.1",
+    "vite": "^8.0.11",
+    "vitest": "^4.1.9"
   }
 }

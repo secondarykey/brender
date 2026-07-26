@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
-import { WorkDirApi } from '../../lib/api'
+import { WorkDirApi, ProjectApi, BlenderApi } from '../../lib/api'
 import { onAppEvent } from '../../lib/appEvents'
 import Dialog from '../../components/Dialog'
 import ConfirmDialog from '../../components/ConfirmDialog'
-import { useMessage } from '../../lib/toast'
+import { useMessage, useToast } from '../../lib/toast'
 
 function fmtGB(bytes) {
   if (!bytes) return null
@@ -226,6 +226,7 @@ function EditDialog({ wd, onClose, onSaved }) {
 function EnvironmentSettings() {
   const { t } = useTranslation()
   const { showError } = useMessage()
+  const { showToast } = useToast()
   const [dirs, setDirs]       = useState([])
   const [editing, setEditing] = useState(null)
   const [deleteTarget, setDeleteTarget]     = useState(null)
@@ -233,6 +234,67 @@ function EnvironmentSettings() {
   const [deleteDirError, setDeleteDirError] = useState('')
   const dragIndex = useRef(null)
   const [dragOver, setDragOver] = useState(null)
+
+  // ── ファイル一括確認 ────────────────────────────────────────
+  const [checking, setChecking]         = useState(false)
+  const [checkProgress, setCheckProgress] = useState(null)  // null | { current, total }
+  const [checkResult, setCheckResult]   = useState(null)     // null | { total, exists, packed, notPacked, unknown, missing, hadTool }
+  const cancelRef = useRef(false)
+
+  const handleCheckAllFiles = async () => {
+    setChecking(true)
+    setCheckResult(null)
+    cancelRef.current = false
+
+    try {
+      const files = await ProjectApi.listAllFiles()
+      if (!files || files.length === 0) {
+        setCheckResult({ total: 0 })
+        setChecking(false)
+        return
+      }
+
+      const total = files.length
+      let exists = 0, packed = 0, notPacked = 0, unknown = 0, missing = 0
+      let hadTool = false
+
+      for (let i = 0; i < total; i++) {
+        if (cancelRef.current) break
+
+        setCheckProgress({ current: i + 1, total })
+        const f = files[i]
+
+        if (!f.file_exists) {
+          missing++
+          continue
+        }
+        exists++
+
+        // ツール実行でパック確認（Blenderが登録されている場合のみ）
+        try {
+          const tool = await BlenderApi.getToolData({ installID: f.blender_install_id || 0, fileID: f.id })
+          hadTool = true
+          if (tool && tool.Pack !== undefined) {
+            if (tool.Pack) packed++
+            else notPacked++
+          } else {
+            unknown++
+          }
+        } catch {
+          // Blender未登録やエラーの場合はスキップ
+          unknown++
+        }
+      }
+
+      setCheckResult({ total, exists, packed, notPacked, unknown, missing, hadTool })
+      showToast(t('settings.workDirs.checkComplete'))
+    } catch (err) {
+      showError(String(err))
+    } finally {
+      setChecking(false)
+      setCheckProgress(null)
+    }
+  }
 
   const load = () => {
     WorkDirApi.list()
@@ -306,6 +368,7 @@ function EnvironmentSettings() {
 
   return (
     <div>
+      <h3 style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: 12 }}>{t('settings.workDirs.title')}</h3>
       {dirs.length === 0 ? (
         <p className="empty-msg">{t('settings.workDirs.empty')}</p>
       ) : (
@@ -354,6 +417,59 @@ function EnvironmentSettings() {
         <button className="btn btn-green" onClick={handleAdd}>
           {t('settings.workDirs.add')}
         </button>
+      </div>
+
+      {/* ── ファイル一括確認 ─────────────────────────── */}
+      <div style={{ marginTop: 24, borderTop: '1px solid rgba(var(--fg), 0.1)', paddingTop: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{t('settings.workDirs.checkAllFiles')}</span>
+          <button
+            className="btn btn-outline btn-sm"
+            onClick={checking ? () => { cancelRef.current = true } : handleCheckAllFiles}
+            disabled={false}
+          >
+            {checking ? t('common.cancelAction') : t('settings.workDirs.checkAllFiles')}
+          </button>
+        </div>
+
+        {checking && checkProgress && (
+          <div style={{ marginTop: 10 }}>
+            <div style={{ fontSize: '0.82rem', color: 'rgba(var(--fg), 0.6)', marginBottom: 4 }}>
+              {t('settings.workDirs.checkingFiles')} {checkProgress.current} / {checkProgress.total}
+            </div>
+            <div style={{ background: 'rgba(var(--fg), 0.1)', borderRadius: 4, height: 6 }}>
+              <div style={{
+                background: '#4a7cdc',
+                borderRadius: 4,
+                height: 6,
+                width: `${Math.round((checkProgress.current / checkProgress.total) * 100)}%`,
+                transition: 'width 0.3s',
+              }} />
+            </div>
+          </div>
+        )}
+
+        {checkResult && !checking && (
+          <div style={{ marginTop: 10, fontSize: '0.85rem', color: 'rgba(var(--fg), 0.75)', background: 'rgba(var(--fg), 0.04)', borderRadius: 6, padding: '10px 14px' }}>
+            {checkResult.total === 0
+              ? t('settings.workDirs.noFilesRegistered')
+              : checkResult.hadTool
+                ? t('settings.workDirs.checkResult', {
+                    total: checkResult.total,
+                    exists: checkResult.exists,
+                    packed: checkResult.packed,
+                    notPacked: checkResult.notPacked,
+                    unknown: checkResult.unknown,
+                    missing: checkResult.missing,
+                  })
+                : t('settings.workDirs.checkResultNoTool', {
+                    total: checkResult.total,
+                    exists: checkResult.exists,
+                    missing: checkResult.missing,
+                  })
+            }
+          </div>
+        )}
       </div>
 
       {editing && (
