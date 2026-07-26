@@ -1,6 +1,7 @@
 {
   "common": {
     "loading": "読み込み中...",
+    "experimental": "Experimental",
     "saving": "保存中...",
     "save": "保存",
     "saved": "保存しました",
@@ -439,6 +440,7 @@
     "defaultOutputFormat": "デフォルト出力フォーマット",
     "serverMode": "サーバモード",
     "serverModeDesc": "有効にすると、アプリ起動時に HTTP サーバを同時に起動し、他のユーザがブラウザでアクセスできるようになります。",
+    "serverExperimentalNote": "サーバモードは実験的機能です。検証が十分ではないため、動作が不安定になる可能性があります。運用環境での利用は推奨しません。",
     "serverEnabled": "サーバモードを有効にする",
     "serverHost": "ホスト名",
     "serverHostPlaceholder": "空欄 = すべてのインターフェース",

@@ -23,7 +23,7 @@ function SettingsPage({ initialTab, navigate }) {
       { id: 'video',       label: t('tabs.video') },
       { id: 'code',        label: t('tabs.code') },
       { id: 'tag',         label: t('tabs.tag') },
-      { id: 'server',      label: t('tabs.server') },
+      { id: 'server',      label: <>{t('tabs.server')}<span className="badge-experimental" style={{ marginLeft: 6 }}>{t('common.experimental')}</span></> },
       { id: 'system',      label: t('tabs.system') },
     ] : []),
   ]

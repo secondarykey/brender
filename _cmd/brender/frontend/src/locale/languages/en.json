@@ -1,6 +1,7 @@
 {
   "common": {
     "loading": "Loading...",
+    "experimental": "Experimental",
     "saving": "Saving...",
     "save": "Save",
     "saved": "Saved",
@@ -439,6 +440,7 @@
     "defaultOutputFormat": "Default Output Format",
     "serverMode": "Server Mode",
     "serverModeDesc": "When enabled, an HTTP server starts alongside the app so other users can access it via a web browser.",
+    "serverExperimentalNote": "Server mode is an experimental feature. It has not been fully tested and may behave unexpectedly. Using it in production is not recommended.",
     "serverEnabled": "Enable server mode",
     "serverHost": "Host",
     "serverHostPlaceholder": "Empty = all interfaces",

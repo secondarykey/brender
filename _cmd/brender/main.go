@@ -236,7 +236,7 @@ func run() error {
 		if err := restServer.Start(); err != nil {
 			log.Error("Failed to start HTTP server: %v", err)
 		} else {
-			log.Notice("= HTTP Server started on port %d", serverPort)
+			log.Notice("= HTTP Server started on port %d [Experimental]", serverPort)
 		}
 	}
 
