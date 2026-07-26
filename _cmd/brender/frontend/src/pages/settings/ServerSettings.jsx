@@ -44,8 +44,12 @@ function ServerSettings() {
 
   return (
     <div>
-      <h2 className="section-title">{t('settings.serverMode')}</h2>
-      <p className="form-hint" style={{ marginBottom: 16 }}>{t('settings.serverModeDesc')}</p>
+      <h2 className="section-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {t('settings.serverMode')}
+        <span className="badge-experimental">{t('common.experimental')}</span>
+      </h2>
+      <p className="form-hint" style={{ marginBottom: 8 }}>{t('settings.serverModeDesc')}</p>
+      <p className="form-hint" style={{ color: '#d15904', marginBottom: 16 }}>{t('settings.serverExperimentalNote')}</p>
 
       <div className="form" style={{ maxWidth: 640 }}>
         <div className="form-field" style={{ marginBottom: 16 }}>

@@ -32,6 +32,9 @@ function LoginPage({ onLogin }) {
       <div className="login-card">
         <h1 className="login-title">Brender</h1>
         <p className="login-subtitle">{t('login.subtitle')}</p>
+        <p style={{ textAlign: 'center', marginBottom: 16 }}>
+          <span className="badge-experimental">{t('common.experimental')}</span>
+        </p>
 
         {error && <div className="login-error">{error}</div>}
 
