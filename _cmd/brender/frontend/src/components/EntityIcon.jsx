@@ -1,11 +1,13 @@
-import { MdFolder, MdViewInAr, MdTune } from 'react-icons/md'
+import { MdFolder, MdViewInAr, MdTune, MdPhotoLibrary } from 'react-icons/md'
 
-// 階層エンティティの種別アイコン。プロジェクト / ファイル / ワークスペースは
-// 一覧の見た目が近いため、種別ごとにアイコンとアクセント色を固定して混同を防ぐ。
+// 階層エンティティの種別アイコン。プロジェクト / ファイル / ワークスペース / 実行結果は
+// 一覧やパンくずの見た目が近いため、種別ごとにアイコンとアクセント色を固定して混同を防ぐ。
+// 種別を増やすときはここと style.css の .entity-{type} の両方に足す。
 const ENTITY = {
   project:   MdFolder,
   file:      MdViewInAr,
   workspace: MdTune,
+  job:       MdPhotoLibrary,
 }
 
 // entityClass は種別アクセント色（--entity-accent）を与えるクラス名を返す。

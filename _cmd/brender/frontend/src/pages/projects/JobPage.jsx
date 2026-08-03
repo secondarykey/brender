@@ -6,7 +6,7 @@ import { onAppEvent } from '../../lib/appEvents'
 import { useToast, useMessage } from '../../lib/toast'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import Dialog from '../../components/Dialog'
-import Breadcrumb from '../../components/Breadcrumb'
+import HierarchyBreadcrumb from '../../components/HierarchyBreadcrumb'
 import { formatDate as fmt, formatDateFull, formatDateShort } from '../../lib/dateFormat'
 import { isWails } from '../../lib/api/_client'
 import MoviePlayer from '../../components/MoviePlayer'
@@ -920,13 +920,16 @@ function JobPage({ job: initialJob, jobID: propJobID, navigate, backPage, backPa
   return (
     <div className="page">
       <div className="page-header">
-        <Breadcrumb items={[
-          { label: t('breadcrumb.projects'), onClick: () => navigate('projects') },
-          { label: names.project, onClick: () => navigate('project', { id: job.project_id }) },
-          { label: names.file, onClick: () => navigate('file', { projectID: job.project_id, projectName: names.project, fileID: job.project_file_id, fileName: names.file }) },
-          { label: names.workspace, onClick: () => navigate('workspace', { projectID: job.project_id, projectName: names.project, fileID: job.project_file_id, fileName: names.file, workspaceID: job.workspace_id, workspaceName: names.workspace }) },
-          { label: t('breadcrumb.jobResult') },
-        ]} />
+        <HierarchyBreadcrumb
+          navigate={navigate}
+          projectID={job.project_id}
+          projectName={names.project}
+          fileID={job.project_file_id}
+          fileName={names.file}
+          workspaceID={job.workspace_id}
+          workspaceName={names.workspace}
+          job
+        />
       </div>
 
       <div className="tab-nav">

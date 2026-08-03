@@ -9,7 +9,7 @@ import Pagination from '../../components/Pagination'
 import SortSelect from '../../components/SortSelect'
 import Dialog from '../../components/Dialog'
 import ConfirmDialog from '../../components/ConfirmDialog'
-import Breadcrumb from '../../components/Breadcrumb'
+import HierarchyBreadcrumb from '../../components/HierarchyBreadcrumb'
 import EntityIcon from '../../components/EntityIcon'
 import NoteSection from '../../components/NoteSection'
 import WorkspaceCreateDialog from '../../components/WorkspaceCreateDialog'
@@ -928,11 +928,13 @@ function FileDetailPage({ projectID, projectName: initialProjectName, fileID, fi
   return (
     <div className="page">
       <div className="page-header" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-        <Breadcrumb items={[
-          { label: t('breadcrumb.projects'), onClick: () => navigate('projects') },
-          { label: projectName, icon: <EntityIcon type="project" />, onClick: () => navigate('project', { id: projectID, initialTab: 'settings' }) },
-          { label: currentFileName, icon: <EntityIcon type="file" /> },
-        ]} />
+        <HierarchyBreadcrumb
+          navigate={navigate}
+          projectID={projectID}
+          projectName={projectName}
+          fileID={fileID}
+          fileName={currentFileName}
+        />
         <button className="back-to-list" onClick={() => navigate('project', { id: projectID, initialTab: 'workspace' })}>
           {t('breadcrumb.backToFileList')}
         </button>
