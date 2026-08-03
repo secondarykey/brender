@@ -99,8 +99,8 @@
     "desc": "降順"
   },
   "tabs": {
-    "fileList": "ファイル一覧",
-    "workspaceList": "ワークスペース一覧",
+    "fileList": ".blend ファイル",
+    "workspaceList": "ワークスペース",
     "settings": "設定",
     "projectSettings": "プロジェクト設定",
     "fileSettings": "ファイル設定",
@@ -187,6 +187,7 @@
     "name": "ワークスペース名",
     "nameSuffix": " *",
     "nameRequired": "ワークスペース名を入力してください",
+    "countLabel": "ワークスペース {{count}}",
     "empty": "ワークスペースがありません",
     "createNew": "+ ワークスペースを作成",
     "addFile": "+ .blend ファイルを追加",

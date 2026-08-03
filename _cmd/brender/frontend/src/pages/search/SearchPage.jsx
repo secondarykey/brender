@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { TagApi, ProjectApi } from '../../lib/api'
 import { useMessage } from '../../lib/toast'
 import Pagination from '../../components/Pagination'
+import EntityIcon from '../../components/EntityIcon'
 import { MdViewList, MdViewModule, MdViewComfy } from 'react-icons/md'
 
 function SearchPage({ navigate }) {
@@ -238,7 +239,10 @@ function SearchPage({ navigate }) {
                       {thumb && <img src={thumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
                     </div>
                     <div className="search-result-info">
-                      <div className="search-result-name">{f.name}</div>
+                      <div className="entity-name-row">
+                        <EntityIcon type="file" />
+                        <div className="search-result-name">{f.name}</div>
+                      </div>
                       <div className="search-result-project">{f.project_name}</div>
                     </div>
                   </div>
@@ -251,7 +255,7 @@ function SearchPage({ navigate }) {
                   return (
                     <div
                       key={f.id}
-                      className="file-tile"
+                      className="file-tile entity-file entity-bar"
                       onClick={() => navigate('file', {
                         projectID: f.project_id,
                         projectName: f.project_name,
@@ -268,7 +272,10 @@ function SearchPage({ navigate }) {
                         )}
                       </div>
                       <div className="file-tile-info">
-                        <div className="file-tile-name" title={f.name}>{f.name}</div>
+                        <div className="entity-name-row">
+                          <EntityIcon type="file" />
+                          <div className="file-tile-name" title={f.name}>{f.name}</div>
+                        </div>
                         <div className="search-result-project">{f.project_name}</div>
                       </div>
                     </div>

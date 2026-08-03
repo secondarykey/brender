@@ -5,6 +5,7 @@ import { useMessage } from '../../lib/toast'
 import WorkspaceTab from './tabs/WorkspaceTab'
 import SettingsTab from './tabs/SettingsTab'
 import Breadcrumb from '../../components/Breadcrumb'
+import EntityIcon from '../../components/EntityIcon'
 import AccessDenied from '../../components/AccessDenied'
 
 function ProjectDetailPage({ id, initialTab, focusName, navigate }) {
@@ -16,9 +17,10 @@ function ProjectDetailPage({ id, initialTab, focusName, navigate }) {
   const [tab, setTab]         = useState(initialTab || 'workspace')
   const [loadError, setLoadError] = useState(false)
   const [accessDenied, setAccessDenied] = useState(false)
+  const [fileCount, setFileCount] = useState(null)
 
   const tabs = [
-    { id: 'workspace', label: t('tabs.fileList') },
+    { id: 'workspace', label: t('tabs.fileList'), icon: 'file', count: fileCount },
     { id: 'settings',  label: t('tabs.projectSettings') },
   ]
 
@@ -59,7 +61,7 @@ function ProjectDetailPage({ id, initialTab, focusName, navigate }) {
       <div className="page-header">
         <Breadcrumb items={[
           { label: t('breadcrumb.projects'), onClick: () => navigate('projects') },
-          { label: detail.project.name },
+          { label: detail.project.name, icon: <EntityIcon type="project" /> },
         ]} />
       </div>
 
@@ -81,7 +83,9 @@ function ProjectDetailPage({ id, initialTab, focusName, navigate }) {
             className={`tab-btn${tab === tb.id ? ' active' : ''}`}
             onClick={() => setTab(tb.id)}
           >
+            {tb.icon && <EntityIcon type={tb.icon} />}
             {tb.label}
+            {tb.count !== null && tb.count !== undefined && <span className="tab-count">{tb.count}</span>}
           </button>
         ))}
       </div>
@@ -93,6 +97,7 @@ function ProjectDetailPage({ id, initialTab, focusName, navigate }) {
             projectName={detail.project.name}
             navigate={navigate}
             role={detail.my_role || 'owner'}
+            onCountChange={setFileCount}
           />
         )}
         {tab === 'settings' && (
