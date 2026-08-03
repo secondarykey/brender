@@ -381,6 +381,22 @@ body {
 
 .tab-btn:hover { color: rgba(var(--fg),0.8); }
 
+/* 種別アイコン付きタブ（ファイル一覧 / ワークスペース一覧） */
+.tab-btn:has(.entity-icon) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tab-count {
+  font-size: 0.75rem;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 8px;
+  background: rgba(var(--fg),0.1);
+  color: rgba(var(--fg),0.6);
+}
+
 .tab-btn.active {
   color: rgba(var(--fg), 1);
   border-bottom-color: #4a7cdc;
@@ -781,6 +797,51 @@ body {
 .file-item-open-btn {
   flex-shrink: 0;
   margin-right: 16px;
+}
+
+/* ── エンティティ種別（プロジェクト / ファイル / ワークスペース） ──
+   3階層とも .file-tile 系の同じ見た目になるため、種別ごとにアイコン色と
+   左端の色帯で区別する。色はテーマ非依存の固定値（ボタンの役割色とは別系統）。 */
+.entity-project   { --entity-accent: #8b5cd6; }
+.entity-file      { --entity-accent: #2b90b5; }
+.entity-workspace { --entity-accent: #219a80; }
+
+.entity-icon {
+  color: var(--entity-accent);
+  flex-shrink: 0;
+  vertical-align: -0.15em;
+}
+
+/* border ではなく inset shadow を使う（サムネイル選択モードの border 上書きと衝突しない） */
+.entity-bar { box-shadow: inset 3px 0 0 var(--entity-accent); }
+
+/* パンくずは gap:6px なのでアイコンとラベルの間だけ詰める */
+.breadcrumb .entity-icon { margin-right: -3px; }
+
+/* ファイルタイル右端のワークスペース件数 */
+.file-tile-ws-count {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  color: rgba(var(--fg),0.45);
+  white-space: nowrap;
+}
+
+/* アイコン + 名称を1行に並べるためのラッパ */
+.entity-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.entity-name-row > .file-tile-name,
+.entity-name-row > .ws-file-name,
+.entity-name-row > .ws-item-name,
+.entity-name-row > .project-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* 表示切り替えボタン */

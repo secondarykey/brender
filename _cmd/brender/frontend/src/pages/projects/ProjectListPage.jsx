@@ -4,6 +4,7 @@ import { ProjectApi, WorkDirApi, BlenderApi, AuthApi } from '../../lib/api'
 import { isWails } from '../../lib/api/_client'
 import { useMessage } from '../../lib/toast'
 import SortSelect from '../../components/SortSelect'
+import EntityIcon from '../../components/EntityIcon'
 import { MdViewList, MdViewModule, MdViewComfy } from 'react-icons/md'
 
 function WorkDirBadge({ status, t }) {
@@ -29,7 +30,7 @@ function ProjectTile({ d, workDirMap, navigate }) {
   }, [d.project.id])
 
   return (
-    <div className="file-tile" title={d.project.name} onClick={() => navigate('project', { id: d.project.id })}>
+    <div className="file-tile entity-project entity-bar" title={d.project.name} onClick={() => navigate('project', { id: d.project.id })}>
       <div className="file-tile-thumb">
         {thumb
           ? <img src={thumb} alt={d.project.name} />
@@ -37,8 +38,11 @@ function ProjectTile({ d, workDirMap, navigate }) {
         }
       </div>
       <div className="file-tile-info">
-        <div className="file-tile-name" title={d.project.name}>
-          {d.project.name}
+        <div className="entity-name-row">
+          <EntityIcon type="project" />
+          <div className="file-tile-name" title={d.project.name}>
+            {d.project.name}
+          </div>
           {wd && <WorkDirBadge status={wd.status} t={t} />}
         </div>
         {d.files.length > 0 && (
@@ -180,10 +184,11 @@ function ProjectListPage({ navigate }) {
                 return (
                   <div
                     key={d.project.id}
-                    className="project-card"
+                    className="project-card entity-project entity-bar"
                     onClick={() => navigate('project', { id: d.project.id })}
                   >
                     <div className="project-card-header">
+                      <EntityIcon type="project" size={18} />
                       <span className="project-name">
                         {d.project.name}
                         {wd && <WorkDirBadge status={wd.status} t={t} />}
