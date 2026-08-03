@@ -13,7 +13,11 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-latest]
-        #os: [ubuntu-latest, windows-latest, macos-latest]
+        # macOS/Linux を配布対象に戻す場合は上の行を差し替える:
+        #   os: [ubuntu-latest, windows-latest, macos-15]
+        # ⚠️ macos-latest は使わない。2026年6月に macos-26 へ切り替わり、Xcode 26.5 の
+        #    actool の回帰バグ（Apple FB20183399）で generate:icons の
+        #    `-macassetdir darwin` がクラッシュする。macos-15 にピン留めすること。
     if: |
       contains(github.ref, 'refs/tags/v') &&
       !contains(github.ref, '-') &&
@@ -80,7 +84,13 @@ jobs:
         shell: bash
         run: |
           if [ "${{ runner.os }}" = "macOS" ]; then
-            wails3 package
+            # universal (arm64 + amd64) の .app を生成する。
+            # `wails3 package` はランナーのネイティブアーキのみのため Intel Mac で動かない。
+            # arm64 専用でよくなったら `wails3 task darwin:package` に変えればよい。
+            # このタスクの最後に codesign:adhoc（`codesign --sign -`）が走る。
+            # Developer ID を用意したら darwin:sign:notarize へ差し替える
+            # （build/darwin/Taskfile.yml の SIGN_IDENTITY / KEYCHAIN_PROFILE を設定）。
+            wails3 task darwin:package:universal
           else
             wails3 build
           fi
@@ -90,11 +100,19 @@ jobs:
         run: |
           export GOOS=$(go env GOOS)
           export GOARCH=$(go env GOARCH)
-          export ZIP_NAME="brender-${VERSION}_${GOOS}_${GOARCH}.zip"
           cd ./_cmd/brender/bin
           if [ "${{ runner.os }}" = "Windows" ]; then
+            ZIP_NAME="brender-${VERSION}_${GOOS}_${GOARCH}.zip"
             7z a ../../../${ZIP_NAME} ./*
+          elif [ "${{ runner.os }}" = "macOS" ]; then
+            # universal ビルドなのでアーキ名はランナーの GOARCH ではなく universal 固定
+            ZIP_NAME="brender-${VERSION}_darwin_universal.zip"
+            # 配布物は .app のみ（bin/ には .app 内へコピーされた生バイナリも残っている）。
+            # zip -r はシンボリックリンクを実体化し拡張属性を落とすためコード署名が壊れる。
+            # .app の圧縮は Apple 推奨の ditto を使う。
+            ditto -c -k --sequesterRsrc --keepParent brender.app ../../../${ZIP_NAME}
           else
+            ZIP_NAME="brender-${VERSION}_${GOOS}_${GOARCH}.zip"
             zip -r ../../../${ZIP_NAME} ./*
           fi
           echo "ZIP_PATH=${ZIP_NAME}" >> $GITHUB_ENV

@@ -13,6 +13,17 @@ ZIPファイルでアップロードして利用するような実行方式に�
 > **サーバモードは Experimental（実験的機能）です。**
 > 検証が十分ではないため動作が不安定になる可能性があります。運用環境での利用は推奨しません。
 
+## macOS 版について
+
+macOS 版の `.app` は ad-hoc 署名のみで Apple の公証（notarization）を受けていません。
+ダウンロードした zip には `com.apple.quarantine` が付くため、初回起動時に
+「"brender" は壊れているため開けません。ゴミ箱に入れる必要があります。」と表示されます。
+バイナリが壊れているわけではなく Gatekeeper による拒否です。以下で解除してください。
+
+```sh
+xattr -dr com.apple.quarantine /Applications/brender.app
+```
+
 ## Caution
 
 開発者はBlenderに関しては素人です。
