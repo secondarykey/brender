@@ -805,6 +805,7 @@ body {
 .entity-project   { --entity-accent: #8b5cd6; }
 .entity-file      { --entity-accent: #2b90b5; }
 .entity-workspace { --entity-accent: #219a80; }
+.entity-job       { --entity-accent: #c2872b; }
 
 .entity-icon {
   color: var(--entity-accent);

@@ -4,7 +4,7 @@ import { ProjectApi, WorkDirApi } from '../../lib/api'
 import { useMessage } from '../../lib/toast'
 import WorkspaceTab from './tabs/WorkspaceTab'
 import SettingsTab from './tabs/SettingsTab'
-import Breadcrumb from '../../components/Breadcrumb'
+import HierarchyBreadcrumb from '../../components/HierarchyBreadcrumb'
 import EntityIcon from '../../components/EntityIcon'
 import AccessDenied from '../../components/AccessDenied'
 
@@ -59,10 +59,11 @@ function ProjectDetailPage({ id, initialTab, focusName, navigate }) {
   return (
     <div className="page">
       <div className="page-header">
-        <Breadcrumb items={[
-          { label: t('breadcrumb.projects'), onClick: () => navigate('projects') },
-          { label: detail.project.name, icon: <EntityIcon type="project" /> },
-        ]} />
+        <HierarchyBreadcrumb
+          navigate={navigate}
+          projectID={id}
+          projectName={detail.project.name}
+        />
       </div>
 
       {workDir?.status === 'lock' && (

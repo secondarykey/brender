@@ -9,8 +9,7 @@ import Pagination from '../../components/Pagination'
 import Dialog from '../../components/Dialog'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import HoldButton from '../../components/HoldButton'
-import Breadcrumb from '../../components/Breadcrumb'
-import EntityIcon from '../../components/EntityIcon'
+import HierarchyBreadcrumb from '../../components/HierarchyBreadcrumb'
 import NoteSection from '../../components/NoteSection'
 import AccessDenied from '../../components/AccessDenied'
 import { MdLock, MdSwapHoriz, MdPlayArrow } from 'react-icons/md'
@@ -1147,12 +1146,20 @@ function WorkspaceDetailPage({ projectID, projectName: initialProjectName, fileI
   return (
     <div className="page">
       <div className="page-header" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-        <Breadcrumb items={[
-          { label: t('breadcrumb.projects'), onClick: () => navigate('projects') },
-          { label: projectName, icon: <EntityIcon type="project" />, onClick: () => navigate('project', { id: projectID, initialTab: 'settings' }) },
-          effectiveFileName && { label: effectiveFileName, icon: <EntityIcon type="file" />, onClick: () => navigate('file', { projectID, projectName, fileID: effectiveFileID, fileName: effectiveFileName, initialTab: 'settings' }) },
-          { label: detail.workspace.name, icon: <EntityIcon type="workspace" />, suffix: wsStale ? <span className="stale-mark-inline" title={t('file.fileChangedTooltip')} style={{ marginLeft: 6 }}>!</span> : null },
-        ].filter(Boolean)} />
+        <HierarchyBreadcrumb
+          navigate={navigate}
+          projectID={projectID}
+          projectName={projectName}
+          fileID={effectiveFileID}
+          fileName={effectiveFileName}
+          workspaceID={detail.workspace.id}
+          workspaceName={detail.workspace.name}
+          suffix={{
+            workspace: wsStale
+              ? <span className="stale-mark-inline" title={t('file.fileChangedTooltip')} style={{ marginLeft: 6 }}>!</span>
+              : null,
+          }}
+        />
         <button className="back-to-list" onClick={() => navigate('file', { projectID, projectName, fileID: effectiveFileID, fileName: effectiveFileName, initialTab: 'workspace' })}>
           {t('breadcrumb.backToWorkspaceList')}
         </button>
