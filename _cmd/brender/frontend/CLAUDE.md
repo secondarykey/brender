@@ -40,8 +40,8 @@
 | 種別 | アイコン | `--entity-accent` |
 |---|---|---|
 | `project` | `MdFolder` | `#8b5cd6` |
-| `file` | `MdViewInAr` | `#2b90b5` |
-| `workspace` | `MdTune` | `#219a80` |
+| `file` | `MdInsertDriveFile` | `#2b90b5` |
+| `workspace` | `MdCameraAlt` | `#219a80` |
 | `job` | `MdPhotoLibrary` | `#c2872b` |
 
 - `<EntityIcon type="file" />` で名称の左に出す。パンくず・タブ・一覧の行/カードで共通
