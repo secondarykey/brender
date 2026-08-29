@@ -107,8 +107,8 @@ Services are registered in `_cmd/brender/main.go`（`main/services` としてimp
 
 `services.Blender.OpenFile(installID, filePath)` — Blender を GUI モードで起動（`-b` なし、`cmd.Start()` で非同期）。
 
-### wails3バージョン整合性チェック (`_cmd/wails3_check.go`)
-`go run _cmd/wails3_check.go` — インストール済み `wails3` CLI と `_cmd/brender/go.mod` のwails3バージョンを比較し、ズレていれば修正コマンドを提示して非ゼロ終了する。`.github/workflows/release.yml`・`versionup.yml` のCLIインストール直後に組み込み済み（CLIバージョンは `.github/variables.env` の `WAILS_VERSION` で固定）。
+### wails3バージョンのピン留め (`.github/variables`)
+CI が使う wails3 CLI のバージョンは `.github/variables` の `WAILS_VERSION` 1箇所で固定する。`.github/workflows/release.yml`・`versionup.yml` が `cat .github/variables >> "$GITHUB_ENV"` で読み込む。バージョン整合性チェックはリポジトリ固有のツールを持たず、Skill `wails3`（`references/advanced.md`）の一般化された手順を使う。
 
 ## Data Model
 

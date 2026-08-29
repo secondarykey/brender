@@ -5,6 +5,7 @@ import { WorkspaceApi, ProjectApi, BlenderApi } from '../../../lib/api'
 import { onAppEvent } from '../../../lib/appEvents'
 import { useToast, useMessage } from '../../../lib/toast'
 import SortSelect from '../../../components/SortSelect'
+import EntityIcon from '../../../components/EntityIcon'
 import { isWails } from '../../../lib/api/_client'
 import { MdViewList, MdViewModule, MdViewComfy } from 'react-icons/md'
 
@@ -56,7 +57,7 @@ function FileCard({ projectID, g, navigate, projectName, thumbnailMode, onSetThu
 
   return (
     <div
-      className={`file-tile${thumbnailMode ? ' file-tile-thumb-select' : ''}${isServerIncompatible(g.file) ? ' file-tile-not-packed' : ''}`}
+      className={`file-tile entity-file entity-bar${thumbnailMode ? ' file-tile-thumb-select' : ''}${isServerIncompatible(g.file) ? ' file-tile-not-packed' : ''}`}
       title={fileName}
       onClick={handleClick}
     >
@@ -67,7 +68,11 @@ function FileCard({ projectID, g, navigate, projectName, thumbnailMode, onSetThu
         }
       </div>
       <div className="file-tile-info">
-        <div className={`file-tile-name${g.file.file_exists === false ? ' file-missing' : ''}`} title={fileName}>{fileName}</div>
+        <div className="entity-name-row">
+          <EntityIcon type="file" />
+          <div className={`file-tile-name${g.file.file_exists === false ? ' file-missing' : ''}`} title={fileName}>{fileName}</div>
+          <span className="file-tile-ws-count">{t('workspace.countLabel', { count: g.workspaces.length })}</span>
+        </div>
         {isServerIncompatible(g.file) && (
           <div className="file-tile-pack-warning" title={t('file.serverIncompatible')}>{t('file.serverIncompatible')}</div>
         )}
@@ -76,7 +81,7 @@ function FileCard({ projectID, g, navigate, projectName, thumbnailMode, onSetThu
   )
 }
 
-function WorkspaceTab({ projectID, navigate, projectName, role }) {
+function WorkspaceTab({ projectID, navigate, projectName, role, onCountChange }) {
   const { t } = useTranslation()
   const { showToast } = useToast()
   const { showError } = useMessage()
@@ -94,7 +99,10 @@ function WorkspaceTab({ projectID, navigate, projectName, role }) {
 
   const load = (s, d) => {
     WorkspaceApi.listByProject({ projectID, sort: s, dir: d })
-      .then(list => setGroups(list || []))
+      .then(list => {
+        setGroups(list || [])
+        if (onCountChange) onCountChange((list || []).length)
+      })
       .catch(err => showError(String(err)))
   }
 
@@ -234,7 +242,7 @@ function WorkspaceTab({ projectID, navigate, projectName, role }) {
           {groups.map(g => (
             <div
               key={g.file.id}
-              className={`file-item${thumbnailMode ? ' file-item-thumb-select' : ''}`}
+              className={`file-item entity-file entity-bar${thumbnailMode ? ' file-item-thumb-select' : ''}`}
               onClick={() => {
                 if (thumbnailMode) {
                   handleSetThumbnail(g.file.id)
@@ -259,14 +267,17 @@ function WorkspaceTab({ projectID, navigate, projectName, role }) {
                 </button>
               )}
               <div className="file-item-info">
-                <span className={`ws-file-name${g.file.file_exists === false ? ' file-missing' : ''}`}>{g.file.name || g.file.path.split(/[/\\]/).pop()}</span>
+                <div className="entity-name-row">
+                  <EntityIcon type="file" />
+                  <span className={`ws-file-name${g.file.file_exists === false ? ' file-missing' : ''}`}>{g.file.name || g.file.path.split(/[/\\]/).pop()}</span>
+                </div>
                 {isServerIncompatible(g.file) && (
                   <span className="file-item-pack-warning">{t('file.serverIncompatible')}</span>
                 )}
                 <span className="ws-file-path">{g.file.path}</span>
               </div>
               <div className="file-item-meta">
-                <span className="file-item-count">{g.workspaces.length} {t('tabs.fileList')}</span>
+                <span className="file-item-count">{t('workspace.countLabel', { count: g.workspaces.length })}</span>
                 <span className="ws-item-arrow">›</span>
               </div>
             </div>

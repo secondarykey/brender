@@ -70,6 +70,13 @@ export async function getTestI18n() {
             download: 'Download',
           },
           sysmon: { memory: 'Memory' },
+          breadcrumb: {
+            projects: 'Projects',
+            job: 'Job',
+            jobResult: 'Job Result',
+            backToFileList: '← File list',
+            backToWorkspaceList: '← Workspace list',
+          },
           status: {
             waiting: 'Waiting',
             running: 'Running',

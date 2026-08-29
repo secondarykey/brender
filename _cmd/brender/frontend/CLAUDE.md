@@ -4,9 +4,49 @@
 
 ## Navigation hierarchy
 
-プロジェクト一覧 → プロジェクト詳細（ファイル一覧タブ） → ファイル詳細（ワークスペース左/履歴右の分割レイアウト・設定タブ） → ワークスペース設定（設定左/履歴右の分割レイアウト）
+プロジェクト一覧 → プロジェクト詳細（ファイル一覧タブ） → ファイル詳細（ワークスペース左/履歴右の分割レイアウト・設定タブ） → ワークスペース設定（設定左/履歴右の分割レイアウト） → 実行結果（JobPage）
 
-Breadcrumb: プロジェクト › プロジェクト名 › ファイル名 › ワークスペース名
+### パンくず (`src/components/HierarchyBreadcrumb.jsx`)
+
+```
+プロジェクト一覧 › プロジェクト名 › ファイル名 › ワークスペース名 › 実行結果
+```
+
+**パンくずは `HierarchyBreadcrumb` 経由でのみ作る。ページ側で `<Breadcrumb items={[...]}>` を組み立てないこと。**
+ラベル・アイコン・遷移先を各ページに散らすと、階層や表現を変えるたびにページごとにずれる。
+
+```jsx
+<HierarchyBreadcrumb
+  navigate={navigate}
+  projectID={projectID} projectName={projectName}
+  fileID={fileID}       fileName={fileName}
+  workspaceID={wsID}    workspaceName={wsName}
+  job                       // 実行結果ページのみ
+  suffix={{ workspace: <StaleMark /> }}  // 特定階層への差し込み
+/>
+```
+
+- 渡された**最下層が自動的に現在地**（リンクなし）になる。`current` のような指定は不要
+- 上位階層のリンク先は各階層の**設定タブ**（一覧へ戻るのは `.back-to-list` ボタンの役割）
+- 階層を増やすときは `HierarchyBreadcrumb` の `levels` に1件足すだけ。全ページに自動反映される
+- `HierarchyBreadcrumb.test.jsx` が各ページ相当の階層でアイコン・リンク・遷移先を検証している
+
+`Breadcrumb.jsx` は表示だけを担う下位コンポーネント（`items` の `label` / `icon` / `onClick` / `suffix` を並べる）。
+
+### エンティティ種別アイコン (`src/components/EntityIcon.jsx`)
+
+プロジェクト / ファイル / ワークスペース / 実行結果は一覧の見た目が近いため、種別ごとにアイコンとアクセント色を固定する。
+
+| 種別 | アイコン | `--entity-accent` |
+|---|---|---|
+| `project` | `MdFolder` | `#8b5cd6` |
+| `file` | `MdViewInAr` | `#2b90b5` |
+| `workspace` | `MdTune` | `#219a80` |
+| `job` | `MdPhotoLibrary` | `#c2872b` |
+
+- `<EntityIcon type="file" />` で名称の左に出す。パンくず・タブ・一覧の行/カードで共通
+- コンテナに `entity-{type}` + `entity-bar` を付けると左端に色帯が出る（`box-shadow: inset` なので border と衝突しない）
+- 種別を増やすときは `EntityIcon.jsx` の `ENTITY` と `style.css` の `.entity-{type}` の両方に足す
 
 ## Page Structure
 

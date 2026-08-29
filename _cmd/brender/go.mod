@@ -5,7 +5,7 @@ go 1.26
 require (
 	github.com/google/uuid v1.6.0
 	github.com/ikascrew/brender v0.0.0
-	github.com/wailsapp/wails/v3 v3.0.0-alpha2.114
+	github.com/wailsapp/wails/v3 v3.0.0-beta.3
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da
 )
 
@@ -35,7 +35,7 @@ require (
 	github.com/tklauser/numcpus v0.11.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	golang.org/x/crypto v0.52.0 // indirect
-	golang.org/x/image v0.40.0 // indirect
+	golang.org/x/image v0.41.0 // indirect
 	golang.org/x/sys v0.45.0 // indirect
 	golang.org/x/term v0.43.0 // indirect
 	golang.org/x/text v0.37.0 // indirect

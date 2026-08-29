@@ -9,7 +9,8 @@ import Pagination from '../../components/Pagination'
 import SortSelect from '../../components/SortSelect'
 import Dialog from '../../components/Dialog'
 import ConfirmDialog from '../../components/ConfirmDialog'
-import Breadcrumb from '../../components/Breadcrumb'
+import HierarchyBreadcrumb from '../../components/HierarchyBreadcrumb'
+import EntityIcon from '../../components/EntityIcon'
 import NoteSection from '../../components/NoteSection'
 import WorkspaceCreateDialog from '../../components/WorkspaceCreateDialog'
 import TagInput from '../../components/TagInput'
@@ -40,7 +41,7 @@ function WorkspaceCard({ projectID, fileID, ws, navigate, projectName, fileName,
 
   return (
     <div
-      className={`file-tile ws-tile${thumbnailMode ? ' file-tile-thumb-select' : ''}`}
+      className={`file-tile ws-tile entity-workspace entity-bar${thumbnailMode ? ' file-tile-thumb-select' : ''}`}
       title={ws.name}
       onClick={handleClick}
     >
@@ -52,7 +53,10 @@ function WorkspaceCard({ projectID, fileID, ws, navigate, projectName, fileName,
         {stale && <span className="stale-mark" title={t('file.fileChangedTooltip')}>!</span>}
       </div>
       <div className="ws-tile-info">
-        <span className="file-tile-name" title={ws.name}>{ws.name}</span>
+        <div className="entity-name-row">
+          <EntityIcon type="workspace" />
+          <span className="file-tile-name" title={ws.name}>{ws.name}</span>
+        </div>
         {!small && (
           <div className="ws-item-meta" style={{ marginTop: 4 }}>
             {ws.engine && <span className="ws-meta-chip">{ws.engine}</span>}
@@ -79,7 +83,7 @@ function WorkspaceCard({ projectID, fileID, ws, navigate, projectName, fileName,
 }
 
 // ── ワークスペースタブ ─────────────────────────────────────
-function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEnqueued, workDirLocked, role }) {
+function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEnqueued, workDirLocked, role, onCountChange }) {
   const { t } = useTranslation()
   const { showToast } = useToast()
   const { showError } = useMessage()
@@ -108,6 +112,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
       .then(list => {
         const group = (list || []).find(g => g.file.id === fileID)
         setWorkspaces(group ? group.workspaces : [])
+        if (onCountChange) onCountChange(group ? group.workspaces.length : 0)
         if (group?.file?.file_modified_at) setFileModifiedAt(group.file.file_modified_at)
       })
       .catch(() => {})
@@ -227,7 +232,7 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
             {workspaces.map(ws => (
               <div
                 key={ws.id}
-                className={`ws-item ws-item-run${thumbnailMode ? ' file-item-thumb-select' : ''}`}
+                className={`ws-item ws-item-run entity-workspace entity-bar${thumbnailMode ? ' file-item-thumb-select' : ''}`}
                 onClick={thumbnailMode ? () => handleSetThumbnail(ws.id) : undefined}
               >
                 {!thumbnailMode && canRun && (
@@ -243,10 +248,13 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
                   className="ws-item-info ws-item-link"
                   onClick={thumbnailMode ? undefined : () => navigate('workspace', { projectID, projectName, fileID, fileName, workspaceID: ws.id })}
                 >
-                  <span className="ws-item-name">
-                    {ws.name}
-                    {isStale(ws) && <span className="stale-mark-inline" title={t('file.fileChangedTooltip')}>!</span>}
-                  </span>
+                  <div className="entity-name-row">
+                    <EntityIcon type="workspace" />
+                    <span className="ws-item-name">
+                      {ws.name}
+                      {isStale(ws) && <span className="stale-mark-inline" title={t('file.fileChangedTooltip')}>!</span>}
+                    </span>
+                  </div>
                   <div className="ws-item-meta">
                     {ws.engine && <span className="ws-meta-chip">{ws.engine}</span>}
                     {(ws.start === 0 && ws.end === -1)
@@ -883,6 +891,7 @@ function FileDetailPage({ projectID, projectName: initialProjectName, fileID, fi
   const [workDirStatus, setWorkDirStatus] = useState(null)
   const [accessDenied, setAccessDenied] = useState(false)
   const [fileRole, setFileRole] = useState('owner')
+  const [wsCount, setWsCount] = useState(null)
 
   useEffect(() => {
     // ファイル権限チェック + ロール取得
@@ -912,18 +921,20 @@ function FileDetailPage({ projectID, projectName: initialProjectName, fileID, fi
   }
 
   const tabs = [
-    { id: 'workspace', label: t('tabs.workspaceList') },
+    { id: 'workspace', label: t('tabs.workspaceList'), icon: 'workspace', count: wsCount },
     { id: 'settings',  label: t('tabs.fileSettings') },
   ]
 
   return (
     <div className="page">
       <div className="page-header" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-        <Breadcrumb items={[
-          { label: t('breadcrumb.projects'), onClick: () => navigate('projects') },
-          { label: projectName, onClick: () => navigate('project', { id: projectID, initialTab: 'settings' }) },
-          { label: currentFileName },
-        ]} />
+        <HierarchyBreadcrumb
+          navigate={navigate}
+          projectID={projectID}
+          projectName={projectName}
+          fileID={fileID}
+          fileName={currentFileName}
+        />
         <button className="back-to-list" onClick={() => navigate('project', { id: projectID, initialTab: 'workspace' })}>
           {t('breadcrumb.backToFileList')}
         </button>
@@ -943,7 +954,9 @@ function FileDetailPage({ projectID, projectName: initialProjectName, fileID, fi
             className={`tab-btn${tab === tb.id ? ' active' : ''}`}
             onClick={() => setTab(tb.id)}
           >
+            {tb.icon && <EntityIcon type={tb.icon} />}
             {tb.label}
+            {tb.count !== null && tb.count !== undefined && <span className="tab-count">{tb.count}</span>}
           </button>
         ))}
       </div>
@@ -961,6 +974,7 @@ function FileDetailPage({ projectID, projectName: initialProjectName, fileID, fi
                 onEnqueued={() => navigate('queue')}
                 workDirLocked={workDirStatus === 'lock'}
                 role={fileRole}
+                onCountChange={setWsCount}
               />
             </div>
             <div className="ws-detail-right">
