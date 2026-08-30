@@ -946,21 +946,13 @@ function FileDetailPage({ projectID, projectName: initialProjectName, fileID, fi
   return (
     <div className="page">
       <div className="page-header" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <HierarchyBreadcrumb
-            navigate={navigate}
-            projectID={projectID}
-            projectName={projectName}
-            fileID={fileID}
-            fileName={currentFileName}
-          />
-          <FavoriteButton
-            fileID={fileID}
-            favorite={favorite}
-            onChange={(_, v) => setFavorite(v)}
-            size="1.25rem"
-          />
-        </div>
+        <HierarchyBreadcrumb
+          navigate={navigate}
+          projectID={projectID}
+          projectName={projectName}
+          fileID={fileID}
+          fileName={currentFileName}
+        />
         <button className="back-to-list" onClick={() => navigate('project', { id: projectID, initialTab: 'workspace' })}>
           {t('breadcrumb.backToFileList')}
         </button>

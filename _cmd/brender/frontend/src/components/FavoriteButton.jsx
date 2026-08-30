@@ -12,7 +12,7 @@ import { FavoriteApi } from '../lib/api'
  *   'inline'  — テキスト行に並べる（リスト表示・ヘッダ）
  *   'row'     — 見出し付きセクションの1行（設定タブ）。label と併用する
  */
-function FavoriteButton({ fileID, favorite, onChange, variant = 'inline', size, label = false }) {
+function FavoriteButton({ fileID, favorite, onChange, variant = 'inline', label = false }) {
   const { t } = useTranslation()
   const labelText = favorite ? t('favorite.remove') : t('favorite.add')
 
@@ -37,7 +37,6 @@ function FavoriteButton({ fileID, favorite, onChange, variant = 'inline', size, 
       aria-pressed={favorite}
       title={labelText}
       aria-label={labelText}
-      style={size ? { fontSize: size } : undefined}
     >
       {favorite ? <MdStar /> : <MdStarBorder />}
       {label && <span className="favorite-btn-label">{labelText}</span>}
