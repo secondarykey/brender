@@ -964,6 +964,21 @@ body {
 }
 .favorite-btn--overlay:hover,
 .favorite-btn--overlay.is-favorite { color: #ffd24a; }
+.favorite-btn--row {
+  width: 100%;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 4px;
+  font-size: 1.15rem;
+  background: rgba(var(--fg),0.04);
+}
+.favorite-btn--row:hover { background: rgba(var(--fg),0.08); }
+.favorite-btn--row:active { transform: none; }
+.favorite-btn-label {
+  font-size: 0.85rem;
+  color: rgba(var(--fg),0.7);
+}
 
 .file-tile-pack-warning {
   font-size: 0.7rem;

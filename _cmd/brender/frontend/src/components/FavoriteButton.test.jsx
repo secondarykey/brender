@@ -44,6 +44,13 @@ describe('FavoriteButton', () => {
     })
   })
 
+  it('shows a text label in the row variant', async () => {
+    await renderWithI18n(
+      <FavoriteButton fileID="f1" favorite={false} onChange={() => {}} variant="row" label />
+    )
+    expect(screen.getByText('Add to favorites')).toBeInTheDocument()
+  })
+
   it('rolls back when the call fails', async () => {
     const onChange = vi.fn()
     FavoriteApi.set.mockRejectedValue(new Error('boom'))

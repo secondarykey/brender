@@ -10,9 +10,11 @@ import { FavoriteApi } from '../lib/api'
  * variant:
  *   'overlay' — サムネイル上に重ねる（カード表示）
  *   'inline'  — テキスト行に並べる（リスト表示・ヘッダ）
+ *   'row'     — 見出し付きセクションの1行（設定タブ）。label と併用する
  */
-function FavoriteButton({ fileID, favorite, onChange, variant = 'inline', size }) {
+function FavoriteButton({ fileID, favorite, onChange, variant = 'inline', size, label = false }) {
   const { t } = useTranslation()
+  const labelText = favorite ? t('favorite.remove') : t('favorite.add')
 
   const handleClick = (e) => {
     e.stopPropagation()
@@ -33,11 +35,12 @@ function FavoriteButton({ fileID, favorite, onChange, variant = 'inline', size }
       className={`favorite-btn favorite-btn--${variant}${favorite ? ' is-favorite' : ''}`}
       onClick={handleClick}
       aria-pressed={favorite}
-      title={favorite ? t('favorite.remove') : t('favorite.add')}
-      aria-label={favorite ? t('favorite.remove') : t('favorite.add')}
+      title={labelText}
+      aria-label={labelText}
       style={size ? { fontSize: size } : undefined}
     >
       {favorite ? <MdStar /> : <MdStarBorder />}
+      {label && <span className="favorite-btn-label">{labelText}</span>}
     </button>
   )
 }

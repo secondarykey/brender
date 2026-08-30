@@ -497,7 +497,7 @@ function DefaultTag({ value, t }) {
 }
 
 // ── 設定タブ ─────────────────────────────────────────────
-function SettingsTab({ projectID, fileID, fileName, role, onUpdated, onDeleted }) {
+function SettingsTab({ projectID, fileID, fileName, role, onUpdated, onDeleted, favorite, onFavoriteChange }) {
   const { t } = useTranslation()
   const { showToast } = useToast()
   const { showError } = useMessage()
@@ -871,6 +871,16 @@ function SettingsTab({ projectID, fileID, fileName, role, onUpdated, onDeleted }
       <div className="ws-detail-right">
         <ThumbnailPanel projectID={projectID} fileID={fileID} />
         <div style={{ marginTop: 20 }}>
+          <h3 className="ws-detail-section-title">{t('favorite.favorites')}</h3>
+          <FavoriteButton
+            fileID={fileID}
+            favorite={favorite}
+            onChange={(_, v) => onFavoriteChange(v)}
+            variant="row"
+            label
+          />
+        </div>
+        <div style={{ marginTop: 20 }}>
           <h3 className="ws-detail-section-title">{t('tag.tags')}</h3>
           <TagInput
             projectFileID={fileID}
@@ -1011,6 +1021,8 @@ function FileDetailPage({ projectID, projectName: initialProjectName, fileID, fi
             fileID={fileID}
             fileName={currentFileName}
             role={fileRole}
+            favorite={favorite}
+            onFavoriteChange={setFavorite}
             onUpdated={f => setCurrentFileName(f.name)}
             onDeleted={() => navigate('project', { id: projectID })}
           />
