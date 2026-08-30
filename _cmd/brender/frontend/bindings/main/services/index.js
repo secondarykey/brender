@@ -6,6 +6,7 @@ import * as Auth from "./auth.js";
 import * as Blender from "./blender.js";
 import * as Codes from "./codes.js";
 import * as Environment from "./environment.js";
+import * as Favorite from "./favorite.js";
 import * as Project from "./project.js";
 import * as Queue from "./queue.js";
 import * as SysMon from "./sysmon.js";
@@ -17,6 +18,7 @@ export {
     Blender,
     Codes,
     Environment,
+    Favorite,
     Project,
     Queue,
     SysMon,

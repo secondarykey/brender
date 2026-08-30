@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
-import { WorkspaceApi, QueueApi, ProjectApi, BlenderApi, WorkDirApi, TagApi } from '../../lib/api'
+import { WorkspaceApi, QueueApi, ProjectApi, BlenderApi, WorkDirApi, TagApi, FavoriteApi } from '../../lib/api'
 import { useToast, useMessage } from '../../lib/toast'
 import { onAppEvent } from '../../lib/appEvents'
 import { formatDateFull, formatDuration } from '../../lib/dateFormat'
@@ -11,6 +11,7 @@ import Dialog from '../../components/Dialog'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import HierarchyBreadcrumb from '../../components/HierarchyBreadcrumb'
 import EntityIcon from '../../components/EntityIcon'
+import FavoriteButton from '../../components/FavoriteButton'
 import NoteSection from '../../components/NoteSection'
 import WorkspaceCreateDialog from '../../components/WorkspaceCreateDialog'
 import TagInput from '../../components/TagInput'
@@ -892,6 +893,13 @@ function FileDetailPage({ projectID, projectName: initialProjectName, fileID, fi
   const [accessDenied, setAccessDenied] = useState(false)
   const [fileRole, setFileRole] = useState('owner')
   const [wsCount, setWsCount] = useState(null)
+  const [favorite, setFavorite] = useState(false)
+
+  useEffect(() => {
+    FavoriteApi.isFavorite({ fileID })
+      .then(v => setFavorite(!!v))
+      .catch(() => {})
+  }, [fileID])
 
   useEffect(() => {
     // ファイル権限チェック + ロール取得
@@ -928,13 +936,21 @@ function FileDetailPage({ projectID, projectName: initialProjectName, fileID, fi
   return (
     <div className="page">
       <div className="page-header" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-        <HierarchyBreadcrumb
-          navigate={navigate}
-          projectID={projectID}
-          projectName={projectName}
-          fileID={fileID}
-          fileName={currentFileName}
-        />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <HierarchyBreadcrumb
+            navigate={navigate}
+            projectID={projectID}
+            projectName={projectName}
+            fileID={fileID}
+            fileName={currentFileName}
+          />
+          <FavoriteButton
+            fileID={fileID}
+            favorite={favorite}
+            onChange={(_, v) => setFavorite(v)}
+            size="1.25rem"
+          />
+        </div>
         <button className="back-to-list" onClick={() => navigate('project', { id: projectID, initialTab: 'workspace' })}>
           {t('breadcrumb.backToFileList')}
         </button>

@@ -122,6 +122,7 @@ func run() error {
 			application.NewService(services.NewWorkDir()),
 			application.NewService(services.NewCodes()),
 			application.NewService(services.NewTag()),
+			application.NewService(services.NewFavorite()),
 			application.NewService(services.NewAuth()),
 			application.NewService(services.NewSysMon()),
 		},

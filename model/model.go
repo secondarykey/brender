@@ -106,6 +106,7 @@ func Init(dsn string) error {
 	db.AutoMigrate(&TagCategory{})
 	db.AutoMigrate(&Tag{})
 	db.AutoMigrate(&ProjectFileTag{})
+	db.AutoMigrate(&FileFavorite{})
 	db.AutoMigrate(&User{})
 	db.AutoMigrate(&Group{})
 	db.AutoMigrate(&UserGroup{})

@@ -286,6 +286,9 @@ func DeleteProjectFile(ctx context.Context, fileID string, force bool) error {
 	if err := model.DeleteTagsByFile(fileID); err != nil {
 		return xerrors.Errorf("DeleteProjectFile tags: %w", err)
 	}
+	if err := model.DeleteFavoritesByFile(fileID); err != nil {
+		return xerrors.Errorf("DeleteProjectFile favorites: %w", err)
+	}
 	if err := model.DeleteJobsByProjectFile(fileID); err != nil {
 		return xerrors.Errorf("DeleteProjectFile jobs: %w", err)
 	}
@@ -331,6 +334,9 @@ func DeleteProject(ctx context.Context, id string, force bool) error {
 	}
 	if err := model.DeleteTagsByProject(id); err != nil {
 		return xerrors.Errorf("DeleteProject tags: %w", err)
+	}
+	if err := model.DeleteFavoritesByProject(id); err != nil {
+		return xerrors.Errorf("DeleteProject favorites: %w", err)
 	}
 	if err := model.DeleteJobsByProject(id); err != nil {
 		return xerrors.Errorf("DeleteProject jobs: %w", err)

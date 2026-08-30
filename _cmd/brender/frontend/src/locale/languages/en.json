@@ -547,6 +547,13 @@
     "identicalRenderWarning": "Settings are identical to the last render. Did you forget to update the file?",
     "previousValue": "Previous"
   },
+  "favorite": {
+    "favorites": "Favorites",
+    "add": "Add to favorites",
+    "remove": "Remove from favorites",
+    "onlyFavorites": "Favorites only",
+    "noResults": "No favorite files"
+  },
   "tag": {
     "addTag": "Tag (Enter or comma to add)",
     "tags": "Tags",

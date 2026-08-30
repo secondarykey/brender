@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
-import { WorkspaceApi, ProjectApi, BlenderApi } from '../../../lib/api'
+import { WorkspaceApi, ProjectApi, BlenderApi, FavoriteApi } from '../../../lib/api'
 import { onAppEvent } from '../../../lib/appEvents'
 import { useToast, useMessage } from '../../../lib/toast'
 import SortSelect from '../../../components/SortSelect'
 import EntityIcon from '../../../components/EntityIcon'
+import FavoriteButton from '../../../components/FavoriteButton'
 import { isWails } from '../../../lib/api/_client'
 import { MdViewList, MdViewModule, MdViewComfy } from 'react-icons/md'
 
@@ -18,7 +19,7 @@ function isServerIncompatible(file) {
 }
 
 // ── サムネイルタイル ──────────────────────────────────────
-function FileCard({ projectID, g, navigate, projectName, thumbnailMode, onSetThumbnail }) {
+function FileCard({ projectID, g, navigate, projectName, thumbnailMode, onSetThumbnail, favorite, onFavoriteChange }) {
   const { t } = useTranslation()
   const [thumb, setThumb] = useState(null)
   const thumbRef = useRef(null)
@@ -66,6 +67,12 @@ function FileCard({ projectID, g, navigate, projectName, thumbnailMode, onSetThu
           ? <img src={thumb} alt={fileName} />
           : <span className="file-tile-thumb-placeholder">{t('workspace.noImage')}</span>
         }
+        <FavoriteButton
+          fileID={g.file.id}
+          favorite={favorite}
+          onChange={onFavoriteChange}
+          variant="overlay"
+        />
       </div>
       <div className="file-tile-info">
         <div className="entity-name-row">
@@ -91,6 +98,22 @@ function WorkspaceTab({ projectID, navigate, projectName, role, onCountChange })
   const [thumbnailMode, setThumbnailMode] = useState(false)
   const [sort, setSort] = useState(() => localStorage.getItem('sort:files') || 'display_order')
   const [dir, setDir]   = useState(() => localStorage.getItem('dir:files') || '')
+  const [favoriteIDs, setFavoriteIDs] = useState(() => new Set())
+
+  useEffect(() => {
+    FavoriteApi.listIDs()
+      .then(ids => setFavoriteIDs(new Set(ids || [])))
+      .catch(() => {})
+  }, [projectID])
+
+  const handleFavoriteChange = (fileID, favorite) => {
+    setFavoriteIDs(prev => {
+      const next = new Set(prev)
+      if (favorite) next.add(fileID)
+      else next.delete(fileID)
+      return next
+    })
+  }
 
   const isOwner     = role === 'owner'
   const isEditor    = role === 'editor'
@@ -277,6 +300,11 @@ function WorkspaceTab({ projectID, navigate, projectName, role, onCountChange })
                 <span className="ws-file-path">{g.file.path}</span>
               </div>
               <div className="file-item-meta">
+                <FavoriteButton
+                  fileID={g.file.id}
+                  favorite={favoriteIDs.has(g.file.id)}
+                  onChange={handleFavoriteChange}
+                />
                 <span className="file-item-count">{t('workspace.countLabel', { count: g.workspaces.length })}</span>
                 <span className="ws-item-arrow">›</span>
               </div>
@@ -294,6 +322,8 @@ function WorkspaceTab({ projectID, navigate, projectName, role, onCountChange })
               projectName={projectName}
               thumbnailMode={thumbnailMode}
               onSetThumbnail={handleSetThumbnail}
+              favorite={favoriteIDs.has(g.file.id)}
+              onFavoriteChange={handleFavoriteChange}
             />
           ))}
         </div>

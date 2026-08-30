@@ -4,7 +4,8 @@ import { TagApi, ProjectApi } from '../../lib/api'
 import { useMessage } from '../../lib/toast'
 import Pagination from '../../components/Pagination'
 import EntityIcon from '../../components/EntityIcon'
-import { MdViewList, MdViewModule, MdViewComfy } from 'react-icons/md'
+import FavoriteButton from '../../components/FavoriteButton'
+import { MdViewList, MdViewModule, MdViewComfy, MdStar } from 'react-icons/md'
 
 function SearchPage({ navigate }) {
   const { t } = useTranslation()
@@ -15,6 +16,7 @@ function SearchPage({ navigate }) {
   const [tagCounts, setTagCounts] = useState({})
   const [selectedTagIDs, setSelectedTagIDs] = useState([])
   const [untagged, setUntagged] = useState(false)
+  const [favoriteOnly, setFavoriteOnly] = useState(false)
   const [keyword, setKeyword] = useState('')
   const [keywordInput, setKeywordInput] = useState('')
 
@@ -42,13 +44,21 @@ function SearchPage({ navigate }) {
   useEffect(() => { loadMeta() }, [loadMeta])
 
   const search = useCallback(() => {
-    TagApi.searchFiles({ tagIDs: selectedTagIDs, page, pageSize, untagged, keyword })
+    TagApi.searchFiles({ tagIDs: selectedTagIDs, page, pageSize, untagged, keyword, favorite: favoriteOnly })
       .then(res => {
         setFiles(res?.files || [])
         setTotal(res?.total || 0)
       })
       .catch(e => showError(String(e)))
-  }, [selectedTagIDs, page, pageSize, untagged, keyword])
+  }, [selectedTagIDs, page, pageSize, untagged, keyword, favoriteOnly])
+
+  // 星のトグル結果を一覧に反映する。お気に入り絞り込み中は外れたら消す。
+  const applyFavorite = (fileID, favorite) => {
+    setFiles(prev => favoriteOnly && !favorite
+      ? prev.filter(f => f.id !== fileID)
+      : prev.map(f => (f.id === fileID ? { ...f, is_favorite: favorite } : f)))
+    if (favoriteOnly && !favorite) setTotal(prev => Math.max(0, prev - 1))
+  }
 
   useEffect(() => { search() }, [search])
 
@@ -91,9 +101,15 @@ function SearchPage({ navigate }) {
     setUntagged(prev => !prev)
   }
 
+  const toggleFavoriteOnly = () => {
+    setPage(1)
+    setFavoriteOnly(prev => !prev)
+  }
+
   const clearFilters = () => {
     setSelectedTagIDs([])
     setUntagged(false)
+    setFavoriteOnly(false)
     setKeyword('')
     setKeywordInput('')
     setPage(1)
@@ -121,8 +137,19 @@ function SearchPage({ navigate }) {
         <div className="search-filter-panel" style={{ width: 240, flexShrink: 0, overflowY: 'auto', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>{t('tag.tags')}</span>
-            <button className="btn btn-ghost btn-sm" onClick={clearFilters} style={{ fontSize: '0.75rem' }} disabled={selectedTagIDs.length === 0 && !untagged && !keyword}>
+            <button className="btn btn-ghost btn-sm" onClick={clearFilters} style={{ fontSize: '0.75rem' }} disabled={selectedTagIDs.length === 0 && !untagged && !favoriteOnly && !keyword}>
               {t('common.reset')}
+            </button>
+          </div>
+
+          <div className="search-filter-group">
+            <button
+              className={`search-filter-tag${favoriteOnly ? ' selected' : ''}`}
+              style={favoriteOnly ? { backgroundColor: '#e8b923', color: '#000' } : {}}
+              onClick={toggleFavoriteOnly}
+            >
+              <MdStar style={{ verticalAlign: 'middle' }} />
+              {t('favorite.onlyFavorites')}
             </button>
           </div>
 
@@ -219,7 +246,7 @@ function SearchPage({ navigate }) {
           <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px' }}>
             {files.length === 0 ? (
               <div style={{ textAlign: 'center', padding: 40, color: 'rgba(255,255,255,0.3)' }}>
-                {selectedTagIDs.length > 0 ? t('tag.noResults') : t('tag.allFiles')}
+                {favoriteOnly ? t('favorite.noResults') : selectedTagIDs.length > 0 ? t('tag.noResults') : t('tag.allFiles')}
               </div>
             ) : viewMode === 'list' ? (
               files.map(f => {
@@ -245,6 +272,11 @@ function SearchPage({ navigate }) {
                       </div>
                       <div className="search-result-project">{f.project_name}</div>
                     </div>
+                    <FavoriteButton
+                      fileID={f.id}
+                      favorite={!!f.is_favorite}
+                      onChange={applyFavorite}
+                    />
                   </div>
                 )
               })
@@ -270,6 +302,12 @@ function SearchPage({ navigate }) {
                         ) : (
                           <span className="file-tile-thumb-placeholder">{f.name}</span>
                         )}
+                        <FavoriteButton
+                          fileID={f.id}
+                          favorite={!!f.is_favorite}
+                          onChange={applyFavorite}
+                          variant="overlay"
+                        />
                       </div>
                       <div className="file-tile-info">
                         <div className="entity-name-row">

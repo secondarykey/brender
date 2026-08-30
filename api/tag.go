@@ -182,22 +182,23 @@ type FileSearchResponse struct {
 	Total int64                     `json:"total"`
 }
 
-func SearchFiles(ctx context.Context, tagIDs []uint, page, pageSize int, sort, dir string, untagged bool, keyword string) (*FileSearchResponse, error) {
-	if page < 1 {
-		page = 1
+func SearchFiles(ctx context.Context, p model.FileSearchParams) (*FileSearchResponse, error) {
+	if p.Page < 1 {
+		p.Page = 1
 	}
-	if pageSize < 1 {
-		pageSize = 20
+	if p.PageSize < 1 {
+		p.PageSize = 20
 	}
-	keyword = strings.TrimSpace(keyword)
+	p.Keyword = strings.TrimSpace(p.Keyword)
+	p.UserID = currentUser(ctx)
 
 	var files []*model.FileSearchResult
 	var total int64
 	var err error
 	if fullAccess(ctx) {
-		files, total, err = model.SearchFilesByTags(tagIDs, page, pageSize, sort, dir, untagged, keyword)
+		files, total, err = model.SearchFilesByTags(p)
 	} else {
-		files, total, err = model.SearchFilesByTagsForUser(tagIDs, page, pageSize, sort, dir, untagged, keyword, currentUser(ctx))
+		files, total, err = model.SearchFilesByTagsForUser(p)
 	}
 	if err != nil {
 		return nil, err

@@ -547,6 +547,13 @@
     "identicalRenderWarning": "前回と完全に同じ設定です。ファイルを更新し忘れていませんか？",
     "previousValue": "前回"
   },
+  "favorite": {
+    "favorites": "お気に入り",
+    "add": "お気に入りに追加",
+    "remove": "お気に入りから外す",
+    "onlyFavorites": "お気に入りのみ",
+    "noResults": "お気に入りのファイルがありません"
+  },
   "tag": {
     "addTag": "タグ（Enterまたはカンマで決定）",
     "tags": "タグ",

@@ -29,6 +29,7 @@ func (h *Handler) registerRoutes() {
 	h.registerWorkDir()
 	h.registerCodes()
 	h.registerTag()
+	h.registerFavorite()
 	h.registerAuth()
 }
 
@@ -1321,19 +1322,66 @@ func (h *Handler) registerTag() {
 			Dir      string `json:"dir"`
 			Untagged bool   `json:"untagged"`
 			Keyword  string `json:"keyword"`
+			Favorite bool   `json:"favorite"`
 		}
 		json.Unmarshal(body, &p)
-		if p.Page < 1 {
-			p.Page = 1
-		}
-		if p.PageSize < 1 {
-			p.PageSize = 20
-		}
-		return api.SearchFiles(ctx, p.TagIDs, p.Page, p.PageSize, p.Sort, p.Dir, p.Untagged, p.Keyword)
+		return api.SearchFiles(ctx, model.FileSearchParams{
+			TagIDs:   p.TagIDs,
+			Page:     p.Page,
+			PageSize: p.PageSize,
+			Sort:     p.Sort,
+			Dir:      p.Dir,
+			Untagged: p.Untagged,
+			Keyword:  p.Keyword,
+			Favorite: p.Favorite,
+		})
 	})
 
 	h.register("tag", "list_tag_usage_counts", func(ctx context.Context, _ json.RawMessage) (any, error) {
 		return api.ListTagUsageCounts()
+	})
+}
+
+// ── Favorite ───────────────────────────────────────────────
+
+func (h *Handler) registerFavorite() {
+	h.register("favorite", "set", func(ctx context.Context, body json.RawMessage) (any, error) {
+		var p struct {
+			FileID   string `json:"file_id"`
+			Favorite bool   `json:"favorite"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return api.SetFavorite(ctx, p.FileID, p.Favorite)
+	})
+
+	h.register("favorite", "toggle", func(ctx context.Context, body json.RawMessage) (any, error) {
+		var p struct {
+			FileID string `json:"file_id"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return api.ToggleFavorite(ctx, p.FileID)
+	})
+
+	h.register("favorite", "is_favorite", func(ctx context.Context, body json.RawMessage) (any, error) {
+		var p struct {
+			FileID string `json:"file_id"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return api.IsFavorite(ctx, p.FileID)
+	})
+
+	h.register("favorite", "list_ids", func(ctx context.Context, _ json.RawMessage) (any, error) {
+		return api.ListFavoriteIDs(ctx)
+	})
+
+	h.register("favorite", "count", func(ctx context.Context, _ json.RawMessage) (any, error) {
+		return api.CountFavorites(ctx)
 	})
 }
 

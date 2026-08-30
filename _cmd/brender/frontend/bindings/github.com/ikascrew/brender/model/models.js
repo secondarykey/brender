@@ -502,6 +502,13 @@ export class FileSearchResult {
              */
             this["project_name"] = "";
         }
+        if (!("is_favorite" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["is_favorite"] = false;
+        }
 
         Object.assign(this, $$source);
     }

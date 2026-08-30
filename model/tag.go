@@ -361,51 +361,83 @@ func ListTagsByFile(projectFileID string) ([]*TagWithCategory, error) {
 type FileSearchResult struct {
 	ProjectFile
 	ProjectName string `json:"project_name"`
+	IsFavorite  bool   `gorm:"-" json:"is_favorite"`
 }
 
-func SearchFilesByTags(tagIDs []uint, page, pageSize int, sort, dir string, untagged bool, keyword string) ([]*FileSearchResult, int64, error) {
-	query := db.Model(&ProjectFile{}).
-		Select("project_files.*, projects.name as project_name").
-		Joins("INNER JOIN projects ON projects.id = project_files.project_id").
-		Where("project_files.deleted_at IS NULL AND projects.deleted_at IS NULL")
+// FileSearchParams はファイル検索の絞り込み条件。
+// UserID はお気に入り判定・お気に入り絞り込み・権限フィルタの対象ユーザ。
+type FileSearchParams struct {
+	TagIDs   []uint
+	Page     int
+	PageSize int
+	Sort     string
+	Dir      string
+	Untagged bool
+	Keyword  string
+	Favorite bool
+	UserID   string
+}
 
-	if keyword != "" {
-		like := "%" + keyword + "%"
+// applyFileSearchFilters はキーワード・タグ・お気に入りの絞り込みを適用する。
+func applyFileSearchFilters(query *gorm.DB, p FileSearchParams) *gorm.DB {
+	if p.Keyword != "" {
+		like := "%" + p.Keyword + "%"
 		query = query.Where("(project_files.name LIKE ? OR projects.name LIKE ?)", like, like)
 	}
 
-	if untagged {
-		query = query.Where("project_files.id NOT IN (?)",
-			db.Model(&ProjectFileTag{}).Select("project_file_id"))
-	} else if len(tagIDs) > 0 {
-		subQuery := db.Model(&ProjectFileTag{}).
-			Select("project_file_id").
-			Where("tag_id IN ?", tagIDs).
-			Group("project_file_id").
-			Having("COUNT(DISTINCT tag_id) = ?", len(tagIDs))
-		query = query.Where("project_files.id IN (?)", subQuery)
+	if p.Favorite {
+		query = query.Where("project_files.id IN (?)",
+			db.Model(&FileFavorite{}).Select("project_file_id").Where("user_id = ?", p.UserID))
 	}
 
+	if p.Untagged {
+		query = query.Where("project_files.id NOT IN (?)",
+			db.Model(&ProjectFileTag{}).Select("project_file_id"))
+	} else if len(p.TagIDs) > 0 {
+		subQuery := db.Model(&ProjectFileTag{}).
+			Select("project_file_id").
+			Where("tag_id IN ?", p.TagIDs).
+			Group("project_file_id").
+			Having("COUNT(DISTINCT tag_id) = ?", len(p.TagIDs))
+		query = query.Where("project_files.id IN (?)", subQuery)
+	}
+	return query
+}
+
+// finishFileSearch は件数取得・ページング・付随情報の付与をまとめて行う。
+func finishFileSearch(query *gorm.DB, p FileSearchParams, label string) ([]*FileSearchResult, int64, error) {
 	var total int64
 	if err := query.Count(&total).Error; err != nil {
-		return nil, 0, xerrors.Errorf("SearchFilesByTags count: %w", err)
+		return nil, 0, xerrors.Errorf("%s count: %w", label, err)
 	}
 
 	var files []*FileSearchResult
-	offset := (page - 1) * pageSize
-	if err := query.Order(resolveOrder(sort, dir)).Offset(offset).Limit(pageSize).Find(&files).Error; err != nil {
-		return nil, 0, xerrors.Errorf("SearchFilesByTags: %w", err)
+	offset := (p.Page - 1) * p.PageSize
+	if err := query.Order(resolveOrder(p.Sort, p.Dir)).Offset(offset).Limit(p.PageSize).Find(&files).Error; err != nil {
+		return nil, 0, xerrors.Errorf("%s: %w", label, err)
 	}
 
 	for _, f := range files {
 		populateFileInfo(&f.ProjectFile)
 	}
+	if err := markFavorites(p.UserID, files); err != nil {
+		return nil, 0, xerrors.Errorf("%s: %w", label, err)
+	}
 	return files, total, nil
 }
 
+func SearchFilesByTags(p FileSearchParams) ([]*FileSearchResult, int64, error) {
+	query := db.Model(&ProjectFile{}).
+		Select("project_files.*, projects.name as project_name").
+		Joins("INNER JOIN projects ON projects.id = project_files.project_id").
+		Where("project_files.deleted_at IS NULL AND projects.deleted_at IS NULL")
+
+	return finishFileSearch(applyFileSearchFilters(query, p), p, "SearchFilesByTags")
+}
+
 // SearchFilesByTagsForUser はファイル権限でフィルタしたタグ検索を行う。
-func SearchFilesByTagsForUser(tagIDs []uint, page, pageSize int, sort, dir string, untagged bool, keyword string, userID string) ([]*FileSearchResult, int64, error) {
-	ids, err := collectTargetIDs(userID)
+func SearchFilesByTagsForUser(p FileSearchParams) ([]*FileSearchResult, int64, error) {
+	ids, err := collectTargetIDs(p.UserID)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -417,38 +449,7 @@ func SearchFilesByTagsForUser(tagIDs []uint, page, pageSize int, sort, dir strin
 		Where("project_files.id IN (?)",
 			db.Model(&FilePermission{}).Select("file_id").Where("target_id IN ?", ids))
 
-	if keyword != "" {
-		like := "%" + keyword + "%"
-		query = query.Where("(project_files.name LIKE ? OR projects.name LIKE ?)", like, like)
-	}
-
-	if untagged {
-		query = query.Where("project_files.id NOT IN (?)",
-			db.Model(&ProjectFileTag{}).Select("project_file_id"))
-	} else if len(tagIDs) > 0 {
-		subQuery := db.Model(&ProjectFileTag{}).
-			Select("project_file_id").
-			Where("tag_id IN ?", tagIDs).
-			Group("project_file_id").
-			Having("COUNT(DISTINCT tag_id) = ?", len(tagIDs))
-		query = query.Where("project_files.id IN (?)", subQuery)
-	}
-
-	var total int64
-	if err := query.Count(&total).Error; err != nil {
-		return nil, 0, xerrors.Errorf("SearchFilesByTagsForUser count: %w", err)
-	}
-
-	var files []*FileSearchResult
-	offset := (page - 1) * pageSize
-	if err := query.Order(resolveOrder(sort, dir)).Offset(offset).Limit(pageSize).Find(&files).Error; err != nil {
-		return nil, 0, xerrors.Errorf("SearchFilesByTagsForUser: %w", err)
-	}
-
-	for _, f := range files {
-		populateFileInfo(&f.ProjectFile)
-	}
-	return files, total, nil
+	return finishFileSearch(applyFileSearchFilters(query, p), p, "SearchFilesByTagsForUser")
 }
 
 // ── 集計 ─────────────────────────────────────────────────

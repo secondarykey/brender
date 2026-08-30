@@ -148,6 +148,13 @@ export async function getTestI18n() {
           tag: {
             addTag: 'Add tag...',
           },
+          favorite: {
+            favorites: 'Favorites',
+            add: 'Add to favorites',
+            remove: 'Remove from favorites',
+            onlyFavorites: 'Favorites only',
+            noResults: 'No favorite files',
+          },
           workspace: {
             createDialog: {
               title: 'Create Workspace',
