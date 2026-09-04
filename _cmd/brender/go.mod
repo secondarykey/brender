@@ -1,11 +1,11 @@
 module main
 
-go 1.26
+go 1.27
 
 require (
 	github.com/google/uuid v1.6.0
 	github.com/ikascrew/brender v0.0.0
-	github.com/wailsapp/wails/v3 v3.0.0-beta.3
+	github.com/wailsapp/wails/v3 v3.0.0-beta.16
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da
 )
 
@@ -34,12 +34,11 @@ require (
 	github.com/tklauser/go-sysconf v0.3.16 // indirect
 	github.com/tklauser/numcpus v0.11.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
-	golang.org/x/crypto v0.52.0 // indirect
+	golang.org/x/crypto v0.53.0 // indirect
 	golang.org/x/image v0.41.0 // indirect
-	golang.org/x/sys v0.45.0 // indirect
-	golang.org/x/term v0.43.0 // indirect
-	golang.org/x/text v0.37.0 // indirect
-	golang.org/x/tools v0.45.0 // indirect
+	golang.org/x/sys v0.46.0 // indirect
+	golang.org/x/term v0.44.0 // indirect
+	golang.org/x/text v0.39.0 // indirect
 	gorm.io/gorm v1.31.1 // indirect
 	modernc.org/libc v1.72.3 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
