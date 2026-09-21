@@ -8,7 +8,7 @@
     !define INFO_PROJECTNAME "brender"
 !endif
 !ifndef INFO_COMPANYNAME
-    !define INFO_COMPANYNAME "ikascrew"
+    !define INFO_COMPANYNAME "secondarykey"
 !endif
 !ifndef INFO_PRODUCTNAME
     !define INFO_PRODUCTNAME "Brender"
@@ -17,7 +17,7 @@
     !define INFO_PRODUCTVERSION "0.3.0"
 !endif
 !ifndef INFO_COPYRIGHT
-    !define INFO_COPYRIGHT "(c)2026, ikascrew"
+    !define INFO_COPYRIGHT "(c)2026, secondarykey"
 !endif
 !ifndef PRODUCT_EXECUTABLE
     !define PRODUCT_EXECUTABLE "${INFO_PROJECTNAME}.exe"

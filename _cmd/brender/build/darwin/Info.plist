@@ -11,7 +11,7 @@
 		<key>CFBundleIconName</key>
 		<string>appicon</string>
 		<key>CFBundleIdentifier</key>
-		<string>com.github.ikascrew.brender</string>
+		<string>com.github.secondarykey.brender</string>
 		<key>CFBundleName</key>
 		<string>Brender</string>
 		<key>CFBundlePackageType</key>
@@ -25,6 +25,6 @@
 		<key>NSHighResolutionCapable</key>
 		<string>true</string>
 		<key>NSHumanReadableCopyright</key>
-		<string>(c)2026, ikascrew</string>
+		<string>(c)2026, secondarykey</string>
 	</dict>
 </plist>

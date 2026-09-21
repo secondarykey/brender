@@ -8,14 +8,14 @@
   IgnorableNamespaces="uap3">
   
   <Identity
-    Name="com.github.ikascrew.brender"
-    Publisher="CN=ikascrew"
+    Name="com.github.secondarykey.brender"
+    Publisher="CN=secondarykey"
     Version="0.3.0.0"
     ProcessorArchitecture="x64" />
 
   <Properties>
     <DisplayName>Brender</DisplayName>
-    <PublisherDisplayName>ikascrew</PublisherDisplayName>
+    <PublisherDisplayName>secondarykey</PublisherDisplayName>
     <Description>Blender rendering management system</Description>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
@@ -29,7 +29,7 @@
   </Resources>
   
   <Applications>
-    <Application Id="com.github.ikascrew.brender" Executable="brender.exe" EntryPoint="Windows.FullTrustApplication">
+    <Application Id="com.github.secondarykey.brender" Executable="brender.exe" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements
         DisplayName="Brender"
         Description="Blender rendering management system"
