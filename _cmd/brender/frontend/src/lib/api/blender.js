@@ -58,6 +58,11 @@ export const BlenderApi = {
     isWails() ? svc().then(s => s.GetToolData(installID, fileID))
               : serverCall('blender', 'get_tool_data', { install_id: installID, file_id: fileID }),
 
+  /** 起動時 Blender 検証の警告一覧を取得 */
+  warnings: () =>
+    isWails() ? svc().then(s => s.Warnings())
+              : serverCall('blender', 'warnings'),
+
   /** システムの論理 CPU コア数を取得 */
   getCPUCount: () =>
     isWails() ? svc().then(s => s.GetCPUCount())

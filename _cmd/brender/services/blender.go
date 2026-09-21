@@ -51,6 +51,12 @@ func (s *Blender) GetToolData(installID uint, fileID string) (*exec.Tool, error)
 	return api.GetToolData(installID, fileID)
 }
 
+// Warnings は起動時検証で検出した警告（パス消失など）を返す。
+// 起動直後のイベントをフロントエンドが取りこぼすため、マウント時に取得する用途。
+func (s *Blender) Warnings() []string {
+	return api.BlenderWarnings()
+}
+
 func (s *Blender) GetCPUCount() int {
 	return runtime.NumCPU()
 }

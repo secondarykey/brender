@@ -183,6 +183,10 @@ func (h *Handler) registerBlender() {
 		return api.GetToolData(p.InstallID, p.FileID)
 	})
 
+	h.register("blender", "warnings", func(ctx context.Context, _ json.RawMessage) (any, error) {
+		return api.BlenderWarnings(), nil
+	})
+
 	h.register("blender", "get_cpu_count", func(ctx context.Context, _ json.RawMessage) (any, error) {
 		return runtime.NumCPU(), nil
 	})

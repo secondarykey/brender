@@ -5,6 +5,7 @@ import (
 	"os"
 	osexec "os/exec"
 	"path/filepath"
+	"sync"
 
 	"github.com/secondarykey/brender/exec"
 	"github.com/secondarykey/brender/log"
@@ -14,6 +15,26 @@ import (
 
 // BlenderWarningHook は起動時の Blender 検証で警告が発生したときに呼ばれるフック。
 var BlenderWarningHook func(warnings []string)
+
+// 起動時検証の結果。フロントエンドがイベント購読より先に起動を終えていない場合に
+// 取りこぼすため、最新の警告を保持して後から取得できるようにする。
+var (
+	blenderWarnMu sync.RWMutex
+	blenderWarns  []string
+)
+
+func setBlenderWarnings(warnings []string) {
+	blenderWarnMu.Lock()
+	blenderWarns = warnings
+	blenderWarnMu.Unlock()
+}
+
+// BlenderWarnings は直近の VerifyBlenderInstalls で検出した警告を返す。
+func BlenderWarnings() []string {
+	blenderWarnMu.RLock()
+	defer blenderWarnMu.RUnlock()
+	return append([]string(nil), blenderWarns...)
+}
 
 func RegisterBlender(path string) (*model.BlenderInstall, error) {
 	if _, err := os.Stat(path); err != nil {
@@ -92,6 +113,8 @@ func VerifyBlenderInstalls() {
 			}
 		}
 	}
+
+	setBlenderWarnings(warnings)
 
 	if len(warnings) > 0 && BlenderWarningHook != nil {
 		BlenderWarningHook(warnings)

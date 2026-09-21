@@ -107,6 +107,17 @@ export function Reorder(ids) {
     return $Call.ByID(117922830, ids);
 }
 
+/**
+ * Warnings は起動時検証で検出した警告（パス消失など）を返す。
+ * 起動直後のイベントをフロントエンドが取りこぼすため、マウント時に取得する用途。
+ * @returns {$CancellablePromise<string[]>}
+ */
+export function Warnings() {
+    return $Call.ByID(695015422).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType3($result);
+    }));
+}
+
 // Private type creation functions
 const $$createType0 = exec$0.CameraTool.createFrom;
 const $$createType1 = $Create.Nullable($$createType0);

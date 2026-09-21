@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { QueueApi, EnvironmentApi } from '../lib/api'
+import { QueueApi, EnvironmentApi, BlenderApi } from '../lib/api'
 import { onAppEvent } from '../lib/appEvents'
 import TitleBar from '../components/TitleBar'
 import { useTranslation } from "react-i18next"
@@ -46,6 +46,14 @@ function MainLayout({ currentPage, onNavigate, children }) {
   }, [])
 
   useEffect(() => {
+    // 起動時検証はフロントのマウントより先に終わることがあり、イベントを取りこぼすため
+    // マウント時にも検証結果を取得する。
+    BlenderApi.warnings()
+      .then(list => {
+        if (Array.isArray(list) && list.length > 0) showError(list.join('\n'))
+      })
+      .catch(() => {})
+
     const off = onAppEvent('blender:warning', data => {
       const warnings = Array.isArray(data) ? data : [data]
       if (warnings.length > 0) {
