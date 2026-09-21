@@ -561,15 +561,24 @@ body {
 }
 
 .blender-refs-list li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
   padding: 2px 0;
 }
 
 .blender-refs-list .ref-kind {
-  display: inline-block;
-  min-width: 96px;
+  flex: 0 0 90px;
   font-size: 0.7rem;
   color: rgba(var(--fg), 0.55);
-  margin-right: 6px;
+}
+
+.blender-refs-list .link-btn {
+  text-align: left;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .missing-badge {
