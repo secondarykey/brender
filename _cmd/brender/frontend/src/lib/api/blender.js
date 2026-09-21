@@ -23,6 +23,13 @@ export const BlenderApi = {
     isWails() ? svc().then(s => s.Delete(id))
               : serverCall('blender', 'delete', { id }),
 
+  /** Blender を参照しているワークスペース・ファイル・プロジェクトを取得
+   * @param {{ id: number }} args
+   */
+  references: ({ id }) =>
+    isWails() ? svc().then(s => s.References(id))
+              : serverCall('blender', 'references', { id }),
+
   /** Blender の並び順を更新
    * @param {{ ids: number[] }} args
    */

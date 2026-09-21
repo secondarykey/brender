@@ -6,7 +6,7 @@ import { useToast } from '../../lib/toast'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import { useMessage } from '../../lib/toast'
 
-function BlenderSettings() {
+function BlenderSettings({ navigate }) {
   const { t } = useTranslation()
   const [blenders, setBlenders] = useState([])
   const [loading, setLoading] = useState(false)
@@ -22,6 +22,8 @@ function BlenderSettings() {
   const [outputFormat, setOutputFormat] = useState('')
   const [imageFormats, setImageFormats] = useState([])
   const [missing, setMissing] = useState([])
+  const [refs, setRefs] = useState([])
+  const [refsLoading, setRefsLoading] = useState(false)
 
   const load = () => {
     BlenderApi.list()
@@ -72,6 +74,37 @@ function BlenderSettings() {
       showError(String(err))
     } finally {
       setLoading(false)
+    }
+  }
+
+  // 削除できない理由（参照しているワークスペース等）を先に見せる
+  const openConfirm = b => {
+    setConfirm(b)
+    setConfirmError('')
+    setRefs([])
+    setRefsLoading(true)
+    BlenderApi.references({ id: b.id })
+      .then(list => setRefs(list || []))
+      .catch(err => setConfirmError(String(err)))
+      .finally(() => setRefsLoading(false))
+  }
+
+  const gotoRef = r => {
+    if (!navigate) return
+    setConfirm(null)
+    if (r.kind === 'workspace') {
+      navigate('workspace', {
+        projectID: r.project_id, projectName: r.project_name,
+        fileID: r.file_id, fileName: r.file_name,
+        workspaceID: r.workspace_id,
+      })
+    } else if (r.kind === 'file') {
+      navigate('file', {
+        projectID: r.project_id, projectName: r.project_name,
+        fileID: r.file_id, fileName: r.file_name,
+      })
+    } else {
+      navigate('project', { id: r.project_id })
     }
   }
 
@@ -131,6 +164,9 @@ function BlenderSettings() {
     setDragOver(null)
   }
 
+  // ワークスペース参照だけが削除をブロックする（プロジェクト/ファイル参照は情報表示）
+  const blockingRefs = refs.filter(r => r.kind === 'workspace')
+
   return (
     <div>
       {blenders.length === 0 ? (
@@ -170,7 +206,7 @@ function BlenderSettings() {
                   </td>
                   <td className="path-cell">{b.path}</td>
                   <td>
-                    <button className="btn btn-danger" onClick={() => { setConfirm(b); setConfirmError('') }}>
+                    <button className="btn btn-danger" onClick={() => openConfirm(b)}>
                       {t('common.delete')}
                     </button>
                   </td>
@@ -234,6 +270,7 @@ function BlenderSettings() {
         onConfirm={handleDelete}
         confirmLabel={deleting ? t('common.deleting') : t('common.delete')}
         busy={deleting}
+        confirmDisabled={blockingRefs.length > 0}
         message={confirmError || undefined}
       >
         {confirm && (
@@ -241,6 +278,27 @@ function BlenderSettings() {
             <p><span className="dialog-label">{t('dialog.name')}</span>{confirm.name}</p>
             <p><span className="dialog-label">{t('dialog.version')}</span>{confirm.version || '—'}</p>
             <p><span className="dialog-label">{t('dialog.path')}</span>{confirm.path}</p>
+            {refsLoading && <p className="form-hint">{t('common.loading')}</p>}
+            {!refsLoading && refs.length > 0 && (
+              <div className="blender-refs">
+                <p className="blender-refs-title">
+                  {blockingRefs.length > 0
+                    ? t('settings.blenderRefsBlocking', { count: blockingRefs.length })
+                    : t('settings.blenderRefsInfo', { count: refs.length })}
+                </p>
+                <ul className="blender-refs-list">
+                  {refs.map((r, i) => (
+                    <li key={`${r.kind}-${r.workspace_id || r.file_id || r.project_id}-${i}`}>
+                      <button className="link-btn" onClick={() => gotoRef(r)}>
+                        <span className="ref-kind">{t(`settings.blenderRefKind.${r.kind}`)}</span>
+                        {[r.project_name, r.file_name, r.workspace_name].filter(Boolean).join(' › ')}
+                        {r.is_system && <span className="missing-badge" style={{ marginLeft: 6 }}>system</span>}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </>
         )}
       </ConfirmDialog>

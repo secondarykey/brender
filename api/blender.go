@@ -71,6 +71,12 @@ func DeleteBlender(id uint) error {
 	return model.RemoveBlenderInstall(id)
 }
 
+// BlenderReferences は指定 Blender を参照しているワークスペース・ファイル・
+// プロジェクトを列挙する。削除できないときに参照元を提示するために使う。
+func BlenderReferences(id uint) ([]*model.BlenderReference, error) {
+	return model.ListBlenderReferences(id)
+}
+
 func ReorderBlenders(ids []uint) error {
 	return model.ReorderBlenders(ids)
 }

@@ -428,6 +428,13 @@
     "noBlenders": "No Blender installations registered",
     "blenderMissing": "Not found",
     "blenderMissingHint": "Some registered Blender executables are missing. Check the paths and register them again.",
+    "blenderRefsBlocking": "Cannot delete: referenced by {{count}} workspace(s). Click to open.",
+    "blenderRefsInfo": "Referenced by {{count}} item(s). Click to open.",
+    "blenderRefKind": {
+      "workspace": "Workspace",
+      "file": "File",
+      "project": "Project"
+    },
     "reorderHint": "Drag ≡ to reorder. The top Blender is used as default.",
     "confirmDeleteBlender": "Delete this Blender installation?",
     "noBlenderRegistered": "No Blender registered (please add in system settings)",

@@ -27,6 +27,11 @@ func (s *Blender) Delete(id uint) error {
 	return api.DeleteBlender(id)
 }
 
+// References は指定 Blender を参照しているワークスペース等を返す。
+func (s *Blender) References(id uint) ([]*model.BlenderReference, error) {
+	return api.BlenderReferences(id)
+}
+
 func (s *Blender) Reorder(ids []uint) error {
 	return api.ReorderBlenders(ids)
 }

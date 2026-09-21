@@ -100,6 +100,17 @@ export function OpenFile(installID, filePath) {
 }
 
 /**
+ * References は指定 Blender を参照しているワークスペース等を返す。
+ * @param {number} id
+ * @returns {$CancellablePromise<(model$0.BlenderReference | null)[]>}
+ */
+export function References(id) {
+    return $Call.ByID(2602821837, id).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType12($result);
+    }));
+}
+
+/**
  * @param {string} path
  * @returns {$CancellablePromise<model$0.BlenderInstall | null>}
  */
@@ -139,3 +150,6 @@ const $$createType6 = $Create.Nullable($$createType5);
 const $$createType7 = model$0.BlenderInstall.createFrom;
 const $$createType8 = $Create.Nullable($$createType7);
 const $$createType9 = $Create.Array($$createType8);
+const $$createType10 = model$0.BlenderReference.createFrom;
+const $$createType11 = $Create.Nullable($$createType10);
+const $$createType12 = $Create.Array($$createType11);
