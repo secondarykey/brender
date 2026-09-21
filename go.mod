@@ -1,6 +1,6 @@
 module github.com/ikascrew/brender
 
-go 1.26
+go 1.27
 
 require (
 	github.com/anthonynsimon/bild v0.15.0
