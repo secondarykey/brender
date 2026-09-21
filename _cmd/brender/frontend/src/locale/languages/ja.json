@@ -432,8 +432,7 @@
     "blenderRefsInfo": "以下の {{count}} 件が参照しています（クリックで移動）",
     "blenderRefKind": {
       "workspace": "ワークスペース",
-      "file": "ファイル",
-      "project": "プロジェクト"
+      "file": "ファイル"
     },
     "reorderHint": "≡ をドラッグして順序を変更できます。一番上のBlenderがデフォルトとして使用されます。",
     "confirmDeleteBlender": "Blenderを削除しますか？",

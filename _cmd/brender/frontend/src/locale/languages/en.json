@@ -432,8 +432,7 @@
     "blenderRefsInfo": "Referenced by {{count}} item(s). Click to open.",
     "blenderRefKind": {
       "workspace": "Workspace",
-      "file": "File",
-      "project": "Project"
+      "file": "File"
     },
     "reorderHint": "Drag ≡ to reorder. The top Blender is used as default.",
     "confirmDeleteBlender": "Delete this Blender installation?",
