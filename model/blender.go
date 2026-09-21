@@ -82,7 +82,7 @@ func ReorderBlenders(ids []uint) error {
 }
 
 // BlenderReference は BlenderInstall を参照しているエンティティ1件を表す。
-// Kind は "workspace" / "file" / "project"。
+// Kind は "workspace" / "file"。
 type BlenderReference struct {
 	Kind          string `json:"kind"`
 	ProjectID     string `json:"project_id"`
@@ -94,8 +94,9 @@ type BlenderReference struct {
 	IsSystem      bool   `json:"is_system"`
 }
 
-// ListBlenderReferences は指定 Blender を参照しているワークスペース・ファイル・
-// プロジェクトを列挙する。削除できない理由（どれが掴んでいるか）を提示するために使う。
+// ListBlenderReferences は指定 Blender を参照しているワークスペース・ファイルを
+// 列挙する。削除できない理由（どれが掴んでいるか）を提示するために使う。
+// Project は BlenderInstallID を持たないので対象外。
 // ワークスペース件数は CountWorkspacesByBlender と一致する（論理削除済みは除外）。
 func ListBlenderReferences(blenderID uint) ([]*BlenderReference, error) {
 	refs := []*BlenderReference{}
@@ -138,24 +139,6 @@ SELECT 'file' AS kind,
 		return nil, xerrors.Errorf("ListBlenderReferences(file): %w", res.Error)
 	}
 	refs = append(refs, files...)
-
-	var projects []*BlenderReference
-	res = db.Raw(`
-SELECT 'project' AS kind,
-       p.id   AS project_id,
-       p.name AS project_name,
-       ''     AS file_id,
-       ''     AS file_name,
-       ''     AS workspace_id,
-       ''     AS workspace_name,
-       0      AS is_system
-  FROM projects p
- WHERE p.blender_install_id = ? AND p.deleted_at IS NULL
- ORDER BY p.name`, blenderID).Scan(&projects)
-	if res.Error != nil {
-		return nil, xerrors.Errorf("ListBlenderReferences(project): %w", res.Error)
-	}
-	refs = append(refs, projects...)
 
 	return refs, nil
 }

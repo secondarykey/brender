@@ -98,13 +98,11 @@ function BlenderSettings({ navigate }) {
         fileID: r.file_id, fileName: r.file_name,
         workspaceID: r.workspace_id,
       })
-    } else if (r.kind === 'file') {
+    } else {
       navigate('file', {
         projectID: r.project_id, projectName: r.project_name,
         fileID: r.file_id, fileName: r.file_name,
       })
-    } else {
-      navigate('project', { id: r.project_id })
     }
   }
 
