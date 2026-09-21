@@ -5,6 +5,7 @@ import { useMessage } from '../../lib/toast'
 import Pagination from '../../components/Pagination'
 import EntityIcon from '../../components/EntityIcon'
 import FavoriteButton from '../../components/FavoriteButton'
+import SortSelect from '../../components/SortSelect'
 import { MdViewList, MdViewModule, MdViewComfy, MdStar } from 'react-icons/md'
 
 function SearchPage({ navigate }) {
@@ -26,6 +27,8 @@ function SearchPage({ navigate }) {
   const [pageSize, setPageSize] = useState(() => Number(localStorage.getItem('pageSize:search')) || 20)
   const [thumbnails, setThumbnails] = useState({})
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('viewMode:search') || 'card')
+  const [sort, setSort] = useState(() => localStorage.getItem('sort:search') || 'created_at')
+  const [dir, setDir] = useState(() => localStorage.getItem('dir:search') || 'desc')
 
   const loadMeta = useCallback(() => {
     Promise.all([
@@ -44,13 +47,13 @@ function SearchPage({ navigate }) {
   useEffect(() => { loadMeta() }, [loadMeta])
 
   const search = useCallback(() => {
-    TagApi.searchFiles({ tagIDs: selectedTagIDs, page, pageSize, untagged, keyword, favorite: favoriteOnly })
+    TagApi.searchFiles({ tagIDs: selectedTagIDs, page, pageSize, sort, dir, untagged, keyword, favorite: favoriteOnly })
       .then(res => {
         setFiles(res?.files || [])
         setTotal(res?.total || 0)
       })
       .catch(e => showError(String(e)))
-  }, [selectedTagIDs, page, pageSize, untagged, keyword, favoriteOnly])
+  }, [selectedTagIDs, page, pageSize, sort, dir, untagged, keyword, favoriteOnly])
 
   // 星のトグル結果を一覧に反映する。お気に入り絞り込み中は外れたら消す。
   const applyFavorite = (fileID, favorite) => {
@@ -76,6 +79,18 @@ function SearchPage({ navigate }) {
       }
     })
   }, [files])
+
+  const handleSortChange = (s) => {
+    setSort(s)
+    setPage(1)
+    localStorage.setItem('sort:search', s)
+  }
+
+  const handleDirChange = (d) => {
+    setDir(d)
+    setPage(1)
+    localStorage.setItem('dir:search', d)
+  }
 
   const toggleTag = (tagID, e) => {
     setPage(1)
@@ -223,6 +238,13 @@ function SearchPage({ navigate }) {
               onChange={e => setKeywordInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') { setKeyword(keywordInput.trim()); setPage(1) } }}
               style={{ flex: 1, height: 30, fontSize: '0.85rem' }}
+            />
+            <SortSelect
+              value={sort}
+              onChange={handleSortChange}
+              dir={dir}
+              onDirChange={handleDirChange}
+              options={['created_at', 'name', 'file_modified_at']}
             />
             <div style={{ display: 'flex', gap: 4 }}>
               <button

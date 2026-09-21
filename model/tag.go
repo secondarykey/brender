@@ -2,6 +2,7 @@ package model
 
 import (
 	"errors"
+	gosort "sort"
 
 	"golang.org/x/xerrors"
 	"gorm.io/gorm"
@@ -404,6 +405,45 @@ func applyFileSearchFilters(query *gorm.DB, p FileSearchParams) *gorm.DB {
 	return query
 }
 
+// resolveFileSearchOrder はファイル検索の ORDER BY 句を返す。
+// projects と JOIN するため、列名は project_files. で修飾する。
+// file_modified_at は DB 列ではない（os.Stat 由来）ため、ここでは扱わず
+// finishFileSearch がメモリ上で並べ替える。
+func resolveFileSearchOrder(sort, dir string) string {
+	d := dir
+	if d != "asc" && d != "desc" {
+		d = ""
+	}
+	switch sort {
+	case "name":
+		if d == "" {
+			d = "asc"
+		}
+		return "project_files.name " + d
+	default: // created_at
+		if d == "" {
+			d = "desc"
+		}
+		return "project_files.created_at " + d
+	}
+}
+
+// sortResultsByModifiedAt はファイル更新日で並べ替える。更新日不明のものは末尾に置く。
+func sortResultsByModifiedAt(files []*FileSearchResult, dir string) {
+	desc := dir != "asc"
+	gosort.SliceStable(files, func(i, j int) bool {
+		ti := files[i].FileModifiedAt
+		tj := files[j].FileModifiedAt
+		if ti == nil || tj == nil {
+			return ti != nil && tj == nil
+		}
+		if desc {
+			return ti.After(*tj)
+		}
+		return ti.Before(*tj)
+	})
+}
+
 // finishFileSearch は件数取得・ページング・付随情報の付与をまとめて行う。
 func finishFileSearch(query *gorm.DB, p FileSearchParams, label string) ([]*FileSearchResult, int64, error) {
 	var total int64
@@ -413,13 +453,35 @@ func finishFileSearch(query *gorm.DB, p FileSearchParams, label string) ([]*File
 
 	var files []*FileSearchResult
 	offset := (p.Page - 1) * p.PageSize
-	if err := query.Order(resolveOrder(p.Sort, p.Dir)).Offset(offset).Limit(p.PageSize).Find(&files).Error; err != nil {
-		return nil, 0, xerrors.Errorf("%s: %w", label, err)
+
+	if p.Sort == "file_modified_at" {
+		// ファイル更新日は DB 列に無いので、全件取得 → stat → メモリ上でページング。
+		var all []*FileSearchResult
+		if err := query.Order(resolveFileSearchOrder("created_at", "desc")).Find(&all).Error; err != nil {
+			return nil, 0, xerrors.Errorf("%s: %w", label, err)
+		}
+		for _, f := range all {
+			populateFileInfo(&f.ProjectFile)
+		}
+		sortResultsByModifiedAt(all, p.Dir)
+		if offset < len(all) {
+			end := offset + p.PageSize
+			if end > len(all) {
+				end = len(all)
+			}
+			files = all[offset:end]
+		} else {
+			files = []*FileSearchResult{}
+		}
+	} else {
+		if err := query.Order(resolveFileSearchOrder(p.Sort, p.Dir)).Offset(offset).Limit(p.PageSize).Find(&files).Error; err != nil {
+			return nil, 0, xerrors.Errorf("%s: %w", label, err)
+		}
+		for _, f := range files {
+			populateFileInfo(&f.ProjectFile)
+		}
 	}
 
-	for _, f := range files {
-		populateFileInfo(&f.ProjectFile)
-	}
 	if err := markFavorites(p.UserID, files); err != nil {
 		return nil, 0, xerrors.Errorf("%s: %w", label, err)
 	}
