@@ -540,6 +540,22 @@ body {
   vertical-align: middle;
 }
 
+.missing-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  background: #c0392b;
+  color: #fff;
+  border-radius: 3px;
+  padding: 1px 5px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.blender-table tr.row-missing .path-cell {
+  color: #c0392b;
+  text-decoration: line-through;
+}
+
 .user-group-badge {
   display: inline-block;
   font-size: 0.7rem;

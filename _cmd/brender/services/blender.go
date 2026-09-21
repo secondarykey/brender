@@ -57,6 +57,11 @@ func (s *Blender) Warnings() []string {
 	return api.BlenderWarnings()
 }
 
+// CheckPaths は実行ファイルが存在しない Blender の ID を返す（軽量チェック）。
+func (s *Blender) CheckPaths() ([]uint, error) {
+	return api.MissingBlenderPaths()
+}
+
 func (s *Blender) GetCPUCount() int {
 	return runtime.NumCPU()
 }

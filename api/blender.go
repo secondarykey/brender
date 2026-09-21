@@ -121,6 +121,22 @@ func VerifyBlenderInstalls() {
 	}
 }
 
+// MissingBlenderPaths は登録済み Blender のうち実行ファイルが存在しないものの ID を返す。
+// os.Stat のみの軽量チェックで、Blender の起動は行わない。
+func MissingBlenderPaths() ([]uint, error) {
+	installs, err := model.ListBlenders()
+	if err != nil {
+		return nil, xerrors.Errorf("MissingBlenderPaths: %w", err)
+	}
+	missing := []uint{}
+	for _, inst := range installs {
+		if _, err := os.Stat(inst.Path); err != nil {
+			missing = append(missing, inst.ID)
+		}
+	}
+	return missing, nil
+}
+
 func GetScenes(installID uint, fileID string) ([]string, error) {
 	var blenderPath string
 	if installID != 0 {

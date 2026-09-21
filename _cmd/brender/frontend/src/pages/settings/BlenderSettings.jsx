@@ -21,11 +21,16 @@ function BlenderSettings() {
   const [savingMaxJobs, setSavingMaxJobs] = useState(false)
   const [outputFormat, setOutputFormat] = useState('')
   const [imageFormats, setImageFormats] = useState([])
+  const [missing, setMissing] = useState([])
 
   const load = () => {
     BlenderApi.list()
       .then(list => setBlenders(list || []))
       .catch(err => showError(String(err)))
+    // 実行ファイルの存在確認（os.Stat のみの軽量チェック）
+    BlenderApi.checkPaths()
+      .then(ids => setMissing(ids || []))
+      .catch(() => {})
   }
 
   useEffect(() => {
@@ -152,14 +157,17 @@ function BlenderSettings() {
                   onDragLeave={handleDragLeave}
                   onDrop={e => handleDrop(e, index)}
                   onDragEnd={handleDragEnd}
-                  className={dragOver === index ? 'drag-over' : ''}
+                  className={`${dragOver === index ? 'drag-over' : ''}${missing.includes(b.id) ? ' row-missing' : ''}`.trim()}
                 >
                   <td className="drag-handle" title={t('common.dragToReorder')}>≡</td>
                   <td>
                     {index === 0 && <span className="default-badge">{t('common.default')}</span>}
                     {b.name}
                   </td>
-                  <td>{b.version || '—'}</td>
+                  <td>
+                    {missing.includes(b.id) && <span className="missing-badge">{t('settings.blenderMissing')}</span>}
+                    {b.version || '—'}
+                  </td>
                   <td className="path-cell">{b.path}</td>
                   <td>
                     <button className="btn btn-danger" onClick={() => { setConfirm(b); setConfirmError('') }}>
@@ -174,7 +182,11 @@ function BlenderSettings() {
       )}
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
-        <span className="setting-desc">{blenders.length > 0 ? t('settings.reorderHint') : ''}</span>
+        <span className="setting-desc" style={missing.length > 0 ? { color: '#c0392b' } : undefined}>
+          {missing.length > 0
+            ? t('settings.blenderMissingHint')
+            : (blenders.length > 0 ? t('settings.reorderHint') : '')}
+        </span>
         <button className="btn btn-green" onClick={handleAdd} disabled={loading}>
           {loading ? t('common.registering') : t('settings.addBlender')}
         </button>

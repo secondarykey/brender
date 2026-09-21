@@ -14,6 +14,16 @@ import * as exec$0 from "../../github.com/secondarykey/brender/exec/models.js";
 import * as model$0 from "../../github.com/secondarykey/brender/model/models.js";
 
 /**
+ * CheckPaths は実行ファイルが存在しない Blender の ID を返す（軽量チェック）。
+ * @returns {$CancellablePromise<number[]>}
+ */
+export function CheckPaths() {
+    return $Call.ByID(2113288027).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType0($result);
+    }));
+}
+
+/**
  * @param {number} id
  * @returns {$CancellablePromise<void>}
  */
@@ -35,7 +45,7 @@ export function GetCPUCount() {
  */
 export function GetCameras(installID, fileID) {
     return $Call.ByID(569593075, installID, fileID).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType2($result);
+        return $$createType3($result);
     }));
 }
 
@@ -45,7 +55,7 @@ export function GetCameras(installID, fileID) {
  */
 export function GetEngines(installID) {
     return $Call.ByID(187648156, installID).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType3($result);
+        return $$createType4($result);
     }));
 }
 
@@ -56,7 +66,7 @@ export function GetEngines(installID) {
  */
 export function GetScenes(installID, fileID) {
     return $Call.ByID(3137013436, installID, fileID).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType3($result);
+        return $$createType4($result);
     }));
 }
 
@@ -67,7 +77,7 @@ export function GetScenes(installID, fileID) {
  */
 export function GetToolData(installID, fileID) {
     return $Call.ByID(746142195, installID, fileID).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType5($result);
+        return $$createType6($result);
     }));
 }
 
@@ -76,7 +86,7 @@ export function GetToolData(installID, fileID) {
  */
 export function List() {
     return $Call.ByID(1829039847).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType8($result);
+        return $$createType9($result);
     }));
 }
 
@@ -95,7 +105,7 @@ export function OpenFile(installID, filePath) {
  */
 export function Register(path) {
     return $Call.ByID(4016063346, path).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType7($result);
+        return $$createType8($result);
     }));
 }
 
@@ -114,17 +124,18 @@ export function Reorder(ids) {
  */
 export function Warnings() {
     return $Call.ByID(695015422).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType3($result);
+        return $$createType4($result);
     }));
 }
 
 // Private type creation functions
-const $$createType0 = exec$0.CameraTool.createFrom;
-const $$createType1 = $Create.Nullable($$createType0);
-const $$createType2 = $Create.Array($$createType1);
-const $$createType3 = $Create.Array($Create.Any);
-const $$createType4 = exec$0.Tool.createFrom;
-const $$createType5 = $Create.Nullable($$createType4);
-const $$createType6 = model$0.BlenderInstall.createFrom;
-const $$createType7 = $Create.Nullable($$createType6);
-const $$createType8 = $Create.Array($$createType7);
+const $$createType0 = $Create.Array($Create.Any);
+const $$createType1 = exec$0.CameraTool.createFrom;
+const $$createType2 = $Create.Nullable($$createType1);
+const $$createType3 = $Create.Array($$createType2);
+const $$createType4 = $Create.Array($Create.Any);
+const $$createType5 = exec$0.Tool.createFrom;
+const $$createType6 = $Create.Nullable($$createType5);
+const $$createType7 = model$0.BlenderInstall.createFrom;
+const $$createType8 = $Create.Nullable($$createType7);
+const $$createType9 = $Create.Array($$createType8);
