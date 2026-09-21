@@ -286,12 +286,16 @@ function BlenderSettings({ navigate }) {
                 </p>
                 <ul className="blender-refs-list">
                   {refs.map((r, i) => (
-                    <li key={`${r.kind}-${r.workspace_id || r.file_id || r.project_id}-${i}`}>
-                      <button className="link-btn" onClick={() => gotoRef(r)}>
-                        <span className="ref-kind">{t(`settings.blenderRefKind.${r.kind}`)}</span>
-                        {[r.project_name, r.file_name, r.workspace_name].filter(Boolean).join(' › ')}
-                        {r.is_system && <span className="missing-badge" style={{ marginLeft: 6 }}>system</span>}
+                    <li key={`${r.kind}-${r.workspace_id || r.file_id}-${i}`}>
+                      <span className="ref-kind">{t(`settings.blenderRefKind.${r.kind}`)}</span>
+                      <button
+                        className="link-btn"
+                        onClick={() => gotoRef(r)}
+                        title={[r.project_name, r.file_name, r.workspace_name].filter(Boolean).join(' › ')}
+                      >
+                        {r.kind === 'workspace' ? r.workspace_name : r.file_name}
                       </button>
+                      {r.is_system && <span className="missing-badge">system</span>}
                     </li>
                   ))}
                 </ul>
