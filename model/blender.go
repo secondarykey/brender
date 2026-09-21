@@ -80,3 +80,82 @@ func ReorderBlenders(ids []uint) error {
 	}
 	return nil
 }
+
+// BlenderReference は BlenderInstall を参照しているエンティティ1件を表す。
+// Kind は "workspace" / "file" / "project"。
+type BlenderReference struct {
+	Kind          string `json:"kind"`
+	ProjectID     string `json:"project_id"`
+	ProjectName   string `json:"project_name"`
+	FileID        string `json:"file_id"`
+	FileName      string `json:"file_name"`
+	WorkspaceID   string `json:"workspace_id"`
+	WorkspaceName string `json:"workspace_name"`
+	IsSystem      bool   `json:"is_system"`
+}
+
+// ListBlenderReferences は指定 Blender を参照しているワークスペース・ファイル・
+// プロジェクトを列挙する。削除できない理由（どれが掴んでいるか）を提示するために使う。
+// ワークスペース件数は CountWorkspacesByBlender と一致する（論理削除済みは除外）。
+func ListBlenderReferences(blenderID uint) ([]*BlenderReference, error) {
+	refs := []*BlenderReference{}
+
+	var ws []*BlenderReference
+	res := db.Raw(`
+SELECT 'workspace' AS kind,
+       w.project_id      AS project_id,
+       COALESCE(p.name, '') AS project_name,
+       w.project_file_id AS file_id,
+       COALESCE(f.name, '') AS file_name,
+       w.id              AS workspace_id,
+       w.name            AS workspace_name,
+       w.is_system       AS is_system
+  FROM workspaces w
+  LEFT JOIN projects p      ON p.id = w.project_id      AND p.deleted_at IS NULL
+  LEFT JOIN project_files f ON f.id = w.project_file_id AND f.deleted_at IS NULL
+ WHERE w.blender_install_id = ? AND w.deleted_at IS NULL
+ ORDER BY p.name, f.name, w.display_order, w.name`, blenderID).Scan(&ws)
+	if res.Error != nil {
+		return nil, xerrors.Errorf("ListBlenderReferences(workspace): %w", res.Error)
+	}
+	refs = append(refs, ws...)
+
+	var files []*BlenderReference
+	res = db.Raw(`
+SELECT 'file' AS kind,
+       f.project_id AS project_id,
+       COALESCE(p.name, '') AS project_name,
+       f.id         AS file_id,
+       f.name       AS file_name,
+       ''           AS workspace_id,
+       ''           AS workspace_name,
+       0            AS is_system
+  FROM project_files f
+  LEFT JOIN projects p ON p.id = f.project_id AND p.deleted_at IS NULL
+ WHERE f.blender_install_id = ? AND f.deleted_at IS NULL
+ ORDER BY p.name, f.display_order, f.name`, blenderID).Scan(&files)
+	if res.Error != nil {
+		return nil, xerrors.Errorf("ListBlenderReferences(file): %w", res.Error)
+	}
+	refs = append(refs, files...)
+
+	var projects []*BlenderReference
+	res = db.Raw(`
+SELECT 'project' AS kind,
+       p.id   AS project_id,
+       p.name AS project_name,
+       ''     AS file_id,
+       ''     AS file_name,
+       ''     AS workspace_id,
+       ''     AS workspace_name,
+       0      AS is_system
+  FROM projects p
+ WHERE p.blender_install_id = ? AND p.deleted_at IS NULL
+ ORDER BY p.name`, blenderID).Scan(&projects)
+	if res.Error != nil {
+		return nil, xerrors.Errorf("ListBlenderReferences(project): %w", res.Error)
+	}
+	refs = append(refs, projects...)
+
+	return refs, nil
+}

@@ -428,6 +428,13 @@
     "noBlenders": "登録されたBlenderはありません",
     "blenderMissing": "見つかりません",
     "blenderMissingHint": "実行ファイルが見つからない Blender があります。パスを確認して再登録してください。",
+    "blenderRefsBlocking": "以下の {{count}} 件のワークスペースが参照しているため削除できません（クリックで移動）",
+    "blenderRefsInfo": "以下の {{count}} 件が参照しています（クリックで移動）",
+    "blenderRefKind": {
+      "workspace": "ワークスペース",
+      "file": "ファイル",
+      "project": "プロジェクト"
+    },
     "reorderHint": "≡ をドラッグして順序を変更できます。一番上のBlenderがデフォルトとして使用されます。",
     "confirmDeleteBlender": "Blenderを削除しますか？",
     "noBlenderRegistered": "Blenderが登録されていません（システム設定で追加してください）",

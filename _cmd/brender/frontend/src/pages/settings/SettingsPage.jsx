@@ -43,7 +43,7 @@ function SettingsPage({ initialTab, navigate }) {
       </div>
       <div className="tab-content">
         {tab === 'basic'     && <BasicSettings />}
-        {tab === 'blender'   && <BlenderSettings />}
+        {tab === 'blender'   && <BlenderSettings navigate={navigate} />}
         {tab === 'directory' && <DirectorySettings navigate={navigate} />}
         {tab === 'video'     && <VideoSettings />}
         {tab === 'code'      && <CodeSettings />}

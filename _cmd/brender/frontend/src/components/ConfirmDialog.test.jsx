@@ -41,6 +41,14 @@ describe('ConfirmDialog', () => {
     expect(screen.getByText('Cancel')).toBeDisabled()
   })
 
+  it('disables only the confirm button when confirmDisabled', async () => {
+    await renderWithI18n(
+      <ConfirmDialog open title="T" onConfirm={() => {}} onCancel={() => {}} confirmDisabled confirmLabel="OK" />
+    )
+    expect(screen.getByText('OK')).toBeDisabled()
+    expect(screen.getByText('Cancel')).not.toBeDisabled()
+  })
+
   it('uses default labels from i18n', async () => {
     await renderWithI18n(
       <ConfirmDialog open title="T" onConfirm={() => {}} onCancel={() => {}} />
