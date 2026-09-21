@@ -430,6 +430,8 @@
     "blenderMissingHint": "Some registered Blender executables are missing. Check the paths and register them again.",
     "blenderRefsBlocking": "Cannot delete: referenced by {{count}} workspace(s). Click to open.",
     "blenderRefsInfo": "Referenced by {{count}} item(s). Click to open.",
+    "blenderRefsReset": "Reset all to default",
+    "blenderRefsResetDone": "Reset {{workspaces}} workspace(s) and {{files}} file(s) to default",
     "blenderRefKind": {
       "workspace": "Workspace",
       "file": "File"

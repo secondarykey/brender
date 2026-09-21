@@ -24,6 +24,7 @@ function BlenderSettings({ navigate }) {
   const [missing, setMissing] = useState([])
   const [refs, setRefs] = useState([])
   const [refsLoading, setRefsLoading] = useState(false)
+  const [resetting, setResetting] = useState(false)
 
   const load = () => {
     BlenderApi.list()
@@ -103,6 +104,26 @@ function BlenderSettings({ navigate }) {
         projectID: r.project_id, projectName: r.project_name,
         fileID: r.file_id, fileName: r.file_name,
       })
+    }
+  }
+
+  // 参照をまとめてデフォルト設定に戻し、削除できる状態にする
+  const handleResetRefs = async () => {
+    if (!confirm) return
+    setResetting(true)
+    setConfirmError('')
+    try {
+      const res = await BlenderApi.resetReferences({ id: confirm.id })
+      showToast(t('settings.blenderRefsResetDone', {
+        workspaces: res?.workspaces ?? 0,
+        files: res?.files ?? 0,
+      }))
+      const list = await BlenderApi.references({ id: confirm.id })
+      setRefs(list || [])
+    } catch (err) {
+      setConfirmError(String(err))
+    } finally {
+      setResetting(false)
     }
   }
 
@@ -267,7 +288,7 @@ function BlenderSettings({ navigate }) {
         onCancel={() => setConfirm(null)}
         onConfirm={handleDelete}
         confirmLabel={deleting ? t('common.deleting') : t('common.delete')}
-        busy={deleting}
+        busy={deleting || resetting}
         confirmDisabled={blockingRefs.length > 0}
         message={confirmError || undefined}
       >
@@ -284,6 +305,11 @@ function BlenderSettings({ navigate }) {
                     ? t('settings.blenderRefsBlocking', { count: blockingRefs.length })
                     : t('settings.blenderRefsInfo', { count: refs.length })}
                 </p>
+                <div className="blender-refs-actions">
+                  <button className="btn btn-outline btn-sm" onClick={handleResetRefs} disabled={resetting}>
+                    {resetting ? t('common.saving') : t('settings.blenderRefsReset')}
+                  </button>
+                </div>
                 <ul className="blender-refs-list">
                   {refs.map((r, i) => (
                     <li key={`${r.kind}-${r.workspace_id || r.file_id}-${i}`}>

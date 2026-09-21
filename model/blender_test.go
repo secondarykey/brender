@@ -82,6 +82,22 @@ func TestListBlenderReferences(t *testing.T) {
 		t.Errorf("workspace refs = %d, count = %d", wsRefs, count)
 	}
 
+	// デフォルトに戻すと参照が外れ、削除可能になる。
+	wsReset, fileReset, err := ResetBlenderReferences(install.ID)
+	if err != nil {
+		t.Fatalf("ResetBlenderReferences: %v", err)
+	}
+	if wsReset != 1 || fileReset != 1 {
+		t.Errorf("reset counts = (%d, %d), want (1, 1)", wsReset, fileReset)
+	}
+	after, err := ListBlenderReferences(install.ID)
+	if err != nil {
+		t.Fatalf("ListBlenderReferences(after reset): %v", err)
+	}
+	if len(after) != 0 {
+		t.Errorf("len(after) = %d, want 0: %+v", len(after), after)
+	}
+
 	// 参照していない Blender は空を返す。
 	empty, err := ListBlenderReferences(other.ID)
 	if err != nil {

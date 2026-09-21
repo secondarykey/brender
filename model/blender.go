@@ -142,3 +142,26 @@ SELECT 'file' AS kind,
 
 	return refs, nil
 }
+
+// ResetBlenderReferences は指定 Blender を参照しているワークスペース・ファイルの
+// 設定をデフォルト（blender_install_id = 0）に戻す。参照を外して削除可能にするために使う。
+// 戻り値は更新したワークスペース件数・ファイル件数。
+func ResetBlenderReferences(blenderID uint) (int64, int64, error) {
+	var wsCount, fileCount int64
+
+	res := db.Model(&Workspace{}).Where("blender_install_id = ?", blenderID).
+		Update("blender_install_id", 0)
+	if res.Error != nil {
+		return 0, 0, xerrors.Errorf("ResetBlenderReferences(workspace): %w", res.Error)
+	}
+	wsCount = res.RowsAffected
+
+	res = db.Model(&ProjectFile{}).Where("blender_install_id = ?", blenderID).
+		Update("blender_install_id", 0)
+	if res.Error != nil {
+		return wsCount, 0, xerrors.Errorf("ResetBlenderReferences(file): %w", res.Error)
+	}
+	fileCount = res.RowsAffected
+
+	return wsCount, fileCount, nil
+}
