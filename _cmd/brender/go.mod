@@ -4,12 +4,12 @@ go 1.27
 
 require (
 	github.com/google/uuid v1.6.0
-	github.com/ikascrew/brender v0.0.0
+	github.com/secondarykey/brender v0.0.0
 	github.com/wailsapp/wails/v3 v3.0.0-beta.23
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da
 )
 
-replace github.com/ikascrew/brender => ../../
+replace github.com/secondarykey/brender => ../../
 
 require (
 	github.com/adrg/xdg v0.5.3 // indirect

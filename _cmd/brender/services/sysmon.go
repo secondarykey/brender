@@ -1,8 +1,8 @@
 package services
 
 import (
-	"github.com/ikascrew/brender/api"
-	"github.com/ikascrew/brender/sysmon"
+	"github.com/secondarykey/brender/api"
+	"github.com/secondarykey/brender/sysmon"
 )
 
 type SysMon struct{}

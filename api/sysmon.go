@@ -3,7 +3,7 @@ package api
 import (
 	"time"
 
-	"github.com/ikascrew/brender/sysmon"
+	"github.com/secondarykey/brender/sysmon"
 )
 
 // SystemStatsHook is called on each stats update while monitoring is active.

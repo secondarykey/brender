@@ -1,4 +1,4 @@
-module github.com/ikascrew/brender
+module github.com/secondarykey/brender
 
 go 1.27
 

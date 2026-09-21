@@ -15,8 +15,8 @@ import (
 	"strings"
 
 	"github.com/anthonynsimon/bild/blur"
-	"github.com/ikascrew/brender/exec"
-	"github.com/ikascrew/brender/model"
+	"github.com/secondarykey/brender/exec"
+	"github.com/secondarykey/brender/model"
 	xdraw "golang.org/x/image/draw"
 	"golang.org/x/xerrors"
 )

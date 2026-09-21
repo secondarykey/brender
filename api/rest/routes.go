@@ -6,10 +6,10 @@ import (
 	"runtime"
 
 	"github.com/google/uuid"
-	brender "github.com/ikascrew/brender"
-	"github.com/ikascrew/brender/api"
-	"github.com/ikascrew/brender/code"
-	"github.com/ikascrew/brender/model"
+	brender "github.com/secondarykey/brender"
+	"github.com/secondarykey/brender/api"
+	"github.com/secondarykey/brender/code"
+	"github.com/secondarykey/brender/model"
 )
 
 var appVersion string

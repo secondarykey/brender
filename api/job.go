@@ -4,8 +4,8 @@ import (
 	"context"
 	"path/filepath"
 
-	"github.com/ikascrew/brender/exec"
-	"github.com/ikascrew/brender/model"
+	"github.com/secondarykey/brender/exec"
+	"github.com/secondarykey/brender/model"
 	"golang.org/x/xerrors"
 )
 

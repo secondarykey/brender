@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ikascrew/brender/model"
+	"github.com/secondarykey/brender/model"
 	"golang.org/x/xerrors"
 )
 

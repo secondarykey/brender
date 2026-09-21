@@ -3,7 +3,7 @@ package exec_test
 import (
 	"testing"
 
-	"github.com/ikascrew/brender/exec"
+	"github.com/secondarykey/brender/exec"
 )
 
 func TestVersion(t *testing.T) {

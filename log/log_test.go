@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/ikascrew/brender/log"
+	"github.com/secondarykey/brender/log"
 )
 
 func TestInit(t *testing.T) {

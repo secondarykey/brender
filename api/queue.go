@@ -14,10 +14,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/ikascrew/brender/code"
-	"github.com/ikascrew/brender/exec"
-	"github.com/ikascrew/brender/log"
-	"github.com/ikascrew/brender/model"
+	"github.com/secondarykey/brender/code"
+	"github.com/secondarykey/brender/exec"
+	"github.com/secondarykey/brender/log"
+	"github.com/secondarykey/brender/model"
 	"github.com/shirou/gopsutil/v4/process"
 	"golang.org/x/xerrors"
 )

@@ -11,8 +11,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/ikascrew/brender/api"
-	"github.com/ikascrew/brender/log"
+	"github.com/secondarykey/brender/api"
+	"github.com/secondarykey/brender/log"
 )
 
 type Server struct {

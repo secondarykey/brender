@@ -8,7 +8,7 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as sysmon$0 from "../../github.com/ikascrew/brender/sysmon/models.js";
+import * as sysmon$0 from "../../github.com/secondarykey/brender/sysmon/models.js";
 
 /**
  * @returns {$CancellablePromise<sysmon$0.Stats>}

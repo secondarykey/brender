@@ -4,10 +4,10 @@ import (
 	"log/slog"
 	"os"
 
-	brender "github.com/ikascrew/brender"
-	"github.com/ikascrew/brender/api"
-	"github.com/ikascrew/brender/log"
-	"github.com/ikascrew/brender/model"
+	brender "github.com/secondarykey/brender"
+	"github.com/secondarykey/brender/api"
+	"github.com/secondarykey/brender/log"
+	"github.com/secondarykey/brender/model"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 

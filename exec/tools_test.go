@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/ikascrew/brender/exec"
+	"github.com/secondarykey/brender/exec"
 )
 
 func TestToolFile(t *testing.T) {

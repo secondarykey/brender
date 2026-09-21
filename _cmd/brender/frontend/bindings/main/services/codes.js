@@ -8,7 +8,7 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as code$0 from "../../github.com/ikascrew/brender/code/models.js";
+import * as code$0 from "../../github.com/secondarykey/brender/code/models.js";
 
 /**
  * @returns {$CancellablePromise<string>}

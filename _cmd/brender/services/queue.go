@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/ikascrew/brender/api"
-	"github.com/ikascrew/brender/model"
+	"github.com/secondarykey/brender/api"
+	"github.com/secondarykey/brender/model"
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/events"
 )

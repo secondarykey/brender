@@ -8,10 +8,10 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as exec$0 from "../../github.com/ikascrew/brender/exec/models.js";
+import * as exec$0 from "../../github.com/secondarykey/brender/exec/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as model$0 from "../../github.com/ikascrew/brender/model/models.js";
+import * as model$0 from "../../github.com/secondarykey/brender/model/models.js";
 
 /**
  * @param {number} id

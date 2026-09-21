@@ -12,12 +12,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ikascrew/brender/api"
-	"github.com/ikascrew/brender/api/rest"
-	"github.com/ikascrew/brender/config"
-	"github.com/ikascrew/brender/log"
-	"github.com/ikascrew/brender/model"
-	"github.com/ikascrew/brender/sysmon"
+	"github.com/secondarykey/brender/api"
+	"github.com/secondarykey/brender/api/rest"
+	"github.com/secondarykey/brender/config"
+	"github.com/secondarykey/brender/log"
+	"github.com/secondarykey/brender/model"
+	"github.com/secondarykey/brender/sysmon"
 	"golang.org/x/xerrors"
 
 	"main/services"

@@ -89,7 +89,7 @@ _cmd/brender-tool/  (CLI, uses exec/ + api/ directly)
 **ヘッドレス運用は不可**: サーバモードの HTTP サーバは Wails アプリのプロセス内（`app.Run()` が前提）で起動する。GUI なしの純ヘッドレスサーバとしては動かせない（設計上の制約）。
 
 ### Module layout
-- Root モジュール `github.com/ikascrew/brender`（プロジェクトルートの `go.mod`）が正。`exec/`・`model/`・`api/`（`api/rest/` 含む）はwails3に依存しない。
+- Root モジュール `github.com/secondarykey/brender`（プロジェクトルートの `go.mod`）が正。`exec/`・`model/`・`api/`（`api/rest/` 含む）はwails3に依存しない。
 - `_cmd/brender/` は独自の `go.mod`（`module main`）を持ち、root モジュールへの `replace` ディレクティブでローカル参照する。**wails3への依存はこのモジュール内（`_cmd/brender/services/` 等）にのみ許可する** — rootパッケージにwails3 importを持ち込まない。
 
 ### Wails3 services (`_cmd/brender/services/`)

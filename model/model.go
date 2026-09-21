@@ -4,7 +4,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ikascrew/brender/log"
+	"github.com/secondarykey/brender/log"
 
 	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"

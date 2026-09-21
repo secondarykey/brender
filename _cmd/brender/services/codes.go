@@ -2,7 +2,7 @@ package services
 
 import (
 	"github.com/google/uuid"
-	"github.com/ikascrew/brender/code"
+	"github.com/secondarykey/brender/code"
 )
 
 type Codes struct{}

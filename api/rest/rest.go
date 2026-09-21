@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ikascrew/brender/api"
-	"github.com/ikascrew/brender/log"
-	"github.com/ikascrew/brender/model"
+	"github.com/secondarykey/brender/api"
+	"github.com/secondarykey/brender/log"
+	"github.com/secondarykey/brender/model"
 )
 
 type handlerFunc func(ctx context.Context, body json.RawMessage) (any, error)

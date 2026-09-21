@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ikascrew/brender/api"
-	"github.com/ikascrew/brender/log"
-	"github.com/ikascrew/brender/model"
+	"github.com/secondarykey/brender/api"
+	"github.com/secondarykey/brender/log"
+	"github.com/secondarykey/brender/model"
 )
 
 const sessionCookieName = "brender_session"

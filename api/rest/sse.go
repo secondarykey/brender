@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/ikascrew/brender/log"
+	"github.com/secondarykey/brender/log"
 )
 
 type sseEvent struct {

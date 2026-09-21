@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ikascrew/brender/log"
+	"github.com/secondarykey/brender/log"
 )
 
 // サブフレーム進捗パターン（Cycles / EEVEE）

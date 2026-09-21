@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/ikascrew/brender/model"
+	"github.com/secondarykey/brender/model"
 	"golang.org/x/xerrors"
 )
 

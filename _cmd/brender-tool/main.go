@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/ikascrew/brender/exec"
-	"github.com/ikascrew/brender/log"
+	"github.com/secondarykey/brender/exec"
+	"github.com/secondarykey/brender/log"
 	"golang.org/x/xerrors"
 )
 

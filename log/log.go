@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ikascrew/brender/config"
+	"github.com/secondarykey/brender/config"
 	"golang.org/x/xerrors"
 )
 

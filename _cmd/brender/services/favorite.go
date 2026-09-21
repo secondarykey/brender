@@ -1,7 +1,7 @@
 package services
 
 import (
-	"github.com/ikascrew/brender/api"
+	"github.com/secondarykey/brender/api"
 )
 
 type Favorite struct{}
