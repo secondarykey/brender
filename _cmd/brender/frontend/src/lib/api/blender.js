@@ -30,6 +30,13 @@ export const BlenderApi = {
     isWails() ? svc().then(s => s.References(id))
               : serverCall('blender', 'references', { id }),
 
+  /** 参照しているワークスペース・ファイルをデフォルト設定に戻す
+   * @param {{ id: number }} args
+   */
+  resetReferences: ({ id }) =>
+    isWails() ? svc().then(s => s.ResetReferences(id))
+              : serverCall('blender', 'reset_references', { id }),
+
   /** Blender の並び順を更新
    * @param {{ ids: number[] }} args
    */

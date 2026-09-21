@@ -430,6 +430,8 @@
     "blenderMissingHint": "実行ファイルが見つからない Blender があります。パスを確認して再登録してください。",
     "blenderRefsBlocking": "以下の {{count}} 件のワークスペースが参照しているため削除できません（クリックで移動）",
     "blenderRefsInfo": "以下の {{count}} 件が参照しています（クリックで移動）",
+    "blenderRefsReset": "すべてデフォルトにする",
+    "blenderRefsResetDone": "ワークスペース {{workspaces}} 件・ファイル {{files}} 件をデフォルトに戻しました",
     "blenderRefKind": {
       "workspace": "ワークスペース",
       "file": "ファイル"

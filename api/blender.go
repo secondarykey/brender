@@ -77,6 +77,23 @@ func BlenderReferences(id uint) ([]*model.BlenderReference, error) {
 	return model.ListBlenderReferences(id)
 }
 
+// BlenderResetResult は ResetBlenderReferences の更新件数。
+type BlenderResetResult struct {
+	Workspaces int64 `json:"workspaces"`
+	Files      int64 `json:"files"`
+}
+
+// ResetBlenderReferences は指定 Blender を参照しているワークスペース・ファイルを
+// デフォルト設定に戻す。削除前に参照を外すために使う。
+func ResetBlenderReferences(id uint) (*BlenderResetResult, error) {
+	ws, files, err := model.ResetBlenderReferences(id)
+	if err != nil {
+		return nil, err
+	}
+	log.Notice("ResetBlenderReferences: blender=%d workspaces=%d files=%d", id, ws, files)
+	return &BlenderResetResult{Workspaces: ws, Files: files}, nil
+}
+
 func ReorderBlenders(ids []uint) error {
 	return model.ReorderBlenders(ids)
 }

@@ -32,6 +32,11 @@ func (s *Blender) References(id uint) ([]*model.BlenderReference, error) {
 	return api.BlenderReferences(id)
 }
 
+// ResetReferences は参照しているワークスペース・ファイルをデフォルト設定に戻す。
+func (s *Blender) ResetReferences(id uint) (*api.BlenderResetResult, error) {
+	return api.ResetBlenderReferences(id)
+}
+
 func (s *Blender) Reorder(ids []uint) error {
 	return api.ReorderBlenders(ids)
 }

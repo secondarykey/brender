@@ -140,6 +140,16 @@ func (h *Handler) registerBlender() {
 		return api.BlenderReferences(p.ID)
 	})
 
+	h.registerAdmin("blender", "reset_references", func(ctx context.Context, body json.RawMessage) (any, error) {
+		var p struct {
+			ID uint `json:"id"`
+		}
+		if err := json.Unmarshal(body, &p); err != nil {
+			return nil, err
+		}
+		return api.ResetBlenderReferences(p.ID)
+	})
+
 	h.registerAdmin("blender", "reorder", func(ctx context.Context, body json.RawMessage) (any, error) {
 		var p struct {
 			IDs []uint `json:"ids"`

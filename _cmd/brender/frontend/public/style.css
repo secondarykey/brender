@@ -552,6 +552,12 @@ body {
   margin: 0 0 6px;
 }
 
+.blender-refs-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 6px;
+}
+
 .blender-refs-list {
   list-style: none;
   margin: 0;
