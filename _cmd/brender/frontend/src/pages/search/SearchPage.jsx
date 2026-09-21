@@ -244,7 +244,7 @@ function SearchPage({ navigate }) {
               onChange={handleSortChange}
               dir={dir}
               onDirChange={handleDirChange}
-              options={['created_at', 'name', 'file_modified_at']}
+              options={['name', 'created_at', 'updated_at', 'processed_at', 'file_modified_at']}
             />
             <div style={{ display: 'flex', gap: 4 }}>
               <button

@@ -92,6 +92,7 @@
     "label": "並び順",
     "display_order": "表示順",
     "created_at": "作成日",
+    "updated_at": "更新日",
     "processed_at": "処理日",
     "name": "名称",
     "file_modified_at": "ファイル更新日",

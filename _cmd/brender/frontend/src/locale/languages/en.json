@@ -92,6 +92,7 @@
     "label": "Sort",
     "display_order": "Display Order",
     "created_at": "Created",
+    "updated_at": "Updated",
     "processed_at": "Processed",
     "name": "Name",
     "file_modified_at": "File Modified",

@@ -420,6 +420,17 @@ func resolveFileSearchOrder(sort, dir string) string {
 			d = "asc"
 		}
 		return "project_files.name " + d
+	case "updated_at":
+		if d == "" {
+			d = "desc"
+		}
+		return "project_files.updated_at " + d + ", project_files.created_at desc"
+	case "processed_at":
+		// 未処理（NULL）は SQLite の既定で desc なら末尾・asc なら先頭に並ぶ。
+		if d == "" {
+			d = "desc"
+		}
+		return "project_files.processed_at " + d + ", project_files.created_at desc"
 	default: // created_at
 		if d == "" {
 			d = "desc"
