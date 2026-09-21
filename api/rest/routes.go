@@ -187,6 +187,10 @@ func (h *Handler) registerBlender() {
 		return api.BlenderWarnings(), nil
 	})
 
+	h.register("blender", "check_paths", func(ctx context.Context, _ json.RawMessage) (any, error) {
+		return api.MissingBlenderPaths()
+	})
+
 	h.register("blender", "get_cpu_count", func(ctx context.Context, _ json.RawMessage) (any, error) {
 		return runtime.NumCPU(), nil
 	})

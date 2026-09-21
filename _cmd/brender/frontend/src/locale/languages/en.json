@@ -426,6 +426,8 @@
     },
     "addBlender": "+ Add Blender",
     "noBlenders": "No Blender installations registered",
+    "blenderMissing": "Not found",
+    "blenderMissingHint": "Some registered Blender executables are missing. Check the paths and register them again.",
     "reorderHint": "Drag ≡ to reorder. The top Blender is used as default.",
     "confirmDeleteBlender": "Delete this Blender installation?",
     "noBlenderRegistered": "No Blender registered (please add in system settings)",

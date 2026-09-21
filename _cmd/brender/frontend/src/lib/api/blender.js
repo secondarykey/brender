@@ -63,6 +63,11 @@ export const BlenderApi = {
     isWails() ? svc().then(s => s.Warnings())
               : serverCall('blender', 'warnings'),
 
+  /** 実行ファイルが存在しない Blender の ID 一覧を取得（軽量チェック） */
+  checkPaths: () =>
+    isWails() ? svc().then(s => s.CheckPaths())
+              : serverCall('blender', 'check_paths'),
+
   /** システムの論理 CPU コア数を取得 */
   getCPUCount: () =>
     isWails() ? svc().then(s => s.GetCPUCount())
