@@ -1,0 +1,91 @@
+---
+name: brender-server-mode
+description: >
+  Brender のサーバモード（ブラウザからの複数ユーザ利用）の仕組みと、サーバモードで考慮すべきことの
+  チェックリスト。有効化と起動フロー（Environment.Server/ServerHost/ServerPort/ServerAuth、
+  main.go での rest.NewServer 起動）、HTTP ルーティング構成（SPA 配信・/api ディスパッチ・
+  /events SSE・/thumbnail・/_movie・/wails スタブ）、REST エンドポイントの追加手順
+  （routes.go のディスパッチテーブル・registerAdmin）、認証ミドルウェアとセッション Cookie、
+  SSE broker の実装、フロントエンドの isWails 判定を扱う。
+  api/rest/ 配下・_cmd/brender/main.go のサーバ起動部・src/lib/api/_client.js を変更するとき、
+  新しい API エンドポイントを追加するとき、またはサーバモード・ブラウザモード・認証・セッション・
+  SSE に関する作業のときは必ずこのSkillを参照すること。
+---
+
+# Brender サーバモード
+
+Brender のベース機能（デスクトップ運用）に対し、サーバモードは「同じアプリを HTTP 経由で複数ユーザに公開する」追加レイヤ。権限・ロール体系の詳細は Skill `brender-access-control`、イベント配信（emit/SSE）の詳細は Skill `brender-render-pipeline` を参照。
+
+## 有効化と起動フロー
+
+- 設定は `Environment` に持つ: `Server bool` / `ServerHost string` / `ServerPort int`（gorm default 8080）/ `ServerAuth bool`（モデルはファイル名 typo に注意: `model/enviroment.go`）
+- 変更 API: `environment/set_server`（admin 限定、`api.SetServer(enabled, host, port, auth)`）。設定画面から変更できるが、**サーバの起動は main.go の起動時のみ — 変更はアプリ再起動で反映**。
+- `main.go` の流れ: `env.Server == true` なら `rest.SetVersionInfo()` → `rest.NewServer(assets, env.ServerHost, env.ServerPort)` → `broker = restServer.Broker()` を `emit` クロージャに接続 → アプリ初期化後に `restServer.Start()`（goroutine で `Serve`）→ 終了時に `Shutdown(ctx)`。
+- **ヘッドレス運用は不可**: HTTP サーバは Wails アプリのプロセス内で動く（`app.Run()` 前提）。GUI なしでは起動できない。
+
+## HTTP ルーティング構成 (`api/rest/server.go`)
+
+`NewServer` が `http.ServeMux` を組み、全体を `requestLogger(authMiddleware(mux))` でラップする。
+
+| ルート | 内容 |
+|---|---|
+| `POST /api/auth/login` ほか auth 系 | 認証ルート（ミドルウェアの前に登録） |
+| `POST /api/{service}/{method}` | ディスパッチテーブル（下記） |
+| `GET /events` | SSE（`broker.Handler()`） |
+| `POST /api/project/upload_file` | multipart アップロード（最大 512MB、`api.UploadProjectFile`） |
+| `/wails/` | Wails ランタイムスタブ（POST→空 JSON、GET→空 JS） |
+| `GET /thumbnail` | サムネイル画像配信（`api.ServeThumbnailPath` が権限+パス解決、`http.ServeFile` が 304 処理） |
+| `GET /_movie` | ローカル動画配信（`api.ValidateWorkDirPath` で作業ディレクトリ配下に限定） |
+| `/`（その他） | SPA 配信（`frontend/dist`、実ファイルがなければ `index.html`） |
+
+**サーバモードフラグの注入**: SPA の `index.html` の `<head>` に `<script>window.__brender_server_mode=true</script>` を注入する。ビルド済み JS に `@wailsio/runtime` が含まれ `window._wails` がセットされてしまうため、フロントの判定は:
+```js
+// src/lib/api/_client.js
+export const isWails = () => Boolean(window._wails) && !window.__brender_server_mode
+```
+
+## REST ディスパッチテーブル (`api/rest/rest.go`, `routes.go`)
+
+- ハンドラ型: `func(ctx context.Context, body json.RawMessage) (any, error)`
+- `register(service, method, fn)` / `registerAdmin(...)`（実行前に `api.RequireAdmin(ctx)` を通す）
+- ルーティングキーは `{service}/{method}`（snake_case）
+- レスポンス規約: 成功 `{data}` / **業務エラーも HTTP 200 で `{error}`**（フロントの `serverCall` が throw に変換し、Wails モードと同じ try/catch で扱える）。未知のエンドポイントのみ 404。
+- `ServeHTTP` は認証ミドルウェアが goroutine ユーザ未設定の場合（認証無効時）`Guest` をフォールバックとしてセットする。
+
+### 新しいエンドポイントの追加手順
+
+1. `api/` にビジネスロジックを実装（第1引数 `ctx`、権限は `api/access.go` のヘルパー）
+2. `_cmd/brender/services/` の Wails サービスにメソッド追加（`api.WailsContext()` を渡す）→ `wails3 generate bindings`
+3. `api/rest/routes.go` の該当 `registerXxx()` に登録（**Wails と REST の二重登録を忘れない**。システム全体に影響する操作は `registerAdmin`）
+4. `src/lib/api/{service}.js` のラッパーに `isWails()` 分岐を追加（サーバ側は `serverCall('service', 'method', args)`）
+
+## 認証 (`api/rest/auth.go`)
+
+- セッション Cookie: `brender_session`（HttpOnly / SameSite=Lax / 30日 / `Secure` は HTTPS リクエスト時のみ — HTTP の LAN 運用でも動くように）
+- `authMiddleware` の流れ: 公開パス（login・reset 系・`/wails/`・静的拡張子）はスキップ → `api.IsAuthEnabled()` が false なら Guest として続行 → Cookie のセッションを `api.ValidateSession` で検証 → 成功時 `model.WithUser(ctx)`（権限判定用）+ `model.SetGoroutineUser`（監査カラム用）
+- **未認証時の応答分岐** (`handleUnauthorized`): `/api/*`・`/_movie`・`/events`・`/thumbnail` は 401 JSON、ページリクエストは SPA を返す（React 側でログイン画面を表示）
+- フロント側: `serverCall` が 401 を受けたら `window.location.reload()` → ログイン画面へ
+- パスワードリセット: `/user/reset/{token}` ページ + `auth/validate_reset_token` / `auth/reset_password` API（公開パス）
+- 期限切れセッション・リセットトークンは `NewServer` 時の `cleanupExpiredAuthData()` で掃除
+
+## SSE broker (`api/rest/sse.go`)
+
+- fan-out 型: クライアントごとにバッファ 16 の chan、**詰まったら drop**（ブロックしない）
+- 配信形式: `data: {"name": "...", "data": ...}\n\n`
+- `main.go` の `emit(name, data)` が Wails Event と `broker.Emit` の両方へ配る（新イベントは必ず emit 経由）
+- フロントは `src/lib/appEvents.js` が `EventSource('/events')` のシングルトンで受信
+
+## サーバモードで考慮すべきことチェックリスト
+
+新機能を追加するとき、ベース機能に加えて以下を確認する:
+
+- [ ] **API の二重登録**: Wails サービス（`services/`）と REST（`routes.go`）の両方に登録したか
+- [ ] **権限**: api 層は `ctx` 第1引数で操作ユーザを受けているか。admin 操作は `registerAdmin` か。リソース権限は `require*` ヘルパーを通しているか（Skill `brender-access-control`）
+- [ ] **イベント**: 新イベントは `emit` 経由か（Wails のみに Emit すると SSE に届かない）
+- [ ] **ファイルパス**: ブラウザは OS のファイルダイアログ・ローカルパスを使えない。パス入力系 UI は `isWails()` で分岐し、ブラウザ側はアップロード（multipart）や登録済みディレクトリ選択にする
+- [ ] **生パスの検証**: ローカルパスを受け取る/配信する口は `ValidateWorkDirPath` で作業ディレクトリ配下に限定したか
+- [ ] **画像・大容量データ**: base64 で返すと 33% 肥大しキャッシュも効かない。サムネイルのように URL 配信 + `Last-Modified` を検討
+- [ ] **同時アクセス**: DB は WAL 設定済み（`model.Init`）だが、書き込み競合するフローは mutex（`enqueueMu` 方式）を検討
+- [ ] **常駐プロセス**: 無制限に増えるリソース（temp スクリプト等）は起動時クリーンアップに載せたか
+- [ ] **認証スキップ対象**: 静的拡張子（`.js` `.png` 等）は認証をスキップする。機密データを静的ファイルとして配置しない
+- [ ] **設定の反映タイミング**: サーバ設定（host/port/auth）は再起動で反映。`brender.ini` も同様

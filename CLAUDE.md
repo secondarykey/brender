@@ -14,7 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | サーバモード（起動フロー・HTTP ルーティング・REST 追加手順・認証/セッション・SSE・考慮事項チェックリスト） | Skill `brender-server-mode` | 該当作業時に Skill を参照 |
 | コード管理 `code/`（フォーマット・解像度プリセット、新カテゴリ追加手順） | Skill `brender-codes` | 該当作業時に Skill を参照 |
 
-Skill の正本はメインリポジトリの `.claude/skills/` に置く（git 未追跡）。ワークツリー作成時に自動コピーされる。ワークツリー内で Skill を更新した場合はメイン側へ手動で書き戻すこと。
+Skill の正本は `_docs/skills/<名前>/SKILL.md`（git 管理。エージェントに依存しない参考資料としても読める）。`.claude/skills/` は git 管理外のコピー置き場で、セッション開始時にユーザー環境のフックが `_docs/skills` から配る。Skill を更新するときは必ず `_docs/skills` 側を編集してコミットすること（`.claude/skills` のコピーを編集しても次のセッション開始で上書きされる）。
 
 ## Project Overview
 
