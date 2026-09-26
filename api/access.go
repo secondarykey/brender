@@ -16,7 +16,7 @@ import (
 // Wails（デスクトップ）モードでは常に owner を載せる（wailsCtx）。
 //
 // アクセス制御が有効になるのは「サーバモード かつ ユーザ管理オン」のときだけ
-// （CLAUDE.md「権限・アクセス制御」参照）。それ以外は全チェックをバイパスする。
+// （AGENTS.md「権限・アクセス制御」参照）。それ以外は全チェックをバイパスする。
 
 // ErrAccessDenied は権限不足を表す。
 var ErrAccessDenied = xerrors.New("access denied")

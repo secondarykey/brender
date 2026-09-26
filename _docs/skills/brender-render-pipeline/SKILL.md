@@ -13,7 +13,7 @@ description: >
 
 # Brender レンダリングパイプライン詳細
 
-Queue/Job のステータス一覧・データモデルはルートの `CLAUDE.md` を参照。このSkillは実装の詳細仕様を扱う。
+Queue/Job のステータス一覧・データモデルはルートの `AGENTS.md` を参照。このSkillは実装の詳細仕様を扱う。
 
 ## サムネイル自動生成 (`api/thumbnail.go`)
 
