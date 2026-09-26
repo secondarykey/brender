@@ -1,6 +1,6 @@
-# CLAUDE.md — フロントエンド規約
+# AGENTS.md — フロントエンド規約
 
-`_cmd/brender/frontend/` 配下の作業時に適用される規約。プロジェクト全体の概要・ビルドコマンド・データモデルはルートの `CLAUDE.md` を参照。
+`_cmd/brender/frontend/` 配下の作業時に適用される規約。プロジェクト全体の概要・ビルドコマンド・データモデルはルートの `AGENTS.md` を参照。
 
 ## Navigation hierarchy
 

@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to coding agents when working with code in this repository.
 
 ## ドキュメント分割
 
@@ -8,11 +8,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 | 内容 | 場所 | ロードのされ方 |
 |---|---|---|
-| フロントエンド規約（ページ構成・API ラッパー層・イベントバス・ダイアログ・トースト・i18n・テーマ・CSS） | `_cmd/brender/frontend/CLAUDE.md` | frontend 配下のファイルを扱うと自動ロード |
-| レンダリングパイプライン詳細（キュー実行・リカバリ・ProcessingWriter・進捗・ETA・サムネイル生成・CLI 表示） | Skill `brender-render-pipeline` | 該当作業時に Skill を参照 |
-| 権限・アクセス制御（ロール体系・ctx ユーザ・REST ガード・フロント制御） | Skill `brender-access-control` | 該当作業時に Skill を参照 |
-| サーバモード（起動フロー・HTTP ルーティング・REST 追加手順・認証/セッション・SSE・考慮事項チェックリスト） | Skill `brender-server-mode` | 該当作業時に Skill を参照 |
-| コード管理 `code/`（フォーマット・解像度プリセット、新カテゴリ追加手順） | Skill `brender-codes` | 該当作業時に Skill を参照 |
+| フロントエンド規約（ページ構成・API ラッパー層・イベントバス・ダイアログ・トースト・i18n・テーマ・CSS） | `_cmd/brender/frontend/AGENTS.md` | frontend 配下のファイルを扱うときに参照 |
+| レンダリングパイプライン詳細（キュー実行・リカバリ・ProcessingWriter・進捗・ETA・サムネイル生成・CLI 表示） | `_docs/skills/brender-render-pipeline/SKILL.md`（Skill `brender-render-pipeline`） | 該当作業時に参照 |
+| 権限・アクセス制御（ロール体系・ctx ユーザ・REST ガード・フロント制御） | `_docs/skills/brender-access-control/SKILL.md`（Skill `brender-access-control`） | 該当作業時に参照 |
+| サーバモード（起動フロー・HTTP ルーティング・REST 追加手順・認証/セッション・SSE・考慮事項チェックリスト） | `_docs/skills/brender-server-mode/SKILL.md`（Skill `brender-server-mode`） | 該当作業時に参照 |
+| コード管理 `code/`（フォーマット・解像度プリセット、新カテゴリ追加手順） | `_docs/skills/brender-codes/SKILL.md`（Skill `brender-codes`） | 該当作業時に参照 |
 
 Skill の正本は `_docs/skills/<名前>/SKILL.md`（git 管理。エージェントに依存しない参考資料としても読める）。`.claude/skills/` は git 管理外で、使うスキルはそこに置いてある名前で決まる。セッション開始時にユーザー環境のフックが、`.claude/skills` にある名前だけをそのチェックアウトの `_docs/skills` の版で置き直す（`_docs/skills` にあっても `.claude/skills` に無いものは配らない）。Skill を更新するときは必ず `_docs/skills` 側を編集してコミットすること（`.claude/skills` のコピーを編集しても次のセッション開始で上書きされる）。
 
