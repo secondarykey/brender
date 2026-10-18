@@ -78,6 +78,7 @@ export const isWails = () => Boolean(window._wails) && !window.__brender_server_
 `isWails()` は**見た目の分かれ道**（ウィンドウ操作・ダイアログ・イベントの受け方・別ウィンドウかタブか）にだけ使う。API ラッパーはモードに関係なくバインディングを呼ぶ。
 
 **ブラウザの呼び出し口**: `_client.js` がサーバモードのとき `@wailsio/runtime` の `setTransport()` で呼び出しを差し替え、`POST /wails/runtime` に送る。401 なら `window.location.reload()` でログイン画面へ。チャンク送信は使わない。
+`@wailsio/runtime` は `latest` のまま（npm のリリースは Go 側の版と一致しないため固定しない。Skill `wails3`）。runtime を上げたときは `setTransport` / `clientId` の口が変わっていないかを見る。
 
 ### サービスのメソッドの追加手順
 
