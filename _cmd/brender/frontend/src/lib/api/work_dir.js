@@ -1,45 +1,33 @@
-import { isWails, serverCall } from './_client'
-
 const svc = () => import('../../../bindings/main/services/workdir');
 
 export const WorkDirApi = {
   list: () =>
-    isWails() ? svc().then(s => s.List())
-              : serverCall('work_dir', 'list'),
+    svc().then(s => s.List()),
 
   create: ({ path, priority }) =>
-    isWails() ? svc().then(s => s.Create(path, priority))
-              : serverCall('work_dir', 'create', { path, priority }),
+    svc().then(s => s.Create(path, priority)),
 
   update: ({ id, path, priority, status }) =>
-    isWails() ? svc().then(s => s.Update(id, path, priority, status))
-              : serverCall('work_dir', 'update', { id, path, priority, status }),
+    svc().then(s => s.Update(id, path, priority, status)),
 
   reorder: ({ ids }) =>
-    isWails() ? svc().then(s => s.Reorder(ids))
-              : serverCall('work_dir', 'reorder', { ids }),
+    svc().then(s => s.Reorder(ids)),
 
   delete: ({ id }) =>
-    isWails() ? svc().then(s => s.Delete(id))
-              : serverCall('work_dir', 'delete', { id }),
+    svc().then(s => s.Delete(id)),
 
   checkDir: ({ path }) =>
-    isWails() ? svc().then(s => s.CheckDir(path))
-              : serverCall('work_dir', 'check_dir', { path }),
+    svc().then(s => s.CheckDir(path)),
 
   startMigration: ({ projectID, newWorkDirID }) =>
-    isWails() ? svc().then(s => s.StartMigration(projectID, newWorkDirID))
-              : serverCall('work_dir', 'start_migration', { project_id: projectID, new_work_dir_id: newWorkDirID }),
+    svc().then(s => s.StartMigration(projectID, newWorkDirID)),
 
   getWorkDirStats: ({ id }) =>
-    isWails() ? svc().then(s => s.GetWorkDirStats(id))
-              : serverCall('work_dir', 'get_work_dir_stats', { id }),
+    svc().then(s => s.GetWorkDirStats(id)),
 
   changeDir: ({ id, newPath }) =>
-    isWails() ? svc().then(s => s.ChangeDir(id, newPath))
-              : serverCall('work_dir', 'change_dir', { id, new_path: newPath }),
+    svc().then(s => s.ChangeDir(id, newPath)),
 
   getProjectDiskSize: ({ projectID }) =>
-    isWails() ? svc().then(s => s.GetProjectDiskSize(projectID))
-              : serverCall('work_dir', 'get_project_disk_size', { project_id: projectID }),
+    svc().then(s => s.GetProjectDiskSize(projectID)),
 }

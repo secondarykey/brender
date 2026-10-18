@@ -1,4 +1,4 @@
-import { isWails, serverCall } from './_client'
+import { isWails } from './_client'
 
 const svc = () => import('../../../bindings/main/services/queue')
 
@@ -7,163 +7,139 @@ export const QueueApi = {
    * @param {{ projectID: string, workspaceID: string }} args
    */
   previewRender: ({ projectID, workspaceID }) =>
-    isWails() ? svc().then(s => s.PreviewRender(projectID, workspaceID))
-              : serverCall('queue', 'preview_render', { project_id: projectID, workspace_id: workspaceID }),
+    svc().then(s => s.PreviewRender(projectID, workspaceID)),
 
   /** プレビュー済みパラメータでキューに追加
    * @param {{ projectID: string, workspaceID: string, preview: object }} args
    */
   enqueueWithPreview: ({ projectID, workspaceID, preview }) =>
-    isWails() ? svc().then(s => s.EnqueueWithPreview(projectID, workspaceID, preview))
-              : serverCall('queue', 'enqueue_with_preview', { project_id: projectID, workspace_id: workspaceID, preview }),
+    svc().then(s => s.EnqueueWithPreview(projectID, workspaceID, preview)),
 
   /** テストレンダリング（サンプル8・中間1フレーム）をキューに追加
    * @param {{ projectID: string, workspaceID: string, params: object }} args
    */
   testEnqueue: ({ projectID, workspaceID, params }) =>
-    isWails() ? svc().then(s => s.TestEnqueue(projectID, workspaceID, params))
-              : serverCall('queue', 'test_enqueue', { project_id: projectID, workspace_id: workspaceID, params }),
+    svc().then(s => s.TestEnqueue(projectID, workspaceID, params)),
 
   /** サンプル比較レンダリングをキューに追加
    * @param {{ projectID: string, workspaceID: string, sampleCounts: number[], frame: number }} args
    */
   samplesComparisonEnqueue: ({ projectID, workspaceID, sampleCounts, frame }) =>
-    isWails() ? svc().then(s => s.SamplesComparisonEnqueue(projectID, workspaceID, sampleCounts, frame))
-              : serverCall('queue', 'samples_comparison_enqueue', { project_id: projectID, workspace_id: workspaceID, sample_counts: sampleCounts, frame }),
+    svc().then(s => s.SamplesComparisonEnqueue(projectID, workspaceID, sampleCounts, frame)),
 
   /** 実行中キュー一覧を取得 */
   list: () =>
-    isWails() ? svc().then(s => s.List())
-              : serverCall('queue', 'list'),
+    svc().then(s => s.List()),
 
   /** 実行中キューをライブ進捗付きで取得 */
   listItems: () =>
-    isWails() ? svc().then(s => s.ListItems())
-              : serverCall('queue', 'list_items'),
+    svc().then(s => s.ListItems()),
 
   /** キューをキャンセル
    * @param {{ id: string }} args
    */
   cancel: ({ id }) =>
-    isWails() ? svc().then(s => s.Cancel(id))
-              : serverCall('queue', 'cancel', { id }),
+    svc().then(s => s.Cancel(id)),
 
   killRunning: () =>
-    isWails() ? svc().then(s => s.KillRunning())
-              : serverCall('queue', 'kill_running'),
+    svc().then(s => s.KillRunning()),
 
   /** ジョブ履歴一覧を取得 */
   listJobs: () =>
-    isWails() ? svc().then(s => s.ListJobs())
-              : serverCall('queue', 'list_jobs'),
+    svc().then(s => s.ListJobs()),
 
   /** ジョブ履歴をページング付きで取得
    * @param {{ filter: { data_statuses?: number[], days?: number, sort_by?: string }, page: number, pageSize: number }} args
    * @returns {Promise<{ jobs: Job[], total: number, total_size: number }>}
    */
   listJobsPaged: ({ filter, page, pageSize }) =>
-    isWails() ? svc().then(s => s.ListJobsPaged(filter, page, pageSize))
-              : serverCall('queue', 'list_jobs_paged', { filter, page, page_size: pageSize }),
+    svc().then(s => s.ListJobsPaged(filter, page, pageSize)),
 
   /** ワークスペース別ジョブ履歴を取得
    * @param {{ projectID: string, workspaceID: string }} args
    */
   listJobsByWorkspace: ({ projectID, workspaceID }) =>
-    isWails() ? svc().then(s => s.ListJobsByWorkspace(projectID, workspaceID))
-              : serverCall('queue', 'list_jobs_by_workspace', { project_id: projectID, workspace_id: workspaceID }),
+    svc().then(s => s.ListJobsByWorkspace(projectID, workspaceID)),
 
   /** ワークスペース別ジョブ履歴をページング付きで取得
    * @param {{ projectID: string, workspaceID: string, page: number, pageSize: number }} args
    * @returns {Promise<{ jobs: Job[], total: number }>}
    */
   listJobsByWorkspacePaged: ({ projectID, workspaceID, page, pageSize }) =>
-    isWails() ? svc().then(s => s.ListJobsByWorkspacePaged(projectID, workspaceID, page, pageSize))
-              : serverCall('queue', 'list_jobs_by_workspace_paged', { project_id: projectID, workspace_id: workspaceID, page, page_size: pageSize }),
+    svc().then(s => s.ListJobsByWorkspacePaged(projectID, workspaceID, page, pageSize)),
 
   /** ファイル別ジョブ履歴を取得
    * @param {{ projectID: string, fileID: number }} args
    */
   listJobsByProjectFile: ({ projectID, fileID }) =>
-    isWails() ? svc().then(s => s.ListJobsByProjectFile(projectID, fileID))
-              : serverCall('queue', 'list_jobs_by_project_file', { project_id: projectID, file_id: fileID }),
+    svc().then(s => s.ListJobsByProjectFile(projectID, fileID)),
 
   /** ファイル別ジョブ履歴をページング付きで取得
    * @param {{ projectID: string, fileID: string, page: number, pageSize: number }} args
    * @returns {Promise<{ jobs: Job[], total: number }>}
    */
   listJobsByProjectFilePaged: ({ projectID, fileID, page, pageSize }) =>
-    isWails() ? svc().then(s => s.ListJobsByProjectFilePaged(projectID, fileID, page, pageSize))
-              : serverCall('queue', 'list_jobs_by_project_file_paged', { project_id: projectID, file_id: fileID, page, page_size: pageSize }),
+    svc().then(s => s.ListJobsByProjectFilePaged(projectID, fileID, page, pageSize)),
 
   /** ジョブ単体を取得
    * @param {{ id: string }} args
    */
   getJob: ({ id }) =>
-    isWails() ? svc().then(s => s.GetJob(id))
-              : serverCall('queue', 'get_job', { id }),
+    svc().then(s => s.GetJob(id)),
 
   /** ジョブの名称とノートを更新
    * @param {{ id: string, name: string, note: string }} args
    */
   updateJobMeta: ({ id, name, note }) =>
-    isWails() ? svc().then(s => s.UpdateJobMeta(id, name, note))
-              : serverCall('queue', 'update_job_meta', { id, name, note }),
+    svc().then(s => s.UpdateJobMeta(id, name, note)),
 
   /** ジョブを削除
    * @param {{ id: string }} args
    */
   deleteJob: ({ id }) =>
-    isWails() ? svc().then(s => s.DeleteJob(id))
-              : serverCall('queue', 'delete_job', { id }),
+    svc().then(s => s.DeleteJob(id)),
 
   /** 出力データのみ削除（ジョブ履歴は残す）
    * @param {{ id: string }} args
    */
   deleteJobData: ({ id }) =>
-    isWails() ? svc().then(s => s.DeleteJobData(id))
-              : serverCall('queue', 'delete_job_data', { id }),
+    svc().then(s => s.DeleteJobData(id)),
 
   /** ジョブの出力ディレクトリにある画像パス一覧を取得
    * @param {{ id: string }} args
    */
   listJobImages: ({ id }) =>
-    isWails() ? svc().then(s => s.ListJobImages(id))
-              : serverCall('queue', 'list_job_images', { id }),
+    svc().then(s => s.ListJobImages(id)),
 
   /** ジョブの出力ディレクトリにある全ファイル情報を取得
    * @param {{ id: string }} args
    */
   listJobFiles: ({ id }) =>
-    isWails() ? svc().then(s => s.ListJobFiles(id))
-              : serverCall('queue', 'list_job_files', { id }),
+    svc().then(s => s.ListJobFiles(id)),
 
   /** 画像ファイルを base64 データ URI として取得
    * @param {{ path: string }} args
    */
   getImageBase64: ({ path }) =>
-    isWails() ? svc().then(s => s.GetImageBase64(path))
-              : serverCall('queue', 'get_image_base64', { path }),
+    svc().then(s => s.GetImageBase64(path)),
 
   /** ジョブをロック
    * @param {{ id: string }} args
    */
   lockJob: ({ id }) =>
-    isWails() ? svc().then(s => s.LockJob(id))
-              : serverCall('queue', 'lock_job', { id }),
+    svc().then(s => s.LockJob(id)),
 
   /** ジョブのロックを解除
    * @param {{ id: string }} args
    */
   unlockJob: ({ id }) =>
-    isWails() ? svc().then(s => s.UnlockJob(id))
-              : serverCall('queue', 'unlock_job', { id }),
+    svc().then(s => s.UnlockJob(id)),
 
   /** render.log の内容を取得
    * @param {{ id: string }} args
    */
   getJobLog: ({ id }) =>
-    isWails() ? svc().then(s => s.GetJobLog(id))
-              : serverCall('queue', 'get_job_log', { id }),
+    svc().then(s => s.GetJobLog(id)),
 
   /** render.log を別ウィンドウで開く
    * @param {{ id: string }} args
@@ -183,50 +159,43 @@ export const QueueApi = {
    * @param {{ id: string, savePath: string }} args
    */
   zipJobData: ({ id, savePath }) =>
-    isWails() ? svc().then(s => s.ZipJobData(id, savePath))
-              : serverCall('queue', 'zip_job_data', { id, save_path: savePath }),
+    svc().then(s => s.ZipJobData(id, savePath)),
 
   /** 選択ファイルを ZIP 圧縮して指定パスに保存
    * @param {{ id: string, filePaths: string[], savePath: string }} args
    */
   zipJobSelectedFiles: ({ id, filePaths, savePath }) =>
-    isWails() ? svc().then(s => s.ZipJobSelectedFiles(id, filePaths, savePath))
-              : serverCall('queue', 'zip_job_selected_files', { id, file_paths: filePaths, save_path: savePath }),
+    svc().then(s => s.ZipJobSelectedFiles(id, filePaths, savePath)),
 
   /** 選択ファイルを削除
    * @param {{ id: string, filePaths: string[] }} args
    */
   deleteJobFiles: ({ id, filePaths }) =>
-    isWails() ? svc().then(s => s.DeleteJobFiles(id, filePaths))
-              : serverCall('queue', 'delete_job_files', { id, file_paths: filePaths }),
+    svc().then(s => s.DeleteJobFiles(id, filePaths)),
 
   /** ワークスペースのジョブを一括削除（ロック済み除く最新 keepCount 件を残す）
    * @param {{ projectID: string, workspaceID: string, keepCount: number }} args
    */
   bulkDeleteJobsByWorkspace: ({ projectID, workspaceID, keepCount, dataOnly, errorOnly }) =>
-    isWails() ? svc().then(s => s.BulkDeleteJobsByWorkspace(projectID, workspaceID, keepCount, dataOnly, errorOnly))
-              : serverCall('queue', 'bulk_delete_jobs_by_workspace', { project_id: projectID, workspace_id: workspaceID, keep_count: keepCount, data_only: dataOnly, error_only: errorOnly }),
+    svc().then(s => s.BulkDeleteJobsByWorkspace(projectID, workspaceID, keepCount, dataOnly, errorOnly)),
 
   /** フィルタ条件に合致するクリーンアップ対象のジョブ統計を取得
    * @param {{ filter: { data_statuses: number[], days: number } }} args
    */
   getCleanableJobStats: ({ filter }) =>
-    isWails() ? svc().then(s => s.GetCleanableJobStats(filter))
-              : serverCall('queue', 'get_cleanable_job_stats', { filter }),
+    svc().then(s => s.GetCleanableJobStats(filter)),
 
   /** フィルタ条件に合致するジョブのデータを削除（履歴は残す）
    * @param {{ filter: { data_statuses: number[], days: number } }} args
    */
   cleanJobData: ({ filter }) =>
-    isWails() ? svc().then(s => s.CleanJobData(filter))
-              : serverCall('queue', 'clean_job_data', { filter }),
+    svc().then(s => s.CleanJobData(filter)),
 
   /** フィルタ条件に合致するジョブの実測ディスクサイズを取得
    * @param {{ filter: { data_statuses: number[], days: number } }} args
    */
   measureFilteredDiskSize: ({ filter }) =>
-    isWails() ? svc().then(s => s.MeasureFilteredDiskSize(filter))
-              : serverCall('queue', 'measure_filtered_disk_size', { filter }),
+    svc().then(s => s.MeasureFilteredDiskSize(filter)),
 
   /** ミニモニターウィンドウを開く */
   openMiniMonitor: () =>
