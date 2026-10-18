@@ -6,7 +6,7 @@
 - 追記: 2026-10-19(試作の結果と、試作で見つかった気をつけること 6〜11 を足した。Code が書いた)
 - 追記: 2026-10-19(実装した結果を足した。Code が書いた)
 - 関係する資料: Skill `brender-server-mode`(今のサーバモード)・`brender-access-control`(権限)
-- 調べた版: Wails v3.0.0-beta.23(brender が使っている版)。beta.26 も、下で読んだファイルは同じ中身
+- 調べた版: Wails v3.0.0-beta.23(調べた時に brender が使っていた版)。beta.26 も、下で読んだファイルは同じ中身。実装の後に brender は beta.26 に上げた(2026-10-19)
 
 ## 目的
 
@@ -95,7 +95,7 @@ func (t *browserTransport) Stop() error {
 // application.Options{ Transport: &browserTransport{HTTPTransport: application.NewHTTPTransport()} }
 ```
 
-## 形(案)
+## 形(案。実装の前に書いたもの。今の形は Skill `brender-server-mode`)
 
 ```
 ウィンドウ(WebView) ──wails://──→ assetHandler の鎖 ──→ バインディング(ctx に利用者なし → Owner)
@@ -157,13 +157,15 @@ func (t *browserTransport) Stop() error {
     npm のリリースは Go の側に追従しないので、**固定せず `latest` のまま使う**(Skill `wails3` の方針。一度 beta.16 に固定したが戻した。2026-10-19)。
     ブラウザの呼び出しは自前の `setTransport` の実装で送り、サーバは `object` しか読まないので、版がずれる心配はウィンドウと同じ。
     runtime を上げたときは `setTransport` / `clientId` の口が変わっていないかだけ見る。
-    (`Window` / `Dialogs` を使う画面(`TitleBar.jsx` とダイアログの9ファイル)はブラウザでは断られるので、見た目の分かれ道として残す)
+    (Go の側は今は beta.26。`Window` / `Dialogs` を使う画面(`TitleBar.jsx` とダイアログの9ファイル)はブラウザでは断られるので、見た目の分かれ道として残す)
 
 ## 未決事項
 
-- 画面で「ブラウザか」を判定する方法(見た目の分かれ道に使う):`__brender_server_mode` の差し込みを残す / Wails の側で分かる手段を探す
-- 通り道を HTTP のまま(既定の `HTTPTransport`)にするか、公式の例のように WebSocket にするか。まず HTTP で試す
-- `Environment.Server` が false のとき(サーバモードでない)の扱い:自作の Transport を使わず既定のままにするか、いつも自作の Transport にしてサーバだけ立てないか
+(3つとも実装で決まった。2026-10-19)
+
+- ~~画面で「ブラウザか」を判定する方法~~ → `__brender_server_mode` の差し込みを残し、`isWails()` で見分ける(見た目の分かれ道にだけ使う)
+- ~~通り道を HTTP のままにするか、WebSocket にするか~~ → HTTP のまま。ウィンドウは既定の `HTTPTransport`、ブラウザは画面の `setTransport()` で `POST /wails/runtime` に送る
+- ~~`Environment.Server` が false のときの扱い~~ → Transport を nil(Wails の既定)にする
 
 ## 実装した結果(2026-10-19)
 
@@ -198,7 +200,7 @@ func (t *browserTransport) Stop() error {
 
 0. **試作**:自作の Transport を作り、ブラウザから1つのサービス(例:`Codes` の読むだけのメソッド)を呼ぶ。確かめること:
    - ✅ ブラウザで `/wails/runtime.js` が読めて、`/wails/runtime` が呼ばれる(curl で確かめた)
-   - ⬜ ウィンドウの側が今までどおり動く(目では確かめていない。上の「実装した結果」)
+   - ✅ ウィンドウの側が今までどおり動く(ユーザーが使って確かめた。上の「実装した結果」)
    - ✅ 自前のサーバの middleware で入れた値が、メソッドの `ctx` に届く
    - ✅ 本物の画面をブラウザで開いて、生成されたバインディングで呼べる
 1. **先に行う(REST のままでよい)**:admin の守り(`registerAdmin` の 34)を `api` の側へ移す(気をつけること 1)。作り直しをしなくても守りが二重になる
