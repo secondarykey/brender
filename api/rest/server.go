@@ -18,7 +18,6 @@ import (
 type Server struct {
 	httpServer *http.Server
 	broker     *SSEBroker
-	handler    *Handler
 
 	// runtime は Wails の配信（/wails/runtime・/wails/runtime.js）。自作の Transport が差し込む
 	runtimeMu sync.RWMutex
@@ -26,24 +25,24 @@ type Server struct {
 }
 
 func NewServer(assets fs.FS, host string, port int) *Server {
-	handler := NewHandler()
 	broker := NewSSEBroker()
 
 	mux := http.NewServeMux()
 
-	// ── 認証関連ルート（ミドルウェアの前に登録） ──
-	mux.HandleFunc("POST /api/auth/login", handler.handleLogin)
-	mux.HandleFunc("POST /api/auth/logout", handler.handleLogout)
+	// ── 認証関連ルート ──
+	// ログイン前にも使うため、Wails のバインディングではなく REST の口にしている
+	mux.HandleFunc("POST /api/auth/login", handleLogin)
+	mux.HandleFunc("POST /api/auth/logout", handleLogout)
 	mux.HandleFunc("GET /api/auth/me", handleGetMe)
+	mux.HandleFunc("POST /api/auth/is_auth_enabled", handleIsAuthEnabled)
 	mux.HandleFunc("POST /api/auth/validate_reset_token", handleValidateResetToken)
 	mux.HandleFunc("POST /api/auth/reset_password", handleResetPasswordAPI)
 	mux.HandleFunc("/user/reset/", handleResetPage)
 
-	mux.Handle("POST /api/{service}/{method}", handler)
 	mux.Handle("GET /events", broker.Handler())
-	mux.HandleFunc("POST /api/project/upload_file", handler.handleUploadFile)
+	mux.HandleFunc("POST /api/project/upload_file", handleUploadFile)
 
-	s := &Server{broker: broker, handler: handler}
+	s := &Server{broker: broker}
 
 	// Wails のバインディング呼び出し（ブラウザから）。確かめてから Wails の配信へ渡す（runtime.go）。
 	// /wails/ のそれ以外は、決めたスクリプトだけを Wails の配信から返し、残りは断る。

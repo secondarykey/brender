@@ -156,9 +156,6 @@ func run() error {
 	services.AppVersion = strings.TrimSpace(appVersion)
 	dev := app.Env.Info().Debug
 	services.DevMode = dev
-	if restServer != nil {
-		rest.SetVersionInfo(strings.TrimSpace(appVersion), dev)
-	}
 	if dev {
 		log.SetLevel(slog.LevelInfo)
 		//ログをInfoに落とす

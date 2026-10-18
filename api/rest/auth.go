@@ -150,7 +150,7 @@ func clearSessionCookie(w http.ResponseWriter) {
 }
 
 // handleLogin はログイン API を処理し、セッション Cookie をセットする。
-func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
+func handleLogin(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -176,7 +176,7 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleLogout はログアウト API を処理し、セッション Cookie を削除する。
-func (h *Handler) handleLogout(w http.ResponseWriter, r *http.Request) {
+func handleLogout(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -278,6 +278,16 @@ func handleResetPasswordAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"data": "ok"})
+}
+
+// handleIsAuthEnabled はユーザ管理（ログイン）が有効かを返す。ログイン画面を出すかの判定に使う。
+func handleIsAuthEnabled(w http.ResponseWriter, r *http.Request) {
+	enabled, err := api.IsAuthEnabled()
+	if err != nil {
+		writeJSON(w, http.StatusOK, map[string]any{"error": err.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"data": enabled})
 }
 
 // handleGetMe は現在のセッションのユーザ情報を返す。
