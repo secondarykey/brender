@@ -19,6 +19,10 @@ type Server struct {
 	httpServer *http.Server
 	broker     *SSEBroker
 	handler    *Handler
+
+	// runtime は Wails の配信（/wails/runtime・/wails/runtime.js）。自作の Transport が差し込む
+	runtimeMu sync.RWMutex
+	runtime   http.Handler
 }
 
 func NewServer(assets fs.FS, host string, port int) *Server {
@@ -39,18 +43,13 @@ func NewServer(assets fs.FS, host string, port int) *Server {
 	mux.Handle("GET /events", broker.Handler())
 	mux.HandleFunc("POST /api/project/upload_file", handler.handleUploadFile)
 
-	// Wails ランタイムのスタブ — ブラウザモードでは不要だが、
-	// ビルド済み JS が @wailsio/runtime 経由でリクエストするためスタブを返す。
-	// POST（IPC 呼び出し）には空 JSON、GET（スクリプト読み込み）には空 JS を返す。
-	mux.HandleFunc("/wails/", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodPost {
-			w.Header().Set("Content-Type", "application/json")
-			w.Write([]byte("{}\n"))
-			return
-		}
-		w.Header().Set("Content-Type", "application/javascript")
-		w.Write([]byte("// wails runtime stub for server mode\n"))
-	})
+	s := &Server{broker: broker, handler: handler}
+
+	// Wails のバインディング呼び出し（ブラウザから）。確かめてから Wails の配信へ渡す（runtime.go）。
+	// /wails/ のそれ以外は、決めたスクリプトだけを Wails の配信から返し、残りは断る。
+	mux.HandleFunc("POST /wails/runtime", s.handleRuntimeCall)
+	mux.HandleFunc("GET /wails/runtime.js", s.handleRuntimeScript)
+	mux.HandleFunc("/wails/", http.NotFound)
 
 	distFS, err := fs.Sub(assets, "frontend/dist")
 	if err != nil {
@@ -97,13 +96,9 @@ func NewServer(assets fs.FS, host string, port int) *Server {
 	// 期限切れセッション・トークンの定期クリーンアップ
 	cleanupExpiredAuthData()
 
-	s := &Server{
-		httpServer: &http.Server{
-			Addr:    fmt.Sprintf("%s:%d", host, port),
-			Handler: requestLogger(authMiddleware(mux)),
-		},
-		broker:  broker,
-		handler: handler,
+	s.httpServer = &http.Server{
+		Addr:    fmt.Sprintf("%s:%d", host, port),
+		Handler: requestLogger(authMiddleware(mux)),
 	}
 	return s
 }
@@ -132,7 +127,8 @@ func (s *Server) Shutdown(ctx context.Context) error {
 
 // serverModeScript は index.html の <head> 内に注入されるスクリプト。
 // @wailsio/runtime がバンドルに含まれていると window._wails がセットされるため、
-// サーバモードであることを別フラグで明示する。
+// ブラウザ（サーバモード）であることを別フラグで明示する。画面の見た目の分かれ道
+// （ウィンドウ操作・ダイアログ・イベントの受け方）に使う。
 const serverModeScript = `<script>window.__brender_server_mode=true</script>`
 
 func spaHandler(fileServer http.Handler, fsys fs.FS) http.Handler {

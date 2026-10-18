@@ -30,6 +30,25 @@ func currentUser(ctx context.Context) string {
 	return model.UserIDOwner
 }
 
+type browserCtxKey struct{}
+
+// WithBrowser は ctx に「ブラウザ（サーバモードの HTTP）からの呼び出し」の印を付ける。
+// 印を付けるのはサーバモードの HTTP サーバだけ。デスクトップのウィンドウからの呼び出しは
+// そのサーバを通らないので印が無い。ヘッダー等のリクエストの中身からは決めない（偽れるため）。
+func WithBrowser(ctx context.Context) context.Context {
+	return context.WithValue(ctx, browserCtxKey{}, true)
+}
+
+// FromBrowser は ctx がブラウザからの呼び出しかを返す。
+// サムネイルを URL で返す・サーバの画面でウィンドウを開く操作を断る、などの分かれ道に使う。
+func FromBrowser(ctx context.Context) bool {
+	v, _ := ctx.Value(browserCtxKey{}).(bool)
+	return v
+}
+
+// ErrNotAvailableFromBrowser はブラウザからは使えない操作（サーバの画面でウィンドウを開く等）を表す。
+var ErrNotAvailableFromBrowser = xerrors.New("not available from browser")
+
 // authActive はユーザ単位のアクセス制御が有効かを返す。
 // サーバモード かつ ServerAuth が true のときのみ有効。
 func authActive() bool {

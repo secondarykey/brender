@@ -91,10 +91,6 @@ func isPublicPath(path string) bool {
 	if path == "/api/auth/validate_reset_token" || path == "/api/auth/reset_password" {
 		return true
 	}
-	// Wails ランタイムスタブ
-	if strings.HasPrefix(path, "/wails/") {
-		return true
-	}
 	// SSE イベント（認証チェックは行わない — ブラウザの EventSource は Cookie を自動送信）
 	// 静的ファイル（js, css, assets 等）
 	if hasStaticExtension(path) {
@@ -117,8 +113,9 @@ func hasStaticExtension(path string) bool {
 // handleUnauthorized はAPI・リソース呼び出しに401を返す。ページリクエストの場合は false を返し、
 // 呼び出し元で SPA の index.html を返すようにする（React側でログイン画面を表示）。
 // /_movie（ファイル配信）と /events（SSE）は SPA ではなくリソースのため 401 を返す。
+// /wails/（バインディング呼び出し）も API として 401 を返す（/wails/runtime.js は静的ファイルとして公開）。
 func handleUnauthorized(w http.ResponseWriter, r *http.Request, path string) bool {
-	if strings.HasPrefix(path, "/api/") || path == "/_movie" || path == "/events" || path == "/thumbnail" {
+	if strings.HasPrefix(path, "/api/") || strings.HasPrefix(path, "/wails/") || path == "/_movie" || path == "/events" || path == "/thumbnail" {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
 		json.NewEncoder(w).Encode(map[string]string{"error": "unauthorized"})

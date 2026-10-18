@@ -109,6 +109,24 @@ func run() error {
 
 	//移行処理
 
+	// サーバモードなら先に HTTP サーバ（と SSE broker）を用意する。
+	// broker はイベント配信フックより前に確定させ、全イベントが SSE へ届くようにする。
+	// サーバは application.New より前に作り、自作の Transport（transport.go）に渡す。
+	// Transport がブラウザからのバインディング呼び出しをこのサーバへつなぐ。
+	var restServer *rest.Server
+	var broker *rest.SSEBroker
+	var serverPort int
+	var transport application.Transport // nil なら Wails の既定（ウィンドウだけ）
+	if env, err := model.GetEnv(); err == nil && env != nil && env.Server {
+		serverPort = env.ServerPort
+		if serverPort < 1 || serverPort > 65535 {
+			serverPort = 8080
+		}
+		restServer = rest.NewServer(assets, env.ServerHost, serverPort)
+		broker = restServer.Broker()
+		transport = newBrowserTransport(restServer, application.HTTPTransportWithLogger(logger))
+	}
+
 	app := application.New(application.Options{
 		Name:        "Brender",
 		Description: "Blender rendering manager",
@@ -132,11 +150,15 @@ func run() error {
 		Mac: application.MacOptions{
 			ApplicationShouldTerminateAfterLastWindowClosed: true,
 		},
+		Transport: transport,
 	})
 
 	services.AppVersion = strings.TrimSpace(appVersion)
 	dev := app.Env.Info().Debug
 	services.DevMode = dev
+	if restServer != nil {
+		rest.SetVersionInfo(strings.TrimSpace(appVersion), dev)
+	}
 	if dev {
 		log.SetLevel(slog.LevelInfo)
 		//ログをInfoに落とす
@@ -166,21 +188,6 @@ func run() error {
 		model.Close()
 		application.Get().Quit()
 	})
-
-	// サーバモードなら先に HTTP サーバ（と SSE broker）を用意する。
-	// broker はイベント配信フックより前に確定させ、全イベントが SSE へ届くようにする。
-	var restServer *rest.Server
-	var broker *rest.SSEBroker
-	var serverPort int
-	if env, err := model.GetEnv(); err == nil && env != nil && env.Server {
-		serverPort = env.ServerPort
-		if serverPort < 1 || serverPort > 65535 {
-			serverPort = 8080
-		}
-		rest.SetVersionInfo(strings.TrimSpace(appVersion), dev)
-		restServer = rest.NewServer(assets, env.ServerHost, serverPort)
-		broker = restServer.Broker()
-	}
 
 	// イベント配信を一元化する。Wails Event へ送り、サーバモードなら SSE へも配る。
 	// 新しいイベントを足す場合もこの emit を通せば両トランスポートへ確実に届く。
