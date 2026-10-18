@@ -74,6 +74,18 @@ func (h *movieAwareHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.fallback.ServeHTTP(w, r)
 }
 
+// startupLog は起動時の大事な知らせをログファイルとターミナル（標準出力・標準エラー）の両方に出す。
+// ログはファイルにしか出ないため、wails3 dev のターミナルでも見えるようにする。
+func startupLog(isErr bool, format string, args ...any) {
+	if isErr {
+		log.Error(format, args...)
+		fmt.Fprintln(os.Stderr, fmt.Sprintf(format, args...))
+		return
+	}
+	log.Notice(format, args...)
+	fmt.Fprintln(os.Stdout, fmt.Sprintf(format, args...))
+}
+
 func main() {
 
 	err := run()
@@ -116,8 +128,14 @@ func run() error {
 	var restServer *rest.Server
 	var broker *rest.SSEBroker
 	var serverPort int
+	var serverAuth bool
 	var transport application.Transport // nil なら Wails の既定（ウィンドウだけ）
-	if env, err := model.GetEnv(); err == nil && env != nil && env.Server {
+	env, err := model.GetEnv()
+	if err != nil {
+		log.Error("GetEnv: %v (server mode is treated as off)", err)
+	}
+	if err == nil && env != nil && env.Server {
+		serverAuth = env.ServerAuth
 		serverPort = env.ServerPort
 		if serverPort < 1 || serverPort > 65535 {
 			serverPort = 8080
@@ -237,12 +255,22 @@ func run() error {
 	go api.VerifyBlenderInstalls()
 	api.StartSystemMonitor()
 
-	if restServer != nil {
-		if err := restServer.Start(); err != nil {
-			log.Error("Failed to start HTTP server: %v", err)
-		} else {
-			log.Notice("= HTTP Server started on port %d [Experimental]", serverPort)
+	// サーバモードの状態は起動のたびに必ず出す（オフでも出す。設定の変更は再起動で反映されるため）
+	if restServer == nil {
+		startupLog(false, "= Server mode: off")
+	} else if err := restServer.Start(); err != nil {
+		startupLog(true, "= Server mode: failed to start on %s: %v", restServer.Addr(), err)
+	} else {
+		url, all := restServer.URL()
+		where := ""
+		if all {
+			where = " (all interfaces)"
 		}
+		auth := "off"
+		if serverAuth {
+			auth = "on"
+		}
+		startupLog(false, "= Server mode: on, listening on %s%s, user management: %s [Experimental]", url, where, auth)
 	}
 
 	if err := app.Run(); err != nil {

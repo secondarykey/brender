@@ -18,6 +18,7 @@ import (
 type Server struct {
 	httpServer *http.Server
 	broker     *SSEBroker
+	addr       string // 実際に待ち受けているアドレス（Start 後）
 
 	// runtime は Wails の配信（/wails/runtime・/wails/runtime.js）。自作の Transport が差し込む
 	runtimeMu sync.RWMutex
@@ -113,13 +114,34 @@ func (s *Server) Start() error {
 	if err != nil {
 		return fmt.Errorf("server listen error: %w", err)
 	}
-	log.Info("HTTP server started on %s", ln.Addr().String())
+	s.addr = ln.Addr().String()
 	go func() {
 		if err := s.httpServer.Serve(ln); err != nil && err != http.ErrServerClosed {
 			log.Error("HTTP server error: %v", err)
 		}
 	}()
 	return nil
+}
+
+// Addr は待ち受けているアドレスを返す。Start 前（や失敗時）は設定したアドレスを返す。
+func (s *Server) Addr() string {
+	if s.addr != "" {
+		return s.addr
+	}
+	return s.httpServer.Addr
+}
+
+// URL はブラウザで開く URL を返す。すべてのインターフェイスで待ち受けているときは localhost で表し、
+// all を true にする（LAN の他の機械からはこの機械のアドレスで開く）。
+func (s *Server) URL() (url string, all bool) {
+	host, port, err := net.SplitHostPort(s.Addr())
+	if err != nil {
+		return "http://" + s.Addr(), false
+	}
+	if ip := net.ParseIP(host); host == "" || (ip != nil && ip.IsUnspecified()) {
+		host, all = "localhost", true
+	}
+	return "http://" + net.JoinHostPort(host, port), all
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {

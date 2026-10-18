@@ -22,6 +22,7 @@ Brender のベース機能（デスクトップ運用）に対し、サーバモ
 - 設定は `Environment` に持つ: `Server bool` / `ServerHost string` / `ServerPort int`（gorm default 8080）/ `ServerAuth bool`（モデルはファイル名 typo に注意: `model/enviroment.go`）
 - 変更 API: `Environment.SetServer`（admin 限定、`api.SetServer(ctx, enabled, host, port, auth)`）。設定画面から変更できるが、**サーバの起動は main.go の起動時のみ — 変更はアプリ再起動で反映**。
 - `main.go` の流れ: `env.Server == true` なら **`application.New` より前に** `rest.NewServer(assets, env.ServerHost, env.ServerPort)` → `broker = restServer.Broker()` → `newBrowserTransport(restServer)` を `application.Options.Transport` に渡す → `emit` クロージャに broker を接続 → フック設定後に `restServer.Start()`（goroutine で `Serve`）→ 終了時に `Shutdown(ctx)`。`env.Server == false` なら Transport は nil（Wails の既定。ウィンドウだけ）。
+- **起動時のログ**: サーバモードの状態を起動のたびに必ず出す（`main.go` の `startupLog`。ログファイルに加えてターミナルにも出す）。`= Server mode: off` / `= Server mode: on, listening on http://…`（すべてのインターフェイスなら `localhost` と `(all interfaces)`、ユーザ管理のオン・オフ付き）/ 失敗は ERROR で `= Server mode: failed to start on …`。設定を変えたときは `api.SetServer` が `= Server settings changed: … (restart to apply)` を出す
 - **ヘッドレス運用は不可**: HTTP サーバは Wails アプリのプロセス内で動く（`app.Run()` 前提）。GUI なしでは起動できない。
 
 ## ブラウザからのバインディング呼び出し（Wails の Transport）

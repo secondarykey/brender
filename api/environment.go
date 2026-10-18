@@ -2,6 +2,8 @@ package api
 
 import (
 	"context"
+
+	"github.com/secondarykey/brender/log"
 	"github.com/secondarykey/brender/model"
 	"golang.org/x/xerrors"
 )
@@ -68,7 +70,12 @@ func SetServer(ctx context.Context, enabled bool, host string, port int, auth bo
 	env.ServerHost = host
 	env.ServerPort = port
 	env.ServerAuth = auth
-	return model.SetEnvironment(env)
+	if err := model.SetEnvironment(env); err != nil {
+		return err
+	}
+	// サーバは起動時にしか立たないので、変えたことと再起動が要ることを残す
+	log.Notice("= Server settings changed: enabled=%v host=%q port=%d user management=%v (restart to apply)", enabled, host, port, auth)
+	return nil
 }
 
 func SetMaxConcurrentJobs(ctx context.Context, n int) error {
