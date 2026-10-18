@@ -20,29 +20,29 @@ func (s *Blender) List() ([]*model.BlenderInstall, error) {
 }
 
 func (s *Blender) Register(path string) (*model.BlenderInstall, error) {
-	return api.RegisterBlender(path)
+	return api.RegisterBlender(api.WailsContext(), path)
 }
 
 func (s *Blender) Delete(id uint) error {
-	return api.DeleteBlender(id)
+	return api.DeleteBlender(api.WailsContext(), id)
 }
 
 // References は指定 Blender を参照しているワークスペース等を返す。
 func (s *Blender) References(id uint) ([]*model.BlenderReference, error) {
-	return api.BlenderReferences(id)
+	return api.BlenderReferences(api.WailsContext(), id)
 }
 
 // ResetReferences は参照しているワークスペース・ファイルをデフォルト設定に戻す。
 func (s *Blender) ResetReferences(id uint) (*api.BlenderResetResult, error) {
-	return api.ResetBlenderReferences(id)
+	return api.ResetBlenderReferences(api.WailsContext(), id)
 }
 
 func (s *Blender) Reorder(ids []uint) error {
-	return api.ReorderBlenders(ids)
+	return api.ReorderBlenders(api.WailsContext(), ids)
 }
 
 func (s *Blender) OpenFile(installID uint, filePath string) error {
-	return api.OpenBlenderFile(installID, filePath)
+	return api.OpenBlenderFile(api.WailsContext(), installID, filePath)
 }
 
 func (s *Blender) GetEngines(installID uint) ([]string, error) {

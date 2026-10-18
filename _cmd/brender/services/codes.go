@@ -2,6 +2,7 @@ package services
 
 import (
 	"github.com/google/uuid"
+	"github.com/secondarykey/brender/api"
 	"github.com/secondarykey/brender/code"
 )
 
@@ -22,15 +23,15 @@ func (s *Codes) GetResolutionPresets() ([]code.ResolutionPreset, error) {
 }
 
 func (s *Codes) SaveImageFormats(items []code.ImageFormat) error {
-	return code.SaveImageFormats(items)
+	return api.SaveImageFormats(api.WailsContext(), items)
 }
 
 func (s *Codes) SaveVideoFormats(items []code.VideoFormat) error {
-	return code.SaveVideoFormats(items)
+	return api.SaveVideoFormats(api.WailsContext(), items)
 }
 
 func (s *Codes) SaveResolutionPresets(items []code.ResolutionPreset) error {
-	return code.SaveResolutionPresets(items)
+	return api.SaveResolutionPresets(api.WailsContext(), items)
 }
 
 func (s *Codes) GenerateID() (string, error) {
@@ -41,6 +42,6 @@ func (s *Codes) GenerateID() (string, error) {
 	return id.String(), nil
 }
 
-func (s *Codes) ResetImageFormats() error      { return code.ResetImageFormats() }
-func (s *Codes) ResetVideoFormats() error      { return code.ResetVideoFormats() }
-func (s *Codes) ResetResolutionPresets() error { return code.ResetResolutionPresets() }
+func (s *Codes) ResetImageFormats() error      { return api.ResetImageFormats(api.WailsContext()) }
+func (s *Codes) ResetVideoFormats() error      { return api.ResetVideoFormats(api.WailsContext()) }
+func (s *Codes) ResetResolutionPresets() error { return api.ResetResolutionPresets(api.WailsContext()) }

@@ -197,6 +197,16 @@ func KillRunningQueues() {
 	}
 }
 
+// KillRunningQueuesByUser は操作ユーザの指示で実行中キューを強制終了する（admin 限定）。
+// アプリ終了時のシステム処理は KillRunningQueues を直接呼ぶ。
+func KillRunningQueuesByUser(ctx context.Context) error {
+	if err := requireAdmin(ctx); err != nil {
+		return err
+	}
+	KillRunningQueues()
+	return nil
+}
+
 // StartRecoveredQueues はリカバリされた waiting キューのスケジューリングを開始する。
 // MaxConcurrentJobs の上限まで複数件を起動する。
 // QueueChangedHook 設定後に呼ぶこと。

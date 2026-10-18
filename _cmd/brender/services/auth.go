@@ -22,15 +22,15 @@ func (s *Auth) GetUser(id string) (*model.User, error) {
 }
 
 func (s *Auth) CreateUser(name, displayName, role string) (*model.User, error) {
-	return api.CreateUser(name, displayName, role)
+	return api.CreateUser(api.WailsContext(), name, displayName, role)
 }
 
 func (s *Auth) UpdateUser(id, name, displayName, role string) (*model.User, error) {
-	return api.UpdateUser(id, name, displayName, role)
+	return api.UpdateUser(api.WailsContext(), id, name, displayName, role)
 }
 
 func (s *Auth) DeleteUser(id string) error {
-	return api.DeleteUser(id)
+	return api.DeleteUser(api.WailsContext(), id)
 }
 
 // ── Group ─────────────────────────────────────────────────
@@ -44,15 +44,15 @@ func (s *Auth) GetGroup(id string) (*model.Group, error) {
 }
 
 func (s *Auth) CreateGroup(displayName string) (*model.Group, error) {
-	return api.CreateGroup(displayName)
+	return api.CreateGroup(api.WailsContext(), displayName)
 }
 
 func (s *Auth) UpdateGroup(id, displayName string) (*model.Group, error) {
-	return api.UpdateGroup(id, displayName)
+	return api.UpdateGroup(api.WailsContext(), id, displayName)
 }
 
 func (s *Auth) DeleteGroup(id string) error {
-	return api.DeleteGroup(id)
+	return api.DeleteGroup(api.WailsContext(), id)
 }
 
 // ── UserGroup ─────────────────────────────────────────────
@@ -66,23 +66,23 @@ func (s *Auth) ListUsersByGroup(groupID string) ([]*model.User, error) {
 }
 
 func (s *Auth) AddUserToGroup(userID, groupID string) error {
-	return api.AddUserToGroup(userID, groupID)
+	return api.AddUserToGroup(api.WailsContext(), userID, groupID)
 }
 
 func (s *Auth) RemoveUserFromGroup(userID, groupID string) error {
-	return api.RemoveUserFromGroup(userID, groupID)
+	return api.RemoveUserFromGroup(api.WailsContext(), userID, groupID)
 }
 
 // ── Password / Login ─────────────────────────────────────
 
 func (s *Auth) ListUsersWithStatus() ([]*api.UserWithStatus, error) {
-	return api.ListUsersWithStatus()
+	return api.ListUsersWithStatus(api.WailsContext())
 }
 
 func (s *Auth) GetActiveResetToken(userID string) (*api.ResetTokenInfo, error) {
-	return api.GetActiveResetToken(userID)
+	return api.GetActiveResetToken(api.WailsContext(), userID)
 }
 
 func (s *Auth) GenerateResetToken(userID string) (string, error) {
-	return api.GenerateResetToken(userID)
+	return api.GenerateResetToken(api.WailsContext(), userID)
 }

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"os"
 	osexec "os/exec"
@@ -36,7 +37,10 @@ func BlenderWarnings() []string {
 	return append([]string(nil), blenderWarns...)
 }
 
-func RegisterBlender(path string) (*model.BlenderInstall, error) {
+func RegisterBlender(ctx context.Context, path string) (*model.BlenderInstall, error) {
+	if err := requireAdmin(ctx); err != nil {
+		return nil, err
+	}
 	if _, err := os.Stat(path); err != nil {
 		return nil, xerrors.Errorf("blender not found: %s", path)
 	}
@@ -60,7 +64,10 @@ func ListBlenders() ([]*model.BlenderInstall, error) {
 	return model.ListBlenders()
 }
 
-func DeleteBlender(id uint) error {
+func DeleteBlender(ctx context.Context, id uint) error {
+	if err := requireAdmin(ctx); err != nil {
+		return err
+	}
 	count, err := model.CountWorkspacesByBlender(id)
 	if err != nil {
 		return xerrors.Errorf("DeleteBlender check: %w", err)
@@ -73,7 +80,10 @@ func DeleteBlender(id uint) error {
 
 // BlenderReferences は指定 Blender を参照しているワークスペース・ファイル・
 // プロジェクトを列挙する。削除できないときに参照元を提示するために使う。
-func BlenderReferences(id uint) ([]*model.BlenderReference, error) {
+func BlenderReferences(ctx context.Context, id uint) ([]*model.BlenderReference, error) {
+	if err := requireAdmin(ctx); err != nil {
+		return nil, err
+	}
 	return model.ListBlenderReferences(id)
 }
 
@@ -85,7 +95,10 @@ type BlenderResetResult struct {
 
 // ResetBlenderReferences は指定 Blender を参照しているワークスペース・ファイルを
 // デフォルト設定に戻す。削除前に参照を外すために使う。
-func ResetBlenderReferences(id uint) (*BlenderResetResult, error) {
+func ResetBlenderReferences(ctx context.Context, id uint) (*BlenderResetResult, error) {
+	if err := requireAdmin(ctx); err != nil {
+		return nil, err
+	}
 	ws, files, err := model.ResetBlenderReferences(id)
 	if err != nil {
 		return nil, err
@@ -94,7 +107,10 @@ func ResetBlenderReferences(id uint) (*BlenderResetResult, error) {
 	return &BlenderResetResult{Workspaces: ws, Files: files}, nil
 }
 
-func ReorderBlenders(ids []uint) error {
+func ReorderBlenders(ctx context.Context, ids []uint) error {
+	if err := requireAdmin(ctx); err != nil {
+		return err
+	}
 	return model.ReorderBlenders(ids)
 }
 
@@ -191,7 +207,10 @@ func GetScenes(installID uint, fileID string) ([]string, error) {
 // OpenBlenderFile は Blender GUI でファイルを開く。
 // -b を付けないので Blender がウィンドウ付きで起動する。
 // プロセスは非同期で起動し、呼び出し元はブロックされない。
-func OpenBlenderFile(installID uint, filePath string) error {
+func OpenBlenderFile(ctx context.Context, installID uint, filePath string) error {
+	if err := requireAdmin(ctx); err != nil {
+		return err
+	}
 	var blenderPath string
 	if installID != 0 {
 		install, err := model.GetBlenderInstall(installID)

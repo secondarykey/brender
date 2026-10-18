@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -25,7 +26,10 @@ func GetUser(id string) (*model.User, error) {
 	return model.GetUser(id)
 }
 
-func CreateUser(name, displayName, role string) (*model.User, error) {
+func CreateUser(ctx context.Context, name, displayName, role string) (*model.User, error) {
+	if err := requireAdmin(ctx); err != nil {
+		return nil, err
+	}
 	if name == "" {
 		return nil, xerrors.New("user name is required")
 	}
@@ -35,14 +39,20 @@ func CreateUser(name, displayName, role string) (*model.User, error) {
 	return model.CreateUser(name, displayName, role)
 }
 
-func UpdateUser(id, name, displayName, role string) (*model.User, error) {
+func UpdateUser(ctx context.Context, id, name, displayName, role string) (*model.User, error) {
+	if err := requireAdmin(ctx); err != nil {
+		return nil, err
+	}
 	if name == "" {
 		return nil, xerrors.New("user name is required")
 	}
 	return model.UpdateUser(id, name, displayName, role)
 }
 
-func DeleteUser(id string) error {
+func DeleteUser(ctx context.Context, id string) error {
+	if err := requireAdmin(ctx); err != nil {
+		return err
+	}
 	return model.DeleteUser(id)
 }
 
@@ -56,21 +66,30 @@ func GetGroup(id string) (*model.Group, error) {
 	return model.GetGroup(id)
 }
 
-func CreateGroup(displayName string) (*model.Group, error) {
+func CreateGroup(ctx context.Context, displayName string) (*model.Group, error) {
+	if err := requireAdmin(ctx); err != nil {
+		return nil, err
+	}
 	if displayName == "" {
 		return nil, xerrors.New("group display name is required")
 	}
 	return model.CreateGroup(displayName)
 }
 
-func UpdateGroup(id, displayName string) (*model.Group, error) {
+func UpdateGroup(ctx context.Context, id, displayName string) (*model.Group, error) {
+	if err := requireAdmin(ctx); err != nil {
+		return nil, err
+	}
 	if displayName == "" {
 		return nil, xerrors.New("group display name is required")
 	}
 	return model.UpdateGroup(id, displayName)
 }
 
-func DeleteGroup(id string) error {
+func DeleteGroup(ctx context.Context, id string) error {
+	if err := requireAdmin(ctx); err != nil {
+		return err
+	}
 	return model.DeleteGroup(id)
 }
 
@@ -84,11 +103,17 @@ func ListUsersByGroup(groupID string) ([]*model.User, error) {
 	return model.ListUsersByGroup(groupID)
 }
 
-func AddUserToGroup(userID, groupID string) error {
+func AddUserToGroup(ctx context.Context, userID, groupID string) error {
+	if err := requireAdmin(ctx); err != nil {
+		return err
+	}
 	return model.AddUserToGroup(userID, groupID)
 }
 
-func RemoveUserFromGroup(userID, groupID string) error {
+func RemoveUserFromGroup(ctx context.Context, userID, groupID string) error {
+	if err := requireAdmin(ctx); err != nil {
+		return err
+	}
 	return model.RemoveUserFromGroup(userID, groupID)
 }
 
@@ -101,7 +126,10 @@ type UserWithStatus struct {
 }
 
 // ListUsersWithStatus はパスワード設定状態付きのユーザ一覧を返す。
-func ListUsersWithStatus() ([]*UserWithStatus, error) {
+func ListUsersWithStatus(ctx context.Context) ([]*UserWithStatus, error) {
+	if err := requireAdmin(ctx); err != nil {
+		return nil, err
+	}
 	users, err := model.ListUsers()
 	if err != nil {
 		return nil, err
@@ -123,7 +151,10 @@ type ResetTokenInfo struct {
 }
 
 // GetActiveResetToken はユーザの有効なリセットトークンのURLパスを返す。存在しなければ nil。
-func GetActiveResetToken(userID string) (*ResetTokenInfo, error) {
+func GetActiveResetToken(ctx context.Context, userID string) (*ResetTokenInfo, error) {
+	if err := requireAdmin(ctx); err != nil {
+		return nil, err
+	}
 	user, err := model.GetUser(userID)
 	if err != nil {
 		return nil, err
@@ -146,7 +177,10 @@ func GetActiveResetToken(userID string) (*ResetTokenInfo, error) {
 
 // GenerateResetToken はパスワードリセットトークンを生成し、URLパスを返す。
 // 同時にパスワードをクリアし、トークンでの再設定までログイン不可にする。
-func GenerateResetToken(userID string) (string, error) {
+func GenerateResetToken(ctx context.Context, userID string) (string, error) {
+	if err := requireAdmin(ctx); err != nil {
+		return "", err
+	}
 	user, err := model.GetUser(userID)
 	if err != nil {
 		return "", err

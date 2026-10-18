@@ -50,7 +50,7 @@ func (h *Handler) registerEnvironment() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return nil, api.SetServer(p.Enabled, p.Host, p.Port, p.Auth)
+		return nil, api.SetServer(ctx, p.Enabled, p.Host, p.Port, p.Auth)
 	})
 
 	h.registerAdmin("environment", "set_ffmpeg", func(ctx context.Context, body json.RawMessage) (any, error) {
@@ -63,7 +63,7 @@ func (h *Handler) registerEnvironment() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return nil, api.SetFfmpegSettings(api.FfmpegSettings{
+		return nil, api.SetFfmpegSettings(ctx, api.FfmpegSettings{
 			Cmd: p.Cmd, FPS: p.FPS, OutExt: p.OutExt, Args: p.Args,
 		})
 	})
@@ -75,7 +75,7 @@ func (h *Handler) registerEnvironment() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return nil, api.SetOutputFormat(p.Format)
+		return nil, api.SetOutputFormat(ctx, p.Format)
 	})
 
 	h.registerAdmin("environment", "set_max_concurrent_jobs", func(ctx context.Context, body json.RawMessage) (any, error) {
@@ -85,7 +85,7 @@ func (h *Handler) registerEnvironment() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return nil, api.SetMaxConcurrentJobs(p.N)
+		return nil, api.SetMaxConcurrentJobs(ctx, p.N)
 	})
 
 	h.register("environment", "get_version", func(ctx context.Context, _ json.RawMessage) (any, error) {
@@ -117,7 +117,7 @@ func (h *Handler) registerBlender() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.RegisterBlender(p.Path)
+		return api.RegisterBlender(ctx, p.Path)
 	})
 
 	h.registerAdmin("blender", "delete", func(ctx context.Context, body json.RawMessage) (any, error) {
@@ -127,7 +127,7 @@ func (h *Handler) registerBlender() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return nil, api.DeleteBlender(p.ID)
+		return nil, api.DeleteBlender(ctx, p.ID)
 	})
 
 	h.registerAdmin("blender", "references", func(ctx context.Context, body json.RawMessage) (any, error) {
@@ -137,7 +137,7 @@ func (h *Handler) registerBlender() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.BlenderReferences(p.ID)
+		return api.BlenderReferences(ctx, p.ID)
 	})
 
 	h.registerAdmin("blender", "reset_references", func(ctx context.Context, body json.RawMessage) (any, error) {
@@ -147,7 +147,7 @@ func (h *Handler) registerBlender() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.ResetBlenderReferences(p.ID)
+		return api.ResetBlenderReferences(ctx, p.ID)
 	})
 
 	h.registerAdmin("blender", "reorder", func(ctx context.Context, body json.RawMessage) (any, error) {
@@ -157,7 +157,7 @@ func (h *Handler) registerBlender() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return nil, api.ReorderBlenders(p.IDs)
+		return nil, api.ReorderBlenders(ctx, p.IDs)
 	})
 
 	h.register("blender", "get_engines", func(ctx context.Context, body json.RawMessage) (any, error) {
@@ -223,7 +223,7 @@ func (h *Handler) registerBlender() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return nil, api.OpenBlenderFile(p.InstallID, p.FilePath)
+		return nil, api.OpenBlenderFile(ctx, p.InstallID, p.FilePath)
 	})
 }
 
@@ -745,8 +745,7 @@ func (h *Handler) registerQueue() {
 	})
 
 	h.registerAdmin("queue", "kill_running", func(ctx context.Context, _ json.RawMessage) (any, error) {
-		api.KillRunningQueues()
-		return nil, nil
+		return nil, api.KillRunningQueuesByUser(ctx)
 	})
 
 	h.register("queue", "list_jobs", func(ctx context.Context, _ json.RawMessage) (any, error) {
@@ -1009,7 +1008,7 @@ func (h *Handler) registerWorkDir() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.CreateWorkDir(p.Path, p.Priority)
+		return api.CreateWorkDir(ctx, p.Path, p.Priority)
 	})
 
 	h.registerAdmin("work_dir", "update", func(ctx context.Context, body json.RawMessage) (any, error) {
@@ -1022,7 +1021,7 @@ func (h *Handler) registerWorkDir() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.UpdateWorkDir(p.ID, p.Path, p.Priority, p.Status)
+		return api.UpdateWorkDir(ctx, p.ID, p.Path, p.Priority, p.Status)
 	})
 
 	h.registerAdmin("work_dir", "reorder", func(ctx context.Context, body json.RawMessage) (any, error) {
@@ -1032,7 +1031,7 @@ func (h *Handler) registerWorkDir() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return nil, api.ReorderWorkDirs(p.IDs)
+		return nil, api.ReorderWorkDirs(ctx, p.IDs)
 	})
 
 	h.registerAdmin("work_dir", "delete", func(ctx context.Context, body json.RawMessage) (any, error) {
@@ -1042,7 +1041,7 @@ func (h *Handler) registerWorkDir() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return nil, api.DeleteWorkDir(p.ID)
+		return nil, api.DeleteWorkDir(ctx, p.ID)
 	})
 
 	h.registerAdmin("work_dir", "check_dir", func(ctx context.Context, body json.RawMessage) (any, error) {
@@ -1052,7 +1051,7 @@ func (h *Handler) registerWorkDir() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.CheckWorkDir(p.Path)
+		return api.CheckWorkDir(ctx, p.Path)
 	})
 
 	h.register("work_dir", "start_migration", func(ctx context.Context, body json.RawMessage) (any, error) {
@@ -1084,7 +1083,7 @@ func (h *Handler) registerWorkDir() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return nil, api.StartChangeWorkDir(p.ID, p.NewPath)
+		return nil, api.StartChangeWorkDir(ctx, p.ID, p.NewPath)
 	})
 
 	h.register("work_dir", "get_project_disk_size", func(ctx context.Context, body json.RawMessage) (any, error) {
@@ -1120,7 +1119,7 @@ func (h *Handler) registerCodes() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return nil, code.SaveImageFormats(p.Items)
+		return nil, api.SaveImageFormats(ctx, p.Items)
 	})
 
 	h.registerAdmin("codes", "save_video_formats", func(ctx context.Context, body json.RawMessage) (any, error) {
@@ -1130,7 +1129,7 @@ func (h *Handler) registerCodes() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return nil, code.SaveVideoFormats(p.Items)
+		return nil, api.SaveVideoFormats(ctx, p.Items)
 	})
 
 	h.registerAdmin("codes", "save_resolution_presets", func(ctx context.Context, body json.RawMessage) (any, error) {
@@ -1140,7 +1139,7 @@ func (h *Handler) registerCodes() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return nil, code.SaveResolutionPresets(p.Items)
+		return nil, api.SaveResolutionPresets(ctx, p.Items)
 	})
 
 	h.register("codes", "generate_id", func(ctx context.Context, _ json.RawMessage) (any, error) {
@@ -1152,15 +1151,15 @@ func (h *Handler) registerCodes() {
 	})
 
 	h.registerAdmin("codes", "reset_image_formats", func(ctx context.Context, _ json.RawMessage) (any, error) {
-		return nil, code.ResetImageFormats()
+		return nil, api.ResetImageFormats(ctx)
 	})
 
 	h.registerAdmin("codes", "reset_video_formats", func(ctx context.Context, _ json.RawMessage) (any, error) {
-		return nil, code.ResetVideoFormats()
+		return nil, api.ResetVideoFormats(ctx)
 	})
 
 	h.registerAdmin("codes", "reset_resolution_presets", func(ctx context.Context, _ json.RawMessage) (any, error) {
-		return nil, code.ResetResolutionPresets()
+		return nil, api.ResetResolutionPresets(ctx)
 	})
 }
 
@@ -1439,7 +1438,7 @@ func (h *Handler) registerAuth() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.CreateUser(p.Name, p.DisplayName, p.Role)
+		return api.CreateUser(ctx, p.Name, p.DisplayName, p.Role)
 	})
 
 	h.registerAdmin("auth", "update_user", func(ctx context.Context, body json.RawMessage) (any, error) {
@@ -1452,7 +1451,7 @@ func (h *Handler) registerAuth() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.UpdateUser(p.ID, p.Name, p.DisplayName, p.Role)
+		return api.UpdateUser(ctx, p.ID, p.Name, p.DisplayName, p.Role)
 	})
 
 	h.registerAdmin("auth", "delete_user", func(ctx context.Context, body json.RawMessage) (any, error) {
@@ -1462,7 +1461,7 @@ func (h *Handler) registerAuth() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return nil, api.DeleteUser(p.ID)
+		return nil, api.DeleteUser(ctx, p.ID)
 	})
 
 	h.register("auth", "list_groups", func(ctx context.Context, _ json.RawMessage) (any, error) {
@@ -1486,7 +1485,7 @@ func (h *Handler) registerAuth() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.CreateGroup(p.DisplayName)
+		return api.CreateGroup(ctx, p.DisplayName)
 	})
 
 	h.registerAdmin("auth", "update_group", func(ctx context.Context, body json.RawMessage) (any, error) {
@@ -1497,7 +1496,7 @@ func (h *Handler) registerAuth() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.UpdateGroup(p.ID, p.DisplayName)
+		return api.UpdateGroup(ctx, p.ID, p.DisplayName)
 	})
 
 	h.registerAdmin("auth", "delete_group", func(ctx context.Context, body json.RawMessage) (any, error) {
@@ -1507,7 +1506,7 @@ func (h *Handler) registerAuth() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return nil, api.DeleteGroup(p.ID)
+		return nil, api.DeleteGroup(ctx, p.ID)
 	})
 
 	h.register("auth", "list_groups_by_user", func(ctx context.Context, body json.RawMessage) (any, error) {
@@ -1538,7 +1537,7 @@ func (h *Handler) registerAuth() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return nil, api.AddUserToGroup(p.UserID, p.GroupID)
+		return nil, api.AddUserToGroup(ctx, p.UserID, p.GroupID)
 	})
 
 	h.registerAdmin("auth", "remove_user_from_group", func(ctx context.Context, body json.RawMessage) (any, error) {
@@ -1549,11 +1548,11 @@ func (h *Handler) registerAuth() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return nil, api.RemoveUserFromGroup(p.UserID, p.GroupID)
+		return nil, api.RemoveUserFromGroup(ctx, p.UserID, p.GroupID)
 	})
 
 	h.registerAdmin("auth", "list_users_with_status", func(ctx context.Context, _ json.RawMessage) (any, error) {
-		return api.ListUsersWithStatus()
+		return api.ListUsersWithStatus(ctx)
 	})
 
 	h.registerAdmin("auth", "get_active_reset_token", func(ctx context.Context, body json.RawMessage) (any, error) {
@@ -1563,7 +1562,7 @@ func (h *Handler) registerAuth() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.GetActiveResetToken(p.UserID)
+		return api.GetActiveResetToken(ctx, p.UserID)
 	})
 
 	h.registerAdmin("auth", "generate_reset_token", func(ctx context.Context, body json.RawMessage) (any, error) {
@@ -1573,7 +1572,7 @@ func (h *Handler) registerAuth() {
 		if err := json.Unmarshal(body, &p); err != nil {
 			return nil, err
 		}
-		return api.GenerateResetToken(p.UserID)
+		return api.GenerateResetToken(ctx, p.UserID)
 	})
 
 	h.register("auth", "login", func(ctx context.Context, body json.RawMessage) (any, error) {

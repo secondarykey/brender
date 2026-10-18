@@ -50,7 +50,7 @@ func (s *Environment) GetLicenses() LicenseInfo {
 }
 
 func (s *Environment) SetFfmpeg(cmd string, fps int, outExt string, args string) error {
-	return api.SetFfmpegSettings(api.FfmpegSettings{
+	return api.SetFfmpegSettings(api.WailsContext(), api.FfmpegSettings{
 		Cmd:    cmd,
 		FPS:    fps,
 		OutExt: outExt,
@@ -59,15 +59,15 @@ func (s *Environment) SetFfmpeg(cmd string, fps int, outExt string, args string)
 }
 
 func (s *Environment) SetOutputFormat(format string) error {
-	return api.SetOutputFormat(format)
+	return api.SetOutputFormat(api.WailsContext(), format)
 }
 
 func (s *Environment) SetServer(enabled bool, host string, port int, auth bool) error {
-	return api.SetServer(enabled, host, port, auth)
+	return api.SetServer(api.WailsContext(), enabled, host, port, auth)
 }
 
 func (s *Environment) SetMaxConcurrentJobs(n int) error {
-	return api.SetMaxConcurrentJobs(n)
+	return api.SetMaxConcurrentJobs(api.WailsContext(), n)
 }
 
 // GetSystemLog returns the contents of today's system log file.

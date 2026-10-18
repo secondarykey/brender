@@ -67,7 +67,10 @@ func ListWorkDirs() ([]*model.WorkDir, error) {
 	return model.ListWorkDirs()
 }
 
-func CreateWorkDir(path string, priority int) (*model.WorkDir, error) {
+func CreateWorkDir(ctx context.Context, path string, priority int) (*model.WorkDir, error) {
+	if err := requireAdmin(ctx); err != nil {
+		return nil, err
+	}
 	if path == "" {
 		return nil, xerrors.New("作業ディレクトリのパスが必要です")
 	}
@@ -82,7 +85,10 @@ func CreateWorkDir(path string, priority int) (*model.WorkDir, error) {
 	return wd, nil
 }
 
-func UpdateWorkDir(id uint, path string, priority int, status string) (*model.WorkDir, error) {
+func UpdateWorkDir(ctx context.Context, id uint, path string, priority int, status string) (*model.WorkDir, error) {
+	if err := requireAdmin(ctx); err != nil {
+		return nil, err
+	}
 	wd, err := model.GetWorkDir(id)
 	if err != nil || wd == nil {
 		return nil, xerrors.Errorf("UpdateWorkDir: not found: %w", err)
@@ -96,11 +102,17 @@ func UpdateWorkDir(id uint, path string, priority int, status string) (*model.Wo
 	return wd, nil
 }
 
-func ReorderWorkDirs(ids []uint) error {
+func ReorderWorkDirs(ctx context.Context, ids []uint) error {
+	if err := requireAdmin(ctx); err != nil {
+		return err
+	}
 	return model.ReorderWorkDirs(ids)
 }
 
-func DeleteWorkDir(id uint) error {
+func DeleteWorkDir(ctx context.Context, id uint) error {
+	if err := requireAdmin(ctx); err != nil {
+		return err
+	}
 	count, err := model.CountProjectsByWorkDir(id)
 	if err != nil {
 		return xerrors.Errorf("DeleteWorkDir: %w", err)
@@ -112,7 +124,10 @@ func DeleteWorkDir(id uint) error {
 }
 
 // CheckWorkDir はパスの存在確認と空き容量を返す。
-func CheckWorkDir(path string) (map[string]interface{}, error) {
+func CheckWorkDir(ctx context.Context, path string) (map[string]interface{}, error) {
+	if err := requireAdmin(ctx); err != nil {
+		return nil, err
+	}
 	info, err := os.Stat(path)
 	exists := err == nil && info.IsDir()
 
@@ -230,7 +245,10 @@ func GetProjectDiskSize(projectID string) (int64, error) {
 }
 
 // StartChangeWorkDir は作業ディレクトリのパスを変更し、参照プロジェクトのファイルを非同期で移動する。
-func StartChangeWorkDir(id uint, newPath string) error {
+func StartChangeWorkDir(ctx context.Context, id uint, newPath string) error {
+	if err := requireAdmin(ctx); err != nil {
+		return err
+	}
 	wd, err := model.GetWorkDir(id)
 	if err != nil || wd == nil {
 		return xerrors.New("作業ディレクトリが見つかりません")

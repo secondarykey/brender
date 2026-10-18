@@ -14,23 +14,23 @@ func (w *WorkDir) List() ([]*model.WorkDir, error) {
 }
 
 func (w *WorkDir) Create(path string, priority int) (*model.WorkDir, error) {
-	return api.CreateWorkDir(path, priority)
+	return api.CreateWorkDir(api.WailsContext(), path, priority)
 }
 
 func (w *WorkDir) Update(id uint, path string, priority int, status string) (*model.WorkDir, error) {
-	return api.UpdateWorkDir(id, path, priority, status)
+	return api.UpdateWorkDir(api.WailsContext(), id, path, priority, status)
 }
 
 func (w *WorkDir) Reorder(ids []uint) error {
-	return api.ReorderWorkDirs(ids)
+	return api.ReorderWorkDirs(api.WailsContext(), ids)
 }
 
 func (w *WorkDir) Delete(id uint) error {
-	return api.DeleteWorkDir(id)
+	return api.DeleteWorkDir(api.WailsContext(), id)
 }
 
 func (w *WorkDir) CheckDir(path string) (map[string]interface{}, error) {
-	return api.CheckWorkDir(path)
+	return api.CheckWorkDir(api.WailsContext(), path)
 }
 
 func (w *WorkDir) StartMigration(projectID string, newWorkDirID uint) error {
@@ -42,7 +42,7 @@ func (w *WorkDir) GetWorkDirStats(id uint) (map[string]interface{}, error) {
 }
 
 func (w *WorkDir) ChangeDir(id uint, newPath string) error {
-	return api.StartChangeWorkDir(id, newPath)
+	return api.StartChangeWorkDir(api.WailsContext(), id, newPath)
 }
 
 func (w *WorkDir) GetProjectDiskSize(projectID string) (int64, error) {
