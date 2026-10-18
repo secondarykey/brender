@@ -35,6 +35,23 @@ wails3 build               # Production build
 wails3 generate bindings   # Regenerate Go<->JS bindings after adding/changing services
 ```
 
+#### ローカルデプロイ（`local:deploy`、任意）
+
+`_cmd/brender/Taskfile.local.yml`（**git 管理外**。各自が作る）を置くと、`wails3 task local:deploy` で
+「起動中の brender を止める → パッチの自動 bump → バージョン・アプリ情報の反映 → `wails3 build` → ビルド情報だけのコミット → `v`+バージョンのタグ → `bin/*` を常用の場所へコピー」をまとめて行える。
+`Taskfile.yml` が `optional: true` で include しているので、ファイルが無ければ何も起きない。中身は Skill `wails3` の `references/local-deploy.md` の標準テンプレート（`APP_NAME` は `brender`、製品名は `brender`）。
+
+```bash
+cd _cmd/brender
+wails3 task local:deploy                           # Taskfile.local.yml の DEPLOY_DEST へ
+wails3 task local:deploy DEPLOY_DEST="D:/tmp/app"  # コピー先を指定
+wails3 task local:build-info                       # ビルド情報の反映だけ
+go run _cmd/version.go -auto                       # （リポジトリルートで）v+現在の版のタグがあれば patch を上げる
+```
+
+- **CI とタグが重なる点に注意**: `main` への PR マージで versionup.yml も patch を上げて `v`+版のタグを打つ（release.yml がそのタグでビルド）。手元の deploy で打ったタグは push しない（軽量タグ）ので、CI は知らずに同じ名前のタグを別のコミットに打とうとする。手元のタグを push するか、CI の版上げの前に手元のタグを消す（`git tag -d v0.3.1`）かを決めてから進める
+- deploy はアプリを起動していなくても通る（停止に `ignore_error: true`）。同じコミットで再 deploy してもパッチは上がる（直前の deploy がタグを打っているため）
+
 The DB is stored at `~/.brender/brender.db` (SQLite, created automatically on first run). パスは `~/.brender/brender.ini` の `db_path` で上書き可（[起動設定ファイル](#起動設定ファイル-config-brenderini) 参照）。`model.Init` は DSN に `_pragma=journal_mode(WAL)` / `synchronous(NORMAL)` を付与し、サーバモードの同時アクセス時の `database is locked` を避ける（glebarez ドライバは接続ごとに `busy_timeout=5000ms` を既定で適用）。WAL 有効時は `brender.db-wal` / `-shm` が併設される。
 
 ### CLI tool

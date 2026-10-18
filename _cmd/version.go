@@ -114,7 +114,7 @@ func main() {
 
 	err := run(args)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "run() error: %+v", err)
+		fmt.Fprintf(os.Stderr, "run() error: %+v\n", err)
 		os.Exit(1)
 	}
 
