@@ -41,6 +41,8 @@ func NewServer(assets fs.FS, host string, port int) *Server {
 
 	mux.Handle("GET /events", broker.Handler())
 	mux.HandleFunc("POST /api/project/upload_file", handleUploadFile)
+	// /api/ のそれ以外は無い（サービスのメソッドは /wails/runtime から呼ぶ）。SPA を返さず 404 にする
+	mux.HandleFunc("/api/", http.NotFound)
 
 	s := &Server{broker: broker}
 

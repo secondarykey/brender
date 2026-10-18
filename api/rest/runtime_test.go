@@ -114,8 +114,8 @@ func TestRuntimeRequiresLogin(t *testing.T) {
 
 func TestWailsOtherPathsAreNotServed(t *testing.T) {
 	h, spy := newRuntimeTestServer(t, false)
-	for _, p := range []string{"/wails/custom.js", "/wails/stream/x", "/wails/event-payload/x"} {
-		req := httptest.NewRequest(http.MethodGet, p, nil)
+	for _, p := range []string{"/wails/custom.js", "/wails/stream/x", "/wails/event-payload/x", "/api/environment/get"} {
+		req := httptest.NewRequest(http.MethodPost, p, nil)
 		rec := httptest.NewRecorder()
 		h.ServeHTTP(rec, req)
 		if rec.Code != http.StatusNotFound || spy.called {
