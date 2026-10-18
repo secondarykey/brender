@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"log/slog"
 	"os"
 
@@ -21,7 +22,7 @@ func NewEnvironment() *Environment {
 	return &env
 }
 
-func (s *Environment) Get() (*model.Environment, error) {
+func (s *Environment) Get(ctx context.Context) (*model.Environment, error) {
 	return api.GetEnvironment()
 }
 
@@ -30,7 +31,7 @@ type VersionInfo struct {
 	Dev     bool   `json:"dev"`
 }
 
-func (s *Environment) GetVersion() VersionInfo {
+func (s *Environment) GetVersion(ctx context.Context) VersionInfo {
 	return VersionInfo{
 		Version: AppVersion,
 		Dev:     DevMode,
@@ -42,15 +43,15 @@ type LicenseInfo struct {
 	ThirdParty string `json:"thirdParty"`
 }
 
-func (s *Environment) GetLicenses() LicenseInfo {
+func (s *Environment) GetLicenses(ctx context.Context) LicenseInfo {
 	return LicenseInfo{
 		App:        brender.AppLicense,
 		ThirdParty: brender.ThirdPartyLicenses,
 	}
 }
 
-func (s *Environment) SetFfmpeg(cmd string, fps int, outExt string, args string) error {
-	return api.SetFfmpegSettings(api.WailsContext(), api.FfmpegSettings{
+func (s *Environment) SetFfmpeg(ctx context.Context, cmd string, fps int, outExt string, args string) error {
+	return api.SetFfmpegSettings(ctx, api.FfmpegSettings{
 		Cmd:    cmd,
 		FPS:    fps,
 		OutExt: outExt,
@@ -58,20 +59,24 @@ func (s *Environment) SetFfmpeg(cmd string, fps int, outExt string, args string)
 	})
 }
 
-func (s *Environment) SetOutputFormat(format string) error {
-	return api.SetOutputFormat(api.WailsContext(), format)
+func (s *Environment) SetOutputFormat(ctx context.Context, format string) error {
+	return api.SetOutputFormat(ctx, format)
 }
 
-func (s *Environment) SetServer(enabled bool, host string, port int, auth bool) error {
-	return api.SetServer(api.WailsContext(), enabled, host, port, auth)
+func (s *Environment) SetServer(ctx context.Context, enabled bool, host string, port int, auth bool) error {
+	return api.SetServer(ctx, enabled, host, port, auth)
 }
 
-func (s *Environment) SetMaxConcurrentJobs(n int) error {
-	return api.SetMaxConcurrentJobs(api.WailsContext(), n)
+func (s *Environment) SetMaxConcurrentJobs(ctx context.Context, n int) error {
+	return api.SetMaxConcurrentJobs(ctx, n)
 }
 
 // GetSystemLog returns the contents of today's system log file.
-func (s *Environment) GetSystemLog() (string, error) {
+// ブラウザからも呼べるため admin 限定（デスクトップのウィンドウは owner なので通る）。
+func (s *Environment) GetSystemLog(ctx context.Context) (string, error) {
+	if err := api.RequireAdmin(ctx); err != nil {
+		return "", err
+	}
 	path := log.Path()
 	if path == "" {
 		return "", nil
@@ -112,17 +117,20 @@ func levelToName(lv slog.Level) string {
 }
 
 // GetLogLevel returns the current log level name (TRACE/DEBUG/INFO/NOTICE/WARN/ERROR).
-func (s *Environment) GetLogLevel() string {
+func (s *Environment) GetLogLevel(ctx context.Context) string {
 	return levelToName(log.GetLevel())
 }
 
 // GetLogLevels returns all available log level names in order.
-func (s *Environment) GetLogLevels() []string {
+func (s *Environment) GetLogLevels(ctx context.Context) []string {
 	return logLevelNames
 }
 
-// SetLogLevel changes the log level by name.
-func (s *Environment) SetLogLevel(level string) error {
+// SetLogLevel changes the log level by name. admin 限定（GetSystemLog と同じ）。
+func (s *Environment) SetLogLevel(ctx context.Context, level string) error {
+	if err := api.RequireAdmin(ctx); err != nil {
+		return err
+	}
 	lv, ok := logLevelMap[level]
 	if !ok {
 		return nil
@@ -135,7 +143,11 @@ const sysLogWindowName = "syslog"
 
 // OpenSystemLogWindow opens the system log in a viewer window.
 // If the window is already open, it is focused instead of creating a new one.
-func (s *Environment) OpenSystemLogWindow() error {
+// ブラウザから呼ばれるとサーバの機械の画面で開いてしまうため断る。
+func (s *Environment) OpenSystemLogWindow(ctx context.Context) error {
+	if api.FromBrowser(ctx) {
+		return api.ErrNotAvailableFromBrowser
+	}
 	app := application.Get()
 	if win, ok := app.Window.GetByName(sysLogWindowName); ok {
 		win.Show()

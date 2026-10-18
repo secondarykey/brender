@@ -12,8 +12,10 @@ import (
 // アクセス制御の共通ヘルパー。
 //
 // 権限判定の「唯一の情報源」は context に紐付いたユーザ（model.WithUser）とする。
-// REST モードでは認証ミドルウェアが検証済みユーザを ctx に載せる。
-// Wails（デスクトップ）モードでは常に owner を載せる（wailsCtx）。
+// サービス（Wails のバインディング）は呼び出しの ctx をそのまま api 層へ渡す。
+//   - ブラウザ（サーバモード）から: 認証ミドルウェアが検証済みユーザを ctx に載せる（api/rest/auth.go）
+//   - デスクトップのウィンドウから: ctx にユーザが無い → currentUser が owner とみなす
+// バックグラウンド処理は SystemContext（owner）を使う。
 //
 // アクセス制御が有効になるのは「サーバモード かつ ユーザ管理オン」のときだけ
 // （AGENTS.md「権限・アクセス制御」参照）。それ以外は全チェックをバイパスする。
@@ -204,9 +206,9 @@ func validateWorkDirPath(path string) error {
 	return ErrPathOutsideWorkDir
 }
 
-// WailsContext は Wails（デスクトップ）モードの操作コンテキストを返す。
-// デスクトップは単一ユーザ運用のため常に owner として振る舞う。
-func WailsContext() context.Context {
+// SystemContext はシステムが自分で行う処理（サムネイルの自動生成など）の操作コンテキストを返す。
+// owner として振る舞う。
+func SystemContext() context.Context {
 	return model.WithUser(context.Background(), model.UserIDOwner)
 }
 

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"github.com/secondarykey/brender/api"
 	"github.com/secondarykey/brender/model"
 )
@@ -13,76 +14,76 @@ func NewAuth() *Auth {
 
 // ── User ──────────────────────────────────────────────────
 
-func (s *Auth) ListUsers() ([]*model.User, error) {
+func (s *Auth) ListUsers(ctx context.Context) ([]*model.User, error) {
 	return api.ListUsers()
 }
 
-func (s *Auth) GetUser(id string) (*model.User, error) {
+func (s *Auth) GetUser(ctx context.Context, id string) (*model.User, error) {
 	return api.GetUser(id)
 }
 
-func (s *Auth) CreateUser(name, displayName, role string) (*model.User, error) {
-	return api.CreateUser(api.WailsContext(), name, displayName, role)
+func (s *Auth) CreateUser(ctx context.Context, name, displayName, role string) (*model.User, error) {
+	return api.CreateUser(ctx, name, displayName, role)
 }
 
-func (s *Auth) UpdateUser(id, name, displayName, role string) (*model.User, error) {
-	return api.UpdateUser(api.WailsContext(), id, name, displayName, role)
+func (s *Auth) UpdateUser(ctx context.Context, id, name, displayName, role string) (*model.User, error) {
+	return api.UpdateUser(ctx, id, name, displayName, role)
 }
 
-func (s *Auth) DeleteUser(id string) error {
-	return api.DeleteUser(api.WailsContext(), id)
+func (s *Auth) DeleteUser(ctx context.Context, id string) error {
+	return api.DeleteUser(ctx, id)
 }
 
 // ── Group ─────────────────────────────────────────────────
 
-func (s *Auth) ListGroups() ([]*model.Group, error) {
+func (s *Auth) ListGroups(ctx context.Context) ([]*model.Group, error) {
 	return api.ListGroups()
 }
 
-func (s *Auth) GetGroup(id string) (*model.Group, error) {
+func (s *Auth) GetGroup(ctx context.Context, id string) (*model.Group, error) {
 	return api.GetGroup(id)
 }
 
-func (s *Auth) CreateGroup(displayName string) (*model.Group, error) {
-	return api.CreateGroup(api.WailsContext(), displayName)
+func (s *Auth) CreateGroup(ctx context.Context, displayName string) (*model.Group, error) {
+	return api.CreateGroup(ctx, displayName)
 }
 
-func (s *Auth) UpdateGroup(id, displayName string) (*model.Group, error) {
-	return api.UpdateGroup(api.WailsContext(), id, displayName)
+func (s *Auth) UpdateGroup(ctx context.Context, id, displayName string) (*model.Group, error) {
+	return api.UpdateGroup(ctx, id, displayName)
 }
 
-func (s *Auth) DeleteGroup(id string) error {
-	return api.DeleteGroup(api.WailsContext(), id)
+func (s *Auth) DeleteGroup(ctx context.Context, id string) error {
+	return api.DeleteGroup(ctx, id)
 }
 
 // ── UserGroup ─────────────────────────────────────────────
 
-func (s *Auth) ListGroupsByUser(userID string) ([]*model.Group, error) {
+func (s *Auth) ListGroupsByUser(ctx context.Context, userID string) ([]*model.Group, error) {
 	return api.ListGroupsByUser(userID)
 }
 
-func (s *Auth) ListUsersByGroup(groupID string) ([]*model.User, error) {
+func (s *Auth) ListUsersByGroup(ctx context.Context, groupID string) ([]*model.User, error) {
 	return api.ListUsersByGroup(groupID)
 }
 
-func (s *Auth) AddUserToGroup(userID, groupID string) error {
-	return api.AddUserToGroup(api.WailsContext(), userID, groupID)
+func (s *Auth) AddUserToGroup(ctx context.Context, userID, groupID string) error {
+	return api.AddUserToGroup(ctx, userID, groupID)
 }
 
-func (s *Auth) RemoveUserFromGroup(userID, groupID string) error {
-	return api.RemoveUserFromGroup(api.WailsContext(), userID, groupID)
+func (s *Auth) RemoveUserFromGroup(ctx context.Context, userID, groupID string) error {
+	return api.RemoveUserFromGroup(ctx, userID, groupID)
 }
 
 // ── Password / Login ─────────────────────────────────────
 
-func (s *Auth) ListUsersWithStatus() ([]*api.UserWithStatus, error) {
-	return api.ListUsersWithStatus(api.WailsContext())
+func (s *Auth) ListUsersWithStatus(ctx context.Context) ([]*api.UserWithStatus, error) {
+	return api.ListUsersWithStatus(ctx)
 }
 
-func (s *Auth) GetActiveResetToken(userID string) (*api.ResetTokenInfo, error) {
-	return api.GetActiveResetToken(api.WailsContext(), userID)
+func (s *Auth) GetActiveResetToken(ctx context.Context, userID string) (*api.ResetTokenInfo, error) {
+	return api.GetActiveResetToken(ctx, userID)
 }
 
-func (s *Auth) GenerateResetToken(userID string) (string, error) {
-	return api.GenerateResetToken(api.WailsContext(), userID)
+func (s *Auth) GenerateResetToken(ctx context.Context, userID string) (string, error) {
+	return api.GenerateResetToken(ctx, userID)
 }

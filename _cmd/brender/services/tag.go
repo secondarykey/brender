@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"github.com/secondarykey/brender/api"
 	"github.com/secondarykey/brender/model"
 )
@@ -11,41 +12,41 @@ func NewTag() *Tag { return &Tag{} }
 
 // ── TagCategory ──────────────────────────────────────────
 
-func (t *Tag) ListCategories() ([]*model.TagCategory, error) {
+func (t *Tag) ListCategories(ctx context.Context) ([]*model.TagCategory, error) {
 	return api.ListTagCategories()
 }
 
-func (t *Tag) CreateCategory(name, color string) (*model.TagCategory, error) {
+func (t *Tag) CreateCategory(ctx context.Context, name, color string) (*model.TagCategory, error) {
 	return api.CreateTagCategory(name, color)
 }
 
-func (t *Tag) UpdateCategory(id uint, name, color string) (*model.TagCategory, error) {
+func (t *Tag) UpdateCategory(ctx context.Context, id uint, name, color string) (*model.TagCategory, error) {
 	return api.UpdateTagCategory(id, name, color)
 }
 
-func (t *Tag) DeleteCategory(id uint) error {
+func (t *Tag) DeleteCategory(ctx context.Context, id uint) error {
 	return api.DeleteTagCategory(id)
 }
 
-func (t *Tag) ReorderCategories(ids []uint) error {
+func (t *Tag) ReorderCategories(ctx context.Context, ids []uint) error {
 	return api.ReorderTagCategories(ids)
 }
 
-func (t *Tag) MergeCategories(sourceID, targetID uint) error {
+func (t *Tag) MergeCategories(ctx context.Context, sourceID, targetID uint) error {
 	return api.MergeTagCategories(sourceID, targetID)
 }
 
-func (t *Tag) MergeTags(sourceID, targetID uint) error {
+func (t *Tag) MergeTags(ctx context.Context, sourceID, targetID uint) error {
 	return api.MergeTags(sourceID, targetID)
 }
 
 // ── Tag ──────────────────────────────────────────────────
 
-func (t *Tag) ListTags() ([]*model.TagWithCategory, error) {
+func (t *Tag) ListTags(ctx context.Context) ([]*model.TagWithCategory, error) {
 	return api.ListTags()
 }
 
-func (t *Tag) CreateTag(name string, categoryID uint, color string) (*model.Tag, error) {
+func (t *Tag) CreateTag(ctx context.Context, name string, categoryID uint, color string) (*model.Tag, error) {
 	var cid *uint
 	if categoryID > 0 {
 		cid = &categoryID
@@ -53,7 +54,7 @@ func (t *Tag) CreateTag(name string, categoryID uint, color string) (*model.Tag,
 	return api.CreateTag(name, cid, color)
 }
 
-func (t *Tag) UpdateTag(id uint, name string, categoryID uint, color string) (*model.Tag, error) {
+func (t *Tag) UpdateTag(ctx context.Context, id uint, name string, categoryID uint, color string) (*model.Tag, error) {
 	var cid *uint
 	if categoryID > 0 {
 		cid = &categoryID
@@ -61,11 +62,11 @@ func (t *Tag) UpdateTag(id uint, name string, categoryID uint, color string) (*m
 	return api.UpdateTag(id, name, cid, color)
 }
 
-func (t *Tag) DeleteTag(id uint) error {
+func (t *Tag) DeleteTag(ctx context.Context, id uint) error {
 	return api.DeleteTag(id)
 }
 
-func (t *Tag) SetTagCategory(tagID uint, categoryID uint) error {
+func (t *Tag) SetTagCategory(ctx context.Context, tagID uint, categoryID uint) error {
 	var cid *uint
 	if categoryID > 0 {
 		cid = &categoryID
@@ -75,26 +76,26 @@ func (t *Tag) SetTagCategory(tagID uint, categoryID uint) error {
 
 // ── File tagging ─────────────────────────────────────────
 
-func (t *Tag) AddTagToFile(projectFileID string, tagID uint) error {
+func (t *Tag) AddTagToFile(ctx context.Context, projectFileID string, tagID uint) error {
 	return api.AddTagToFile(projectFileID, tagID)
 }
 
-func (t *Tag) RemoveTagFromFile(projectFileID string, tagID uint) error {
+func (t *Tag) RemoveTagFromFile(ctx context.Context, projectFileID string, tagID uint) error {
 	return api.RemoveTagFromFile(projectFileID, tagID)
 }
 
-func (t *Tag) GetFileTags(projectFileID string) ([]*model.TagWithCategory, error) {
+func (t *Tag) GetFileTags(ctx context.Context, projectFileID string) ([]*model.TagWithCategory, error) {
 	return api.GetFileTags(projectFileID)
 }
 
-func (t *Tag) AssignTagByInput(projectFileID, input string) (*model.TagWithCategory, error) {
+func (t *Tag) AssignTagByInput(ctx context.Context, projectFileID, input string) (*model.TagWithCategory, error) {
 	return api.AssignTagByInput(projectFileID, input)
 }
 
 // ── Search ───────────────────────────────────────────────
 
-func (t *Tag) SearchFiles(tagIDs []uint, page, pageSize int, sort, dir string, untagged bool, keyword string, favorite bool) (*api.FileSearchResponse, error) {
-	return api.SearchFiles(api.WailsContext(), model.FileSearchParams{
+func (t *Tag) SearchFiles(ctx context.Context, tagIDs []uint, page, pageSize int, sort, dir string, untagged bool, keyword string, favorite bool) (*api.FileSearchResponse, error) {
+	return api.SearchFiles(ctx, model.FileSearchParams{
 		TagIDs:   tagIDs,
 		Page:     page,
 		PageSize: pageSize,
@@ -106,6 +107,6 @@ func (t *Tag) SearchFiles(tagIDs []uint, page, pageSize int, sort, dir string, u
 	})
 }
 
-func (t *Tag) ListTagUsageCounts() ([]*model.TagUsageCount, error) {
+func (t *Tag) ListTagUsageCounts(ctx context.Context) ([]*model.TagUsageCount, error) {
 	return api.ListTagUsageCounts()
 }

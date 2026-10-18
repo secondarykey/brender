@@ -141,7 +141,7 @@ func UploadProjectFile(ctx context.Context, projectID string, filename string, r
 		slog.Error("UploadProjectFile: CopyProjectPermissionsToFile", "error", err)
 	}
 	// 非同期でPackチェック → Pack済みならサムネイル自動生成（バックグラウンドは owner 権限で実行）
-	go checkPackAndThumbnail(WailsContext(), projectID, f)
+	go checkPackAndThumbnail(SystemContext(), projectID, f)
 	return f, nil
 }
 
@@ -187,7 +187,7 @@ func AddProjectFile(ctx context.Context, projectID, path string) (*model.Project
 		slog.Error("AddProjectFile: CopyProjectPermissionsToFile", "error", err)
 	}
 	// サムネイル自動生成はバックグラウンドで owner 権限として実行する
-	bgCtx := WailsContext()
+	bgCtx := SystemContext()
 	go func() {
 		if err := CreateThumbnailWorkspace(bgCtx, projectID, f); err != nil {
 			slog.Error("thumbnail workspace creation failed", "fileID", f.ID, "error", err)
