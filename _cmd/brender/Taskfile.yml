@@ -5,6 +5,10 @@ includes:
   windows: ./build/windows/Taskfile.yml
   darwin: ./build/darwin/Taskfile.yml
   linux: ./build/linux/Taskfile.yml
+  # 個人用（git 管理外）。あれば local:deploy などが増え、無ければ何も起きない（AGENTS.md 参照）
+  local:
+    taskfile: Taskfile.local.yml
+    optional: true
 
 vars:
   APP_NAME: "brender"
