@@ -6,5 +6,6 @@ brender でやりたいこと。詳しい資料があるものは `_docs/` に�
 
 | | やりたいこと | 資料 |
 |---|---|---|
-| ⬜ | サーバモードを Wails の Transport で作り直す:自前の REST(`api/rest/` のディスパッチ)をやめ、Wails の `AssetServerTransport` で、同じ exe のままブラウザからも Wails のバインディングを呼ぶ。二重登録(サービスと `routes.go`)と、画面の API ラッパーの `isWails()` の分かれ道をなくす。認証・SSE・アップロードなどは残す。ブラウザから全部のメソッドが呼べるようになるので、サービスの権限の判定を `ctx` の利用者に変えるのが前提(今は `api.WailsContext()` でいつも Owner)。まず試作で見込みどおり動くかを確かめる(2026-10-19) | [server-transport.md](_docs/server-transport.md)(検討メモ) |
-| ⬜ | ウィンドウを出さずに動かす(バックグラウンド実行):デスクトップのビルドのまま、ウィンドウを作らずに起動し、ブラウザから使う(別の exe にはしない。2026-10-19)。今はメインのウィンドウを閉じるとアプリが終わる(`main.go`)ので、終わらせ方(トレイ・シグナルなど)も考える。`AGENTS.md` の「ヘッドレス運用は不可」はこれで変わる | 未作成 |
+| ⬜ | admin の守りを `api` の側へ移す:今は REST の `registerAdmin`(34)にしか無く、`api.CreateUser`・`SetServer` などは `ctx` も受けない。REST のままでも先にでき、Transport で作り直すときの前提になる(2026-10-19) | [server-transport.md](_docs/server-transport.md)(気をつけること 1) |
+| ⬜ | サーバモードを Wails の Transport で作り直す:自前の REST(`api/rest/` のディスパッチ)をやめ、Wails の `AssetServerTransport` で、同じ exe のままブラウザからも Wails のバインディングを呼ぶ。二重登録(サービスと `routes.go`)と、画面の API ラッパーの `isWails()` の分かれ道をなくす。認証・SSE・アップロードなどは残す。ブラウザから全部のメソッドが呼べるようになるので、サービスの権限の判定を `ctx` の利用者に変えるのが前提(今は `api.WailsContext()` でいつも Owner)。試作で、ブラウザから呼べて `ctx` に利用者が届くことは確かめた(2026-10-19)。ウィンドウの側と本物の画面はまだ。ブラウザから `Application.Quit` などの Wails の決まった API も通るので、自前のサーバで `/wails/runtime` を絞るのも前提 | [server-transport.md](_docs/server-transport.md)(検討メモ) |
+| ⬜ | ウィンドウを出さずに動かす(バックグラウンド実行):デスクトップのビルドのまま、ウィンドウを作らずに起動し、ブラウザから使う(別の exe にはしない。2026-10-19)。今はメインのウィンドウを閉じるとアプリが終わる(`main.go`)ので、終わらせ方(トレイ・シグナルなど)も考える。`AGENTS.md` の「ヘッドレス運用は不可」はこれで変わる。Transport の試作では、ウィンドウを1つも作らずに `app.Run()` が動き続けた(Windows。2026-10-19) | 未作成 |

@@ -1,7 +1,8 @@
 # サーバモードを Wails の Transport で作り直す(検討メモ)
 
-- 状態: 検討中(試作の前。下の「進め方」の 0 で、見込みどおり動くかを確かめてから仕様にする)
+- 状態: 検討中(試作でブラウザの側は確かめた。ウィンドウの側はまだ。下の「試作で確かめたこと」)
 - 書いた日: 2026-10-19(aibow の相談の中で調べた。Chat が書いた)
+- 追記: 2026-10-19(試作の結果と、試作で見つかった気をつけること 6〜11 を足した。Code が書いた)
 - 関係する資料: Skill `brender-server-mode`(今のサーバモード)・`brender-access-control`(権限)
 - 調べた版: Wails v3.0.0-beta.23(brender が使っている版)。beta.26 も、下で読んだファイルは同じ中身
 
@@ -27,7 +28,7 @@ Wails v3 の **Transport の差し替え**(`application.Options.Transport` の `
 - `AssetServerTransport`:`Transport` に `ServeAssets(assetHandler http.Handler)` を足したもの。説明に「ブラウザから使う・ネットワークに出すため」とある。
   Wails は `Start` の後に、自分の配信(静的ファイル + `/wails/runtime.js` など)を `assetHandler` として渡してくる。Transport はそれを自分の HTTP サーバに載せる
 - 渡される `assetHandler` は、`AssetOptions.Middleware` → Wails の内部の処理 → Transport の `Handler()`(既定の `HTTPTransport` なら `/wails/runtime` を処理する)を通る鎖。
-  なので、**既定の `HTTPTransport` を中に持つ Transport なら、ブラウザからの `POST /wails/runtime` も同じ鎖で処理される**(見込み。試作で確かめる)
+  なので、**既定の `HTTPTransport` を中に持つ Transport なら、ブラウザからの `POST /wails/runtime` も同じ鎖で処理される**(試作で確かめた)
 - バインディングのメソッドに渡る `ctx` は、HTTP のリクエストの `r.Context()` から作られる(`transport_http.go` → `HandleRuntimeCallWithIDs`)。
   `context.WithoutCancel` で包むので**値は引き継がれる**。手前の middleware が `model.WithUser(ctx)` で入れた利用者を、メソッドの中で読める
 - ウィンドウの無い呼び出しも想定されている(`messageprocessor_call.go` に「Calls may originate from windowless transports」とある)。ウィンドウがあるときだけ `ctx` に `application.WindowKey` が入る
@@ -35,6 +36,62 @@ Wails v3 の **Transport の差し替え**(`application.Options.Transport` の `
 - 公式の例 `v3/examples/websocket-transport`:デスクトップのウィンドウを出しながら、`:9099` でブラウザにも画面とバインディングを出している(通り道は WebSocket)。同じプロセスで両方を出す形の手本
 - 参考(使わないもの):Server Build では、イベント用の WebSocket(`/wails/events`)は `AssetOptions.Middleware` を通らず(ログインしていなくてもつなげる)、送り先を1人に絞る手段も無い。
   デスクトップのビルドには、ブラウザにイベントを送る仕組み自体が無い
+- 自作の Transport が `WailsEventListener` を持つと、ウィンドウへのイベントの送り方(IPC)が外される(`application.go` の `transport.(WailsEventListener)` の分かれ道)。
+  なので自作の Transport には `DispatchWailsEvent` を持たせない
+- 画面が使う `@wailsio/runtime` は、呼び出し先を `window.location.origin + "/wails/runtime"` で決める(`runtime.ts` の `runtimeURL()`)。
+  ブラウザで開いたときは、開いたサーバの `/wails/runtime` に届く
+
+## 試作で確かめたこと(2026-10-19)
+
+beta.23 で、ウィンドウを作らない小さなアプリを作った(リポジトリの外。中身は下の「試作の形」)。
+自作の Transport は `*application.HTTPTransport` を埋め込み、`ServeAssets` で `127.0.0.1:9123` に自前の `http.Server` を立てる。
+自前のサーバの middleware は、`x-wails-window-*` のヘッダーを消し、試しのヘッダー(`X-Test-User`)の値を `ctx` に入れる。curl で呼んだ。
+
+| 確かめたこと | 結果 |
+|---|---|
+| `GET /` と `GET /wails/runtime.js` | ✅ 自前のサーバを通して Wails の配信が返る |
+| `POST /wails/runtime` でサービスのメソッドを呼ぶ(ウィンドウ無し) | ✅ 呼べる |
+| 自前のサーバの middleware で入れた値が、メソッドの `ctx` に届くか | ✅ 届く。`application.WindowKey` は入らない |
+| `x-wails-window-id` を偽って送る | ✅ middleware で消せば効かない(ウィンドウ無しとして扱われる) |
+| `ctx` を受けないメソッド | 呼べる(=守りの無いまま出る。気をつけること 1) |
+| ウィンドウの API(`object` 6)・ダイアログ(5) | 断られる(`window '' not found`) |
+| **`Application.Quit`(`{"object":2,"method":2}`)** | **通る。アプリが終わった**(気をつけること 6) |
+| **`Events.Emit`(`object` 3)** | **通る**。好きな名前のイベントを出せる(気をつけること 6) |
+| メソッドが呼ばれる goroutine | HTTP の処理と同じ goroutine で、そのまま呼ばれる。監査用の goroutine ユーザ(`model.SetGoroutineUser`)もそのまま使える |
+| 本文の大きさの上限 | `maxRuntimeBodyBytes` = `maxAssembledBytes` = **64 MiB**(`transport_http.go`) |
+| ウィンドウを1つも作らずに `app.Run()` | 終わらずに動き続けた(Windows)。`TODO.md` の「ウィンドウを出さずに動かす」の見込みにもなる |
+
+まだ確かめていないこと:
+
+- **ウィンドウの側が今までどおり動くか**(試作はウィンドウを作っていない。WebView からの `wails://` の通り道は変えていないので、変わらない見込み)
+- 本物の画面(React と、バンドルされた `@wailsio/runtime`)をブラウザで開いて、生成されたバインディングで呼べるか
+
+試作の形(要点だけ):
+
+```go
+type browserTransport struct {
+	*application.HTTPTransport // Start / JSClient / Handler は任せる
+	srv *http.Server
+}
+
+func (t *browserTransport) ServeAssets(assetHandler http.Handler) error {
+	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		r.Header.Del("x-wails-window-id")
+		r.Header.Del("x-wails-window-name")
+		assetHandler.ServeHTTP(w, r.WithContext(model.WithUser(r.Context(), userID)))
+	})
+	t.srv = &http.Server{Addr: addr, Handler: h}
+	go t.srv.ListenAndServe()
+	return nil
+}
+
+func (t *browserTransport) Stop() error {
+	t.srv.Close()
+	return t.HTTPTransport.Stop()
+}
+
+// application.Options{ Transport: &browserTransport{HTTPTransport: application.NewHTTPTransport()} }
+```
 
 ## 形(案)
 
@@ -44,7 +101,9 @@ Wails v3 の **Transport の差し替え**(`application.Options.Transport` の `
 ブラウザ ──HTTP──→ 自前の http.Server
                     ├ authMiddleware(Cookie → model.WithUser。未ログインは Guest。ヘッダー x-wails-window-* は消す)
                     ├ /events(SSE。今のまま)・アップロード・/thumbnail・/_movie・ログインの口(今のまま)
-                    └ その他 → assetHandler の鎖 ──→ バインディング(ctx に利用者あり)
+                    ├ POST /wails/runtime → ログイン必須・object は 0(呼び出し)と 10(取り消し)だけ通す
+                    │                        → assetHandler の鎖 ──→ バインディング(ctx に利用者あり)
+                    └ 決めたパスだけ(静的ファイル・/wails/runtime.js) → assetHandler の鎖。それ以外の /wails/* は断る
 ```
 
 - 自作の Transport は、既定の `HTTPTransport`(`application.NewHTTPTransport()`)を中に持ち、`Start` / `JSClient` / `Stop` / `Handler` はそれに任せる。
@@ -73,10 +132,27 @@ Wails v3 の **Transport の差し替え**(`application.Options.Transport` の `
      `ctx` に利用者がある(自前のサーバの middleware が入れた)→ その利用者 / 無い(ウィンドウから。自前のサーバを通っていない)→ Owner
    - **ヘッダー(`x-wails-window-id`)や `application.WindowKey` で「ウィンドウからか」を判定しない**。ブラウザが偽れるため。自前のサーバの middleware は、利用者をいつも入れ(未ログインは Guest)、`x-wails-window-*` のヘッダーを消す
    - `registerAdmin` にあたる印(admin だけが呼べる)は、サービスか `api` の側で `api.RequireAdmin(ctx)` を通す。`api` の関数で `ctx` を受けていないもの(`ReorderBlenders(ids)` など)は、権限の判定を見直す
+   - **今、admin の守りは REST の側にしか無い**(2026-10-19 に数えた):`registerAdmin` は 34。`api` の側で `requireAdmin` を通しているのは `KillRunningQueues`(`api/queue.go`)の1つだけ。
+     `api.CreateUser`・`GenerateResetToken`・`SetServer`・`RegisterBlender`・`DeleteBlender` などは `ctx` も受けない。**このままサービスを出すと、未ログイン(Guest)のブラウザから管理の操作ができる**。
+     REST のままでも先に `api` の側へ移せる(移すだけで守りが二重になる)ので、作り直しより前に行う
+   - 今の REST に**出していない**サービスのメソッドも、ブラウザから呼べるようになる(2026-10-19 に照らし合わせた):
+     `Environment.GetSystemLog`・`SetLogLevel`・`GetLogLevel(s)`・`OpenSystemLogWindow`、`Queue.OpenLogWindow`・`OpenMovieWindow`・`OpenMiniMonitor`・`CloseMiniMonitor`、`SysMon.Get` など。
+     出してよいか、admin だけか、ブラウザからは断るかを1つずつ決める
 2. **ウィンドウ・ダイアログを開くメソッド**は、ブラウザから呼ばれるとサーバの機械の画面で開く。ブラウザからは断る(例:`services/queue.go` のログのウィンドウ、`services/environment.go` の `application.Get()` を使う部分、`Blender.OpenFile`(Blender を GUI で起動する。REST では admin 限定))
 3. **引数の形が変わる**:REST は JSON のオブジェクト(`{installID, fileID}`)、バインディングは位置引数。ラッパーは REST の形を捨て、バインディングの形にそろえる
-4. **大きいデータ**:`/wails/runtime` は本文の大きさに上限がある(`maxRuntimeBodyBytes`。値は未確認)。ファイルのアップロードは今の multipart の口のまま
+4. **大きいデータ**:`/wails/runtime` は本文の大きさに上限がある(`maxRuntimeBodyBytes` = 64 MiB)。ファイルのアップロードは今の multipart の口のまま
 5. **移行中は REST と並べられる**:`/api/...` を残したまま、サービスごとにラッパーをバインディングに切り替えられる(一度に全部を直さなくてよい)
+6. **Wails の決まった API も、ブラウザから呼べる**(試作で確かめた)。ウィンドウの要らない呼び出し(`object` が 0 呼び出し・2 アプリ・3 イベント・8 システム)は、ウィンドウ無しでも通る。
+   - `Application.Quit` でアプリが終わる。`Hide` / `Show` も通る。`Events.Emit` で、ウィンドウの画面に好きなイベント(例:`queue:changed`)を出せる
+   - 自前のサーバで `POST /wails/runtime` の本文を読み、`object` が 0(呼び出し)と 10(取り消し)のときだけ通す。読んだ本文は `r.Body` に戻してから渡す
+   - チャンクで分けた送り方(`x-wails-chunk-id` のヘッダー。WebView2 の上限のための仕組み)は、1つ目のかけらしか中身を見られないので、ブラウザからは断る
+7. **`/wails/` は今ログイン無しで通る**(`api/rest/auth.go` の `isPublicPath`)。ダミーのための決まり。`/wails/runtime` はログイン必須にする(`/wails/runtime.js` は今のまま公開でよい)
+8. **`/_movie` が2つある**:Wails の配信(`main.go` の `movieAwareHandler`)には、パスを確かめない `/_movie` が入っている。
+   自前のサーバの `/_movie`(`api.ValidateWorkDirPath` で確かめる)を必ず先に当てる。assetHandler の鎖へ渡すパスは、決めたものだけにする
+9. **自作の Transport に `WailsEventListener` を持たせない**(調べたこと)。持たせるとウィンドウにイベントが届かなくなる。ブラウザへのイベントは今の SSE のまま
+10. **エラーの返し方が変わる**:Wails はエラーを 422(本文はテキストか JSON)で返す。今の `serverCall` の「401 ならページを読み直す」は、ラッパーの共通の受け口で作り直す
+11. **画面の `@wailsio/runtime` の版がずれている**:`package.json` は `"latest"`、入っているのは beta.16。Go の側は beta.23。
+    ブラウザから同じ通り道を使うので、Go の側と同じ版に固定する(`Window` / `Dialogs` を使う画面(`TitleBar.jsx` とダイアログの9ファイル)はブラウザでは断られるので、見た目の分かれ道として残す)
 
 ## 未決事項
 
@@ -87,13 +163,24 @@ Wails v3 の **Transport の差し替え**(`application.Options.Transport` の `
 ## 進め方(案)
 
 0. **試作**:自作の Transport を作り、ブラウザから1つのサービス(例:`Codes` の読むだけのメソッド)を呼ぶ。確かめること:
-   - ブラウザで `/wails/runtime.js` が読めて、`/wails/runtime` が呼ばれる
-   - ウィンドウの側が今までどおり動く
-   - 自前のサーバの middleware で入れた値が、メソッドの `ctx` に届く
-1. サービスのメソッドを `ctx` を受ける形にし、利用者の決め方(気をつけること 1)を1か所に作る
-2. ブラウザから断るメソッドの印を作る(気をつけること 2)
-3. サービスごとに、ラッパーの `isWails()` の分かれ道を消してバインディングに切り替える
-4. REST のディスパッチ(`rest.go` / `routes.go`)と `/wails/` のダミーを消す。Skill `brender-server-mode`・`brender-access-control` と `AGENTS.md` を書き直す
+   - ✅ ブラウザで `/wails/runtime.js` が読めて、`/wails/runtime` が呼ばれる(curl で確かめた)
+   - ⬜ ウィンドウの側が今までどおり動く(brender に入れて確かめる)
+   - ✅ 自前のサーバの middleware で入れた値が、メソッドの `ctx` に届く
+   - ⬜ 本物の画面をブラウザで開いて、生成されたバインディングで呼べる
+1. **先に行う(REST のままでよい)**:admin の守り(`registerAdmin` の 34)を `api` の側へ移す(気をつけること 1)。作り直しをしなくても守りが二重になる
+2. 自前のサーバの守りを作る:`/wails/runtime` をログイン必須にし、`object` を 0 と 10 に絞り、チャンクを断る。assetHandler へ渡すパスを決めたものだけにする(気をつけること 6〜8)
+3. サービスのメソッドを `ctx` を受ける形にし、利用者の決め方(気をつけること 1)を1か所に作る
+4. ブラウザから断るメソッドの印を作る(気をつけること 1 の「出していないメソッド」と 2)
+5. 画面の `@wailsio/runtime` を Go の側と同じ版に固定し、エラーの受け口を作る(気をつけること 10・11)
+6. サービスごとに、ラッパーの `isWails()` の分かれ道を消してバインディングに切り替える
+7. REST のディスパッチ(`rest.go` / `routes.go`)と `/wails/` のダミーを消す。Skill `brender-server-mode`・`brender-access-control` と `AGENTS.md` を書き直す
+
+## 見込める効果(2026-10-19 に数えた)
+
+- なくなるもの:`api/rest/routes.go`(1613 行)、`api/rest/rest.go` のディスパッチ、ラッパーの `isWails()`(約 157 か所)、`/wails/` のダミー
+- 残るもの:`api/rest/auth.go`(認証)・`sse.go`・アップロード・`/thumbnail`・`/_movie`。`server.go` は自作の Transport の `ServeAssets` に形を変えて残る
+- ほかのやり方と比べて:Server Build は別の exe になるので使わない(決めたこと)。
+  自前のリフレクションで REST を1つにまとめるやり方は `routes.go` を消せるが、画面の分かれ道は残る。Transport がいちばん多く減らせる
 
 ## 出典
 
