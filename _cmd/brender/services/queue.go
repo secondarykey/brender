@@ -59,8 +59,8 @@ func (s *Queue) Cancel(id string) error {
 	return api.CancelQueue(api.WailsContext(), id)
 }
 
-func (s *Queue) KillRunning() {
-	api.KillRunningQueues()
+func (s *Queue) KillRunning() error {
+	return api.KillRunningQueuesByUser(api.WailsContext())
 }
 
 func (s *Queue) ListJobs() ([]*model.Job, error) {

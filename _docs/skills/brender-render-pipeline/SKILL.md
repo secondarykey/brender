@@ -61,7 +61,15 @@ Queue/Job のステータス一覧・データモデルはルートの `AGENTS.m
 4. `model.UpdateQueueRunning(id, pid)` で PID・開始時刻を記録
 5. `errCh` から完了を待ち、`finishJob()` を呼ぶ
 
-`finishJob()` は完了時に `calcDirSize()` で出力ディレクトリ容量を計算して `Job.DiskSize` に保存、Queue レコードを削除後 `startNextWaiting()` → `notifyQueueChanged()` を呼ぶ。
+`finishJob()` は完了時に `calcDirSize()` で出力ディレクトリ容量を計算して `Job.DiskSize` に保存、Queue レコードを削除後 `startNextWaiting()` → `notifyQueueChanged()` を呼ぶ。`shuttingDown` が立っているときは何もせずに戻る（Queue を `running` のまま残し、次回起動時のリカバリに任せる）。
+
+**実行中キューの強制終了は2種類あり、`shuttingDown` を立てるのは終了時だけ**:
+| 関数 | 呼び出し元 | `shuttingDown` | kill されたジョブの後始末 |
+|---|---|---|---|
+| `KillRunningQueues()` | アプリ終了時（`main.go` の `WindowClosing` フック） | 立てる | `finishJob` がスキップ → Queue が残り、次回起動時に `interrupted` + 再実行 |
+| `KillRunningQueuesByUser(ctx)` | 利用者の操作（サービス `Queue.KillRunning` / REST `queue.kill_running`、admin 限定） | 立てない | 実行 goroutine の `finishJob` が `cancelled`（`JobDataCorrupted`、エラー文なし。`CancelQueue` と同じ扱い）で閉じ、Queue 削除・次の待機キュー起動まで通常どおり |
+
+kill 部分は内部関数 `killRunningQueues()` に共通化している。利用者の強制終了では kill したキュー ID を `userKilledQueues`（`sync.Map`）に kill より先に記録し、`finishJob` がそれを見て `error` ではなく `cancelled` にする（kill できなかったキューは記録を外し、ジョブはそのまま走り続ける）。利用者の操作から `KillRunningQueues()` を呼ぶと `shuttingDown` が立ったままになり、再起動まで全ジョブの完了記録と次キューの起動が止まるので呼ばないこと。
 
 ## 起動時キューリカバリ (`api/queue.go`)
 
@@ -82,7 +90,7 @@ Queue/Job のステータス一覧・データモデルはルートの `AGENTS.m
 - いずれの場合も stdout パイプは切断され再接続不可のため、新ジョブで再実行する
 
 **PID 誤殺の防止** (`killQueueProcess` / `isBlenderProcess`):
-保存済み PID は OS に再利用され別プロセスへ割り当てられている可能性がある。`Kill()` する前に gopsutil（`process.NewProcess`）で実行ファイルを検証し、記録された Blender パスと一致するか実行ファイル名に "blender" を含む場合のみ kill する。検証できない場合は kill をスキップ（無関係なプロセスの誤殺より orphan 残存を許容）。`RecoverStaleQueues` / `CancelQueue` / `KillRunningQueues` の3箇所で共通利用する。
+保存済み PID は OS に再利用され別プロセスへ割り当てられている可能性がある。`Kill()` する前に gopsutil（`process.NewProcess`）で実行ファイルを検証し、記録された Blender パスと一致するか実行ファイル名に "blender" を含む場合のみ kill する。検証できない場合は kill をスキップ（無関係なプロセスの誤殺より orphan 残存を許容）。`RecoverStaleQueues` / `CancelQueue` / `killRunningQueues`（`KillRunningQueues` / `KillRunningQueuesByUser`）の3箇所で共通利用する。kill を実行できたかを `bool` で返す。
 
 ## イベント配信フック (`api/*.go` の `XxxHook` + `main.go` の `emit`)
 

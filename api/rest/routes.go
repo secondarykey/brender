@@ -745,8 +745,7 @@ func (h *Handler) registerQueue() {
 	})
 
 	h.registerAdmin("queue", "kill_running", func(ctx context.Context, _ json.RawMessage) (any, error) {
-		api.KillRunningQueues()
-		return nil, nil
+		return nil, api.KillRunningQueuesByUser(ctx)
 	})
 
 	h.register("queue", "list_jobs", func(ctx context.Context, _ json.RawMessage) (any, error) {
