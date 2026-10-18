@@ -1,7 +1,7 @@
 # サーバモードを Wails の Transport で作り直す(検討メモ)
 
 - 状態: 実装した(2026-10-19)。今の仕組みは Skill `brender-server-mode`・`brender-access-control` を正とする。このメモは経緯として残す。
-  残り:ウィンドウの側の目視確認、`@wailsio/runtime` を Go の側(beta.23)にそろえる(下の「実装した結果」)
+  ウィンドウの側もユーザーが確かめた(2026-10-19)。残りは `@wailsio/runtime` を Go の側の版にそろえること(下の「実装した結果」)
 - 書いた日: 2026-10-19(aibow の相談の中で調べた。Chat が書いた)
 - 追記: 2026-10-19(試作の結果と、試作で見つかった気をつけること 6〜11 を足した。Code が書いた)
 - 追記: 2026-10-19(実装した結果を足した。Code が書いた)
@@ -178,12 +178,20 @@ func (t *browserTransport) Stop() error {
 - ブラウザでログインして、設定・キューの画面が開く。`/wails/runtime` が 200、SSE も届く、コンソールのエラー無し
 - creator はユーザ作成・システムログで `access denied`、admin は通る。監査カラム(`created_by`)にログインした利用者が入る
 - 未ログインは 401。ブラウザからの `Queue.OpenLogWindow` は `not available from browser`、`Application.Quit`・`Events.Emit` は 403
-- **ウィンドウの側は目では確かめていない**。通り道は既定の `HTTPTransport` を埋め込んでいるので変わらない(サーバモードでないときは Transport が nil で、前と同じ)
+- ウィンドウの側は、通り道が既定の `HTTPTransport` を埋め込んでいるので変わらない(サーバモードでないときは Transport が nil で、前と同じ)。ユーザーが使って確かめた(2026-10-19)
+
+実装した後で分かったこと・足したこと:
+
+- サーバの起動の行がログファイルにしか出ず、`wails3 dev` のターミナルでは見えなかった。設定を変えても再起動まで何も出なかった。
+  起動のたびにサーバモードのオン・オフ・待ち受けている URL・失敗の理由をログとターミナルの両方に出し、設定を変えたときに「再起動で反映」と出すようにした
+- キューの強制終了(利用者の操作)が終了時用の `KillRunningQueues` を呼び、`shuttingDown` が立ったまま以後のジョブが閉じられなくなっていた(作り直しの前からの不具合)。
+  `KillRunningQueuesByUser` を分けて直した(Skill `brender-render-pipeline`)
+- 権限エラーは Wails が ERROR としてログに出す。ブラウザからの呼び出しは 1 回ごとの INFO が無い(Skill `brender-server-mode` の「エラーとログの出方」)
+- ウィンドウを 1 つも作らなくても `app.Run()` が動き続ける。`TODO.md` の「ウィンドウを出さずに動かす」に使える
 
 残り:
 
-- ウィンドウの側の目視確認(サーバモードのオン・オフ両方)
-- 画面の `@wailsio/runtime` は beta.16 に固定した(`latest` をやめた)。Go の側(beta.23)にそろえるのは別に行う(依存の更新になるため)
+- 画面の `@wailsio/runtime` は beta.16 に固定した(`latest` をやめた)。Go の側の版(features では beta.26)にそろえるのは別に行う(依存の更新になるため)
 
 ## 進め方(案)
 
