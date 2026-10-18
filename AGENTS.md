@@ -10,8 +10,8 @@ This file provides guidance to coding agents when working with code in this repo
 |---|---|---|
 | フロントエンド規約（ページ構成・API ラッパー層・イベントバス・ダイアログ・トースト・i18n・テーマ・CSS） | `_cmd/brender/frontend/AGENTS.md` | frontend 配下のファイルを扱うときに参照 |
 | レンダリングパイプライン詳細（キュー実行・リカバリ・ProcessingWriter・進捗・ETA・サムネイル生成・CLI 表示） | `_docs/skills/brender-render-pipeline/SKILL.md`（Skill `brender-render-pipeline`） | 該当作業時に参照 |
-| 権限・アクセス制御（ロール体系・ctx ユーザ・REST ガード・フロント制御） | `_docs/skills/brender-access-control/SKILL.md`（Skill `brender-access-control`） | 該当作業時に参照 |
-| サーバモード（起動フロー・HTTP ルーティング・REST 追加手順・認証/セッション・SSE・考慮事項チェックリスト） | `_docs/skills/brender-server-mode/SKILL.md`（Skill `brender-server-mode`） | 該当作業時に参照 |
+| 権限・アクセス制御（ロール体系・ctx ユーザ・ブラウザから呼ばれるサービスの守り・フロント制御） | `_docs/skills/brender-access-control/SKILL.md`（Skill `brender-access-control`） | 該当作業時に参照 |
+| サーバモード（起動フロー・Wails の Transport・HTTP ルーティング・メソッド追加手順・認証/セッション・SSE・考慮事項チェックリスト） | `_docs/skills/brender-server-mode/SKILL.md`（Skill `brender-server-mode`） | 該当作業時に参照 |
 | コード管理 `code/`（フォーマット・解像度プリセット、新カテゴリ追加手順） | `_docs/skills/brender-codes/SKILL.md`（Skill `brender-codes`） | 該当作業時に参照 |
 
 Skill の正本は `_docs/skills/<名前>/SKILL.md`（git 管理。エージェントに依存しない参考資料としても読める）。`.claude/skills/` は git 管理外で、使うスキルはそこに置いてある名前で決まる。セッション開始時にユーザー環境のフックが、`.claude/skills` にある名前だけをそのチェックアウトの `_docs/skills` の版で置き直す（`_docs/skills` にあっても `.claude/skills` に無いものは配らない）。Skill を更新するときは必ず `_docs/skills` 側を編集してコミットすること（`.claude/skills` のコピーを編集しても次のセッション開始で上書きされる）。
@@ -70,13 +70,14 @@ npm run test:watch  # vitest（watch モード）
 ```
 _cmd/brender/  (Wails3 desktop app)
     frontend/  (React + Vite)
-        src/lib/api/       ← API ラッパー層（Wails/HTTP 切り替え）
+        src/lib/api/       ← API ラッパー層（ウィンドウ・ブラウザとも同じバインディングを呼ぶ）
         src/lib/appEvents.js ← イベントバス（Wails Events/SSE 切り替え）
         ↕ Wails3 JS bindings (frontend/bindings/)
-    services/  (Wails サービス層 — thin wrappers registered in main.go。wails3依存はこのモジュール内に閉じる)
+    services/  (Wails サービス層 — thin wrappers registered in main.go。メソッドは第1引数 ctx を api 層へ渡す。wails3依存はこのモジュール内に閉じる)
+    transport.go (サーバモード用の自作 Transport — ブラウザからのバインディング呼び出しを api/rest のサーバへつなぐ)
     main.go
         ↓
-api/rest/      (REST サービス層 — サーバモード用。認証・SSE・admin ガード込みで実装済み)
+api/rest/      (サーバモードの HTTP サーバ — 認証・SSE・アップロード・/wails/runtime の守り。サービスのディスパッチは持たない)
         ↓
 api/           (business logic, framework-agnostic。権限判定は context.Context 経由のユーザで行う。wails3非依存)
         ↓
@@ -160,7 +161,7 @@ CI が使う wails3 CLI のバージョンは `.github/variables` の `WAILS_VER
 - **ProcessingWriter** (`exec/writer.go`): Blender stdout/stderr をリアルタイムパース。Blender 4.x/5.x 両対応、Cycles/EEVEE/Workbench のエンジン別検出、スレッドセーフ（`Result()` でスナップショット取得）。
 - **進捗トラッキング** (`exec/progress.go`): Queue ID キーの in-memory map。`ListQueueItems()` が進捗フィールドを `QueueItem` に付与してフロントエンドへ渡す。
 - **サムネイル自動生成** (`api/thumbnail.go`): `AddProjectFile` 時に非同期で `IsSystem=true` ワークスペースを作成し、中間フレームを 1 枚レンダリング → 640×360 JPEG で `thumbnail.jpg` に保存。取得は Wails=base64 データURI / サーバモード=URL 配信（`GET /thumbnail`）の 2 形態。
-- **権限・アクセス制御**: `Environment.Server=true` かつ `ServerAuth=true` のときのみ有効（無効時は全員フルアクセス）。api 層の関数は第1引数 `ctx` の操作ユーザ（`model.WithUser` / `currentUser(ctx)`）で判定し、**`api/access.go` の共通ヘルパー（`fullAccess` / `requireProjectRole` / `requireAdmin` 等）を使う — 自前で `if userID != owner {...}` を書かない**。ロール体系・REST ガード・フロント制御の詳細は Skill `brender-access-control` を参照。
+- **権限・アクセス制御**: `Environment.Server=true` かつ `ServerAuth=true` のときのみ有効（無効時は全員フルアクセス）。api 層の関数は第1引数 `ctx` の操作ユーザ（`model.WithUser` / `currentUser(ctx)`）で判定し、**`api/access.go` の共通ヘルパー（`fullAccess` / `requireProjectRole` / `requireAdmin` 等）を使う — 自前で `if userID != owner {...}` を書かない**。**サービスのメソッドは全部ブラウザからも呼べる**ため、admin 操作は api の関数の中で `requireAdmin(ctx)` を通し、ウィンドウを開く操作は `api.FromBrowser(ctx)` で断る。ロール体系・守り・フロント制御の詳細は Skill `brender-access-control` を参照。
 
 ### 起動設定ファイル (`config/`, `~/.brender/brender.ini`)
 

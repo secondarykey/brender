@@ -5,7 +5,8 @@ description: >
   （アプリレベル User.Role、プロジェクトレベル ProjectPermission、ファイルレベル FilePermission）、
   context.Context 経由のユーザ識別（model.WithUser / currentUser）、api/access.go の共通ヘルパー
   （fullAccess / requireProjectRole / requireFileRole / requireAdmin / requireCreateProject）、
-  REST エンドポイントのガード（registerAdmin・owner 限定・リソース認証・生パス検証）、
+  ブラウザから呼ばれるサービスの守り（api 層の requireAdmin・owner 限定・リソース認証・生パス検証・
+  api.FromBrowser）、
   フロントエンドの権限制御（PermissionSection・作成権限チェック・HasFileAccess）を扱う。
   api/access.go・model/user.go・model/tag.go・api/rest/ の認証まわり・PermissionSection.jsx を
   変更するとき、または権限・ロール・ユーザ管理・グループ・アクセス制御に関する作業のときは
@@ -90,8 +91,11 @@ model.WithUser(ctx, userID)      // ctx にユーザを紐付ける
 model.UserFromContext(ctx)       // ctx からユーザを取り出す
 ```
 
-- **REST モード**: 認証ミドルウェア（`api/rest/auth.go`）がセッション検証後に `r = r.WithContext(model.WithUser(...))` で ctx へ注入。ハンドラは `r.Context()` を api 層へ渡す。
-- **Wails モード**: 各サービスラッパーが `api.WailsContext()`（= 常に `usr_owner`）を渡す。デスクトップは単一ユーザ運用のため常にフルアクセス。
+サービス（`_cmd/brender/services/`）はメソッドの第1引数 `ctx` を受け、そのまま api 層へ渡す。ウィンドウでもブラウザでも同じメソッドが呼ばれる:
+
+- **ブラウザ（サーバモード）から**: 認証ミドルウェア（`api/rest/auth.go`）がセッション検証後に `model.WithUser(...)` で ctx へ注入し、`POST /wails/runtime` の守り（`api/rest/runtime.go`）が `api.WithBrowser` の印を付けて Wails へ渡す。ユーザ管理が有効なのに ctx に利用者が無い呼び出しは 401 で通さない。
+- **デスクトップのウィンドウから**: ctx に利用者が無い → `currentUser` が `usr_owner` とみなす。デスクトップは単一ユーザ運用のため常にフルアクセス。
+- **バックグラウンド処理**: `api.SystemContext()`（owner）を使う（サムネイル自動生成など）。
 
 **`model.CurrentUser()` / goroutine-local storage** は監査カラム（`CreatedBy` / `UpdatedBy`）専用のベストエフォート機構に格下げされた。権限判定には使わない（そちらは ctx が唯一の情報源）。GORM の監査コールバックはクエリ ctx のユーザを優先し、なければ goroutine-local にフォールバックする（`model.auditUser`）。
 
@@ -111,11 +115,13 @@ model.UserFromContext(ctx)       // ctx からユーザを取り出す
 - `Job.HasFileAccess` (`gorm:"-"` フィールド) — `ListJobsPaged` で API 層がファイルID ごとにキャッシュして設定
 - `has_file_access === false` のジョブ → 行クリック・ダイアログ・ナビゲーションを抑制、ファイル名をリンクではなく淡色テキストで表示
 
-## REST エンドポイントのガード (`api/rest/`)
+## ブラウザから呼ばれるサービスの守り
 
-サーバモードの REST は全操作を無差別公開せず、以下で保護する。
+**サービスに登録したメソッドは選別なしに全部ブラウザから呼べる**（Wails の Transport。Skill `brender-server-mode`）。REST 側でまとめて守る口は無いので、守りは api 層とサービスの中に置く。
 
-- **admin 限定エンドポイント**: `Handler.registerAdmin`（`api/rest/rest.go`）でラップし、ハンドラ実行前に `api.RequireAdmin(ctx)` を通す。対象は設定変更（`environment/set_*`）、Blender 登録・削除・並べ替え・GUI 起動（`blender register/delete/reorder/open_file`）、作業ディレクトリ管理（`work_dir create/update/reorder/delete/change_dir/check_dir`）、コード管理（`codes save_*/reset_*`）、`queue/kill_running`、ユーザ・グループ管理系（`auth` の create/update/delete/add/remove、リセットトークン、`list_users_with_status`）。
+- **admin 限定の操作**: api の関数の中で `requireAdmin(ctx)` を通す（`api/access_test.go` が admin 以外で `ErrAccessDenied` になることを確かめている。admin 関数を足したらここにも足す）。api を通らない操作（ログの取得・レベル変更）はサービスで `api.RequireAdmin(ctx)`。対象は設定変更（`environment/set_*`）、Blender 登録・削除・並べ替え・GUI 起動（`blender register/delete/reorder/open_file`）、作業ディレクトリ管理（`work_dir create/update/reorder/delete/change_dir/check_dir`）、コード管理（`api/codes.go` の `Save*`/`Reset*`）、キューの強制終了（`KillRunningQueuesByUser`）、システムログ（`Environment.GetSystemLog` / `SetLogLevel`）、ユーザ・グループ管理系（`auth` の create/update/delete/add/remove、リセットトークン、`list_users_with_status`）。
 - **プロジェクト/ファイル owner 限定**: 権限付与・剥奪（`project set_permission` / `remove_permission` / `set_file_permission` / `remove_file_permission`）は `api.SetProjectPermission` 等の中で `requireProjectRole(owner)` / `requireFileRole(owner)` を通す（admin ではなく対象リソースの owner）。
-- **リソースの認証**: `/_movie`（ローカルファイル配信）と `/events`（SSE）は SPA ではなくリソースのため、未認証時は SPA を返さず 401 を返す（`handleUnauthorized`）。
+- **ブラウザからは断る操作**: ウィンドウを開く・サーバの画面を使うメソッド（`Queue.Open*Window`・`OpenMiniMonitor`・`CloseMiniMonitor`・`Environment.OpenSystemLogWindow`）は `api.FromBrowser(ctx)` なら `api.ErrNotAvailableFromBrowser`。**ヘッダー（`x-wails-window-id`）や `application.WindowKey` で判定しない**（ブラウザが偽れる）
+- **Wails の決まった API**: `Application.Quit`・`Events.Emit` などはウィンドウ無しでも通るため、`POST /wails/runtime` の守りで `object` を 0（呼び出し）と 10（取り消し）に絞っている
+- **リソースの認証**: `/_movie`（ローカルファイル配信）・`/events`（SSE）・`/wails/*`（バインディング呼び出し）は SPA ではなくリソースのため、未認証時は SPA を返さず 401 を返す（`handleUnauthorized`）。
 - **生パスの検証**: 生ファイルパスを受け取る口は登録済み作業ディレクトリ配下に限定する。`queue/get_image_base64` は `validateWorkDirPath`、サーバモード `/_movie` は `api.ValidateWorkDirPath` で検証。`zip_job_selected_files` は OutputDir 外のパスを無視する。

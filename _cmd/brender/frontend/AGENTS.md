@@ -114,7 +114,7 @@ On startup, `App.jsx` calls `EnvironmentApi.get()`. If `ProjectRoot` is not set,
 
 ```
 src/lib/api/
-  _client.js      isWails() 判定 + serverCall() fetch ヘルパー
+  _client.js      isWails() 判定 + ブラウザの呼び出し口（setTransport）+ serverCall()（認証の口だけ）
   blender.js      BlenderApi
   environment.js  EnvironmentApi
   project.js      ProjectApi  ← getFileThumbnail({ projectID, fileID }) を含む
@@ -126,10 +126,11 @@ src/lib/api/
 ```
 
 - **モード判定**: `isWails()` は `window._wails && !window.__brender_server_mode`。サーバモードでもバンドル内の `@wailsio/runtime` が `window._wails` をセットするため、サーバ側が index.html に注入する `__brender_server_mode` フラグで区別する
-- **Wailsモード**: `@wailsio/runtime` を動的インポートして既存 Service を呼ぶ
-- **サーバモード**: `POST /api/{service}/{method}` + JSON ボディ、レスポンス `{ data } | { error }` 形式（業務エラーも HTTP 200）。401 は `window.location.reload()` でログイン画面へ。詳細は Skill `brender-server-mode`
+- **呼び出し**: ウィンドウでもブラウザでも、バインディング（`bindings/main/services/*`）を動的インポートして呼ぶ。`isWails()` で API を分けない
+- **ブラウザ（サーバモード）**: `_client.js` が `@wailsio/runtime` の `setTransport()` で呼び出しを `POST /wails/runtime` へ送る。401 は `window.location.reload()` でログイン画面へ。詳細は Skill `brender-server-mode`
+- **`isWails()` を使ってよいのは見た目の分かれ道だけ**: ウィンドウ操作（`Window`）・ダイアログ（`Dialogs`）・イベントの受け方（`appEvents.js`）・別ウィンドウを開くかタブで開くか（`QueueApi.openLogWindow` など）
 - 引数は常にオブジェクト形式: `ProjectApi.get({ id })`, `QueueApi.cancel({ id })` など
-- サーバモードの REST エンドポイントは snake_case: `list_by_project`, `get_engines` など
+- ログイン前に使う認証の口（`AuthApi.login` / `logout` / `me` / `isAuthEnabled`）とアップロード（`ProjectApi.uploadFile`）だけは REST（`/api/...`）のまま
 
 ### CodesApi（コード管理）
 ```js

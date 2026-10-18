@@ -1,8 +1,10 @@
 # サーバモードを Wails の Transport で作り直す(検討メモ)
 
-- 状態: 検討中(試作でブラウザの側は確かめた。ウィンドウの側はまだ。下の「試作で確かめたこと」)
+- 状態: 実装した(2026-10-19)。今の仕組みは Skill `brender-server-mode`・`brender-access-control` を正とする。このメモは経緯として残す。
+  残り:ウィンドウの側の目視確認、`@wailsio/runtime` を Go の側(beta.23)にそろえる(下の「実装した結果」)
 - 書いた日: 2026-10-19(aibow の相談の中で調べた。Chat が書いた)
 - 追記: 2026-10-19(試作の結果と、試作で見つかった気をつけること 6〜11 を足した。Code が書いた)
+- 追記: 2026-10-19(実装した結果を足した。Code が書いた)
 - 関係する資料: Skill `brender-server-mode`(今のサーバモード)・`brender-access-control`(権限)
 - 調べた版: Wails v3.0.0-beta.23(brender が使っている版)。beta.26 も、下で読んだファイルは同じ中身
 
@@ -160,13 +162,36 @@ func (t *browserTransport) Stop() error {
 - 通り道を HTTP のまま(既定の `HTTPTransport`)にするか、公式の例のように WebSocket にするか。まず HTTP で試す
 - `Environment.Server` が false のとき(サーバモードでない)の扱い:自作の Transport を使わず既定のままにするか、いつも自作の Transport にしてサーバだけ立てないか
 
+## 実装した結果(2026-10-19)
+
+下の「進め方」の 1〜7 を行った。
+
+- admin の守りは api の関数の中に移した(34 件。`api/access_test.go` で creator・Guest が `ErrAccessDenied` になることを確かめる)
+- 自作の Transport は `_cmd/brender/transport.go`、`/wails/runtime` の守りは `api/rest/runtime.go`(`api/rest/runtime_test.go`)
+- ウィンドウかブラウザかは `api.WithBrowser` / `api.FromBrowser(ctx)` で見分ける。サムネイルはブラウザに URL、ウィンドウを開くメソッドはブラウザからは断る
+- 画面の呼び出しは `@wailsio/runtime` の `setTransport()`(公式の差し替え口)で `/wails/runtime` に送る。401 で読み直す
+- `routes.go` を消した。認証の口(login / logout / me / is_auth_enabled・パスワードの再設定)とアップロードは REST のまま
+- `Environment.Server` が false のときは Transport を nil(Wails の既定)にする(未決事項の3つ目はこれに決めた)
+
+実機で確かめたこと(ユーザー管理オン・別のホームで新しい DB):
+
+- ブラウザでログインして、設定・キューの画面が開く。`/wails/runtime` が 200、SSE も届く、コンソールのエラー無し
+- creator はユーザ作成・システムログで `access denied`、admin は通る。監査カラム(`created_by`)にログインした利用者が入る
+- 未ログインは 401。ブラウザからの `Queue.OpenLogWindow` は `not available from browser`、`Application.Quit`・`Events.Emit` は 403
+- **ウィンドウの側は目では確かめていない**。通り道は既定の `HTTPTransport` を埋め込んでいるので変わらない(サーバモードでないときは Transport が nil で、前と同じ)
+
+残り:
+
+- ウィンドウの側の目視確認(サーバモードのオン・オフ両方)
+- 画面の `@wailsio/runtime` は beta.16 に固定した(`latest` をやめた)。Go の側(beta.23)にそろえるのは別に行う(依存の更新になるため)
+
 ## 進め方(案)
 
 0. **試作**:自作の Transport を作り、ブラウザから1つのサービス(例:`Codes` の読むだけのメソッド)を呼ぶ。確かめること:
    - ✅ ブラウザで `/wails/runtime.js` が読めて、`/wails/runtime` が呼ばれる(curl で確かめた)
-   - ⬜ ウィンドウの側が今までどおり動く(brender に入れて確かめる)
+   - ⬜ ウィンドウの側が今までどおり動く(目では確かめていない。上の「実装した結果」)
    - ✅ 自前のサーバの middleware で入れた値が、メソッドの `ctx` に届く
-   - ⬜ 本物の画面をブラウザで開いて、生成されたバインディングで呼べる
+   - ✅ 本物の画面をブラウザで開いて、生成されたバインディングで呼べる
 1. **先に行う(REST のままでよい)**:admin の守り(`registerAdmin` の 34)を `api` の側へ移す(気をつけること 1)。作り直しをしなくても守りが二重になる
 2. 自前のサーバの守りを作る:`/wails/runtime` をログイン必須にし、`object` を 0 と 10 に絞り、チャンクを断る。assetHandler へ渡すパスを決めたものだけにする(気をつけること 6〜8)
 3. サービスのメソッドを `ctx` を受ける形にし、利用者の決め方(気をつけること 1)を1か所に作る
