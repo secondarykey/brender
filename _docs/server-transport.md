@@ -1,7 +1,7 @@
 # サーバモードを Wails の Transport で作り直す(検討メモ)
 
 - 状態: 実装した(2026-10-19)。今の仕組みは Skill `brender-server-mode`・`brender-access-control` を正とする。このメモは経緯として残す。
-  残り:ウィンドウの側の目視確認、`@wailsio/runtime` を Go の側(beta.23)にそろえる(下の「実装した結果」)
+  ウィンドウの側もユーザーが確かめた(2026-10-19)。
 - 書いた日: 2026-10-19(aibow の相談の中で調べた。Chat が書いた)
 - 追記: 2026-10-19(試作の結果と、試作で見つかった気をつけること 6〜11 を足した。Code が書いた)
 - 追記: 2026-10-19(実装した結果を足した。Code が書いた)
@@ -153,8 +153,11 @@ func (t *browserTransport) Stop() error {
    自前のサーバの `/_movie`(`api.ValidateWorkDirPath` で確かめる)を必ず先に当てる。assetHandler の鎖へ渡すパスは、決めたものだけにする
 9. **自作の Transport に `WailsEventListener` を持たせない**(調べたこと)。持たせるとウィンドウにイベントが届かなくなる。ブラウザへのイベントは今の SSE のまま
 10. **エラーの返し方が変わる**:Wails はエラーを 422(本文はテキストか JSON)で返す。今の `serverCall` の「401 ならページを読み直す」は、ラッパーの共通の受け口で作り直す
-11. **画面の `@wailsio/runtime` の版がずれている**:`package.json` は `"latest"`、入っているのは beta.16。Go の側は beta.23。
-    ブラウザから同じ通り道を使うので、Go の側と同じ版に固定する(`Window` / `Dialogs` を使う画面(`TitleBar.jsx` とダイアログの9ファイル)はブラウザでは断られるので、見た目の分かれ道として残す)
+11. **画面の `@wailsio/runtime` の版は Go の側と一致しない**:`package.json` は `"latest"`、入っているのは beta.16。Go の側は beta.23。
+    npm のリリースは Go の側に追従しないので、**固定せず `latest` のまま使う**(Skill `wails3` の方針。一度 beta.16 に固定したが戻した。2026-10-19)。
+    ブラウザの呼び出しは自前の `setTransport` の実装で送り、サーバは `object` しか読まないので、版がずれる心配はウィンドウと同じ。
+    runtime を上げたときは `setTransport` / `clientId` の口が変わっていないかだけ見る。
+    (`Window` / `Dialogs` を使う画面(`TitleBar.jsx` とダイアログの9ファイル)はブラウザでは断られるので、見た目の分かれ道として残す)
 
 ## 未決事項
 
@@ -178,12 +181,18 @@ func (t *browserTransport) Stop() error {
 - ブラウザでログインして、設定・キューの画面が開く。`/wails/runtime` が 200、SSE も届く、コンソールのエラー無し
 - creator はユーザ作成・システムログで `access denied`、admin は通る。監査カラム(`created_by`)にログインした利用者が入る
 - 未ログインは 401。ブラウザからの `Queue.OpenLogWindow` は `not available from browser`、`Application.Quit`・`Events.Emit` は 403
-- **ウィンドウの側は目では確かめていない**。通り道は既定の `HTTPTransport` を埋め込んでいるので変わらない(サーバモードでないときは Transport が nil で、前と同じ)
+- ウィンドウの側は、通り道が既定の `HTTPTransport` を埋め込んでいるので変わらない(サーバモードでないときは Transport が nil で、前と同じ)。ユーザーが使って確かめた(2026-10-19)
 
-残り:
+実装した後で分かったこと・足したこと:
 
-- ウィンドウの側の目視確認(サーバモードのオン・オフ両方)
-- 画面の `@wailsio/runtime` は beta.16 に固定した(`latest` をやめた)。Go の側(beta.23)にそろえるのは別に行う(依存の更新になるため)
+- サーバの起動の行がログファイルにしか出ず、`wails3 dev` のターミナルでは見えなかった。設定を変えても再起動まで何も出なかった。
+  起動のたびにサーバモードのオン・オフ・待ち受けている URL・失敗の理由をログとターミナルの両方に出し、設定を変えたときに「再起動で反映」と出すようにした
+- キューの強制終了(利用者の操作)が終了時用の `KillRunningQueues` を呼び、`shuttingDown` が立ったまま以後のジョブが閉じられなくなっていた(作り直しの前からの不具合)。
+  `KillRunningQueuesByUser` を分けて直した(Skill `brender-render-pipeline`)
+- 権限エラーは Wails が ERROR としてログに出す。ブラウザからの呼び出しは 1 回ごとの INFO が無い(Skill `brender-server-mode` の「エラーとログの出方」)
+- ウィンドウを 1 つも作らなくても `app.Run()` が動き続ける。`TODO.md` の「ウィンドウを出さずに動かす」に使える
+
+- 画面の `@wailsio/runtime` を一度 beta.16 に固定したが、npm のリリースは Go の側の版と一致しないため `latest` に戻した(気をつけること 11)
 
 ## 進め方(案)
 
@@ -196,7 +205,7 @@ func (t *browserTransport) Stop() error {
 2. 自前のサーバの守りを作る:`/wails/runtime` をログイン必須にし、`object` を 0 と 10 に絞り、チャンクを断る。assetHandler へ渡すパスを決めたものだけにする(気をつけること 6〜8)
 3. サービスのメソッドを `ctx` を受ける形にし、利用者の決め方(気をつけること 1)を1か所に作る
 4. ブラウザから断るメソッドの印を作る(気をつけること 1 の「出していないメソッド」と 2)
-5. 画面の `@wailsio/runtime` を Go の側と同じ版に固定し、エラーの受け口を作る(気をつけること 10・11)
+5. 画面のエラーの受け口を作る(気をつけること 10。`@wailsio/runtime` は `latest` のまま。気をつけること 11)
 6. サービスごとに、ラッパーの `isWails()` の分かれ道を消してバインディングに切り替える
 7. REST のディスパッチ(`rest.go` / `routes.go`)と `/wails/` のダミーを消す。Skill `brender-server-mode`・`brender-access-control` と `AGENTS.md` を書き直す
 

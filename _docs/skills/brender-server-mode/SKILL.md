@@ -45,6 +45,15 @@ Brender のベース機能（デスクトップ運用）に対し、サーバモ
 - **ウィンドウかブラウザかの見分け**: サービスの中では `api.FromBrowser(ctx)`。印を付けるのは rest サーバだけなので偽れない。**ヘッダーや `application.WindowKey` で判定しない**
 - Wails はメソッドを HTTP の処理と同じ goroutine で同期に呼び、呼び出しが返ると ctx を取り消す。goroutine で ctx を使い続けるときは `context.WithoutCancel(ctx)`（`Workspace.CreateMovie` 参照）
 
+### エラーとログの出方
+
+- バインディングのメソッドが error を返すと、HTTP 422 で `{"message": "...", "cause": {}, "kind": "RuntimeError"}` が返る。画面（`_client.js` の呼び出し口）は `message` を `Error` にして投げるので、ウィンドウと同じ try/catch で扱える
+- 権限エラー（`access denied`）も Wails がログに **ERROR**（`Binding call failed: Bound method returned an error: access denied`）で出す。利用者の操作ミスでも ERROR になる点に注意
+- 守りで断ったもの: object の不許可は 403（ログに WARN `runtime: object N from browser is not allowed`）、未ログインは 401、チャンクは 400
+- `/wails/runtime` の呼び出し自体は `requestLogger` の DEBUG にしか出ない（以前の REST のような 1 呼び出し 1 行の INFO は無い）
+- runtime はページ読み込み時に `HEAD /wails/custom.js` を見に来る。404 でよい（無ければ読み飛ばす）
+- 監査カラム（`created_by` など）にはログインした利用者が入る（メソッドが HTTP の処理と同じ goroutine で呼ばれるため、goroutine ユーザも効く）
+
 ## HTTP ルーティング構成 (`api/rest/server.go`)
 
 `NewServer` が `http.ServeMux` を組み、全体を `requestLogger(authMiddleware(mux))` でラップする。
@@ -69,6 +78,7 @@ export const isWails = () => Boolean(window._wails) && !window.__brender_server_
 `isWails()` は**見た目の分かれ道**（ウィンドウ操作・ダイアログ・イベントの受け方・別ウィンドウかタブか）にだけ使う。API ラッパーはモードに関係なくバインディングを呼ぶ。
 
 **ブラウザの呼び出し口**: `_client.js` がサーバモードのとき `@wailsio/runtime` の `setTransport()` で呼び出しを差し替え、`POST /wails/runtime` に送る。401 なら `window.location.reload()` でログイン画面へ。チャンク送信は使わない。
+`@wailsio/runtime` は `latest` のまま（npm のリリースは Go 側の版と一致しないため固定しない。Skill `wails3`）。runtime を上げたときは `setTransport` / `clientId` の口が変わっていないかを見る。
 
 ### サービスのメソッドの追加手順
 
@@ -92,6 +102,17 @@ export const isWails = () => Boolean(window._wails) && !window.__brender_server_
 - 配信形式: `data: {"name": "...", "data": ...}\n\n`
 - `main.go` の `emit(name, data)` が Wails Event と `broker.Emit` の両方へ配る（新イベントは必ず emit 経由）
 - フロントは `src/lib/appEvents.js` が `EventSource('/events')` のシングルトンで受信
+
+## 実機での確かめ方
+
+本物の DB（`~/.brender/brender.db`）を触らずに、サーバモードを本番ビルドで確かめる手順。
+
+1. 仮のホームを作る。`config.Dir()` は `os.UserHomeDir()`（Windows は `USERPROFILE`）を使うので、`USERPROFILE` を差し替えれば DB・`brender.ini` が仮のホームの `.brender/` に向く。ログの出先は仮の `brender.ini` の `log_dir` で分ける
+2. 仮の DB を作る小さな Go プログラム（`replace github.com/secondarykey/brender => <checkout>`）で `model.Init` → `model.SetEnvironment(&model.Environment{Server: true, ServerHost: "127.0.0.1", ServerPort: <空きポート>, ServerAuth: true})` → `model.CreateUser` / `model.SetPassword` で admin と creator を作る
+3. `frontend/dist` を作ってから `go build -tags production` し、`USERPROFILE=<仮のホーム>` で起動する（デスクトップにウィンドウも出る）。起動ログに `= Server mode: on, listening on ...` が出る
+4. curl で `POST /api/auth/login`（Cookie を保存）→ `POST /wails/runtime` に `{"object":0,"method":0,"args":{"call-id":"x","methodID":<ID>,"args":[...]}}`。`methodID` は生成されたバインディング（`frontend/bindings/main/services/*.js` の `$Call.ByID(<ID>, ...)`）から取る
+5. 確かめること: 未ログインは 401、creator の admin 操作は `access denied`、ウィンドウを開くメソッドは `not available from browser`、`{"object":2,"method":2}`（Quit）と `{"object":3,...}`（Emit）は 403。ブラウザで画面を開き、`/wails/runtime` が 200・SSE が届く・コンソールにエラーが無いこと
+6. 終わったら `taskkill /IM <exe>`（`/F` なしで WindowClosing フックを通す）
 
 ## サーバモードで考慮すべきことチェックリスト
 
