@@ -28,7 +28,17 @@ type Options struct {
 	// KeepDays は Dir に残す日数（今日を含む）。それより古い <Prefix>_<日付>.log を消す。0 なら消さない。
 	// 消すのは wenteasy/log の RollingFileWriter（SetKeep）で、ファイルを開いたとき（最初に書いたとき・日付が変わって切り替えたとき）に動く
 	KeepDays int
+	// CompressDays は、そのまま読める形で残す日数（今日を含む）。それより古いログファイルを gzip（<名前>.log.gz）にする。0 なら圧縮しない。
+	// 2 なら今日と昨日は .log のまま。圧縮するのも消すのと同じ時（SetCompressAfter）。KeepDays より古いものは、圧縮したものも消える
+	CompressDays int
 }
+
+// DefaultKeepDays・DefaultCompressDays は、アプリ（_cmd/brender・_cmd/brender-tool）が Options に渡す既定の日数（今日を含む）。
+// 2 日より古いものは gzip にして、100 日分を残す。
+const (
+	DefaultKeepDays     = 100
+	DefaultCompressDays = 2
+)
 
 // FilePrefix はログファイルの名前の頭の既定（brender_20261109.log）。
 const FilePrefix = "brender"
@@ -70,7 +80,8 @@ func Init(opts Options) (io.Closer, error) {
 			w.SetPrefix(prefix)
 			// 片付けるのは <prefix>_<日付>.log にぴったり合うものだけ（頭の違うファイルや、前の形の YYYYMMDD.log には触らない）
 			w.SetKeep(opts.KeepDays)
-			// 消せなかったことは残す（ログのために止めはしない）。wenteasy/log は w のロックを持たずに呼ぶので、ここから同じ w へ書いてよい
+			w.SetCompressAfter(opts.CompressDays)
+			// 消せなかった・圧縮できなかったことは残す（ログのために止めはしない）。wenteasy/log は w のロックを持たずに呼ぶので、ここから同じ w へ書いてよい
 			w.SetErrorHandler(func(err error) {
 				Warnf("古いログファイルを片付けられませんでした（%s）: %v", opts.Dir, err)
 			})

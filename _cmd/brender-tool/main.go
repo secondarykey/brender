@@ -64,7 +64,8 @@ func main() {
 	if verbose {
 		root = log.LevelDebug
 	}
-	logs, logErr := log.Init(log.Options{Dir: log.DefaultDir(), Prefix: "brender-tool", Root: root, KeepDays: 30})
+	logs, logErr := log.Init(log.Options{Dir: log.DefaultDir(), Prefix: "brender-tool", Root: root,
+		KeepDays: log.DefaultKeepDays, CompressDays: log.DefaultCompressDays})
 	if logErr != nil {
 		fmt.Fprintf(os.Stderr, "log.Init() error: %v\n", logErr)
 	}

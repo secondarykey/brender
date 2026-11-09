@@ -101,15 +101,13 @@ func startLog() (io.Closer, error) {
 		root = log.LevelInfo
 	}
 	return log.Init(log.Options{
-		Dir:      log.DefaultDir(),
-		Root:     root,
-		Console:  isDev,
-		KeepDays: logKeepDays,
+		Dir:          log.DefaultDir(),
+		Root:         root,
+		Console:      isDev,
+		KeepDays:     log.DefaultKeepDays,
+		CompressDays: log.DefaultCompressDays,
 	})
 }
-
-// logKeepDays はログファイルを残す日数（今日を含む）。
-const logKeepDays = 30
 
 func main() {
 

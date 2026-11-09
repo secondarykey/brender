@@ -211,7 +211,7 @@ db_path = D:\brender\brender.db
 ### Temp ディレクトリ構成
 ```
 {TempDir}/brender/
-  logs/                  ← アプリログ（brender_YYYYMMDD.log / brender-tool_YYYYMMDD.log、日次・追記・30 日分）。brender.ini の log_dir で変更可
+  logs/                  ← アプリログ（brender_YYYYMMDD.log / brender-tool_YYYYMMDD.log、日次・追記。2 日より古いものは .log.gz、100 日分を残す）。brender.ini の log_dir で変更可
   scripts/               ← Blender 用 Python 生成スクリプト
     tool_*.py            ← シーン/エンジン解析（getToolPythonFile でプロセス内1回キャッシュ）
     run_*.py             ← レンダリング実行（毎回生成）

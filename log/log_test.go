@@ -199,3 +199,50 @@ func TestInitBadDir(t *testing.T) {
 	c.Close()
 	log.Info("still works")
 }
+
+// 古いファイルを gzip にし、KeepDays より古いものを消すこと（片付けは別の goroutine なので、終わるまで待つ）。
+func TestInitCleansOldFiles(t *testing.T) {
+	old := slog.Default()
+	t.Cleanup(func() { slog.SetDefault(old) })
+	dir := t.TempDir()
+	name := func(daysAgo int) string {
+		return filepath.Join(dir, "test_"+time.Now().AddDate(0, 0, -daysAgo).Format("20060102")+".log")
+	}
+	for _, d := range []int{1, 3, 120} {
+		if err := os.WriteFile(name(d), []byte("old\n"), 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	other := filepath.Join(dir, "20200101.log") // 前の形の名前には触らない
+	if err := os.WriteFile(other, []byte("x\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	c, err := log.Init(log.Options{Dir: dir, Prefix: "test", KeepDays: 100, CompressDays: 2})
+	if err != nil {
+		t.Fatalf("Init() error: %v", err)
+	}
+	t.Cleanup(func() { c.Close() })
+	log.Notice("open") // ファイルを開いたときに片付けが動く
+
+	exists := func(p string) bool { _, err := os.Stat(p); return err == nil }
+	deadline := time.Now().Add(5 * time.Second)
+	for time.Now().Before(deadline) {
+		if exists(name(3)+".gz") && !exists(name(3)) && !exists(name(120)) {
+			break
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	if !exists(name(1)) {
+		t.Errorf("yesterday's log should stay as .log")
+	}
+	if exists(name(3)) || !exists(name(3)+".gz") {
+		t.Errorf("3 days ago should be compressed")
+	}
+	if exists(name(120)) {
+		t.Errorf("120 days ago should be removed")
+	}
+	if !exists(other) {
+		t.Errorf("file of another name was touched")
+	}
+}
