@@ -5,7 +5,7 @@ import (
 	"embed"
 	_ "embed"
 	"fmt"
-	"log/slog"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -74,17 +74,42 @@ func (h *movieAwareHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.fallback.ServeHTTP(w, r)
 }
 
-// startupLog は起動時の大事な知らせをログファイルとターミナル（標準出力・標準エラー）の両方に出す。
-// ログはファイルにしか出ないため、wails3 dev のターミナルでも見えるようにする。
+// startupLog は起動時の大事な知らせをログとターミナル（標準出力・標準エラー）の両方に出す。
+// 配る exe のログはファイルにしか出ないため、ターミナルから起動したときにも見えるようにする
+// （wails3 dev はログがターミナルにも出るので、二重に出さない）。
 func startupLog(isErr bool, format string, args ...any) {
 	if isErr {
-		log.Error(format, args...)
-		fmt.Fprintln(os.Stderr, fmt.Sprintf(format, args...))
+		log.Errorf(format, args...)
+	} else {
+		log.Noticef(format, args...)
+	}
+	if isDev {
 		return
 	}
-	log.Notice(format, args...)
-	fmt.Fprintln(os.Stdout, fmt.Sprintf(format, args...))
+	out := os.Stdout
+	if isErr {
+		out = os.Stderr
+	}
+	fmt.Fprintln(out, fmt.Sprintf(format, args...))
 }
+
+// startLog はログの出口を組む。ファイルはいつも（brender.ini の log_dir、無ければ一時フォルダ）、
+// wails3 dev ではターミナルにも出し、Info から残す。配る exe は Notice から残す（設定画面で変えられる）。
+func startLog() (io.Closer, error) {
+	root := log.LevelNotice
+	if isDev {
+		root = log.LevelInfo
+	}
+	return log.Init(log.Options{
+		Dir:      log.DefaultDir(),
+		Root:     root,
+		Console:  isDev,
+		KeepDays: logKeepDays,
+	})
+}
+
+// logKeepDays はログファイルを残す日数（今日を含む）。
+const logKeepDays = 30
 
 func main() {
 
@@ -97,21 +122,23 @@ func main() {
 
 func run() error {
 
-	logger, err := log.Init(context.Background())
-	if err != nil {
-		return xerrors.Errorf("log.Init() error: %w", err)
+	// 最初に組む（DB の初期化のログから残すため）。ログが書けなくてもアプリは止めない
+	logs, logErr := startLog()
+	defer logs.Close()
+	if logErr != nil {
+		log.Warnf("startLog: %v", logErr)
 	}
 
-	log.Notice("= Brender Version: %s", strings.TrimSpace(appVersion))
+	log.Noticef("= Brender Version: %s", strings.TrimSpace(appVersion))
 
-	err = initDB()
+	err := initDB()
 	if err != nil {
 		return xerrors.Errorf("initDB() error: %w", err)
 	}
 
 	// 常駐中に溜まった生成済みスクリプトを起動時に一掃する
 	if err := api.ClearScripts(); err != nil {
-		log.Notice("ClearScripts: %v", err)
+		log.Noticef("ClearScripts: %v", err)
 	}
 
 	// 前回終了時に running のまま残ったキューを waiting に戻す
@@ -132,7 +159,7 @@ func run() error {
 	var transport application.Transport // nil なら Wails の既定（ウィンドウだけ）
 	env, err := model.GetEnv()
 	if err != nil {
-		log.Error("GetEnv: %v (server mode is treated as off)", err)
+		log.Errorf("GetEnv: %v (server mode is treated as off)", err)
 	}
 	if err == nil && env != nil && env.Server {
 		serverAuth = env.ServerAuth
@@ -142,13 +169,14 @@ func run() error {
 		}
 		restServer = rest.NewServer(assets, env.ServerHost, serverPort)
 		broker = restServer.Broker()
-		transport = newBrowserTransport(restServer, application.HTTPTransportWithLogger(logger))
+		transport = newBrowserTransport(restServer, application.HTTPTransportWithLogger(log.Logger()))
 	}
 
 	app := application.New(application.Options{
 		Name:        "Brender",
 		Description: "Blender rendering manager",
-		Logger:      logger,
+		// ⚠️ Wails 自身のログも同じ出口へ。渡さないと、配る exe（production）では Wails のログ（エラーを含む）が捨てられる
+		Logger: log.Logger(),
 		Services: []application.Service{
 			application.NewService(services.NewBlender()),
 			application.NewService(services.NewEnvironment()),
@@ -175,8 +203,6 @@ func run() error {
 	dev := app.Env.Info().Debug
 	services.DevMode = dev
 	if dev {
-		log.SetLevel(slog.LevelInfo)
-		//ログをInfoに落とす
 		log.Info("Develop Mode")
 	}
 

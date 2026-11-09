@@ -7,6 +7,7 @@ require (
 	github.com/glebarez/sqlite v1.11.0
 	github.com/google/uuid v1.6.0
 	github.com/shirou/gopsutil/v4 v4.26.5
+	github.com/wenteasy/log v0.4.0
 	golang.org/x/crypto v0.52.0
 	golang.org/x/image v0.40.0
 	golang.org/x/sys v0.45.0

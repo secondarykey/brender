@@ -49,13 +49,13 @@ func CreateWorkspace(ctx context.Context, projectID string, projectFileID string
 	}
 	now := time.Now()
 	if err := model.UpdateWorkspaceProcessedAt(ws.ID, &now); err != nil {
-		log.Error("CreateWorkspace: UpdateWorkspaceProcessedAt: %v", err)
+		log.Errorf("CreateWorkspace: UpdateWorkspaceProcessedAt: %v", err)
 	}
 	if err := model.UpdateProjectFileProcessedAt(projectFileID, &now); err != nil {
-		log.Error("CreateWorkspace: UpdateProjectFileProcessedAt: %v", err)
+		log.Errorf("CreateWorkspace: UpdateProjectFileProcessedAt: %v", err)
 	}
 	if err := model.UpdateProjectProcessedAt(projectID, &now); err != nil {
-		log.Error("CreateWorkspace: UpdateProjectProcessedAt: %v", err)
+		log.Errorf("CreateWorkspace: UpdateProjectProcessedAt: %v", err)
 	}
 	return ws, nil
 }
@@ -83,15 +83,15 @@ func CreateWorkspaceBatch(ctx context.Context, projectID, projectFileID string, 
 			return results, err
 		}
 		if err := model.UpdateWorkspaceProcessedAt(ws.ID, &now); err != nil {
-			log.Error("CreateWorkspaceBatch: UpdateWorkspaceProcessedAt: %v", err)
+			log.Errorf("CreateWorkspaceBatch: UpdateWorkspaceProcessedAt: %v", err)
 		}
 		results = append(results, ws)
 	}
 	if err := model.UpdateProjectFileProcessedAt(projectFileID, &now); err != nil {
-		log.Error("CreateWorkspaceBatch: UpdateProjectFileProcessedAt: %v", err)
+		log.Errorf("CreateWorkspaceBatch: UpdateProjectFileProcessedAt: %v", err)
 	}
 	if err := model.UpdateProjectProcessedAt(projectID, &now); err != nil {
-		log.Error("CreateWorkspaceBatch: UpdateProjectProcessedAt: %v", err)
+		log.Errorf("CreateWorkspaceBatch: UpdateProjectProcessedAt: %v", err)
 	}
 	return results, nil
 }
@@ -122,13 +122,13 @@ func CopyWorkspace(ctx context.Context, projectID, workspaceID, newName string) 
 	}
 	now := time.Now()
 	if err := model.UpdateWorkspaceProcessedAt(newWS.ID, &now); err != nil {
-		log.Error("CopyWorkspace: UpdateWorkspaceProcessedAt: %v", err)
+		log.Errorf("CopyWorkspace: UpdateWorkspaceProcessedAt: %v", err)
 	}
 	if err := model.UpdateProjectFileProcessedAt(src.ProjectFileID, &now); err != nil {
-		log.Error("CopyWorkspace: UpdateProjectFileProcessedAt: %v", err)
+		log.Errorf("CopyWorkspace: UpdateProjectFileProcessedAt: %v", err)
 	}
 	if err := model.UpdateProjectProcessedAt(projectID, &now); err != nil {
-		log.Error("CopyWorkspace: UpdateProjectProcessedAt: %v", err)
+		log.Errorf("CopyWorkspace: UpdateProjectProcessedAt: %v", err)
 	}
 	return newWS, nil
 }
@@ -180,7 +180,7 @@ func DeleteWorkspace(ctx context.Context, projectID, workspaceID string, force b
 	if len(dirs) > 0 {
 		wsDir := filepath.Dir(dirs[0])
 		if err := os.RemoveAll(wsDir); err != nil {
-			log.Error("DeleteWorkspace: remove workspace dir: %v", err)
+			log.Errorf("DeleteWorkspace: remove workspace dir: %v", err)
 		}
 	}
 	if err := model.DeleteJobsByWorkspace(workspaceID); err != nil {

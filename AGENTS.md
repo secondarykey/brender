@@ -180,6 +180,17 @@ CI が使う wails3 CLI のバージョンは `.github/variables` の `WAILS_VER
 - **サムネイル自動生成** (`api/thumbnail.go`): `AddProjectFile` 時に非同期で `IsSystem=true` ワークスペースを作成し、中間フレームを 1 枚レンダリング → 640×360 JPEG で `thumbnail.jpg` に保存。取得は Wails=base64 データURI / サーバモード=URL 配信（`GET /thumbnail`）の 2 形態。
 - **権限・アクセス制御**: `Environment.Server=true` かつ `ServerAuth=true` のときのみ有効（無効時は全員フルアクセス）。api 層の関数は第1引数 `ctx` の操作ユーザ（`model.WithUser` / `currentUser(ctx)`）で判定し、**`api/access.go` の共通ヘルパー（`fullAccess` / `requireProjectRole` / `requireAdmin` 等）を使う — 自前で `if userID != owner {...}` を書かない**。**サービスのメソッドは全部ブラウザからも呼べる**ため、admin 操作は api の関数の中で `requireAdmin(ctx)` を通し、ウィンドウを開く操作は `api.FromBrowser(ctx)` で断る。ロール体系・守り・フロント制御の詳細は Skill `brender-access-control` を参照。
 
+### ログ (`log/`)
+
+土台は `github.com/wenteasy/log`。作り方の決まりごとの正は wenteasy/log の README「使う側のやり方（自分の log パッケージを作る）」（ライブラリとしても使われる形）。
+
+- **brender のコードは `brender/log` の関数でログを出す**（標準の `log`・`slog`・wenteasy/log を直接使わない）。`log.Info("msg", "key", v)` は slog と同じキーと値の形、printf は `log.Infof(...)`。混ぜない（`Info` に書式を渡すと整形されず `!BADKEY` になる）
+- **wenteasy/log を import するのは `log/` の中だけ。** brender を使う人に見せるのは `slog.Level` と `*slog.Logger`（`log.SetLogger` / `log.Logger`）だけ
+- **出口を組む（`log.Init` / `slog.SetDefault`）のは `_cmd/brender` と `_cmd/brender-tool` の main だけ。** `exec/`・`api/` などからは呼ばない。ログが書けなくてもアプリは止めない（`Init` は出せる出口で組み、理由を error で返す）
+- ⚠️ `log/log.go` の `output` は公開関数から直接呼ぶ（間に関数を挟むと、記録される位置が全部 `log` パッケージになる）。歯止めは `log/log_test.go` の `TestCallerIsTheCaller`
+- 出し先: デスクトップは `brender_<日付>.log`（`wails3 dev` は Info からでターミナルにも出す、配る exe は Notice から）、brender-tool は `brender-tool_<日付>.log`（ファイルだけ、`-v` で Debug）。dev かどうかは `-tags production` の有無（`_cmd/brender/devmode_*.go`）で見分ける。Wails 自身のログも `application.Options.Logger: log.Logger()` で同じ出口へ
+- 設定画面のレベル変更は `log.SetLevel`（`Init` で組んだ出口にだけ効く。`SetLogger` で別の Logger を渡したときは効かない）。GORM のログは `log.NewDBLogger()` で `logger=db` の印付き
+
 ### 起動設定ファイル (`config/`, `~/.brender/brender.ini`)
 
 DB（`Environment`）を読む**前**に確定したい設定の受け皿。`log.Init()` が `initDB()` より先に呼ばれるため、ログ出力先のような早期設定は DB に置けない。`config.Get()` がプロセス起動時に1回だけ `~/.brender/brender.ini` を読む（**変更は再起動で反映**）。デスクトップ・サーバ両モード共通。ファイルが無ければ各呼び出し側のデフォルトにフォールバックする。
@@ -192,7 +203,7 @@ db_path = D:\brender\brender.db
 
 | キー | 反映先 | 未設定時のデフォルト |
 |---|---|---|
-| `log_dir` | `log.Init()` のログ出力ディレクトリ | `{TempDir}/brender/logs` |
+| `log_dir` | `log.DefaultDir()`（`log.Init` に渡すログのフォルダ） | `{TempDir}/brender/logs` |
 | `db_path` | `main.initDB()` の SQLite パス | `~/.brender/brender.db` |
 
 新しいキーを足す場合: `config.Config` にフィールド追加 → `load()` の `switch` に case 追加 → 読みたい箇所で `config.Get().Xxx`。
@@ -200,7 +211,7 @@ db_path = D:\brender\brender.db
 ### Temp ディレクトリ構成
 ```
 {TempDir}/brender/
-  logs/                  ← アプリログ（YYYYMMDD.log、日次・追記）。brender.ini の log_dir で変更可
+  logs/                  ← アプリログ（brender_YYYYMMDD.log / brender-tool_YYYYMMDD.log、日次・追記・30 日分）。brender.ini の log_dir で変更可
   scripts/               ← Blender 用 Python 生成スクリプト
     tool_*.py            ← シーン/エンジン解析（getToolPythonFile でプロセス内1回キャッシュ）
     run_*.py             ← レンダリング実行（毎回生成）

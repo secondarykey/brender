@@ -117,7 +117,7 @@ func (ff *FFmpeg) CreateMovie(ctx context.Context, out string, fps int, p string
 		return nil, err
 	}
 
-	log.Info("ffmpeg started: %s", out)
+	log.Infof("ffmpeg started: %s", out)
 	return ch, nil
 }
 
@@ -127,7 +127,7 @@ func (ff *FFmpeg) run(ctx context.Context, args ...string) (chan error, error) {
 		return nil, xerrors.Errorf("runCommand() error: %w", err)
 	}
 
-	log.Info("ffmpeg PID:%d", pId)
+	log.Infof("ffmpeg PID:%d", pId)
 
 	return errCh, err
 }

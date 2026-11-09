@@ -69,7 +69,7 @@ func (b *SSEBroker) Handler() http.HandlerFunc {
 			case ev := <-ch:
 				data, err := json.Marshal(ev)
 				if err != nil {
-					log.Warn("SSE marshal error: %v", err)
+					log.Warnf("SSE marshal error: %v", err)
 					continue
 				}
 				fmt.Fprintf(w, "data: %s\n\n", data)

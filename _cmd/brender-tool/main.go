@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"log/slog"
 	"os"
 	"path/filepath"
 	"time"
@@ -59,15 +58,17 @@ func main() {
 
 	flag.Parse()
 
-	if _, err := log.Init(context.Background()); err != nil {
-		fmt.Fprintf(os.Stderr, "log.Init() error: %+v\n", err)
-		os.Exit(1)
-	}
-	defer log.Close()
-
+	// ログはファイルだけ（ターミナルは進捗の表示に使う）。デスクトップアプリのログと混ざらないよう、頭を分ける。
+	// ファイルを作れないときは標準エラー出力に出して続ける
+	root := log.LevelNotice
 	if verbose {
-		log.SetLevel(slog.LevelDebug)
+		root = log.LevelDebug
 	}
+	logs, logErr := log.Init(log.Options{Dir: log.DefaultDir(), Prefix: "brender-tool", Root: root, KeepDays: 30})
+	if logErr != nil {
+		fmt.Fprintf(os.Stderr, "log.Init() error: %v\n", logErr)
+	}
+	defer logs.Close()
 
 	if engines {
 		err := printEngineList()
@@ -202,7 +203,7 @@ func rendering(f string) error {
 
 	tool := b.Tool
 	fmt.Printf("Blender Version: %s (%s)\n", tool.Version, tool.Build)
-	log.Info("Blender Version: %s (%s)", tool.Version, tool.Build)
+	log.Infof("Blender Version: %s (%s)", tool.Version, tool.Build)
 
 	s := tool.ActiveScene()
 	if scene == "" {
@@ -210,7 +211,7 @@ func rendering(f string) error {
 	}
 	b.Scene = scene
 	fmt.Printf("Scene: %s\n", b.Scene)
-	log.Info("Scene: %s", b.Scene)
+	log.Infof("Scene: %s", b.Scene)
 
 	if start == -1 {
 		start = s.Start
@@ -235,7 +236,7 @@ func rendering(f string) error {
 	b.Start = start
 	b.End = end
 	fmt.Printf("Frame: %d-%d\n", b.Start, b.End)
-	log.Info("Frame: %d-%d", b.Start, b.End)
+	log.Infof("Frame: %d-%d", b.Start, b.End)
 
 	var w []io.Writer
 	if verbose {
@@ -253,7 +254,7 @@ func rendering(f string) error {
 		}
 		defer logFile.Close()
 		w = append(w, logFile)
-		log.Info("render.log: %s", logPath)
+		log.Infof("render.log: %s", logPath)
 	}
 
 	//処理をまとめてくれるライターを生成
