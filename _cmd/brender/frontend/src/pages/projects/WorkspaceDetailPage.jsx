@@ -237,7 +237,7 @@ function DefaultTag({ value, t }) {
 }
 
 // ── 設定タブ ──────────────────────────────────────────────
-function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, detail, focusName, role, onUpdated, onDeleted, onTestEnqueued, onRenderEnqueued, workDirLocked, navigate, wsStale }) {
+function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, detail, focusName, role, onUpdated, onDeleted, onTestEnqueued, onRenderEnqueued, workDirLocked, navigate }) {
   const { t } = useTranslation()
   const { showToast } = useToast()
   const { showError } = useMessage()
@@ -941,7 +941,8 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
         {renderConfirm && (() => {
           const pv = renderConfirm
           const prev = pv.previous
-          const fileNotModified = detail.workspace.processed_at && !wsStale
+          // 判定はダイアログを開いた時点のサーバ側の値で行う（ページを開いたときの detail は古いことがある）
+          const fileNotModified = pv.file_not_modified
           const allIdentical = prev && pv.scene === prev.scene && pv.engine === prev.engine
             && pv.start_frame === prev.start_frame && pv.end_frame === prev.end_frame
             && pv.frame_step === prev.frame_step && pv.samples === prev.samples
@@ -1189,7 +1190,6 @@ function WorkspaceDetailPage({ projectID, projectName: initialProjectName, fileI
             onRenderEnqueued={() => navigate('queue')}
             workDirLocked={workDirStatus === 'lock'}
             navigate={navigate}
-            wsStale={wsStale}
           />
         </div>
         <div className="ws-detail-right">

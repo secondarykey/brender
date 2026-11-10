@@ -338,7 +338,8 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
         {confirm && (() => {
           const pv = confirm.preview
           const prev = pv.previous
-          const fileNotModified = confirm.ws.processed_at && !isStale(confirm.ws)
+          // 判定はダイアログを開いた時点のサーバ側の値で行う（一覧を読んだときの値は古いことがある）
+          const fileNotModified = pv.file_not_modified
           const allIdentical = prev && pv.scene === prev.scene && pv.engine === prev.engine
             && pv.start_frame === prev.start_frame && pv.end_frame === prev.end_frame
             && pv.frame_step === prev.frame_step && pv.samples === prev.samples

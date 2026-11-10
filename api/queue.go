@@ -282,6 +282,23 @@ type RenderPreview struct {
 	OutputFormat  string              `json:"output_format"` // 解決済みフォーマット名（"PNG" / "JPEG"）
 	JobType       string              `json:"job_type"`
 	Previous      *PreviousRenderInfo `json:"previous"`
+	// FileNotModified は前回の実行（ワークスペースの processed_at）からファイルが更新されていないこと。
+	// 確認ダイアログを開いた時点のファイルの更新時刻で判定する（画面が持っている古い値を使わない）。
+	FileNotModified bool `json:"file_not_modified"`
+}
+
+// fileNotModifiedSince は processedAt 以降に path のファイルが更新されていなければ true を返す。
+// まだ一度も実行していない（processedAt が nil）ときは false。ファイルが読めないときは
+// 更新を確認できないので true（更新されていない側）に倒す。
+func fileNotModifiedSince(path string, processedAt *time.Time) bool {
+	if processedAt == nil {
+		return false
+	}
+	info, err := os.Stat(path)
+	if err != nil {
+		return true
+	}
+	return !info.ModTime().After(*processedAt)
 }
 
 type PreviousRenderInfo struct {
@@ -463,23 +480,24 @@ func PreviewRender(projectID, workspaceID string) (*RenderPreview, error) {
 	}
 
 	preview := &RenderPreview{
-		ProjectName:   p.Name,
-		WorkspaceName: w.Name,
-		ProjectFileID: w.ProjectFileID,
-		BlenderPath:   blenderPath,
-		BlenderFile:   blenderFile,
-		Scene:         st.Name, // 常に実際のシーン名
-		Engine:        engine,
-		StartFrame:    startFrame,
-		EndFrame:      endFrame,
-		FrameStep:     w.FrameStep,
-		Thread:        w.Thread,
-		Samples:       samples,
-		ResolutionX:   w.ResolutionX,
-		ResolutionY:   w.ResolutionY,
-		Camera:        camera,
-		OutputFormat:  outputFormat,
-		JobType:       model.JobTypeRender,
+		ProjectName:     p.Name,
+		WorkspaceName:   w.Name,
+		ProjectFileID:   w.ProjectFileID,
+		BlenderPath:     blenderPath,
+		BlenderFile:     blenderFile,
+		Scene:           st.Name, // 常に実際のシーン名
+		Engine:          engine,
+		StartFrame:      startFrame,
+		EndFrame:        endFrame,
+		FrameStep:       w.FrameStep,
+		Thread:          w.Thread,
+		Samples:         samples,
+		ResolutionX:     w.ResolutionX,
+		ResolutionY:     w.ResolutionY,
+		Camera:          camera,
+		OutputFormat:    outputFormat,
+		JobType:         model.JobTypeRender,
+		FileNotModified: fileNotModifiedSince(blenderFile, w.ProcessedAt),
 	}
 
 	if prev, err := model.GetLatestCompletedRenderJob(workspaceID); err == nil && prev != nil {
