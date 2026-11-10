@@ -154,6 +154,7 @@ export async function getTestI18n() {
             noResults: 'No favorite files',
           },
           workspace: {
+            defaultValueLabel: 'Default = {{value}}',
             createDialog: {
               title: 'Create Workspace',
               multipleFromFile: 'Create multiple',

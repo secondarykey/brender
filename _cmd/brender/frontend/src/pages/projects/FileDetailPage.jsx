@@ -14,6 +14,7 @@ import EntityIcon from '../../components/EntityIcon'
 import WorkspacePanel from './WorkspacePanel'
 import FavoriteButton from '../../components/FavoriteButton'
 import NoteSection from '../../components/NoteSection'
+import FieldLabel from '../../components/FieldLabel'
 import WorkspaceCreateDialog from '../../components/WorkspaceCreateDialog'
 import TagInput from '../../components/TagInput'
 import PermissionSection from '../../components/PermissionSection'
@@ -410,12 +411,6 @@ function ThumbnailPanel({ projectID, fileID }) {
   )
 }
 
-// ── デフォルト値ヒント ────────────────────────────────────
-function DefaultTag({ value, t }) {
-  if (!value) return null
-  return <span className="form-default-tag">（{t('workspace.defaultValueLabel', { value })}）</span>
-}
-
 // ── 設定タブ ─────────────────────────────────────────────
 function SettingsTab({ projectID, fileID, fileName, role, onUpdated, onDeleted, favorite, onFavoriteChange }) {
   const { t } = useTranslation()
@@ -632,10 +627,7 @@ function SettingsTab({ projectID, fileID, fileName, role, onUpdated, onDeleted, 
               )}
             </div>
             <div className="form-field" style={{ flex: 1 }}>
-              <label className="form-label" style={{ whiteSpace: 'nowrap' }}>
-                {t('file.defaultBlender')}
-                <DefaultTag value={blenderDefault} t={t} />
-              </label>
+              <FieldLabel text={t('file.defaultBlender')} defaultValue={blenderDefault} />
               {blenders.length === 0 ? (
                 <p className="setting-desc">{t('settings.noBlenderRegistered')}</p>
               ) : (
@@ -660,10 +652,7 @@ function SettingsTab({ projectID, fileID, fileName, role, onUpdated, onDeleted, 
 
           <div className="form-row" style={{ alignItems: 'flex-start', marginTop: 12 }}>
             <div className="form-field" style={{ flex: 2 }}>
-              <label className="form-label">
-                {t('file.defaultEngine')}
-                <DefaultTag value={engineDefault} t={t} />
-              </label>
+              <FieldLabel text={t('file.defaultEngine')} defaultValue={engineDefault} />
               {(toolData?.Engines?.length ?? 0) > 0 ? (
                 <select
                   className="form-select"
@@ -694,10 +683,7 @@ function SettingsTab({ projectID, fileID, fileName, role, onUpdated, onDeleted, 
 
           <div className="form-row" style={{ alignItems: 'flex-start' }}>
             <div className="form-field" style={{ flex: 1 }}>
-              <label className="form-label">
-                {t('file.defaultScene')}
-                <DefaultTag value={sceneDefault} t={t} />
-              </label>
+              <FieldLabel text={t('file.defaultScene')} defaultValue={sceneDefault} />
               {scenes.length > 0 ? (
                 <select
                   className="form-select"
@@ -724,10 +710,7 @@ function SettingsTab({ projectID, fileID, fileName, role, onUpdated, onDeleted, 
               </label>
             </div>
             <div className="form-field" style={{ flex: 1 }}>
-              <label className="form-label">
-                {t('file.defaultCamera')}
-                <DefaultTag value={cameraDefault} t={t} />
-              </label>
+              <FieldLabel text={t('file.defaultCamera')} defaultValue={cameraDefault} />
               <select
                 className="form-select"
                 value={camera}

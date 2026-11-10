@@ -10,8 +10,9 @@ import Dialog from '../../components/Dialog'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import HoldButton from '../../components/HoldButton'
 import NoteSection from '../../components/NoteSection'
+import FieldLabel from '../../components/FieldLabel'
 import AccessDenied from '../../components/AccessDenied'
-import { MdLock, MdSwapHoriz, MdPlayArrow } from 'react-icons/md'
+import { MdSwapHoriz, MdPlayArrow } from 'react-icons/md'
 
 
 const isFrameDefault      = (start, end) => start === 0 && end === -1
@@ -653,13 +654,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
           <input ref={nameRef} className="form-input" value={form.name} onChange={e => set('name', e.target.value)} disabled={readOnly} />
         </div>
         <div className="form-field" style={{ flex: 1 }}>
-          <label className="form-label">
-            {t('workspace.blender')}
-            {fileBlenderFixed
-              ? <span className="form-lock-tag"><MdLock /> {lockedBlenderName}</span>
-              : <DefaultTag value={blenderDefault} t={t} />
-            }
-          </label>
+          <FieldLabel text={t('workspace.blender')} lockedValue={fileBlenderFixed ? (lockedBlenderName) : null} defaultValue={blenderDefault} />
           {fileBlenderFixed ? (
             <input className="form-input" value={lockedBlenderName} disabled style={{ opacity: 0.5 }} />
           ) : (
@@ -678,13 +673,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
         <div className="form-collapsible-body">
       <div className="form-row" style={{ alignItems: 'flex-start' }}>
         <div className="form-field" style={{ flex: 2 }}>
-          <label className="form-label">
-            {t('workspace.renderEngine')}
-            {fileEngineFixed
-              ? <span className="form-lock-tag"><MdLock /> {fileEngine || sceneInfo?.Engine || t('common.notSet')}</span>
-              : <DefaultTag value={engineDefault} t={t} />
-            }
-          </label>
+          <FieldLabel text={t('workspace.renderEngine')} lockedValue={fileEngineFixed ? (fileEngine || sceneInfo?.Engine || t('common.notSet')) : null} defaultValue={engineDefault} />
           {fileEngineFixed ? (
             <input className="form-input" value={fileEngine || sceneInfo?.Engine || t('common.notSet')} disabled style={{ opacity: 0.5 }} />
           ) : engines.length > 0 ? (
@@ -717,13 +706,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
 
       <div className="form-row" style={{ alignItems: 'flex-start', marginTop: -20 }}>
         <div className="form-field" style={{ flex: 1 }}>
-          <label className="form-label">
-            {t('workspace.scene')}
-            {fileSceneFixed
-              ? <span className="form-lock-tag"><MdLock /> {fileScene || activeScene?.Name || t('common.notSet')}</span>
-              : <DefaultTag value={sceneDefault} t={t} />
-            }
-          </label>
+          <FieldLabel text={t('workspace.scene')} lockedValue={fileSceneFixed ? (fileScene || activeScene?.Name || t('common.notSet')) : null} defaultValue={sceneDefault} />
           {fileSceneFixed ? (
             <input className="form-input" value={fileScene || activeScene?.Name || t('common.notSet')} disabled style={{ opacity: 0.5 }} />
           ) : scenes.length > 0 ? (
@@ -737,13 +720,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
           {missingScene && <span className="form-hint" style={{ color: '#e74c3c' }}>{t('workspace.sceneMissing', { name: missingScene })}</span>}
         </div>
         <div className="form-field" style={{ flex: 1 }}>
-          <label className="form-label">
-            {t('workspace.camera')}
-            {fileCameraFixed
-              ? <span className="form-lock-tag"><MdLock /> {fileCamera || sceneInfo?.Camera || t('common.notSet')}</span>
-              : <DefaultTag value={cameraDefault} t={t} />
-            }
-          </label>
+          <FieldLabel text={t('workspace.camera')} lockedValue={fileCameraFixed ? (fileCamera || sceneInfo?.Camera || t('common.notSet')) : null} defaultValue={cameraDefault} />
           {fileCameraFixed ? (
             <input className="form-input" value={fileCamera || sceneInfo?.Camera || t('common.notSet')} disabled style={{ opacity: 0.5 }} />
           ) : (

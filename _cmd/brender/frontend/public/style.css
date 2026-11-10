@@ -1527,6 +1527,17 @@ body {
   color: rgba(var(--fg),0.6);
 }
 
+/* FieldLabel: 1行に収め、入りきらない分は「…」（全文は title）。
+   横並びの欄でラベルだけ折り返すと入力の位置がずれるため。欄が縮めるよう min-width も外す */
+.form-label-ellipsis {
+  display: block;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.form-field:has(> .form-label-ellipsis) { min-width: 0; }
+
 .required { color: #e74c3c; }
 
 .form-input, .form-select {

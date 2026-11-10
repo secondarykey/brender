@@ -353,6 +353,7 @@ background: #1a1a1a;
 - `textarea` には `textarea.form-input { height: auto; padding: 8px 10px }` が適用される。`minHeight` と `resize: vertical` をインラインで指定する
 - `input` / `textarea` は `width: 100%` を付けてカラム幅いっぱいに広げる（デフォルトは `width` 未指定）
 - `.form-hint` — 補足テキスト（11px, #888）
+- ラベルに「（未設定時 = 値）」や固定値を添えるときは `FieldLabel`（`src/components/FieldLabel.jsx`）を使う。1行に収めて入りきらない分は「…」にし、全文は `title` で出す（横並びの欄でラベルだけ折り返すと入力の位置がずれる）
 - `.form-actions` — `justify-content: space-between`（削除ボタン左・保存ボタン右）
 
 ### 左右分割レイアウト (`.ws-detail-split`)
