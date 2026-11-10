@@ -6,7 +6,6 @@ import WorkspaceTab from './tabs/WorkspaceTab'
 import SettingsTab from './tabs/SettingsTab'
 import HierarchyBreadcrumb from '../../components/HierarchyBreadcrumb'
 import EntityIcon from '../../components/EntityIcon'
-import EntityHeader from '../../components/EntityHeader'
 import AccessDenied from '../../components/AccessDenied'
 
 function ProjectDetailPage({ id, initialTab, focusName, navigate }) {
@@ -66,8 +65,6 @@ function ProjectDetailPage({ id, initialTab, focusName, navigate }) {
           projectName={detail.project.name}
         />
       </div>
-
-      <EntityHeader type="project" name={detail.project.name} />
 
       {workDir?.status === 'lock' && (
         <div className="notice-banner notice-error">

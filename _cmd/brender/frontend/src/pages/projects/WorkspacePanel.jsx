@@ -9,7 +9,6 @@ import Pagination from '../../components/Pagination'
 import Dialog from '../../components/Dialog'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import HoldButton from '../../components/HoldButton'
-import EntityHeader from '../../components/EntityHeader'
 import NoteSection from '../../components/NoteSection'
 import AccessDenied from '../../components/AccessDenied'
 import { MdLock, MdSwapHoriz, MdPlayArrow } from 'react-icons/md'
@@ -32,8 +31,8 @@ const HISTORY_PAGE_SIZE = 5
 
 const IMAGE_FILTER = [{ DisplayName: 'Image', Pattern: '*.jpg;*.jpeg;*.png;*.bmp;*.webp' }]
 
-// ── ワークスペースサムネイル（見出しの左。クリックで画像を差し替える） ──
-function WorkspaceThumbnail({ projectID, fileID, workspaceID }) {
+// ── ワークスペースサムネイル（クリックで画像を差し替える） ──
+function WorkspaceThumbnailPanel({ projectID, fileID, workspaceID }) {
   const { t } = useTranslation()
   const [src, setSrc]             = useState(null)
   const [uploading, setUploading] = useState(false)
@@ -61,8 +60,14 @@ function WorkspaceThumbnail({ projectID, fileID, workspaceID }) {
   }
 
   return (
-    <div className="entity-header-thumb thumbnail-clickable" onClick={handleClick} title={t('workspace.clickToChangeThumbnail')}>
-      {src && <img src={src} alt="" />}
+    <div className="thumbnail-panel">
+      <h3 className="ws-detail-section-title">{t('workspace.thumbnail')}</h3>
+      <div className="thumbnail-clickable" onClick={handleClick} title={t('workspace.clickToChangeThumbnail')}>
+        {src
+          ? <img className="thumbnail-img" src={src} alt="thumbnail" />
+          : <div className="thumbnail-placeholder">No Image</div>
+        }
+      </div>
     </div>
   )
 }
@@ -1113,21 +1118,10 @@ function WorkspacePanel({ projectID, projectName, fileID, fileName, workspaceID,
     return <p className="setting-desc">{t('common.loading')}</p>
   }
 
-  const file  = detail.project_files?.find(f => f.id === detail.workspace.project_file_id)
-  const stale = file?.file_modified_at && detail.workspace.processed_at
-    && new Date(file.file_modified_at) > new Date(detail.workspace.processed_at)
-
   // 設定と履歴は横に並べ、幅が足りなければ履歴が下へ回る（.ws-pane-body の折り返し）。
   // テストレンダリングの結果を、設定を見たまま確かめられるようにするため。
   return (
     <>
-      <EntityHeader
-        type="workspace"
-        name={name}
-        thumb={<WorkspaceThumbnail projectID={projectID} fileID={fileID} workspaceID={workspaceID} />}
-        suffix={stale ? <span className="stale-mark-inline" title={t('file.fileChangedTooltip')}>!</span> : null}
-      />
-
       <div className="ws-pane-body">
         <div className="ws-pane-form">
           <SettingsTab
@@ -1149,6 +1143,7 @@ function WorkspacePanel({ projectID, projectName, fileID, fileName, workspaceID,
           />
         </div>
         <div className="ws-pane-history">
+          <WorkspaceThumbnailPanel projectID={projectID} fileID={fileID} workspaceID={workspaceID} />
           <h3 className="ws-detail-section-title">{t('tabs.history')}</h3>
           <HistoryTab
             projectID={projectID}

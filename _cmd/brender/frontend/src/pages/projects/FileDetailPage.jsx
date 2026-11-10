@@ -11,7 +11,6 @@ import Dialog from '../../components/Dialog'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import HierarchyBreadcrumb from '../../components/HierarchyBreadcrumb'
 import EntityIcon from '../../components/EntityIcon'
-import EntityHeader from '../../components/EntityHeader'
 import WorkspacePanel from './WorkspacePanel'
 import FavoriteButton from '../../components/FavoriteButton'
 import NoteSection from '../../components/NoteSection'
@@ -372,7 +371,7 @@ function HistoryTab({ projectID, fileID, navigate, projectName, fileName }) {
 const IMAGE_FILTER = [{ DisplayName: 'Image', Pattern: '*.jpg;*.jpeg;*.png;*.bmp;*.webp' }]
 
 // ── サムネイルパネル ───────────────────────────────────────
-function ThumbnailPanel({ projectID, fileID, onChanged }) {
+function ThumbnailPanel({ projectID, fileID }) {
   const { t } = useTranslation()
   const [src, setSrc]           = useState(null)
   const [uploading, setUploading] = useState(false)
@@ -391,7 +390,6 @@ function ThumbnailPanel({ projectID, fileID, onChanged }) {
       setUploading(true)
       const data = await ProjectApi.setFileThumbnail({ projectID, fileID, imagePath: path })
       setSrc(data || null)
-      if (onChanged) onChanged(data || null)
     } catch (e) {
       console.error(e)
     } finally {
@@ -419,7 +417,7 @@ function DefaultTag({ value, t }) {
 }
 
 // ── 設定タブ ─────────────────────────────────────────────
-function SettingsTab({ projectID, fileID, fileName, role, onUpdated, onDeleted, onThumbnailChanged, favorite, onFavoriteChange }) {
+function SettingsTab({ projectID, fileID, fileName, role, onUpdated, onDeleted, favorite, onFavoriteChange }) {
   const { t } = useTranslation()
   const { showToast } = useToast()
   const { showError } = useMessage()
@@ -791,7 +789,7 @@ function SettingsTab({ projectID, fileID, fileName, role, onUpdated, onDeleted, 
       </div>
 
       <div className="ws-detail-right">
-        <ThumbnailPanel projectID={projectID} fileID={fileID} onChanged={onThumbnailChanged} />
+        <ThumbnailPanel projectID={projectID} fileID={fileID} />
         <div style={{ marginTop: 20 }}>
           <h3 className="ws-detail-section-title">{t('favorite.favorites')}</h3>
           <FavoriteButton
@@ -833,7 +831,6 @@ function FileDetailPage({ projectID, projectName: initialProjectName, fileID: in
   const [fileRole, setFileRole] = useState('owner')
   const [workspaces, setWorkspaces] = useState(null) // null = 未読込
   const [railReload, setRailReload] = useState(0)
-  const [thumb, setThumb] = useState(null)
   const [favorite, setFavorite] = useState(false)
 
   useEffect(() => {
@@ -855,10 +852,7 @@ function FileDetailPage({ projectID, projectName: initialProjectName, fileID: in
     FavoriteApi.isFavorite({ fileID })
       .then(v => setFavorite(!!v))
       .catch(() => {})
-    ProjectApi.getFileThumbnail({ projectID, fileID })
-      .then(src => setThumb(src || null))
-      .catch(() => {})
-  }, [projectID, fileID])
+  }, [fileID])
 
   useEffect(() => {
     if (!fileID) return
@@ -919,12 +913,6 @@ function FileDetailPage({ projectID, projectName: initialProjectName, fileID: in
           fileName={currentFileName}
         />
       </div>
-
-      <EntityHeader
-        type="file"
-        name={currentFileName}
-        thumb={<div className="entity-header-thumb">{thumb && <img src={thumb} alt="" />}</div>}
-      />
 
       {workDirStatus === 'lock' && (
         <div className="notice-banner notice-error">{t('project.workDirLockError')}</div>
@@ -1003,7 +991,6 @@ function FileDetailPage({ projectID, projectName: initialProjectName, fileID: in
             favorite={favorite}
             onFavoriteChange={setFavorite}
             onUpdated={f => setCurrentFileName(f.name)}
-            onThumbnailChanged={setThumb}
             onDeleted={() => navigate('project', { id: projectID })}
           />
         )}

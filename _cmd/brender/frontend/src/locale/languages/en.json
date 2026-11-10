@@ -129,12 +129,6 @@
     "job": "Job",
     "jobResult": "Result"
   },
-  "entity": {
-    "project": "Project",
-    "file": "File",
-    "workspace": "Workspace",
-    "job": "Job Result"
-  },
   "project": {
     "register": {
       "transition": "+New Project",

@@ -6,7 +6,7 @@ import FileDetailPage from './FileDetailPage'
 
 // ファイル画面の骨格を守るテスト:
 //   ワークスペースは単独のページを持たず、ファイル画面の中で「左の一覧から選ぶ → 右に開く」。
-//   ファイルの見出しはワークスペースを開いていても出たままになる。
+//   ワークスペースを開いていても、パンくずはファイルで終わり、一覧は出たままになる。
 
 const WORKSPACES = [
   { id: 'w1', name: 'Preview',  engine: 'BLENDER_EEVEE', start: 0, end: -1 },
@@ -72,11 +72,8 @@ async function renderPage(props = {}) {
 beforeEach(() => { vi.clearAllMocks() })
 
 describe('FileDetailPage', () => {
-  it('ファイルの見出しを出し、指定が無ければ先頭のワークスペースを開く', async () => {
+  it('指定が無ければ先頭のワークスペースを開く', async () => {
     const { container } = await renderPage()
-    const header = container.querySelector('.entity-header.entity-file')
-    expect(within(header).getByText('File')).toBeInTheDocument()
-    expect(within(header).getByRole('heading', { name: 'scene.blend' })).toBeInTheDocument()
     expect(screen.getByTestId('ws-panel')).toHaveTextContent('w1@scene.blend')
     expect(container.querySelector('.ws-rail-item.selected')).toHaveTextContent('Preview')
   })
@@ -105,11 +102,11 @@ describe('FileDetailPage', () => {
     expect(within(crumb).queryByText('Final 4K')).not.toBeInTheDocument()
   })
 
-  it('実行履歴タブへ切り替えても、ファイルの見出しは残る', async () => {
+  it('実行履歴タブへ切り替えると、ワークスペースの一覧と中身は外れる', async () => {
     const { container } = await renderPage()
     await userEvent.click(screen.getByRole('button', { name: /tabs.history|History/ }))
     expect(screen.queryByTestId('ws-panel')).not.toBeInTheDocument()
-    expect(container.querySelector('.entity-header.entity-file')).toBeInTheDocument()
+    expect(container.querySelector('.ws-rail')).not.toBeInTheDocument()
   })
 
   it('fileID が無いときはワークスペースからファイルを引く', async () => {

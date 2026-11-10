@@ -129,12 +129,6 @@
     "job": "ジョブ",
     "jobResult": "実行結果"
   },
-  "entity": {
-    "project": "プロジェクト",
-    "file": "ファイル",
-    "workspace": "ワークスペース",
-    "job": "実行結果"
-  },
   "project": {
     "register": {
       "transition": "+新規作成",

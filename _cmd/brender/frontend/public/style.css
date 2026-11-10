@@ -896,68 +896,6 @@ body {
   white-space: nowrap;
 }
 
-/* ── 現在地の見出し帯（EntityHeader） ──
-   種別ラベル + 名称。パンくずが道筋なら、こちらは表札。種別の色で薄く塗り、左端に色帯を出す。 */
-.entity-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-shrink: 0;
-  padding: 8px 12px;
-  margin-bottom: 10px;
-  border-radius: 6px;
-  background: color-mix(in srgb, var(--entity-accent) 10%, transparent);
-  box-shadow: inset 3px 0 0 var(--entity-accent);
-}
-.entity-header-thumb {
-  flex: 0 0 80px;
-  aspect-ratio: 16 / 9;
-  border-radius: 4px;
-  overflow: hidden;
-  background: var(--bg-deep);
-}
-.entity-header-thumb img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.entity-header-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex: 1;
-  min-width: 0;
-}
-.entity-header-kind {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  color: rgba(var(--fg),0.6);
-}
-.entity-header-name {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-  margin: 0;
-  font-size: 1.15rem;
-  font-weight: 600;
-}
-.entity-header-name-text {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.entity-header-actions {
-  display: flex;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
 /* ── ファイル画面: 左にワークスペース一覧、右に選んだ1件 ──
    ワークスペースは単独のページを持たない。一覧（.ws-rail）と中身（.ws-pane）を
    同じ画面に並べ、どのファイルのどのワークスペースを見ているかを常に見せる。 */
@@ -1010,7 +948,7 @@ body {
   transition: background 0.12s;
 }
 .ws-rail-item:hover { background: rgba(var(--fg),0.05); }
-/* 選択中の行は右の見出し帯と同じ色で塗り、つながって見えるようにする */
+/* 選択中の行は種別の色で塗る（右に出ているのがこの行だと分かるように） */
 .ws-rail-item.selected {
   background: color-mix(in srgb, var(--entity-accent) 18%, transparent);
   box-shadow: inset 4px 0 0 var(--entity-accent);
