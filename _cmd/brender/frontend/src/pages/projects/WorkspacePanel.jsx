@@ -901,10 +901,9 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
         {canCopyDelete && (
         <button className="btn btn-danger" onClick={() => { setForceDel(false); setConfirm(true) }}>{t('common.delete')}</button>
         )}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
-          <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8 }}>
           {canRun && (
-          <button className="btn btn-run" onClick={handleTestEncode} disabled={testEnqueueing || workDirLocked}>
+          <button className="btn btn-run" onClick={handleTestEncode} disabled={testEnqueueing || workDirLocked} title={t('workspace.testHint')}>
             {testEnqueueing ? t('common.enqueueing') : t('workspace.testRender')}
           </button>
           )}
@@ -918,8 +917,6 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
             {saving ? t('common.saving') : t('common.save')}
           </button>
           )}
-          </div>
-          {canRun && <span style={{ fontSize: '0.75rem', opacity: 0.45 }}>{t('workspace.testHint')}</span>}
         </div>
       </div>
       )}
@@ -1118,8 +1115,9 @@ function WorkspacePanel({ projectID, projectName, fileID, fileName, workspaceID,
     return <p className="setting-desc">{t('common.loading')}</p>
   }
 
-  // 設定と履歴は横に並べ、幅が足りなければ履歴が下へ回る（.ws-pane-body の折り返し）。
+  // 設定と履歴は横に並べ、それぞれ別々にスクロールする（狭いときは縦に積む。style.css の .ws-pane）。
   // テストレンダリングの結果を、設定を見たまま確かめられるようにするため。
+  // 設定フォーム末尾の操作行（削除・Test・実行・保存）は .form-actions の sticky で下端に固定している。
   return (
     <>
       <div className="ws-pane-body">
