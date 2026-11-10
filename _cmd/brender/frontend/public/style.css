@@ -729,18 +729,6 @@ body {
 
 .breadcrumb-sep { color: rgba(var(--fg),0.25); }
 
-.back-to-list {
-  background: none;
-  border: none;
-  color: rgba(var(--fg),0.4);
-  cursor: pointer;
-  font-size: 0.75rem;
-  padding: 0;
-  margin-top: 8px;
-  transition: color 0.15s;
-}
-.back-to-list:hover { color: rgba(var(--fg),0.8); }
-
 /* ── Detail sections ── */
 .detail-section {
   margin-bottom: 36px;
@@ -907,6 +895,181 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* ── 現在地の見出し帯（EntityHeader） ──
+   種別ラベル + 名称。パンくずが道筋なら、こちらは表札。種別の色で薄く塗り、左端に色帯を出す。 */
+.entity-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--entity-accent) 10%, transparent);
+  box-shadow: inset 3px 0 0 var(--entity-accent);
+}
+.entity-header-thumb {
+  flex: 0 0 80px;
+  aspect-ratio: 16 / 9;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--bg-deep);
+}
+.entity-header-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.entity-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+.entity-header-kind {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(var(--fg),0.6);
+}
+.entity-header-name {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+.entity-header-name-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.entity-header-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ── ファイル画面: 左にワークスペース一覧、右に選んだ1件 ──
+   ワークスペースは単独のページを持たない。一覧（.ws-rail）と中身（.ws-pane）を
+   同じ画面に並べ、どのファイルのどのワークスペースを見ているかを常に見せる。 */
+.tab-content:has(.file-split) {
+  overflow: hidden;
+  display: flex;
+}
+.file-split {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+.ws-rail {
+  flex: 0 0 300px;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding-right: 12px;
+  border-right: 1px solid rgba(var(--fg),0.1);
+}
+.ws-rail-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.ws-rail-tools .sort-select { margin-left: 0; }
+.ws-rail-tools .btn { margin-left: auto; }
+.ws-rail-list {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ws-rail-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  padding: 8px 8px 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.ws-rail-item:hover { background: rgba(var(--fg),0.05); }
+/* 選択中の行は右の見出し帯と同じ色で塗り、つながって見えるようにする */
+.ws-rail-item.selected {
+  background: color-mix(in srgb, var(--entity-accent) 18%, transparent);
+  box-shadow: inset 4px 0 0 var(--entity-accent);
+}
+.ws-rail-item.selected .ws-item-name { font-weight: 600; }
+.ws-rail-thumb {
+  flex: 0 0 56px;
+  aspect-ratio: 16 / 9;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--bg-deep);
+}
+.ws-rail-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ws-rail-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+.btn.ws-rail-run {
+  flex: 0 0 30px;
+  min-width: 0;
+  padding: 0;
+  justify-content: center;
+}
+.ws-rail-foot {
+  display: flex;
+  padding-top: 10px;
+}
+.ws-rail-foot .btn { flex: 1; }
+.ws-pane {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 0 8px 0 20px;
+}
+/* 設定と履歴は横並び。幅が足りなければ履歴が下へ回る */
+.ws-pane-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px 32px;
+}
+.ws-pane-form {
+  flex: 1 1 480px;
+  max-width: 640px;
+  min-width: 0;
+}
+.ws-pane-history {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+.file-history { max-width: 720px; }
 
 /* 表示切り替えボタン */
 .file-view-toggle {
@@ -1091,26 +1254,10 @@ body {
 .file-tile-grid--sm .project-files {
   display: none;
 }
-.file-tile-grid--sm .file-tile-info,
-.file-tile-grid--sm .ws-tile-info {
+.file-tile-grid--sm .file-tile-info {
   display: none;
 }
 
-/* ワークスペースタイル */
-.ws-tile { cursor: pointer; }
-.ws-tile-info {
-  padding: 6px 10px 2px;
-  min-width: 0;
-}
-.ws-tile-actions {
-  padding: 4px 10px 8px;
-  display: flex;
-  justify-content: flex-end;
-}
-.file-tile .ws-tile-actions {
-  justify-content: space-between;
-  align-items: center;
-}
 .thumbnail-mode-hint {
   margin: 6px 0;
   padding: 6px 10px;
@@ -1383,22 +1530,6 @@ body {
   padding: 2px 8px;
   border-radius: 4px;
 }
-
-.ws-item-run { cursor: default; }
-.ws-item-run:hover { background: rgba(var(--fg),0.04); }
-
-.ws-item-run-btn {
-  flex-shrink: 0;
-}
-
-.ws-item-run-btn + .ws-item-info {
-  margin-left: 16px;
-}
-
-.ws-item-link {
-  cursor: pointer;
-}
-.ws-item-link:hover { color: #fff; }
 
 .btn-sm {
   height: 28px;

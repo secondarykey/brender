@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
-import { WorkspaceApi, BlenderApi, QueueApi, ProjectApi, WorkDirApi, CodesApi, EnvironmentApi } from '../../lib/api'
+import { WorkspaceApi, BlenderApi, QueueApi, CodesApi, EnvironmentApi } from '../../lib/api'
 import { useToast, useMessage } from '../../lib/toast'
 import { onAppEvent } from '../../lib/appEvents'
 import { formatDateShort } from '../../lib/dateFormat'
@@ -9,7 +9,7 @@ import Pagination from '../../components/Pagination'
 import Dialog from '../../components/Dialog'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import HoldButton from '../../components/HoldButton'
-import HierarchyBreadcrumb from '../../components/HierarchyBreadcrumb'
+import EntityHeader from '../../components/EntityHeader'
 import NoteSection from '../../components/NoteSection'
 import AccessDenied from '../../components/AccessDenied'
 import { MdLock, MdSwapHoriz, MdPlayArrow } from 'react-icons/md'
@@ -32,8 +32,8 @@ const HISTORY_PAGE_SIZE = 5
 
 const IMAGE_FILTER = [{ DisplayName: 'Image', Pattern: '*.jpg;*.jpeg;*.png;*.bmp;*.webp' }]
 
-// ── ワークスペースサムネイル ───────────────────────────────
-function WorkspaceThumbnailPanel({ projectID, fileID, workspaceID }) {
+// ── ワークスペースサムネイル（見出しの左。クリックで画像を差し替える） ──
+function WorkspaceThumbnail({ projectID, fileID, workspaceID }) {
   const { t } = useTranslation()
   const [src, setSrc]             = useState(null)
   const [uploading, setUploading] = useState(false)
@@ -61,14 +61,8 @@ function WorkspaceThumbnailPanel({ projectID, fileID, workspaceID }) {
   }
 
   return (
-    <div className="thumbnail-panel">
-      <h3 className="ws-detail-section-title">{t('workspace.thumbnail')}</h3>
-      <div className="thumbnail-clickable" onClick={handleClick} title={t('workspace.clickToChangeThumbnail')}>
-        {src
-          ? <img className="thumbnail-img" src={src} alt="thumbnail" />
-          : <div className="thumbnail-placeholder">No Image</div>
-        }
-      </div>
+    <div className="entity-header-thumb thumbnail-clickable" onClick={handleClick} title={t('workspace.clickToChangeThumbnail')}>
+      {src && <img src={src} alt="" />}
     </div>
   )
 }
@@ -133,7 +127,7 @@ function HistoryTab({ projectID, workspaceID, navigate, projectName, fileName, f
 
   return (
     <>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8, marginTop: -30 }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
         <button className="btn btn-outline btn-sm" onClick={() => { setBulkError(''); setBulkOpen(true) }}>
           {t('job.bulkDelete')}
         </button>
@@ -237,7 +231,7 @@ function DefaultTag({ value, t }) {
 }
 
 // ── 設定タブ ──────────────────────────────────────────────
-function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, detail, focusName, role, onUpdated, onDeleted, onTestEnqueued, onRenderEnqueued, workDirLocked, navigate }) {
+function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, detail, focusName, role, onUpdated, onCopied, onDeleted, onTestEnqueued, onRenderEnqueued, workDirLocked, navigate }) {
   const { t } = useTranslation()
   const { showToast } = useToast()
   const { showError } = useMessage()
@@ -497,6 +491,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
       const newWS = await WorkspaceApi.copy({ projectID, workspaceID, newName })
       setCopyConfirm(false)
       showToast(t('workspace.copied'))
+      onCopied()
       navigate('workspace', { projectID, projectName, fileID, fileName, workspaceID: newWS.id })
     } catch (err) {
       showError(String(err))
@@ -526,7 +521,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
       savedForm.current = { ...form, name: form.name.trim() }
       savedNote.current = note
       showToast(t('common.saved'))
-      onUpdated()
+      onUpdated(form.name.trim())
     } catch (err) {
       showError(String(err))
     } finally {
@@ -1074,141 +1069,101 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
 
 
 
-// ── ページ本体 ────────────────────────────────────────────
-function WorkspaceDetailPage({ projectID, projectName: initialProjectName, fileID, fileName, workspaceID, focusName, navigate }) {
+// ── パネル本体 ────────────────────────────────────────────
+// ファイル画面の右側に出す、ワークスペース1件ぶんの表示。単独のページにはしない
+// （ワークスペースは必ずファイルの中で開く。どのファイルの設定かを画面から消さないため）。
+//   onChanged … 名称変更・複製など、左の一覧を読み直すべき変更があったとき
+//   onDeleted … 削除したとき
+//   onMissing … 読み込めなかったとき（既に消えたワークスペースを指していた等）
+function WorkspacePanel({ projectID, projectName, fileID, fileName, workspaceID, focusName, role, workDirLocked, navigate, onChanged, onDeleted, onMissing }) {
   const { t } = useTranslation()
   const { showError } = useMessage()
-  const [projectName, setProjectName] = useState(initialProjectName)
-  const [detail, setDetail]           = useState(null)
-  const [loadFailed, setLoadFailed]   = useState(false)
+  const [detail, setDetail]             = useState(null)
+  const [name, setName]                 = useState('')
+  const [loadFailed, setLoadFailed]     = useState(false)
   const [accessDenied, setAccessDenied] = useState(false)
   const [historyReload, setHistoryReload] = useState(0)
-  const [workDirStatus, setWorkDirStatus] = useState(null)
-  const [fileRole, setFileRole]       = useState('owner')
 
-  const load = useCallback(() => {
+  useEffect(() => {
+    let alive = true
     WorkspaceApi.get({ projectID, workspaceID })
-      .then(d => setDetail(d))
+      .then(d => {
+        if (!alive) return
+        setDetail(d)
+        setName(d.workspace.name)
+      })
       .catch(err => {
+        if (!alive) return
         if (String(err).includes('access denied')) {
           setAccessDenied(true)
         } else {
           showError(String(err))
           setLoadFailed(true)
+          if (onMissing) onMissing()
         }
       })
+    return () => { alive = false }
   }, [projectID, workspaceID, showError])
 
-  useEffect(() => { load() }, [load])
-
-  useEffect(() => {
-    // プロジェクト情報取得（パンくず名もAPIから取得して統一）
-    ProjectApi.get({ id: projectID })
-      .then(d => {
-        if (d?.project?.name) setProjectName(d.project.name)
-        WorkDirApi.list().then(dirs => {
-          const wd = (dirs || []).find(w => w.id === d?.project?.work_dir_id)
-          setWorkDirStatus(wd?.status || null)
-        }).catch(() => {})
-      })
-      .catch(err => {
-        if (String(err).includes('access denied')) setProjectName(t('permission.accessDeniedLabel'))
-      })
-  }, [projectID])
-
-  // ファイル権限のロール取得
-  useEffect(() => {
-    const fid = fileID || detail?.workspace?.project_file_id
-    if (!fid) return
-    ProjectApi.getFile({ fileID: fid })
-      .then(f => {
-        if (f?.my_role) setFileRole(f.my_role)
-      })
-      .catch(() => {})
-  }, [fileID, detail?.workspace?.project_file_id])
-
   if (accessDenied) {
-    return <AccessDenied onBack={() => navigate('file', { projectID, projectName: initialProjectName, fileID, fileName })} />
+    return <AccessDenied onBack={() => navigate('file', { projectID, projectName, fileID, fileName })} />
   }
-
-  if (loadFailed && !detail) {
-    return <div className="page" />
-  }
+  if (loadFailed) return null
   if (!detail) {
-    return <div className="page"><p className="setting-desc">{t('common.loading')}</p></div>
+    return <p className="setting-desc">{t('common.loading')}</p>
   }
 
-  const effectiveFileID   = fileID   || detail.workspace.project_file_id || ''
-  const effectiveFileName = fileName || detail.project_files?.find(f => f.id === effectiveFileID)?.name || ''
-  const effectiveFile     = detail.project_files?.find(f => f.id === effectiveFileID)
-  const wsStale = effectiveFile?.file_modified_at && detail.workspace.processed_at
-    && new Date(effectiveFile.file_modified_at) > new Date(detail.workspace.processed_at)
+  const file  = detail.project_files?.find(f => f.id === detail.workspace.project_file_id)
+  const stale = file?.file_modified_at && detail.workspace.processed_at
+    && new Date(file.file_modified_at) > new Date(detail.workspace.processed_at)
 
+  // 設定と履歴は横に並べ、幅が足りなければ履歴が下へ回る（.ws-pane-body の折り返し）。
+  // テストレンダリングの結果を、設定を見たまま確かめられるようにするため。
   return (
-    <div className="page">
-      <div className="page-header" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-        <HierarchyBreadcrumb
-          navigate={navigate}
-          projectID={projectID}
-          projectName={projectName}
-          fileID={effectiveFileID}
-          fileName={effectiveFileName}
-          workspaceID={detail.workspace.id}
-          workspaceName={detail.workspace.name}
-          suffix={{
-            workspace: wsStale
-              ? <span className="stale-mark-inline" title={t('file.fileChangedTooltip')} style={{ marginLeft: 6 }}>!</span>
-              : null,
-          }}
-        />
-        <button className="back-to-list" onClick={() => navigate('file', { projectID, projectName, fileID: effectiveFileID, fileName: effectiveFileName, initialTab: 'workspace' })}>
-          {t('breadcrumb.backToWorkspaceList')}
-        </button>
-      </div>
+    <>
+      <EntityHeader
+        type="workspace"
+        name={name}
+        thumb={<WorkspaceThumbnail projectID={projectID} fileID={fileID} workspaceID={workspaceID} />}
+        suffix={stale ? <span className="stale-mark-inline" title={t('file.fileChangedTooltip')}>!</span> : null}
+      />
 
-      {workDirStatus === 'lock' && (
-        <div className="notice-banner notice-error">{t('project.workDirLockError')}</div>
-      )}
-      {workDirStatus === 'inactive' && (
-        <div className="notice-banner">{t('project.workDirInactiveWarning')}</div>
-      )}
-
-      <div className="ws-detail-split">
-        <div className="ws-detail-left">
+      <div className="ws-pane-body">
+        <div className="ws-pane-form">
           <SettingsTab
             projectID={projectID}
             projectName={projectName}
-            fileID={effectiveFileID}
-            fileName={effectiveFileName}
+            fileID={fileID}
+            fileName={fileName}
             workspaceID={workspaceID}
             detail={detail}
             focusName={focusName}
-            role={fileRole}
-            onUpdated={() => {}}
-            onDeleted={() => navigate('file', { projectID, projectName, fileID: effectiveFileID, fileName: effectiveFileName })}
+            role={role}
+            onUpdated={savedName => { setName(savedName); onChanged() }}
+            onCopied={onChanged}
+            onDeleted={onDeleted}
             onTestEnqueued={() => setHistoryReload(n => n + 1)}
             onRenderEnqueued={() => navigate('queue')}
-            workDirLocked={workDirStatus === 'lock'}
+            workDirLocked={workDirLocked}
             navigate={navigate}
           />
         </div>
-        <div className="ws-detail-right">
-          <WorkspaceThumbnailPanel projectID={projectID} fileID={effectiveFileID} workspaceID={workspaceID} />
+        <div className="ws-pane-history">
           <h3 className="ws-detail-section-title">{t('tabs.history')}</h3>
           <HistoryTab
             projectID={projectID}
             workspaceID={workspaceID}
             navigate={navigate}
             projectName={projectName}
-            fileID={effectiveFileID}
-            fileName={effectiveFileName}
-            workspaceName={detail.workspace.name}
+            fileID={fileID}
+            fileName={fileName}
+            workspaceName={name}
             reloadTrigger={historyReload}
           />
         </div>
       </div>
-    </div>
+    </>
   )
 }
 
-export default WorkspaceDetailPage
+export default WorkspacePanel

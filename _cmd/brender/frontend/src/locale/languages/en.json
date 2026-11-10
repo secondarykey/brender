@@ -127,9 +127,13 @@
   "breadcrumb": {
     "projects": "Project List",
     "job": "Job",
-    "jobResult": "Result",
-    "backToFileList": "← Files",
-    "backToWorkspaceList": "← Workspaces"
+    "jobResult": "Result"
+  },
+  "entity": {
+    "project": "Project",
+    "file": "File",
+    "workspace": "Workspace",
+    "job": "Job Result"
   },
   "project": {
     "register": {

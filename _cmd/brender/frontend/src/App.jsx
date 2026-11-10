@@ -4,7 +4,6 @@ import MainLayout from './layouts/MainLayout'
 import ProjectListPage from './pages/projects/ProjectListPage'
 import ProjectDetailPage from './pages/projects/ProjectDetailPage'
 import FileDetailPage from './pages/projects/FileDetailPage'
-import WorkspaceDetailPage from './pages/projects/WorkspaceDetailPage'
 import JobPage from './pages/projects/JobPage'
 import QueuePage from './pages/queue/QueuePage'
 import SettingsPage from './pages/settings/SettingsPage'
@@ -115,26 +114,20 @@ function App() {
         return <ProjectListPage navigate={navigate} />
       case 'project':
         return <ProjectDetailPage id={p.id} initialTab={p.initialTab} focusName={p.focusName} navigate={navigate} />
+      // ワークスペースは単独のページを持たず、ファイル画面の中で開く。
+      // 'workspace' は「そのワークスペースを開いた状態のファイル画面」への入口として残してある。
       case 'file':
-        return (
-          <FileDetailPage
-            projectID={p.projectID}
-            projectName={p.projectName}
-            fileID={p.fileID}
-            fileName={p.fileName}
-            initialTab={p.initialTab}
-            navigate={navigate}
-          />
-        )
       case 'workspace':
         return (
-          <WorkspaceDetailPage
+          <FileDetailPage
+            key={p.fileID || p.workspaceID}
             projectID={p.projectID}
             projectName={p.projectName}
             fileID={p.fileID}
             fileName={p.fileName}
             workspaceID={p.workspaceID}
             focusName={p.focusName}
+            initialTab={p.initialTab}
             navigate={navigate}
           />
         )

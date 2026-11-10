@@ -70,12 +70,16 @@ export async function getTestI18n() {
             download: 'Download',
           },
           sysmon: { memory: 'Memory' },
+          entity: {
+            project: 'Project',
+            file: 'File',
+            workspace: 'Workspace',
+            job: 'Job Result',
+          },
           breadcrumb: {
             projects: 'Projects',
             job: 'Job',
             jobResult: 'Job Result',
-            backToFileList: '← File list',
-            backToWorkspaceList: '← Workspace list',
           },
           status: {
             waiting: 'Waiting',
