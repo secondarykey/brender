@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"log/slog"
 	"os"
 
 	brender "github.com/secondarykey/brender"
@@ -90,35 +89,9 @@ func (s *Environment) GetSystemLog(ctx context.Context) (string, error) {
 
 var logLevelNames = []string{"TRACE", "DEBUG", "INFO", "NOTICE", "WARN", "ERROR"}
 
-var logLevelMap = map[string]slog.Level{
-	"TRACE":  log.LevelTrace,
-	"DEBUG":  slog.LevelDebug,
-	"INFO":   slog.LevelInfo,
-	"NOTICE": log.LevelNotice,
-	"WARN":   slog.LevelWarn,
-	"ERROR":  slog.LevelError,
-}
-
-func levelToName(lv slog.Level) string {
-	switch {
-	case lv <= log.LevelTrace:
-		return "TRACE"
-	case lv <= slog.LevelDebug:
-		return "DEBUG"
-	case lv < log.LevelNotice:
-		return "INFO"
-	case lv < slog.LevelWarn:
-		return "NOTICE"
-	case lv < slog.LevelError:
-		return "WARN"
-	default:
-		return "ERROR"
-	}
-}
-
 // GetLogLevel returns the current log level name (TRACE/DEBUG/INFO/NOTICE/WARN/ERROR).
 func (s *Environment) GetLogLevel(ctx context.Context) string {
-	return levelToName(log.GetLevel())
+	return log.LevelName(log.GetLevel())
 }
 
 // GetLogLevels returns all available log level names in order.
@@ -131,9 +104,9 @@ func (s *Environment) SetLogLevel(ctx context.Context, level string) error {
 	if err := api.RequireAdmin(ctx); err != nil {
 		return err
 	}
-	lv, ok := logLevelMap[level]
-	if !ok {
-		return nil
+	lv, err := log.ParseLevel(level)
+	if err != nil {
+		return err
 	}
 	log.SetLevel(lv)
 	return nil

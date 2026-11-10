@@ -29,7 +29,7 @@ func authMiddleware(next http.Handler) http.Handler {
 		// 認証が有効か確認
 		authEnabled, err := api.IsAuthEnabled()
 		if err != nil {
-			log.Error("authMiddleware: %v", err)
+			log.Errorf("authMiddleware: %v", err)
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -53,7 +53,7 @@ func authMiddleware(next http.Handler) http.Handler {
 		// セッションを検証
 		user, err := api.ValidateSession(cookie.Value)
 		if err != nil {
-			log.Error("authMiddleware validate session: %v", err)
+			log.Errorf("authMiddleware validate session: %v", err)
 			if handleUnauthorized(w, r, path) {
 				return
 			}

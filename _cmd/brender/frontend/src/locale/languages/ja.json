@@ -127,9 +127,7 @@
   "breadcrumb": {
     "projects": "プロジェクト一覧",
     "job": "ジョブ",
-    "jobResult": "実行結果",
-    "backToFileList": "← ファイル一覧",
-    "backToWorkspaceList": "← ワークスペース一覧"
+    "jobResult": "実行結果"
   },
   "project": {
     "register": {

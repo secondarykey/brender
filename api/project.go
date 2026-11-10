@@ -2,9 +2,9 @@ package api
 
 import (
 	"context"
+	"github.com/secondarykey/brender/log"
 	"io"
 	"io/fs"
-	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -133,12 +133,12 @@ func UploadProjectFile(ctx context.Context, projectID string, filename string, r
 	}
 	now := time.Now()
 	if err := model.UpdateProjectFileProcessedAt(f.ID, &now); err != nil {
-		slog.Error("UploadProjectFile: UpdateProjectFileProcessedAt", "error", err)
+		log.Error("UploadProjectFile: UpdateProjectFileProcessedAt", "error", err)
 	}
 	touchProjectProcessedAt(projectID)
 	// プロジェクトの権限をファイルにコピー
 	if err := model.CopyProjectPermissionsToFile(projectID, f.ID); err != nil {
-		slog.Error("UploadProjectFile: CopyProjectPermissionsToFile", "error", err)
+		log.Error("UploadProjectFile: CopyProjectPermissionsToFile", "error", err)
 	}
 	// 非同期でPackチェック → Pack済みならサムネイル自動生成（バックグラウンドは owner 権限で実行）
 	go checkPackAndThumbnail(SystemContext(), projectID, f)
@@ -150,18 +150,18 @@ func UploadProjectFile(ctx context.Context, projectID string, filename string, r
 func checkPackAndThumbnail(ctx context.Context, projectID string, f *model.ProjectFile) {
 	tool, err := GetToolData(0, f.ID)
 	if err != nil {
-		slog.Error("checkPackAndThumbnail: GetToolData", "fileID", f.ID, "error", err)
+		log.Error("checkPackAndThumbnail: GetToolData", "fileID", f.ID, "error", err)
 		return
 	}
 	if err := model.UpdateProjectFilePacked(f.ID, tool.Pack); err != nil {
-		slog.Error("checkPackAndThumbnail: UpdateProjectFilePacked", "fileID", f.ID, "error", err)
+		log.Error("checkPackAndThumbnail: UpdateProjectFilePacked", "fileID", f.ID, "error", err)
 	}
 	if tool.Pack {
 		if err := CreateThumbnailWorkspace(ctx, projectID, f); err != nil {
-			slog.Error("checkPackAndThumbnail: thumbnail creation failed", "fileID", f.ID, "error", err)
+			log.Error("checkPackAndThumbnail: thumbnail creation failed", "fileID", f.ID, "error", err)
 		}
 	} else {
-		slog.Warn("uploaded file is not packed", "fileID", f.ID, "name", f.Name)
+		log.Warn("uploaded file is not packed", "fileID", f.ID, "name", f.Name)
 	}
 }
 
@@ -179,18 +179,18 @@ func AddProjectFile(ctx context.Context, projectID, path string) (*model.Project
 	}
 	now := time.Now()
 	if err := model.UpdateProjectFileProcessedAt(f.ID, &now); err != nil {
-		slog.Error("AddProjectFile: UpdateProjectFileProcessedAt", "error", err)
+		log.Error("AddProjectFile: UpdateProjectFileProcessedAt", "error", err)
 	}
 	touchProjectProcessedAt(projectID)
 	// プロジェクトの権限をファイルにコピー
 	if err := model.CopyProjectPermissionsToFile(projectID, f.ID); err != nil {
-		slog.Error("AddProjectFile: CopyProjectPermissionsToFile", "error", err)
+		log.Error("AddProjectFile: CopyProjectPermissionsToFile", "error", err)
 	}
 	// サムネイル自動生成はバックグラウンドで owner 権限として実行する
 	bgCtx := SystemContext()
 	go func() {
 		if err := CreateThumbnailWorkspace(bgCtx, projectID, f); err != nil {
-			slog.Error("thumbnail workspace creation failed", "fileID", f.ID, "error", err)
+			log.Error("thumbnail workspace creation failed", "fileID", f.ID, "error", err)
 		}
 	}()
 	return f, nil
@@ -270,7 +270,7 @@ func DeleteProjectFile(ctx context.Context, fileID string, force bool) error {
 	if len(dirs) > 0 {
 		fileDir := filepath.Dir(filepath.Dir(dirs[0]))
 		if err := os.RemoveAll(fileDir); err != nil {
-			slog.Warn("DeleteProjectFile: remove file dir", "error", err)
+			log.Warn("DeleteProjectFile: remove file dir", "error", err)
 		}
 	} else {
 		// ジョブがなくてもサムネイルが存在する可能性があるため fileID ディレクトリを削除
@@ -278,7 +278,7 @@ func DeleteProjectFile(ctx context.Context, fileID string, force bool) error {
 			if baseDir, err := GetProjectBaseDir(pf.ProjectID); err == nil {
 				fileDir := filepath.Join(baseDir, pf.ProjectID, fileID)
 				if err := os.RemoveAll(fileDir); err != nil {
-					slog.Warn("DeleteProjectFile: remove file dir (no jobs)", "error", err)
+					log.Warn("DeleteProjectFile: remove file dir (no jobs)", "error", err)
 				}
 			}
 		}
@@ -322,13 +322,13 @@ func DeleteProject(ctx context.Context, id string, force bool) error {
 	if len(dirs) > 0 {
 		projectDir := filepath.Dir(filepath.Dir(filepath.Dir(dirs[0])))
 		if err := os.RemoveAll(projectDir); err != nil {
-			slog.Warn("DeleteProject: remove project dir", "error", err)
+			log.Warn("DeleteProject: remove project dir", "error", err)
 		}
 	} else {
 		if baseDir, err := GetProjectBaseDir(id); err == nil {
 			projectDir := filepath.Join(baseDir, id)
 			if err := os.RemoveAll(projectDir); err != nil {
-				slog.Warn("DeleteProject: remove project dir (no jobs)", "error", err)
+				log.Warn("DeleteProject: remove project dir (no jobs)", "error", err)
 			}
 		}
 	}
@@ -368,12 +368,12 @@ func CreateProject(ctx context.Context, name string) (*model.ProjectDetail, erro
 	}
 	now := time.Now()
 	if err := model.UpdateProjectProcessedAt(d.Project.ID, &now); err != nil {
-		slog.Error("CreateProject: UpdateProjectProcessedAt", "error", err)
+		log.Error("CreateProject: UpdateProjectProcessedAt", "error", err)
 	}
 	// デフォルト権限を設定（作成者 + BrenderOwner → owner, All → viewer）
 	creatorID := currentUser(ctx)
 	if err := model.SetDefaultProjectPermissions(d.Project.ID, creatorID); err != nil {
-		slog.Error("CreateProject: SetDefaultProjectPermissions", "error", err)
+		log.Error("CreateProject: SetDefaultProjectPermissions", "error", err)
 	}
 	return d, nil
 }
@@ -381,6 +381,6 @@ func CreateProject(ctx context.Context, name string) (*model.ProjectDetail, erro
 func touchProjectProcessedAt(projectID string) {
 	now := time.Now()
 	if err := model.UpdateProjectProcessedAt(projectID, &now); err != nil {
-		slog.Error("touchProjectProcessedAt", "projectID", projectID, "error", err)
+		log.Error("touchProjectProcessedAt", "projectID", projectID, "error", err)
 	}
 }

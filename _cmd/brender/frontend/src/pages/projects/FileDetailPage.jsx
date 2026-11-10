@@ -11,18 +11,20 @@ import Dialog from '../../components/Dialog'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import HierarchyBreadcrumb from '../../components/HierarchyBreadcrumb'
 import EntityIcon from '../../components/EntityIcon'
+import WorkspacePanel from './WorkspacePanel'
 import FavoriteButton from '../../components/FavoriteButton'
 import NoteSection from '../../components/NoteSection'
+import FieldLabel from '../../components/FieldLabel'
 import WorkspaceCreateDialog from '../../components/WorkspaceCreateDialog'
 import TagInput from '../../components/TagInput'
 import PermissionSection from '../../components/PermissionSection'
 import AccessDenied from '../../components/AccessDenied'
 import { isWails } from '../../lib/api/_client'
-import { MdViewList, MdViewModule, MdViewComfy, MdPlayArrow } from 'react-icons/md'
+import { MdPlayArrow } from 'react-icons/md'
 
 
-// ── ワークスペースカード（サムネイル表示） ──────────────────
-function WorkspaceCard({ projectID, fileID, ws, navigate, projectName, fileName, onRunClick, resolvingWsId, thumbnailMode, onSetThumbnail, workDirLocked, small, stale, canRun }) {
+// ── ワークスペース一覧の1行 ────────────────────────────────
+function WorkspaceRailItem({ projectID, fileID, ws, selected, stale, thumbnailMode, canRun, runDisabled, onSelect, onRun }) {
   const { t } = useTranslation()
   const [thumb, setThumb] = useState(null)
 
@@ -32,59 +34,52 @@ function WorkspaceCard({ projectID, fileID, ws, navigate, projectName, fileName,
       .catch(() => {})
   }, [projectID, fileID, ws.id])
 
-  const handleClick = () => {
-    if (thumbnailMode) {
-      onSetThumbnail(ws.id)
-    } else {
-      navigate('workspace', { projectID, projectName, fileID, fileName, workspaceID: ws.id })
-    }
-  }
-
   return (
     <div
-      className={`file-tile ws-tile entity-workspace entity-bar${thumbnailMode ? ' file-tile-thumb-select' : ''}`}
+      className={`ws-rail-item entity-workspace entity-bar${selected ? ' selected' : ''}${thumbnailMode ? ' file-item-thumb-select' : ''}`}
       title={ws.name}
-      onClick={handleClick}
+      aria-current={selected ? 'true' : undefined}
+      onClick={onSelect}
     >
-      <div className="file-tile-thumb">
-        {thumb
-          ? <img src={thumb} alt={ws.name} />
-          : <span className="file-tile-thumb-placeholder">{t('workspace.noImage')}</span>
-        }
-        {stale && <span className="stale-mark" title={t('file.fileChangedTooltip')}>!</span>}
+      <div className="ws-rail-thumb">
+        {thumb && <img src={thumb} alt="" />}
       </div>
-      <div className="ws-tile-info">
+      <div className="ws-rail-info">
         <div className="entity-name-row">
           <EntityIcon type="workspace" />
-          <span className="file-tile-name" title={ws.name}>{ws.name}</span>
+          <span className="ws-item-name">{ws.name}</span>
+          {stale && <span className="stale-mark-inline" title={t('file.fileChangedTooltip')}>!</span>}
         </div>
-        {!small && (
-          <div className="ws-item-meta" style={{ marginTop: 4 }}>
-            {ws.engine && <span className="ws-meta-chip">{ws.engine}</span>}
-            {(ws.start === 0 && ws.end === -1)
-              ? <span className="ws-meta-chip">{t('workspace.blendDefault')}</span>
-              : <span className="ws-meta-chip">{ws.start} – {ws.end} f</span>
-            }
-          </div>
-        )}
+        <div className="ws-item-meta">
+          {ws.engine && <span className="ws-meta-chip">{ws.engine}</span>}
+          {(ws.start === 0 && ws.end === -1)
+            ? <span className="ws-meta-chip">{t('workspace.blendDefault')}</span>
+            : <span className="ws-meta-chip">{ws.start} – {ws.end} f</span>
+          }
+        </div>
       </div>
-      {!thumbnailMode && !small && canRun && (
-        <div className="ws-tile-actions">
-          <button
-            className="btn btn-run btn-sm"
-            onClick={e => { e.stopPropagation(); onRunClick(ws) }}
-            disabled={resolvingWsId !== null || workDirLocked}
-          >
-            <MdPlayArrow /> {t('common.run')}
-          </button>
-        </div>
+      {!thumbnailMode && canRun && (
+        <button
+          className="btn btn-run btn-sm ws-rail-run"
+          title={t('common.run')}
+          aria-label={t('common.run')}
+          onClick={e => { e.stopPropagation(); onRun() }}
+          disabled={runDisabled}
+        >
+          <MdPlayArrow />
+        </button>
       )}
     </div>
   )
 }
 
-// ── ワークスペースタブ ─────────────────────────────────────
-function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEnqueued, workDirLocked, role, onCountChange }) {
+// ── ワークスペース一覧（ファイル画面の左側） ─────────────────
+// 選んだ1件を右側の WorkspacePanel が表示する。一覧はここにしか無く、ページ遷移はしない。
+//   selectedID    … 選択中のワークスペース（強調表示）
+//   onSelect      … (id, extra) 行を選んだとき。extra は新規作成直後の { focusName: true } など
+//   onLoaded      … 一覧を読み込むたびに呼ぶ（件数と既定の選択を親が決める）
+//   reloadTrigger … 値が変わったら読み直す（右側で名称変更・複製・削除があったとき）
+function WorkspaceRail({ projectID, fileID, fileName, selectedID, onSelect, onEnqueued, workDirLocked, role, onLoaded, reloadTrigger }) {
   const { t } = useTranslation()
   const { showToast } = useToast()
   const { showError } = useMessage()
@@ -94,7 +89,6 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
   const [confirm, setConfirm]       = useState(null) // { ws, preview }
   const [resolvingWsId, setResolvingWsId] = useState(null)
   const [enqueuing, setEnqueuing]   = useState(false)
-  const [viewMode, setViewMode]     = useState(() => localStorage.getItem('viewMode:workspaces') || 'list')
   const [thumbnailMode, setThumbnailMode] = useState(false)
   const [sort, setSort]             = useState(() => localStorage.getItem('sort:workspaces') || 'display_order')
   const [dir, setDir]               = useState(() => localStorage.getItem('dir:workspaces') || '')
@@ -112,8 +106,9 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
     WorkspaceApi.listByProject({ projectID, sort: s, dir: d })
       .then(list => {
         const group = (list || []).find(g => g.file.id === fileID)
-        setWorkspaces(group ? group.workspaces : [])
-        if (onCountChange) onCountChange(group ? group.workspaces.length : 0)
+        const next = group ? group.workspaces : []
+        setWorkspaces(next)
+        if (onLoaded) onLoaded(next)
         if (group?.file?.file_modified_at) setFileModifiedAt(group.file.file_modified_at)
       })
       .catch(() => {})
@@ -136,16 +131,12 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
     load(sort, d)
   }
 
-  useEffect(() => { load(sort, dir) }, [projectID, fileID])
-
-  const handleCreateWorkspace = () => {
-    setCreateDialogOpen(true)
-  }
+  useEffect(() => { load(sort, dir) }, [projectID, fileID, reloadTrigger])
 
   const handleCreated = (newWorkspaces) => {
     load(sort, dir)
     if (newWorkspaces.length === 1) {
-      navigate('workspace', { projectID, projectName, fileID, fileName, workspaceID: newWorkspaces[0].id, focusName: true })
+      onSelect(newWorkspaces[0].id, { focusName: true })
     }
   }
 
@@ -188,33 +179,17 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100%' }}>
+    <div className="ws-rail">
       {workspaces.length > 0 && (
-        <div className="file-view-toggle" style={{ marginBottom: 8 }}>
-          <button
-            className={`file-view-btn${viewMode === 'list' ? ' active' : ''}`}
-            onClick={() => { setViewMode('list'); localStorage.setItem('viewMode:workspaces', 'list') }}
-            title={t('workspace.listView')}
-          ><MdViewList /></button>
-          <button
-            className={`file-view-btn${viewMode === 'card' ? ' active' : ''}`}
-            onClick={() => { setViewMode('card'); localStorage.setItem('viewMode:workspaces', 'card') }}
-            title={t('workspace.cardView')}
-          ><MdViewModule /></button>
-          <button
-            className={`file-view-btn${viewMode === 'card-sm' ? ' active' : ''}`}
-            onClick={() => { setViewMode('card-sm'); localStorage.setItem('viewMode:workspaces', 'card-sm') }}
-            title={t('workspace.smallCardView')}
-          ><MdViewComfy /></button>
+        <div className="ws-rail-tools">
           <SortSelect value={sort} onChange={handleSortChange} dir={dir} onDirChange={handleDirChange} />
           {canSetThumbnail && (
-          <button
-            className={`btn btn-sm${thumbnailMode ? ' btn-outline-active' : ' btn-outline'}`}
-            style={{ marginLeft: 'auto' }}
-            onClick={() => setThumbnailMode(v => !v)}
-          >
-            {t('workspace.setAsFileThumbnail')}
-          </button>
+            <button
+              className={`btn btn-sm${thumbnailMode ? ' btn-outline-active' : ' btn-outline'}`}
+              onClick={() => setThumbnailMode(v => !v)}
+            >
+              {t('workspace.setAsFileThumbnail')}
+            </button>
           )}
         </div>
       )}
@@ -223,79 +198,25 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
         <div className="thumbnail-mode-hint">{t('file.selectThumbnailHint')}</div>
       )}
 
-
-      <div style={{ position: 'relative' }}>
-        {viewMode === 'list' ? (
-          <div className="ws-list">
-            {workspaces.length === 0 && (
-              <p className="ws-empty">{t('workspace.empty')}</p>
-            )}
-            {workspaces.map(ws => (
-              <div
-                key={ws.id}
-                className={`ws-item ws-item-run entity-workspace entity-bar${thumbnailMode ? ' file-item-thumb-select' : ''}`}
-                onClick={thumbnailMode ? () => handleSetThumbnail(ws.id) : undefined}
-              >
-                {!thumbnailMode && canRun && (
-                  <button
-                    className="btn btn-run btn-sm ws-item-run-btn"
-                    onClick={() => handleRunClick(ws)}
-                    disabled={resolvingWsId !== null || workDirLocked}
-                  >
-                    <MdPlayArrow /> {t('common.run')}
-                  </button>
-                )}
-                <div
-                  className="ws-item-info ws-item-link"
-                  onClick={thumbnailMode ? undefined : () => navigate('workspace', { projectID, projectName, fileID, fileName, workspaceID: ws.id })}
-                >
-                  <div className="entity-name-row">
-                    <EntityIcon type="workspace" />
-                    <span className="ws-item-name">
-                      {ws.name}
-                      {isStale(ws) && <span className="stale-mark-inline" title={t('file.fileChangedTooltip')}>!</span>}
-                    </span>
-                  </div>
-                  <div className="ws-item-meta">
-                    {ws.engine && <span className="ws-meta-chip">{ws.engine}</span>}
-                    {(ws.start === 0 && ws.end === -1)
-                      ? <span className="ws-meta-chip">{t('workspace.blendDefault')}</span>
-                      : <span className="ws-meta-chip">{ws.start} – {ws.end} f</span>
-                    }
-                  </div>
-                </div>
-                {!thumbnailMode && (
-                  <span className="ws-item-arrow" onClick={() => navigate('workspace', { projectID, projectName, fileID, fileName, workspaceID: ws.id })}>›</span>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className={`file-tile-grid${viewMode === 'card-sm' ? ' file-tile-grid--sm' : ''}`}>
-            {workspaces.length === 0 && (
-              <p className="ws-empty">{t('workspace.empty')}</p>
-            )}
-            {workspaces.map(ws => (
-              <WorkspaceCard
-                key={ws.id}
-                projectID={projectID}
-                fileID={fileID}
-                ws={ws}
-                navigate={navigate}
-                projectName={projectName}
-                fileName={fileName}
-                onRunClick={handleRunClick}
-                resolvingWsId={resolvingWsId}
-                thumbnailMode={thumbnailMode}
-                onSetThumbnail={handleSetThumbnail}
-                workDirLocked={workDirLocked}
-                small={viewMode === 'card-sm'}
-                stale={isStale(ws)}
-                canRun={canRun}
-              />
-            ))}
-          </div>
+      <div className="ws-rail-list">
+        {workspaces.length === 0 && (
+          <p className="ws-empty">{t('workspace.empty')}</p>
         )}
+        {workspaces.map(ws => (
+          <WorkspaceRailItem
+            key={ws.id}
+            projectID={projectID}
+            fileID={fileID}
+            ws={ws}
+            selected={ws.id === selectedID}
+            stale={isStale(ws)}
+            thumbnailMode={thumbnailMode}
+            canRun={canRun}
+            runDisabled={resolvingWsId !== null || workDirLocked}
+            onSelect={() => (thumbnailMode ? handleSetThumbnail(ws.id) : onSelect(ws.id))}
+            onRun={() => handleRunClick(ws)}
+          />
+        ))}
         {resolvingWsId !== null && (
           <div className="ws-list-overlay">
             <span className="ws-list-overlay-label">{t('common.processing')}</span>
@@ -303,13 +224,12 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
         )}
       </div>
 
-      <div className="list-spacer" />
       {canCreateWorkspace && (
-      <div className="list-fab">
-        <button className="btn btn-green" onClick={handleCreateWorkspace}>
-          {t('workspace.createNew')}
-        </button>
-      </div>
+        <div className="ws-rail-foot">
+          <button className="btn btn-green" onClick={() => setCreateDialogOpen(true)}>
+            {t('workspace.createNew')}
+          </button>
+        </div>
       )}
 
       <WorkspaceCreateDialog
@@ -338,7 +258,8 @@ function WorkspaceTab({ projectID, projectName, fileID, fileName, navigate, onEn
         {confirm && (() => {
           const pv = confirm.preview
           const prev = pv.previous
-          const fileNotModified = confirm.ws.processed_at && !isStale(confirm.ws)
+          // 判定はダイアログを開いた時点のサーバ側の値で行う（一覧を読んだときの値は古いことがある）
+          const fileNotModified = pv.file_not_modified
           const allIdentical = prev && pv.scene === prev.scene && pv.engine === prev.engine
             && pv.start_frame === prev.start_frame && pv.end_frame === prev.end_frame
             && pv.frame_step === prev.frame_step && pv.samples === prev.samples
@@ -421,7 +342,7 @@ function HistoryTab({ projectID, fileID, navigate, projectName, fileName }) {
       job: j,
       initialTab: 'render',
       backPage: 'file',
-      backParams: { projectID, projectName, fileID, fileName },
+      backParams: { projectID, projectName, fileID, fileName, initialTab: 'history' },
     })
   }
 
@@ -488,12 +409,6 @@ function ThumbnailPanel({ projectID, fileID }) {
       </div>
     </div>
   )
-}
-
-// ── デフォルト値ヒント ────────────────────────────────────
-function DefaultTag({ value, t }) {
-  if (!value) return null
-  return <span className="form-default-tag">（{t('workspace.defaultValueLabel', { value })}）</span>
 }
 
 // ── 設定タブ ─────────────────────────────────────────────
@@ -712,10 +627,7 @@ function SettingsTab({ projectID, fileID, fileName, role, onUpdated, onDeleted, 
               )}
             </div>
             <div className="form-field" style={{ flex: 1 }}>
-              <label className="form-label" style={{ whiteSpace: 'nowrap' }}>
-                {t('file.defaultBlender')}
-                <DefaultTag value={blenderDefault} t={t} />
-              </label>
+              <FieldLabel text={t('file.defaultBlender')} defaultValue={blenderDefault} />
               {blenders.length === 0 ? (
                 <p className="setting-desc">{t('settings.noBlenderRegistered')}</p>
               ) : (
@@ -740,10 +652,7 @@ function SettingsTab({ projectID, fileID, fileName, role, onUpdated, onDeleted, 
 
           <div className="form-row" style={{ alignItems: 'flex-start', marginTop: 12 }}>
             <div className="form-field" style={{ flex: 2 }}>
-              <label className="form-label">
-                {t('file.defaultEngine')}
-                <DefaultTag value={engineDefault} t={t} />
-              </label>
+              <FieldLabel text={t('file.defaultEngine')} defaultValue={engineDefault} />
               {(toolData?.Engines?.length ?? 0) > 0 ? (
                 <select
                   className="form-select"
@@ -774,10 +683,7 @@ function SettingsTab({ projectID, fileID, fileName, role, onUpdated, onDeleted, 
 
           <div className="form-row" style={{ alignItems: 'flex-start' }}>
             <div className="form-field" style={{ flex: 1 }}>
-              <label className="form-label">
-                {t('file.defaultScene')}
-                <DefaultTag value={sceneDefault} t={t} />
-              </label>
+              <FieldLabel text={t('file.defaultScene')} defaultValue={sceneDefault} />
               {scenes.length > 0 ? (
                 <select
                   className="form-select"
@@ -804,10 +710,7 @@ function SettingsTab({ projectID, fileID, fileName, role, onUpdated, onDeleted, 
               </label>
             </div>
             <div className="form-field" style={{ flex: 1 }}>
-              <label className="form-label">
-                {t('file.defaultCamera')}
-                <DefaultTag value={cameraDefault} t={t} />
-              </label>
+              <FieldLabel text={t('file.defaultCamera')} defaultValue={cameraDefault} />
               <select
                 className="form-select"
                 value={camera}
@@ -894,28 +797,53 @@ function SettingsTab({ projectID, fileID, fileName, role, onUpdated, onDeleted, 
 }
 
 // ── ページ本体 ────────────────────────────────────────────
-function FileDetailPage({ projectID, projectName: initialProjectName, fileID, fileName, initialTab, navigate }) {
+// ファイル1件の画面。ワークスペースはこの中で開く（単独のページは無い）。
+//   タブ「ワークスペース」… 左: 一覧（WorkspaceRail） / 右: 選んだ1件（WorkspacePanel）
+//   タブ「実行履歴」    … このファイル全体の履歴
+//   タブ「ファイル設定」
+// workspaceID は「どのワークスペースを開いておくか」。無ければ一覧の先頭を開く。
+// fileID が無く workspaceID だけ渡された場合（古い実行結果からの遷移など）は、ワークスペースから引く。
+function FileDetailPage({ projectID, projectName: initialProjectName, fileID: initialFileID, fileName, workspaceID, focusName, initialTab, navigate }) {
   const { t } = useTranslation()
-  const [tab, setTab] = useState(initialTab || 'workspace')
+  const [tab, setTab] = useState(workspaceID ? 'workspace' : (initialTab || 'workspace'))
   const [projectName, setProjectName] = useState(initialProjectName)
-  const [currentFileName, setCurrentFileName] = useState(fileName)
+  const [fileID, setFileID] = useState(initialFileID || '')
+  const [currentFileName, setCurrentFileName] = useState(fileName || '')
   const [workDirStatus, setWorkDirStatus] = useState(null)
   const [accessDenied, setAccessDenied] = useState(false)
   const [fileRole, setFileRole] = useState('owner')
-  const [wsCount, setWsCount] = useState(null)
+  const [workspaces, setWorkspaces] = useState(null) // null = 未読込
+  const [railReload, setRailReload] = useState(0)
   const [favorite, setFavorite] = useState(false)
 
   useEffect(() => {
+    if (fileID || !workspaceID) return
+    WorkspaceApi.get({ projectID, workspaceID })
+      .then(d => {
+        const fid = d?.workspace?.project_file_id
+        if (!fid) return
+        setFileID(fid)
+        setCurrentFileName(prev => prev || d.project_files?.find(f => f.id === fid)?.name || '')
+      })
+      .catch(err => {
+        if (String(err).includes('access denied')) setAccessDenied(true)
+      })
+  }, [projectID, fileID, workspaceID])
+
+  useEffect(() => {
+    if (!fileID) return
     FavoriteApi.isFavorite({ fileID })
       .then(v => setFavorite(!!v))
       .catch(() => {})
   }, [fileID])
 
   useEffect(() => {
+    if (!fileID) return
     // ファイル権限チェック + ロール取得
     ProjectApi.getFile({ fileID })
       .then(f => {
         if (f?.my_role) setFileRole(f.my_role)
+        if (f?.name) setCurrentFileName(prev => prev || f.name)
       })
       .catch(err => {
         if (String(err).includes('access denied')) setAccessDenied(true)
@@ -938,14 +866,28 @@ function FileDetailPage({ projectID, projectName: initialProjectName, fileID, fi
     return <AccessDenied onBack={() => navigate('project', { id: projectID })} />
   }
 
+  if (!fileID) {
+    return <div className="page"><p className="setting-desc">{t('common.loading')}</p></div>
+  }
+
   const tabs = [
-    { id: 'workspace', label: t('tabs.workspaceList'), icon: 'workspace', count: wsCount },
+    { id: 'workspace', label: t('tabs.workspaceList'), icon: 'workspace', count: workspaces ? workspaces.length : null },
+    { id: 'history',   label: t('tabs.history'), icon: 'job' },
     { id: 'settings',  label: t('tabs.fileSettings') },
   ]
 
+  // 開いておくワークスペース。指定が無ければ一覧の先頭。
+  // 指定は一覧に載っているかを見ずに信じる（作成・複製の直後は一覧の読み直しより先に指定が届く）。
+  // 既に消えたものを指していた場合は WorkspacePanel が onMissing で知らせるので、指定を外す。
+  const selectedID = workspaceID || workspaces?.[0]?.id || null
+
+  const selectWorkspace = (id, extra = {}) => {
+    navigate('file', { projectID, projectName, fileID, fileName: currentFileName, workspaceID: id, ...extra })
+  }
+
   return (
     <div className="page">
-      <div className="page-header" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+      <div className="page-header">
         <HierarchyBreadcrumb
           navigate={navigate}
           projectID={projectID}
@@ -953,9 +895,6 @@ function FileDetailPage({ projectID, projectName: initialProjectName, fileID, fi
           fileID={fileID}
           fileName={currentFileName}
         />
-        <button className="back-to-list" onClick={() => navigate('project', { id: projectID, initialTab: 'workspace' })}>
-          {t('breadcrumb.backToFileList')}
-        </button>
       </div>
 
       {workDirStatus === 'lock' && (
@@ -981,30 +920,49 @@ function FileDetailPage({ projectID, projectName: initialProjectName, fileID, fi
 
       <div className="tab-content">
         {tab === 'workspace' && (
-          <div className="ws-detail-split">
-            <div className="ws-detail-left">
-              <WorkspaceTab
-                projectID={projectID}
-                projectName={projectName}
-                fileID={fileID}
-                fileName={currentFileName}
-                navigate={navigate}
-                onEnqueued={() => navigate('queue')}
-                workDirLocked={workDirStatus === 'lock'}
-                role={fileRole}
-                onCountChange={setWsCount}
-              />
+          <div className="file-split">
+            <WorkspaceRail
+              projectID={projectID}
+              fileID={fileID}
+              fileName={currentFileName}
+              selectedID={selectedID}
+              onSelect={selectWorkspace}
+              onEnqueued={() => navigate('queue')}
+              workDirLocked={workDirStatus === 'lock'}
+              role={fileRole}
+              onLoaded={setWorkspaces}
+              reloadTrigger={railReload}
+            />
+            <div className="ws-pane entity-workspace">
+              {selectedID && (
+                <WorkspacePanel
+                  key={selectedID}
+                  projectID={projectID}
+                  projectName={projectName}
+                  fileID={fileID}
+                  fileName={currentFileName}
+                  workspaceID={selectedID}
+                  focusName={focusName && selectedID === workspaceID}
+                  role={fileRole}
+                  workDirLocked={workDirStatus === 'lock'}
+                  navigate={navigate}
+                  onChanged={() => setRailReload(n => n + 1)}
+                  onDeleted={() => { setRailReload(n => n + 1); selectWorkspace(undefined) }}
+                  onMissing={() => selectWorkspace(undefined)}
+                />
+              )}
             </div>
-            <div className="ws-detail-right">
-              <h3 className="ws-detail-section-title">{t('tabs.history')}</h3>
-              <HistoryTab
-                projectID={projectID}
-                fileID={fileID}
-                navigate={navigate}
-                projectName={projectName}
-                fileName={currentFileName}
-              />
-            </div>
+          </div>
+        )}
+        {tab === 'history' && (
+          <div className="file-history">
+            <HistoryTab
+              projectID={projectID}
+              fileID={fileID}
+              navigate={navigate}
+              projectName={projectName}
+              fileName={currentFileName}
+            />
           </div>
         )}
         {tab === 'settings' && (

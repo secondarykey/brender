@@ -4,7 +4,16 @@
 
 ## Navigation hierarchy
 
-プロジェクト一覧 → プロジェクト詳細（ファイル一覧タブ） → ファイル詳細（ワークスペース左/履歴右の分割レイアウト・設定タブ） → ワークスペース設定（設定左/履歴右の分割レイアウト） → 実行結果（JobPage）
+プロジェクト一覧 → プロジェクト詳細（ファイル一覧タブ） → ファイル画面（左: ワークスペース一覧 / 右: 選んだワークスペース） → 実行結果（JobPage）
+
+**ワークスペースは単独のページを持たない。必ずファイル画面の中で開く。**
+ファイルとワークスペースが同じ骨格の別ページだった頃は、どちらを見ているのか分からなくなった。
+ワークスペースを開いている間もパンくずのファイル名と一覧が出たままになるよう、1画面にまとめてある。
+種別と名前を大きく出す見出し帯（サムネイル＋名称のバー）は置かない（試したが不要と判断した）。
+
+- `navigate('workspace', { ..., workspaceID })` は残してあるが、行き先は「そのワークスペースを開いた状態のファイル画面」（`App.jsx` で `file` と同じ `FileDetailPage` に流す）
+- ファイル画面の中でワークスペースを切り替えるのは `navigate('file', { ..., workspaceID })`。`workspaceID` が無ければ一覧の先頭を開く
+- ワークスペース用の新しいページを作らない。ワークスペースに関する表示は `WorkspacePanel`（右側）に足す
 
 ### パンくず (`src/components/HierarchyBreadcrumb.jsx`)
 
@@ -27,7 +36,8 @@
 ```
 
 - 渡された**最下層が自動的に現在地**（リンクなし）になる。`current` のような指定は不要
-- 上位階層のリンク先は各階層の**設定タブ**（一覧へ戻るのは `.back-to-list` ボタンの役割）
+- 上位階層のリンク先は各階層の**最初のタブ**（プロジェクト → ファイル一覧、ファイル → ワークスペース）。「一覧へ戻る」専用のボタンは置かない
+- ファイル画面のパンくずはファイルで終わる（中で開いているワークスペースは、一覧の選択が示す）。ワークスペース階層が出るのは実行結果ページだけ
 - 階層を増やすときは `HierarchyBreadcrumb` の `levels` に1件足すだけ。全ページに自動反映される
 - `HierarchyBreadcrumb.test.jsx` が各ページ相当の階層でアイコン・リンク・遷移先を検証している
 
@@ -57,17 +67,19 @@ App.jsx
       プロジェクト新規作成: 「New Project」デフォルト値・フォーカス・全選択状態
     ProjectDetailPage      (/project/:id)
       tabs: ファイル一覧 / 設定
-    FileDetailPage         (/file)
-      tab: ワークスペース → 左右分割
-        左: ワークスペース一覧（各行に「▶ 実行」・名称・›）
-             新規作成: 「New Workspace」デフォルト値・全選択状態
-        右: 実行履歴（HistoryTab）
-      tab: 設定 → 左右分割
+    FileDetailPage         (/file ・ /workspace も同じ画面)
+      tab: ワークスペース → 左右分割（.file-split）
+        左: WorkspaceRail（一覧。各行にサムネイル・名称・「▶」。行を選ぶと右が切り替わる）
+             新規作成: 「New Workspace」デフォルト値・全選択状態（作成後はその行を選ぶ）
+        右: WorkspacePanel（設定フォーム ＋ サムネイル・実行履歴）
+             設定と「サムネイル・履歴」は横並びで別々にスクロールする（狭いときは縦に積む）
+             設定フォーム末尾の操作行（削除・Test・実行・保存）は下端に固定（`.ws-pane-form .form-actions` の sticky）
+             Test の説明はボタンの `title`（画面内に説明文を書かない）
+      tab: 実行履歴 → このファイル全体の履歴（HistoryTab）
+      tab: ファイル設定 → 左右分割
         左: ファイル設定フォーム
         右: ThumbnailPanel（thumbnail.jpg 表示）
-    WorkspaceDetailPage    (/workspace)
-      左右分割（左: 設定フォーム, 右: 実行履歴）
-      ※ props に fileID/fileName がない場合、detail.project_files から補完してパンクズに表示
+      ※ fileID が無く workspaceID だけで来た場合は、ワークスペースからファイルを引く
     QueuePage              (/queue)
       tabs: キュー（waiting/running 一覧、登録順昇順） / 実行履歴
     SettingsPage           (/settings)
@@ -139,7 +151,7 @@ CodesApi.getImageFormats()      // Promise<ImageFormat[]>
 CodesApi.getVideoFormats()      // Promise<VideoFormat[]>
 CodesApi.getResolutionPresets() // Promise<ResolutionPreset[]>
 ```
-利用箇所: `BlenderSettings.jsx`（image_formats）、`WorkspaceDetailPage.jsx`（image_formats + resolution_presets）、`VideoSettings.jsx` / `JobPage.jsx`（video_formats）。
+利用箇所: `BlenderSettings.jsx`（image_formats）、`WorkspacePanel.jsx`（image_formats + resolution_presets）、`VideoSettings.jsx` / `JobPage.jsx`（video_formats）。
 `code/` の仕組み・新カテゴリ追加手順は Skill `brender-codes` を参照。
 
 ## Event Bus (`src/lib/appEvents.js`)
@@ -320,7 +332,7 @@ background: #1a1a1a;
 - `#app, #root` must both have `width/height: 100%` for the height chain to work
 
 ### フォームレイアウト
-設定フォームは以下のクラスを使う（`WorkspaceDetailPage` 等が基準）：
+設定フォームは以下のクラスを使う（`WorkspacePanel` 等が基準）：
 
 ```jsx
 <div className="form" style={{ maxWidth: 640 }}>
@@ -341,10 +353,11 @@ background: #1a1a1a;
 - `textarea` には `textarea.form-input { height: auto; padding: 8px 10px }` が適用される。`minHeight` と `resize: vertical` をインラインで指定する
 - `input` / `textarea` は `width: 100%` を付けてカラム幅いっぱいに広げる（デフォルトは `width` 未指定）
 - `.form-hint` — 補足テキスト（11px, #888）
+- ラベルに「（未設定時 = 値）」や固定値を添えるときは `FieldLabel`（`src/components/FieldLabel.jsx`）を使う。1行に収めて入りきらない分は「…」にし、全文は `title` で出す（横並びの欄でラベルだけ折り返すと入力の位置がずれる）
 - `.form-actions` — `justify-content: space-between`（削除ボタン左・保存ボタン右）
 
 ### 左右分割レイアウト (`.ws-detail-split`)
-ファイル詳細・ワークスペース詳細で使用：
+プロジェクト設定・ファイル設定・実行結果で使用（ファイル画面のワークスペース一覧/中身の分割は別物で `.file-split` > `.ws-rail` + `.ws-pane`）：
 ```css
 .ws-detail-split  { display: flex; gap: 32px; flex: 1; min-height: 0; overflow: hidden; }
 .ws-detail-left   { flex: 3; min-width: 0; overflow-y: auto; }   /* 約60% */

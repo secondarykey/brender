@@ -581,12 +581,12 @@ func parseFrame(seg string) int {
 	buf = strings.TrimSpace(buf)
 	fields := strings.Fields(buf)
 	if len(fields) == 0 {
-		log.Warn("parseFrame() empty:%s", seg)
+		log.Warnf("parseFrame() empty:%s", seg)
 		return -1
 	}
 	v, err := strconv.Atoi(fields[0])
 	if err != nil {
-		log.Warn("parseFrame() error:%s", seg)
+		log.Warnf("parseFrame() error:%s", seg)
 		return -1
 	}
 	return v

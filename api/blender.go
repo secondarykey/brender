@@ -103,7 +103,7 @@ func ResetBlenderReferences(ctx context.Context, id uint) (*BlenderResetResult, 
 	if err != nil {
 		return nil, err
 	}
-	log.Notice("ResetBlenderReferences: blender=%d workspaces=%d files=%d", id, ws, files)
+	log.Noticef("ResetBlenderReferences: blender=%d workspaces=%d files=%d", id, ws, files)
 	return &BlenderResetResult{Workspaces: ws, Files: files}, nil
 }
 
@@ -119,7 +119,7 @@ func ReorderBlenders(ctx context.Context, ids []uint) error {
 func VerifyBlenderInstalls() {
 	installs, err := model.ListBlenders()
 	if err != nil {
-		log.Error("VerifyBlenderInstalls: ListBlenders: %v", err)
+		log.Errorf("VerifyBlenderInstalls: ListBlenders: %v", err)
 		return
 	}
 	if len(installs) == 0 {
@@ -130,25 +130,25 @@ func VerifyBlenderInstalls() {
 	for _, inst := range installs {
 		if _, err := os.Stat(inst.Path); err != nil {
 			msg := fmt.Sprintf("%s (%s): パスが見つかりません", inst.Name, inst.Path)
-			log.Warn("VerifyBlenderInstalls: %s", msg)
+			log.Warnf("VerifyBlenderInstalls: %s", msg)
 			warnings = append(warnings, msg)
 			continue
 		}
 
 		b, err := exec.NewBlender(inst.Path)
 		if err != nil {
-			log.Warn("VerifyBlenderInstalls: NewBlender(%s): %v", inst.Path, err)
+			log.Warnf("VerifyBlenderInstalls: NewBlender(%s): %v", inst.Path, err)
 			continue
 		}
 		newVersion := b.Version()
 		if newVersion == "" || newVersion == "-" {
-			log.Warn("VerifyBlenderInstalls: バージョン取得失敗: %s", inst.Path)
+			log.Warnf("VerifyBlenderInstalls: バージョン取得失敗: %s", inst.Path)
 			continue
 		}
 		if newVersion != inst.Version {
-			log.Notice("VerifyBlenderInstalls: %s バージョン更新 %s → %s", inst.Name, inst.Version, newVersion)
+			log.Noticef("VerifyBlenderInstalls: %s バージョン更新 %s → %s", inst.Name, inst.Version, newVersion)
 			if err := model.UpdateBlenderVersion(inst.ID, newVersion); err != nil {
-				log.Error("VerifyBlenderInstalls: UpdateBlenderVersion: %v", err)
+				log.Errorf("VerifyBlenderInstalls: UpdateBlenderVersion: %v", err)
 			}
 		}
 	}
@@ -266,7 +266,7 @@ func GetToolData(installID uint, fileID string) (*exec.Tool, error) {
 	}
 	// Pack 状態を DB に保存
 	if updateErr := model.UpdateProjectFilePacked(fileID, tool.Pack); updateErr != nil {
-		log.Error("GetToolData: UpdateProjectFilePacked fileID=%s error=%v", fileID, updateErr)
+		log.Errorf("GetToolData: UpdateProjectFilePacked fileID=%s error=%v", fileID, updateErr)
 	}
 	return tool, nil
 }

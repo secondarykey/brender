@@ -74,7 +74,7 @@ func SetServer(ctx context.Context, enabled bool, host string, port int, auth bo
 		return err
 	}
 	// サーバは起動時にしか立たないので、変えたことと再起動が要ることを残す
-	log.Notice("= Server settings changed: enabled=%v host=%q port=%d user management=%v (restart to apply)", enabled, host, port, auth)
+	log.Noticef("= Server settings changed: enabled=%v host=%q port=%d user management=%v (restart to apply)", enabled, host, port, auth)
 	return nil
 }
 

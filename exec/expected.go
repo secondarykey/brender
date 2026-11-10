@@ -137,11 +137,11 @@ func (rt *RenderingTime) expected(data map[int][]*Frame) {
 
 	avg := total / num
 	remain := int64(rt.Max - rt.Now)
-	log.Debug("AVG: %s", time.Duration(avg))
-	log.Debug("RemainFrame: %d", remain)
+	log.Debugf("AVG: %s", time.Duration(avg))
+	log.Debugf("RemainFrame: %d", remain)
 
 	at := time.Duration(avg * remain)
-	log.Debug("Remain: %s", at)
+	log.Debugf("Remain: %s", at)
 
 	//1フレーム平均を算出
 	now := time.Now()

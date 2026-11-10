@@ -74,8 +74,6 @@ export async function getTestI18n() {
             projects: 'Projects',
             job: 'Job',
             jobResult: 'Job Result',
-            backToFileList: '← File list',
-            backToWorkspaceList: '← Workspace list',
           },
           status: {
             waiting: 'Waiting',
@@ -156,6 +154,7 @@ export async function getTestI18n() {
             noResults: 'No favorite files',
           },
           workspace: {
+            defaultValueLabel: 'Default = {{value}}',
             createDialog: {
               title: 'Create Workspace',
               multipleFromFile: 'Create multiple',

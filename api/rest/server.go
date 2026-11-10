@@ -55,7 +55,7 @@ func NewServer(assets fs.FS, host string, port int) *Server {
 
 	distFS, err := fs.Sub(assets, "frontend/dist")
 	if err != nil {
-		log.Error("failed to get frontend/dist sub-filesystem: %v", err)
+		log.Errorf("failed to get frontend/dist sub-filesystem: %v", err)
 		distFS = assets
 	}
 
@@ -117,7 +117,7 @@ func (s *Server) Start() error {
 	s.addr = ln.Addr().String()
 	go func() {
 		if err := s.httpServer.Serve(ln); err != nil && err != http.ErrServerClosed {
-			log.Error("HTTP server error: %v", err)
+			log.Errorf("HTTP server error: %v", err)
 		}
 	}()
 	return nil
@@ -161,7 +161,7 @@ func spaHandler(fileServer http.Handler, fsys fs.FS) http.Handler {
 	loadIndex := func() {
 		raw, err := fs.ReadFile(fsys, "index.html")
 		if err != nil {
-			log.Error("failed to read index.html: %v", err)
+			log.Errorf("failed to read index.html: %v", err)
 			return
 		}
 		indexHTML = bytes.Replace(raw, []byte("<head>"), []byte("<head>"+serverModeScript), 1)
@@ -193,7 +193,7 @@ func spaHandler(fileServer http.Handler, fsys fs.FS) http.Handler {
 func requestLogger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !strings.HasPrefix(r.URL.Path, "/api/") && r.URL.Path != "/events" {
-			log.Debug("HTTP %s %s", r.Method, r.URL.Path)
+			log.Debugf("HTTP %s %s", r.Method, r.URL.Path)
 		}
 		next.ServeHTTP(w, r)
 	})

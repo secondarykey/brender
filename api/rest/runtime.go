@@ -79,7 +79,7 @@ func (s *Server) handleRuntimeCall(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if *req.Object != runtimeObjectCall && *req.Object != runtimeObjectCancelCall {
-		log.Warn("runtime: object %d from browser is not allowed", *req.Object)
+		log.Warnf("runtime: object %d from browser is not allowed", *req.Object)
 		http.Error(w, "forbidden", http.StatusForbidden)
 		return
 	}

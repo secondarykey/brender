@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dialogs } from '@wailsio/runtime'
-import { WorkspaceApi, BlenderApi, QueueApi, ProjectApi, WorkDirApi, CodesApi, EnvironmentApi } from '../../lib/api'
+import { WorkspaceApi, BlenderApi, QueueApi, CodesApi, EnvironmentApi } from '../../lib/api'
 import { useToast, useMessage } from '../../lib/toast'
 import { onAppEvent } from '../../lib/appEvents'
 import { formatDateShort } from '../../lib/dateFormat'
@@ -9,10 +9,10 @@ import Pagination from '../../components/Pagination'
 import Dialog from '../../components/Dialog'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import HoldButton from '../../components/HoldButton'
-import HierarchyBreadcrumb from '../../components/HierarchyBreadcrumb'
 import NoteSection from '../../components/NoteSection'
+import FieldLabel from '../../components/FieldLabel'
 import AccessDenied from '../../components/AccessDenied'
-import { MdLock, MdSwapHoriz, MdPlayArrow } from 'react-icons/md'
+import { MdSwapHoriz, MdPlayArrow } from 'react-icons/md'
 
 
 const isFrameDefault      = (start, end) => start === 0 && end === -1
@@ -32,7 +32,7 @@ const HISTORY_PAGE_SIZE = 5
 
 const IMAGE_FILTER = [{ DisplayName: 'Image', Pattern: '*.jpg;*.jpeg;*.png;*.bmp;*.webp' }]
 
-// ── ワークスペースサムネイル ───────────────────────────────
+// ── ワークスペースサムネイル（クリックで画像を差し替える） ──
 function WorkspaceThumbnailPanel({ projectID, fileID, workspaceID }) {
   const { t } = useTranslation()
   const [src, setSrc]             = useState(null)
@@ -133,7 +133,7 @@ function HistoryTab({ projectID, workspaceID, navigate, projectName, fileName, f
 
   return (
     <>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8, marginTop: -30 }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
         <button className="btn btn-outline btn-sm" onClick={() => { setBulkError(''); setBulkOpen(true) }}>
           {t('job.bulkDelete')}
         </button>
@@ -237,7 +237,7 @@ function DefaultTag({ value, t }) {
 }
 
 // ── 設定タブ ──────────────────────────────────────────────
-function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, detail, focusName, role, onUpdated, onDeleted, onTestEnqueued, onRenderEnqueued, workDirLocked, navigate, wsStale }) {
+function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, detail, focusName, role, onUpdated, onCopied, onDeleted, onTestEnqueued, onRenderEnqueued, workDirLocked, navigate }) {
   const { t } = useTranslation()
   const { showToast } = useToast()
   const { showError } = useMessage()
@@ -497,6 +497,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
       const newWS = await WorkspaceApi.copy({ projectID, workspaceID, newName })
       setCopyConfirm(false)
       showToast(t('workspace.copied'))
+      onCopied()
       navigate('workspace', { projectID, projectName, fileID, fileName, workspaceID: newWS.id })
     } catch (err) {
       showError(String(err))
@@ -526,7 +527,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
       savedForm.current = { ...form, name: form.name.trim() }
       savedNote.current = note
       showToast(t('common.saved'))
-      onUpdated()
+      onUpdated(form.name.trim())
     } catch (err) {
       showError(String(err))
     } finally {
@@ -653,13 +654,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
           <input ref={nameRef} className="form-input" value={form.name} onChange={e => set('name', e.target.value)} disabled={readOnly} />
         </div>
         <div className="form-field" style={{ flex: 1 }}>
-          <label className="form-label">
-            {t('workspace.blender')}
-            {fileBlenderFixed
-              ? <span className="form-lock-tag"><MdLock /> {lockedBlenderName}</span>
-              : <DefaultTag value={blenderDefault} t={t} />
-            }
-          </label>
+          <FieldLabel text={t('workspace.blender')} lockedValue={fileBlenderFixed ? (lockedBlenderName) : null} defaultValue={blenderDefault} />
           {fileBlenderFixed ? (
             <input className="form-input" value={lockedBlenderName} disabled style={{ opacity: 0.5 }} />
           ) : (
@@ -678,13 +673,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
         <div className="form-collapsible-body">
       <div className="form-row" style={{ alignItems: 'flex-start' }}>
         <div className="form-field" style={{ flex: 2 }}>
-          <label className="form-label">
-            {t('workspace.renderEngine')}
-            {fileEngineFixed
-              ? <span className="form-lock-tag"><MdLock /> {fileEngine || sceneInfo?.Engine || t('common.notSet')}</span>
-              : <DefaultTag value={engineDefault} t={t} />
-            }
-          </label>
+          <FieldLabel text={t('workspace.renderEngine')} lockedValue={fileEngineFixed ? (fileEngine || sceneInfo?.Engine || t('common.notSet')) : null} defaultValue={engineDefault} />
           {fileEngineFixed ? (
             <input className="form-input" value={fileEngine || sceneInfo?.Engine || t('common.notSet')} disabled style={{ opacity: 0.5 }} />
           ) : engines.length > 0 ? (
@@ -717,13 +706,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
 
       <div className="form-row" style={{ alignItems: 'flex-start', marginTop: -20 }}>
         <div className="form-field" style={{ flex: 1 }}>
-          <label className="form-label">
-            {t('workspace.scene')}
-            {fileSceneFixed
-              ? <span className="form-lock-tag"><MdLock /> {fileScene || activeScene?.Name || t('common.notSet')}</span>
-              : <DefaultTag value={sceneDefault} t={t} />
-            }
-          </label>
+          <FieldLabel text={t('workspace.scene')} lockedValue={fileSceneFixed ? (fileScene || activeScene?.Name || t('common.notSet')) : null} defaultValue={sceneDefault} />
           {fileSceneFixed ? (
             <input className="form-input" value={fileScene || activeScene?.Name || t('common.notSet')} disabled style={{ opacity: 0.5 }} />
           ) : scenes.length > 0 ? (
@@ -737,13 +720,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
           {missingScene && <span className="form-hint" style={{ color: '#e74c3c' }}>{t('workspace.sceneMissing', { name: missingScene })}</span>}
         </div>
         <div className="form-field" style={{ flex: 1 }}>
-          <label className="form-label">
-            {t('workspace.camera')}
-            {fileCameraFixed
-              ? <span className="form-lock-tag"><MdLock /> {fileCamera || sceneInfo?.Camera || t('common.notSet')}</span>
-              : <DefaultTag value={cameraDefault} t={t} />
-            }
-          </label>
+          <FieldLabel text={t('workspace.camera')} lockedValue={fileCameraFixed ? (fileCamera || sceneInfo?.Camera || t('common.notSet')) : null} defaultValue={cameraDefault} />
           {fileCameraFixed ? (
             <input className="form-input" value={fileCamera || sceneInfo?.Camera || t('common.notSet')} disabled style={{ opacity: 0.5 }} />
           ) : (
@@ -901,10 +878,9 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
         {canCopyDelete && (
         <button className="btn btn-danger" onClick={() => { setForceDel(false); setConfirm(true) }}>{t('common.delete')}</button>
         )}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
-          <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8 }}>
           {canRun && (
-          <button className="btn btn-run" onClick={handleTestEncode} disabled={testEnqueueing || workDirLocked}>
+          <button className="btn btn-run" onClick={handleTestEncode} disabled={testEnqueueing || workDirLocked} title={t('workspace.testHint')}>
             {testEnqueueing ? t('common.enqueueing') : t('workspace.testRender')}
           </button>
           )}
@@ -918,8 +894,6 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
             {saving ? t('common.saving') : t('common.save')}
           </button>
           )}
-          </div>
-          {canRun && <span style={{ fontSize: '0.75rem', opacity: 0.45 }}>{t('workspace.testHint')}</span>}
         </div>
       </div>
       )}
@@ -941,7 +915,8 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
         {renderConfirm && (() => {
           const pv = renderConfirm
           const prev = pv.previous
-          const fileNotModified = detail.workspace.processed_at && !wsStale
+          // 判定はダイアログを開いた時点のサーバ側の値で行う（ページを開いたときの detail は古いことがある）
+          const fileNotModified = pv.file_not_modified
           const allIdentical = prev && pv.scene === prev.scene && pv.engine === prev.engine
             && pv.start_frame === prev.start_frame && pv.end_frame === prev.end_frame
             && pv.frame_step === prev.frame_step && pv.samples === prev.samples
@@ -1073,142 +1048,92 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
 
 
 
-// ── ページ本体 ────────────────────────────────────────────
-function WorkspaceDetailPage({ projectID, projectName: initialProjectName, fileID, fileName, workspaceID, focusName, navigate }) {
+// ── パネル本体 ────────────────────────────────────────────
+// ファイル画面の右側に出す、ワークスペース1件ぶんの表示。単独のページにはしない
+// （ワークスペースは必ずファイルの中で開く。どのファイルの設定かを画面から消さないため）。
+//   onChanged … 名称変更・複製など、左の一覧を読み直すべき変更があったとき
+//   onDeleted … 削除したとき
+//   onMissing … 読み込めなかったとき（既に消えたワークスペースを指していた等）
+function WorkspacePanel({ projectID, projectName, fileID, fileName, workspaceID, focusName, role, workDirLocked, navigate, onChanged, onDeleted, onMissing }) {
   const { t } = useTranslation()
   const { showError } = useMessage()
-  const [projectName, setProjectName] = useState(initialProjectName)
-  const [detail, setDetail]           = useState(null)
-  const [loadFailed, setLoadFailed]   = useState(false)
+  const [detail, setDetail]             = useState(null)
+  const [name, setName]                 = useState('')
+  const [loadFailed, setLoadFailed]     = useState(false)
   const [accessDenied, setAccessDenied] = useState(false)
   const [historyReload, setHistoryReload] = useState(0)
-  const [workDirStatus, setWorkDirStatus] = useState(null)
-  const [fileRole, setFileRole]       = useState('owner')
 
-  const load = useCallback(() => {
+  useEffect(() => {
+    let alive = true
     WorkspaceApi.get({ projectID, workspaceID })
-      .then(d => setDetail(d))
+      .then(d => {
+        if (!alive) return
+        setDetail(d)
+        setName(d.workspace.name)
+      })
       .catch(err => {
+        if (!alive) return
         if (String(err).includes('access denied')) {
           setAccessDenied(true)
         } else {
           showError(String(err))
           setLoadFailed(true)
+          if (onMissing) onMissing()
         }
       })
+    return () => { alive = false }
   }, [projectID, workspaceID, showError])
 
-  useEffect(() => { load() }, [load])
-
-  useEffect(() => {
-    // プロジェクト情報取得（パンくず名もAPIから取得して統一）
-    ProjectApi.get({ id: projectID })
-      .then(d => {
-        if (d?.project?.name) setProjectName(d.project.name)
-        WorkDirApi.list().then(dirs => {
-          const wd = (dirs || []).find(w => w.id === d?.project?.work_dir_id)
-          setWorkDirStatus(wd?.status || null)
-        }).catch(() => {})
-      })
-      .catch(err => {
-        if (String(err).includes('access denied')) setProjectName(t('permission.accessDeniedLabel'))
-      })
-  }, [projectID])
-
-  // ファイル権限のロール取得
-  useEffect(() => {
-    const fid = fileID || detail?.workspace?.project_file_id
-    if (!fid) return
-    ProjectApi.getFile({ fileID: fid })
-      .then(f => {
-        if (f?.my_role) setFileRole(f.my_role)
-      })
-      .catch(() => {})
-  }, [fileID, detail?.workspace?.project_file_id])
-
   if (accessDenied) {
-    return <AccessDenied onBack={() => navigate('file', { projectID, projectName: initialProjectName, fileID, fileName })} />
+    return <AccessDenied onBack={() => navigate('file', { projectID, projectName, fileID, fileName })} />
   }
-
-  if (loadFailed && !detail) {
-    return <div className="page" />
-  }
+  if (loadFailed) return null
   if (!detail) {
-    return <div className="page"><p className="setting-desc">{t('common.loading')}</p></div>
+    return <p className="setting-desc">{t('common.loading')}</p>
   }
 
-  const effectiveFileID   = fileID   || detail.workspace.project_file_id || ''
-  const effectiveFileName = fileName || detail.project_files?.find(f => f.id === effectiveFileID)?.name || ''
-  const effectiveFile     = detail.project_files?.find(f => f.id === effectiveFileID)
-  const wsStale = effectiveFile?.file_modified_at && detail.workspace.processed_at
-    && new Date(effectiveFile.file_modified_at) > new Date(detail.workspace.processed_at)
-
+  // 設定と履歴は横に並べ、それぞれ別々にスクロールする（狭いときは縦に積む。style.css の .ws-pane）。
+  // テストレンダリングの結果を、設定を見たまま確かめられるようにするため。
+  // 設定フォーム末尾の操作行（削除・Test・実行・保存）は .form-actions の sticky で下端に固定している。
   return (
-    <div className="page">
-      <div className="page-header" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-        <HierarchyBreadcrumb
-          navigate={navigate}
-          projectID={projectID}
-          projectName={projectName}
-          fileID={effectiveFileID}
-          fileName={effectiveFileName}
-          workspaceID={detail.workspace.id}
-          workspaceName={detail.workspace.name}
-          suffix={{
-            workspace: wsStale
-              ? <span className="stale-mark-inline" title={t('file.fileChangedTooltip')} style={{ marginLeft: 6 }}>!</span>
-              : null,
-          }}
-        />
-        <button className="back-to-list" onClick={() => navigate('file', { projectID, projectName, fileID: effectiveFileID, fileName: effectiveFileName, initialTab: 'workspace' })}>
-          {t('breadcrumb.backToWorkspaceList')}
-        </button>
-      </div>
-
-      {workDirStatus === 'lock' && (
-        <div className="notice-banner notice-error">{t('project.workDirLockError')}</div>
-      )}
-      {workDirStatus === 'inactive' && (
-        <div className="notice-banner">{t('project.workDirInactiveWarning')}</div>
-      )}
-
-      <div className="ws-detail-split">
-        <div className="ws-detail-left">
+    <>
+      <div className="ws-pane-body">
+        <div className="ws-pane-form">
           <SettingsTab
             projectID={projectID}
             projectName={projectName}
-            fileID={effectiveFileID}
-            fileName={effectiveFileName}
+            fileID={fileID}
+            fileName={fileName}
             workspaceID={workspaceID}
             detail={detail}
             focusName={focusName}
-            role={fileRole}
-            onUpdated={() => {}}
-            onDeleted={() => navigate('file', { projectID, projectName, fileID: effectiveFileID, fileName: effectiveFileName })}
+            role={role}
+            onUpdated={savedName => { setName(savedName); onChanged() }}
+            onCopied={onChanged}
+            onDeleted={onDeleted}
             onTestEnqueued={() => setHistoryReload(n => n + 1)}
             onRenderEnqueued={() => navigate('queue')}
-            workDirLocked={workDirStatus === 'lock'}
+            workDirLocked={workDirLocked}
             navigate={navigate}
-            wsStale={wsStale}
           />
         </div>
-        <div className="ws-detail-right">
-          <WorkspaceThumbnailPanel projectID={projectID} fileID={effectiveFileID} workspaceID={workspaceID} />
+        <div className="ws-pane-history">
+          <WorkspaceThumbnailPanel projectID={projectID} fileID={fileID} workspaceID={workspaceID} />
           <h3 className="ws-detail-section-title">{t('tabs.history')}</h3>
           <HistoryTab
             projectID={projectID}
             workspaceID={workspaceID}
             navigate={navigate}
             projectName={projectName}
-            fileID={effectiveFileID}
-            fileName={effectiveFileName}
-            workspaceName={detail.workspace.name}
+            fileID={fileID}
+            fileName={fileName}
+            workspaceName={name}
             reloadTrigger={historyReload}
           />
         </div>
       </div>
-    </div>
+    </>
   )
 }
 
-export default WorkspaceDetailPage
+export default WorkspacePanel

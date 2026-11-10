@@ -76,12 +76,14 @@ describe('HierarchyBreadcrumb', () => {
     expect(navigate).toHaveBeenLastCalledWith('projects')
 
     await userEvent.click(screen.getByText('Project A'))
-    expect(navigate).toHaveBeenLastCalledWith('project', { id: 'p1', initialTab: 'settings' })
+    expect(navigate).toHaveBeenLastCalledWith('project', { id: 'p1' })
 
     await userEvent.click(screen.getByText('scene.blend'))
     expect(navigate).toHaveBeenLastCalledWith('file', expect.objectContaining({
-      projectID: 'p1', fileID: 'f1', initialTab: 'settings',
+      projectID: 'p1', fileID: 'f1',
     }))
+    // 上位階層は設定タブではなく最初のタブ（一覧）へ行く
+    expect(navigate.mock.lastCall[1].initialTab).toBeUndefined()
 
     await userEvent.click(screen.getByText('WS 1'))
     expect(navigate).toHaveBeenLastCalledWith('workspace', expect.objectContaining({

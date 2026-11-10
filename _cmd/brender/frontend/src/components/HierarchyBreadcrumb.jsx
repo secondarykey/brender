@@ -7,7 +7,8 @@ import EntityIcon from './EntityIcon'
 //
 // ページ側は「自分がどの階層にいるか」を ID と名称で渡すだけでよい。
 // 渡された最下層が自動的に現在地（リンクなし）になり、上位はすべてリンクになる。
-// 上位階層のリンク先は各階層の設定タブ（一覧へ戻るのは .back-to-list ボタンの役割）。
+// 上位階層のリンク先は各階層の最初のタブ（プロジェクト → ファイル一覧、ファイル → ワークスペース）。
+// ワークスペースは単独のページを持たないので、そのワークスペースを開いた状態のファイル画面へ行く。
 //
 // ラベル・アイコン・遷移先をページ側に書かないこと。書くと階層が増減したときに
 // ページごとに表現がずれる（実行結果だけアイコンが出ない、等）。
@@ -33,14 +34,14 @@ export default function HierarchyBreadcrumb({
       show: !!projectID,
       label: projectName,
       icon: 'project',
-      go: () => navigate('project', { id: projectID, initialTab: 'settings' }),
+      go: () => navigate('project', { id: projectID }),
     },
     {
       key: 'file',
       show: !!fileID && !!fileName,
       label: fileName,
       icon: 'file',
-      go: () => navigate('file', { projectID, projectName, fileID, fileName, initialTab: 'settings' }),
+      go: () => navigate('file', { projectID, projectName, fileID, fileName }),
     },
     {
       key: 'workspace',

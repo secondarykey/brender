@@ -28,7 +28,7 @@ func handleUploadFile(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 
 	if err := r.ParseMultipartForm(512 << 20); err != nil { // 512MB max
-		log.Warn("REST upload parse error: %v", err)
+		log.Warnf("REST upload parse error: %v", err)
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "failed to parse multipart form"})
 		return
 	}
@@ -41,7 +41,7 @@ func handleUploadFile(w http.ResponseWriter, r *http.Request) {
 
 	file, header, err := r.FormFile("file")
 	if err != nil {
-		log.Warn("REST upload FormFile error: %v", err)
+		log.Warnf("REST upload FormFile error: %v", err)
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "file is required"})
 		return
 	}
@@ -50,11 +50,11 @@ func handleUploadFile(w http.ResponseWriter, r *http.Request) {
 	result, err := api.UploadProjectFile(r.Context(), projectID, header.Filename, file)
 	elapsed := time.Since(start)
 	if err != nil {
-		log.Warn("REST upload error: %v (%s)", err, elapsed)
+		log.Warnf("REST upload error: %v (%s)", err, elapsed)
 		writeJSON(w, http.StatusOK, map[string]any{"error": err.Error()})
 		return
 	}
 
-	log.Info("REST project/upload_file %s (%s)", header.Filename, elapsed)
+	log.Infof("REST project/upload_file %s (%s)", header.Filename, elapsed)
 	writeJSON(w, http.StatusOK, map[string]any{"data": result})
 }
