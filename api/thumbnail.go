@@ -52,7 +52,7 @@ func thumbnailPath(projectID, fileID, workspaceID string) (string, bool) {
 		if _, err := os.Stat(p); err == nil {
 			return p, true
 		}
-		job, err := model.GetLatestThumbnailJobByFile(fileID)
+		job, err := model.GetLatestTestJobByFile(fileID)
 		if err != nil || job == nil {
 			return "", false
 		}
@@ -136,39 +136,22 @@ func ServeThumbnailPath(ctx context.Context, projectID, fileID, workspaceID stri
 	return p, nil
 }
 
-// thumbnailSamples はサムネイル生成のサンプル数。
-const thumbnailSamples = 8
-
-// CreateThumbnailWorkspace はファイル登録時に、サムネイル用のワークスペース「ファイル名 Thumbnail」を作り、
-// その下にサムネイル生成のジョブ（中間フレーム1枚）を投入する。
-// ワークスペースは普通のワークスペースとして一覧に出るので、ジョブも履歴から辿れる。
-// ファイルのサムネイルは、このジョブ（JobTypeThumbnail）の出力から作る（thumbnailPath）。
-func CreateThumbnailWorkspace(ctx context.Context, projectID string, file *model.ProjectFile) error {
-	base, err := resolveRenderBase(projectID, file.ID, 0, "", "", "")
+// CreateDefaultWorkspace はファイル登録時に、ファイル名のワークスペース（既定の設定）を作り、
+// そこで Test 出力（中間フレーム1枚・サンプル8）を投入する。
+// ファイルのサムネイルは、このファイルの Test ジョブの出力から作る（thumbnailPath）。
+func CreateDefaultWorkspace(ctx context.Context, projectID string, file *model.ProjectFile) error {
+	ws, err := model.CreateWorkspace(projectID, file.ID, file.Name)
 	if err != nil {
 		return err
 	}
-	st := base.Scene
-	mid := (st.Start + st.End) / 2
-
-	ws, err := model.CreateThumbnailWorkspace(projectID, file.ID, file.Name+" Thumbnail", mid, thumbnailSamples)
-	if err != nil {
-		return err
-	}
-
-	preview, err := PreviewRender(projectID, ws.ID)
-	if err != nil {
-		return err
-	}
-	preview.JobType = model.JobTypeThumbnail
-
-	_, err = EnqueueWithPreview(ctx, projectID, ws.ID, preview)
+	// 開始 0・終了 -1 はシーンのフレーム範囲を使う（TestEnqueue がその中間の1枚を出す）
+	_, err = TestEnqueue(ctx, projectID, ws.ID, TestRenderParams{StartFrame: 0, EndFrame: -1})
 	return err
 }
 
 // GetFileThumbnail はファイルのサムネイル画像を base64 データURIで返す。
 // {baseDir}/{projectID}/{fileID}/thumbnail.jpg が存在すればそれを返す。
-// 存在しない場合はサムネイル生成ジョブ（JobTypeThumbnail）の完了済み出力から JPEG を生成して保存する。
+// 存在しない場合はそのファイルの最新の完了した Test ジョブの出力から JPEG を生成して保存する。
 // サムネイルが作れない場合は空文字を返す（エラーなし）。
 func GetFileThumbnail(projectID string, fileID string) (string, error) {
 	p, ok := thumbnailPath(projectID, fileID, "")
@@ -377,7 +360,7 @@ func SetProjectThumbnailFromFile(projectID, fileID string) (string, error) {
 	if _, err := os.Stat(fileThumbPath); err == nil {
 		srcPath = fileThumbPath
 	} else {
-		job, err := model.GetLatestThumbnailJobByFile(fileID)
+		job, err := model.GetLatestTestJobByFile(fileID)
 		if err != nil || job == nil {
 			return "", xerrors.New("サムネイルにする画像が見つかりません")
 		}

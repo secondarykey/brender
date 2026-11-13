@@ -140,13 +140,13 @@ func UploadProjectFile(ctx context.Context, projectID string, filename string, r
 	if err := model.CopyProjectPermissionsToFile(projectID, f.ID); err != nil {
 		log.Error("UploadProjectFile: CopyProjectPermissionsToFile", "error", err)
 	}
-	// 非同期でPackチェック → Pack済みならサムネイル自動生成（バックグラウンドは owner 権限で実行）
+	// 非同期でPackチェック → Pack済みなら既定のワークスペースを作って Test 出力（バックグラウンドは owner 権限で実行）
 	go checkPackAndThumbnail(SystemContext(), projectID, f)
 	return f, nil
 }
 
 // checkPackAndThumbnail はツール実行でPack状態を検査し、DB に保存する。
-// Pack 済みの場合はサムネイル自動生成を開始する。
+// Pack 済みの場合は既定のワークスペースを作り、Test 出力（サムネイル）を始める。
 func checkPackAndThumbnail(ctx context.Context, projectID string, f *model.ProjectFile) {
 	tool, err := GetToolData(0, f.ID)
 	if err != nil {
@@ -157,8 +157,8 @@ func checkPackAndThumbnail(ctx context.Context, projectID string, f *model.Proje
 		log.Error("checkPackAndThumbnail: UpdateProjectFilePacked", "fileID", f.ID, "error", err)
 	}
 	if tool.Pack {
-		if err := CreateThumbnailWorkspace(ctx, projectID, f); err != nil {
-			log.Error("checkPackAndThumbnail: thumbnail creation failed", "fileID", f.ID, "error", err)
+		if err := CreateDefaultWorkspace(ctx, projectID, f); err != nil {
+			log.Error("checkPackAndThumbnail: default workspace creation failed", "fileID", f.ID, "error", err)
 		}
 	} else {
 		log.Warn("uploaded file is not packed", "fileID", f.ID, "name", f.Name)
@@ -186,11 +186,11 @@ func AddProjectFile(ctx context.Context, projectID, path string) (*model.Project
 	if err := model.CopyProjectPermissionsToFile(projectID, f.ID); err != nil {
 		log.Error("AddProjectFile: CopyProjectPermissionsToFile", "error", err)
 	}
-	// サムネイル自動生成はバックグラウンドで owner 権限として実行する
+	// 既定のワークスペースの作成と Test 出力（サムネイル）はバックグラウンドで owner 権限として実行する
 	bgCtx := SystemContext()
 	go func() {
-		if err := CreateThumbnailWorkspace(bgCtx, projectID, f); err != nil {
-			log.Error("thumbnail workspace creation failed", "fileID", f.ID, "error", err)
+		if err := CreateDefaultWorkspace(bgCtx, projectID, f); err != nil {
+			log.Error("default workspace creation failed", "fileID", f.ID, "error", err)
 		}
 	}()
 	return f, nil

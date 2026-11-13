@@ -133,20 +133,14 @@ func Init(dsn string) error {
 }
 
 // migrateSystemWorkspaces は、サムネイル用に隠していたワークスペース（is_system=1）を
-// 普通のワークスペースに戻し、is_system 列を消す。
-// 隠していた頃のサムネイルのジョブは test として作られていたので thumbnail に直す
-// （ファイルのサムネイルは thumbnail のジョブから探すため）。列が無ければ何もしない。
+// 普通のワークスペースとして一覧に出すため、is_system 列を消す。列が無ければ何もしない。
+// そこにあったサムネイルのジョブは Test ジョブなので、ファイルのサムネイルはそのまま辿れる。
 func migrateSystemWorkspaces() error {
 	if !db.Migrator().HasColumn(&Workspace{}, "is_system") {
 		return nil
 	}
-	if res := db.Exec(`UPDATE jobs SET job_type = ?
-		WHERE job_type = ? AND workspace_id IN (SELECT id FROM workspaces WHERE is_system = 1)`,
-		JobTypeThumbnail, JobTypeTest); res.Error != nil {
-		return xerrors.Errorf("migrateSystemWorkspaces jobs: %w", res.Error)
-	}
 	if res := db.Exec("ALTER TABLE workspaces DROP COLUMN is_system"); res.Error != nil {
-		return xerrors.Errorf("migrateSystemWorkspaces drop column: %w", res.Error)
+		return xerrors.Errorf("migrateSystemWorkspaces: %w", res.Error)
 	}
 	return nil
 }

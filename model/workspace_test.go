@@ -6,8 +6,8 @@ import (
 	"time"
 )
 
-// サムネイル用に隠していたワークスペース（is_system=1）が起動時に普通のワークスペースへ戻り、
-// そのジョブがファイルのサムネイルの元として辿れること。
+// サムネイル用に隠していたワークスペース（is_system=1）が起動時に普通のワークスペースとして一覧に出て、
+// そこの Test ジョブがファイルのサムネイルの元として辿れること。
 func TestMigrateSystemWorkspaces(t *testing.T) {
 	dsn := filepath.Join(t.TempDir(), "test.db")
 	if err := Init(dsn); err != nil {
@@ -25,8 +25,8 @@ func TestMigrateSystemWorkspaces(t *testing.T) {
 		t.Fatalf("AddProjectFile: %v", err)
 	}
 
-	// 隠していた頃のデータを作る
-	if res := db.Exec("ALTER TABLE workspaces ADD COLUMN is_system numeric DEFAULT false"); res.Error != nil {
+	// 隠していた頃のデータを作る（列は GORM の AutoMigrate と同じ形で足す）
+	if res := db.Exec("ALTER TABLE `workspaces` ADD `is_system` numeric DEFAULT false"); res.Error != nil {
 		t.Fatalf("add column: %v", res.Error)
 	}
 	hidden, err := CreateWorkspace(projectID, file.ID, "scene.blend Thumbnail")
@@ -41,12 +41,13 @@ func TestMigrateSystemWorkspaces(t *testing.T) {
 		t.Fatalf("CreateWorkspace(normal): %v", err)
 	}
 
-	now := time.Now()
+	earlier := time.Now().Add(-time.Hour)
+	later := time.Now()
 	thumbJob := &Job{ID: "job-thumb", ProjectID: projectID, WorkspaceID: hidden.ID, ProjectFileID: file.ID,
-		Status: JobCompleted, JobType: JobTypeTest, EnqueuedAt: &now}
-	testJob := &Job{ID: "job-test", ProjectID: projectID, WorkspaceID: normal.ID, ProjectFileID: file.ID,
-		Status: JobCompleted, JobType: JobTypeTest, EnqueuedAt: &now}
-	for _, j := range []*Job{thumbJob, testJob} {
+		Status: JobCompleted, JobType: JobTypeTest, EnqueuedAt: &earlier}
+	renderJob := &Job{ID: "job-render", ProjectID: projectID, WorkspaceID: normal.ID, ProjectFileID: file.ID,
+		Status: JobCompleted, JobType: JobTypeRender, EnqueuedAt: &later}
+	for _, j := range []*Job{thumbJob, renderJob} {
 		if err := CreateJob(j); err != nil {
 			t.Fatalf("CreateJob: %v", err)
 		}
@@ -71,18 +72,12 @@ func TestMigrateSystemWorkspaces(t *testing.T) {
 		t.Fatalf("workspaces = %+v, want 2 under the file", list)
 	}
 
-	got, err := GetLatestThumbnailJobByFile(file.ID)
+	// 新しい render ジョブがあっても、サムネイルの元は Test ジョブ
+	got, err := GetLatestTestJobByFile(file.ID)
 	if err != nil {
-		t.Fatalf("GetLatestThumbnailJobByFile: %v", err)
+		t.Fatalf("GetLatestTestJobByFile: %v", err)
 	}
 	if got == nil || got.ID != thumbJob.ID {
-		t.Fatalf("thumbnail job = %+v, want %s", got, thumbJob.ID)
-	}
-	j, err := GetJob(testJob.ID)
-	if err != nil {
-		t.Fatalf("GetJob: %v", err)
-	}
-	if j.JobType != JobTypeTest {
-		t.Errorf("normal workspace's test job changed to %q", j.JobType)
+		t.Fatalf("test job = %+v, want %s", got, thumbJob.ID)
 	}
 }

@@ -17,14 +17,13 @@ Queue/Job のステータス一覧・データモデルはルートの `AGENTS.m
 
 ## サムネイル自動生成 (`api/thumbnail.go`)
 
-ファイル登録時（`AddProjectFile`）に非同期で `CreateThumbnailWorkspace` を呼び出す。
+ファイル登録時（`AddProjectFile`）に非同期で `CreateDefaultWorkspace` を呼び出す。サムネイル専用のものは作らず、「既定のワークスペースを作って、そこで Test 出力をした」形にする。
 
 **フロー**:
-1. `resolveRenderBase` で `.blend` のシーンを解析し、中間フレーム（`(start+end)/2`）を決める
-2. 普通のワークスペース「`ファイル名 Thumbnail`」を作成（`model.CreateThumbnailWorkspace`。開始=終了=中間フレーム、サンプル 8、出力 PNG）。一覧に出るので、ユーザーが名前を変えたり、再実行したり、消したりできる
-3. `PreviewRender` で解決した内容を `JobType=thumbnail` にして `EnqueueWithPreview` で投入（そのワークスペースの下のジョブとして履歴に残る）
-4. ファイルのサムネイルが要るとき、`thumbnail.jpg` が無ければ `model.GetLatestThumbnailJobByFile`（そのファイルの最新の完了した thumbnail ジョブ）の出力を `convertToJPEG` で 640×360 JPEG に変換して保存する。ワークスペースの名前を変えても辿れる
-5. エラーはログ出力のみ（ファイル登録をブロックしない）
+1. ファイル名のワークスペースを既定の設定で作成（`model.CreateWorkspace`。画面の「新規作成」と同じもの）
+2. そこで `TestEnqueue`（開始 0・終了 -1 = シーンのフレーム範囲 → 中間フレーム `(start+end)/2` を 1 枚、サンプル 8）を投入。そのワークスペースの Test ジョブとして履歴に残る
+3. ファイルのサムネイルが要るとき、`thumbnail.jpg` が無ければ `model.GetLatestTestJobByFile`（そのファイルの、どのワークスペースかを問わない最新の完了した Test ジョブ）の出力を `convertToJPEG` で 640×360 JPEG に変換して保存する
+4. エラーはログ出力のみ（ファイル登録をブロックしない）
 
 **変換ロジック** (`convertToJPEG`):
 - キャンバス 640×360（黒背景）
@@ -38,7 +37,7 @@ Queue/Job のステータス一覧・データモデルはルートの `AGENTS.m
 - **URL 配信**（サーバモード）: `GetFileThumbnailURL` 等が `/thumbnail?project_id=...&file_id=...&v={mtime}` を返し、実体は REST の `GET /thumbnail`（`api.ServeThumbnailPath`、認証+アクセス権限チェック+`Last-Modified` による 304）が配信する。base64 の 33% 肥大を避け、ブラウザキャッシュを効かせる。`v={mtime}` で再生成時にキャッシュを更新。存在しなければ空文字（フロントはプレースホルダ表示のまま `queue:changed` で再取得）。
 - フロントの `ProjectApi.getFileThumbnail` はどちらのモードでも文字列（データURI or URL）を返すため、`<img src>` にそのまま渡せる（消費側コードはモード非依存）。
 
-**隠しワークスペース（`is_system`）は廃止**: 以前はサムネイル用のワークスペースを `IsSystem=true` で作って一覧から隠していたため、ワークスペースもジョブも画面から辿れず浮いていた。起動時の `model.migrateSystemWorkspaces` が、そこにあった `test` ジョブを `thumbnail` に直してから `workspaces.is_system` 列を消す（列が無ければ何もしない）。
+**隠しワークスペース（`is_system`）は廃止**: 以前はサムネイル用のワークスペースを `IsSystem=true` で作って一覧から隠していたため、ワークスペースもジョブも画面から辿れず浮いていた。起動時の `model.migrateSystemWorkspaces` が `workspaces.is_system` 列を消し、既存分を普通のワークスペースとして一覧に出す（列が無ければ何もしない）。そこにあったのも Test ジョブなので、ファイルのサムネイルはそのまま辿れる。
 
 ## Async rendering flow (`api/queue.go`)
 
@@ -162,7 +161,7 @@ Progress displays with 2 decimal places. Log text (`q.log2`) is shown as-is from
 
 ## RunTool 結果キャッシュ (`exec/toolcache.go`)
 
-`RunTool()` の解析結果 `Tool` を `(cmd, filePath)` キー + ファイル更新時刻でインメモリキャッシュする。Blender 起動は数秒かかるため、同一 `.blend` への `ResolveScene` / `GetToolData` / `getScenes` 等の重複起動を排除する。特にファイル登録時のサムネイル生成（`GetToolData`（Packチェック）→ `CreateThumbnailWorkspace` の `resolveRenderBase` → `PreviewRender` 内の `ResolveScene`）が1回の Blender 起動で済む。ファイルが編集されると mtime が変わり自動的にキャッシュミスになる。明示的な破棄は `exec.InvalidateToolCache(cmd, filePath)`。
+`RunTool()` の解析結果 `Tool` を `(cmd, filePath)` キー + ファイル更新時刻でインメモリキャッシュする。Blender 起動は数秒かかるため、同一 `.blend` への `ResolveScene` / `GetToolData` / `getScenes` 等の重複起動を排除する。特にファイル登録時のサムネイル生成（`GetToolData`（Packチェック）→ `CreateDefaultWorkspace` → `TestEnqueue` 内の `ResolveScene`）が1回の Blender 起動で済む。ファイルが編集されると mtime が変わり自動的にキャッシュミスになる。明示的な破棄は `exec.InvalidateToolCache(cmd, filePath)`。
 
 ## CLI terminal display (`_cmd/brender-tool/main.go`)
 

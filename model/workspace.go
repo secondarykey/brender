@@ -205,30 +205,6 @@ func CreateWorkspaceWithSettings(projectID, projectFileID, name, scene, camera, 
 	return w, nil
 }
 
-// CreateThumbnailWorkspace はファイル登録時のサムネイル用ワークスペースを作る。
-// 普通のワークスペースとして一覧に出る。frame の1枚だけを samples で PNG に出す設定にする。
-func CreateThumbnailWorkspace(projectID string, projectFileID string, name string, frame, samples int) (*Workspace, error) {
-	id, err := newWorkspaceID()
-	if err != nil {
-		return nil, xerrors.Errorf("newWorkspaceID: %w", err)
-	}
-	w := &Workspace{
-		ID:            id,
-		ProjectId:     projectID,
-		ProjectFileID: projectFileID,
-		Name:          name,
-		StartFrame:    frame,
-		EndFrame:      frame,
-		FrameStep:     1,
-		Samples:       samples,
-		OutputFormat:  "PNG", // サムネイルの元画像は PNG / JPEG しか読めない
-	}
-	if res := db.Create(w); res.Error != nil {
-		return nil, xerrors.Errorf("CreateThumbnailWorkspace: %w", res.Error)
-	}
-	return w, nil
-}
-
 func UpdateWorkspace(projectID string, workspaceID string, name string, note string, blenderInstallID uint, scene, camera, engine string, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY int, outputFormat string, autoLock bool, autoLockMinSize int64, autoLockKeep int) (*WorkspaceDetail, error) {
 	var w Workspace
 	if res := db.First(&w, "id = ? AND project_id = ?", workspaceID, projectID); res.Error != nil {

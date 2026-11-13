@@ -151,13 +151,13 @@ CI が使う wails3 CLI のバージョンは `.github/variables` の `WAILS_VER
 - `WorkDir`: `ID uint`, `Path string`, `Priority int`, `Status string` (`active`/`inactive`/`lock`). `GetDefaultWorkDir()` は `active` かつ `Priority` 最小を返す。
 - `Project`: `ID string` (UUID v4), `Name`, `BlenderInstallID uint`, `Scene string`, `WorkDirID uint`. No `Archive` or `ThumbnailFrame` fields (removed).
 - `ProjectFile`: `ID string` (UUID v4), `ProjectID`, `Path`, `Name`, `BlenderInstallID uint`, `Scene string`, `FileModifiedAt *time.Time`. `FileModifiedAt` is set from `os.Stat().ModTime()` on add.
-- `Workspace`: `ID string` (UUID v4), `ProjectFileID string` (固定、Update では変更不可), `BlenderInstallID=0` means use project default。サムネイル用も普通のワークスペース（隠しワークスペースの `IsSystem` は廃止。起動時の `migrateSystemWorkspaces` が既存分を一覧に出し、列を消す）。
+- `Workspace`: `ID string` (UUID v4), `ProjectFileID string` (固定、Update では変更不可), `BlenderInstallID=0` means use project default。ファイル登録時にファイル名の既定のワークスペースが作られる（以前の隠しワークスペースの `IsSystem` は廃止。起動時の `migrateSystemWorkspaces` が列を消して既存分を一覧に出す）。
 - `Job`: permanent history record. Shares UUID v7 with its `Queue` record. Has `ProjectFileID string` for direct file-based query.
   - `Status`: `completed` / `error` / `cancelled` / `interrupted`（システム中断）
   - `DiskSize int64`: 完了時に出力ディレクトリの容量を保存
   - `DataStatus int`: `0`=none / `1`=none+locked / `2`=available / `3`=available+locked / `4`=deleted / `5`=deleted+locked
   - `OutputDir string`: 出力先ディレクトリパス
-  - `JobType`: `render` / `test` / `samples_comparison` / `thumbnail`（ファイル登録時のサムネイル生成。ファイルのサムネイルはこのジョブの出力から作る）
+  - `JobType`: `render` / `test` / `samples_comparison`
 - `Queue`: ephemeral active-execution record. Deleted by `finishJob()` on completion/error/cancel.
   - `Status`: `waiting` / `recovering`（リカバリ再実行待ち） / `running`
 
@@ -189,7 +189,7 @@ CI が使う wails3 CLI のバージョンは `.github/variables` の `WAILS_VER
 - **Job deletion**: `DeleteJob(id)` は `OutputDir` を `os.RemoveAll` してから DB レコードを削除する。
 - **ProcessingWriter** (`exec/writer.go`): Blender stdout/stderr をリアルタイムパース。Blender 4.x/5.x 両対応、Cycles/EEVEE/Workbench のエンジン別検出、スレッドセーフ（`Result()` でスナップショット取得）。
 - **進捗トラッキング** (`exec/progress.go`): Queue ID キーの in-memory map。`ListQueueItems()` が進捗フィールドを `QueueItem` に付与してフロントエンドへ渡す。
-- **サムネイル自動生成** (`api/thumbnail.go`): `AddProjectFile` 時に非同期でワークスペース「`ファイル名 Thumbnail`」（一覧に出る普通のもの）を作成し、その下に `JobType=thumbnail` のジョブで中間フレームを 1 枚レンダリング → 640×360 JPEG で `thumbnail.jpg` に保存。取得は Wails=base64 データURI / サーバモード=URL 配信（`GET /thumbnail`）の 2 形態。
+- **サムネイル自動生成** (`api/thumbnail.go`): `AddProjectFile` 時に非同期でファイル名の既定のワークスペースを作成し、そこで Test 出力（中間フレーム 1 枚・サンプル 8）を投入。ファイルのサムネイルは、そのファイルの最新の完了した Test ジョブの出力を 640×360 JPEG にして `thumbnail.jpg` に保存する。取得は Wails=base64 データURI / サーバモード=URL 配信（`GET /thumbnail`）の 2 形態。
 - **システムモニタ** (`sysmon/`, `api/sysmon.go`): CPU・メモリ・GPU の使用率を `system:stats` イベントで配る。GPU は `nvidia-smi` で取る（NVIDIA のみ。見つからなければ GPU の行は出さず、起動もしない）。**キューページの `SystemStats` が表示しているあいだだけ動く**: 画面が 10 秒ごとに `SysMon.Keep` を呼び（隠れているあいだは呼ばない）、`sysmon.Keep` が 5 秒ごとに収集、15 秒 Keep が来なければ自分で止まる。期限で止まるので、サーバモードで複数のブラウザが見ていても数を数えずに済む。
 - **子プロセスはコンソールを隠す（Windows）**: 配る exe は `-H windowsgui` でコンソールを持たないので、コンソールアプリを素の `exec.Command` で起動すると、そのたびに窓が一瞬開く。`exec/` の `runCommand` を使うか `exec.HideConsole(cmd)` を通す（`sysmon/` は model に依存させないよう、同じ設定の `hideConsole` を自分で持つ）。`wails3 dev` は親のコンソールを共有するので窓が出ず、dev では気づけない。
 - **権限・アクセス制御**: `Environment.Server=true` かつ `ServerAuth=true` のときのみ有効（無効時は全員フルアクセス）。api 層の関数は第1引数 `ctx` の操作ユーザ（`model.WithUser` / `currentUser(ctx)`）で判定し、**`api/access.go` の共通ヘルパー（`fullAccess` / `requireProjectRole` / `requireAdmin` 等）を使う — 自前で `if userID != owner {...}` を書かない**。**サービスのメソッドは全部ブラウザからも呼べる**ため、admin 操作は api の関数の中で `requireAdmin(ctx)` を通し、ウィンドウを開く操作は `api.FromBrowser(ctx)` で断る。ロール体系・守り・フロント制御の詳細は Skill `brender-access-control` を参照。
