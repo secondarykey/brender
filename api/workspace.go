@@ -43,7 +43,7 @@ func CreateWorkspace(ctx context.Context, projectID string, projectFileID string
 	if err := requireFileRole(ctx, projectFileID, rolesWorkspaceCreatorUp...); err != nil {
 		return nil, err
 	}
-	ws, err := model.CreateWorkspace(projectID, projectFileID, name, false)
+	ws, err := model.CreateWorkspace(projectID, projectFileID, name)
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +109,7 @@ func CopyWorkspace(ctx context.Context, projectID, workspaceID, newName string) 
 		return nil, err
 	}
 	src := detail.Workspace
-	newWS, err := model.CreateWorkspace(projectID, src.ProjectFileID, newName, false)
+	newWS, err := model.CreateWorkspace(projectID, src.ProjectFileID, newName)
 	if err != nil {
 		return nil, err
 	}

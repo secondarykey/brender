@@ -35,7 +35,7 @@ func TestListBlenderReferences(t *testing.T) {
 		t.Fatalf("AddProjectFile: %v", err)
 	}
 
-	ws, err := CreateWorkspace(projectID, file.ID, "本番用", false)
+	ws, err := CreateWorkspace(projectID, file.ID, "本番用")
 	if err != nil {
 		t.Fatalf("CreateWorkspace: %v", err)
 	}

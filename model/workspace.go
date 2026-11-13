@@ -31,7 +31,6 @@ type Workspace struct {
 	AutoLock        bool       `gorm:"default:false" json:"auto_lock"`      // 完了時自動ロック
 	AutoLockMinSize int64      `gorm:"default:104857600" json:"auto_lock_min_size"` // 自動ロック対象の最小容量（バイト）。デフォルト100MB
 	AutoLockKeep    int        `gorm:"default:1" json:"auto_lock_keep"`     // ロック保持件数。0=無制限
-	IsSystem         bool       `gorm:"default:false" json:"is_system"`
 	DisplayOrder     int        `gorm:"default:99999" json:"display_order"`
 	ProcessedAt      *time.Time `json:"processed_at"`
 	MetaFields       `gorm:"embedded"`
@@ -73,7 +72,7 @@ func ListWorkspacesByProject(projectID string, sort, dir string) ([]*WorkspacesB
 	for _, f := range files {
 		populateFileInfo(f)
 		var ws []*Workspace
-		if res := db.Where("project_id = ? AND project_file_id = ? AND is_system = ?", projectID, f.ID, false).
+		if res := db.Where("project_id = ? AND project_file_id = ?", projectID, f.ID).
 			Order(wsOrder).Find(&ws); res.Error != nil {
 			return nil, xerrors.Errorf("ListWorkspacesByProject workspaces: %w", res.Error)
 		}
@@ -112,7 +111,7 @@ func ListWorkspacesByProjectForUser(projectID, userID string, sort, dir string) 
 	for _, f := range files {
 		populateFileInfo(f)
 		var ws []*Workspace
-		if res := db.Where("project_id = ? AND project_file_id = ? AND is_system = ?", projectID, f.ID, false).
+		if res := db.Where("project_id = ? AND project_file_id = ?", projectID, f.ID).
 			Order(wsOrder).Find(&ws); res.Error != nil {
 			return nil, xerrors.Errorf("ListWorkspacesByProjectForUser workspaces: %w", res.Error)
 		}
@@ -165,7 +164,7 @@ func GetWorkspace(projectID string, workspaceID string) (*WorkspaceDetail, error
 	return &WorkspaceDetail{Workspace: &w, ProjectFiles: files}, nil
 }
 
-func CreateWorkspace(projectID string, projectFileID string, name string, isSystem bool) (*Workspace, error) {
+func CreateWorkspace(projectID string, projectFileID string, name string) (*Workspace, error) {
 	id, err := newWorkspaceID()
 	if err != nil {
 		return nil, xerrors.Errorf("newWorkspaceID: %w", err)
@@ -177,7 +176,6 @@ func CreateWorkspace(projectID string, projectFileID string, name string, isSyst
 		Name:          name,
 		StartFrame:    0,
 		EndFrame:      -1,
-		IsSystem:      isSystem,
 	}
 	if res := db.Create(w); res.Error != nil {
 		return nil, xerrors.Errorf("CreateWorkspace: %w", res.Error)
@@ -207,7 +205,9 @@ func CreateWorkspaceWithSettings(projectID, projectFileID, name, scene, camera, 
 	return w, nil
 }
 
-func CreateSystemWorkspace(projectID string, projectFileID string, name string, startFrame, endFrame, samples int) (*Workspace, error) {
+// CreateThumbnailWorkspace はファイル登録時のサムネイル用ワークスペースを作る。
+// 普通のワークスペースとして一覧に出る。frame の1枚だけを samples で PNG に出す設定にする。
+func CreateThumbnailWorkspace(projectID string, projectFileID string, name string, frame, samples int) (*Workspace, error) {
 	id, err := newWorkspaceID()
 	if err != nil {
 		return nil, xerrors.Errorf("newWorkspaceID: %w", err)
@@ -217,13 +217,14 @@ func CreateSystemWorkspace(projectID string, projectFileID string, name string, 
 		ProjectId:     projectID,
 		ProjectFileID: projectFileID,
 		Name:          name,
-		StartFrame:    startFrame,
-		EndFrame:      endFrame,
+		StartFrame:    frame,
+		EndFrame:      frame,
+		FrameStep:     1,
 		Samples:       samples,
-		IsSystem:      true,
+		OutputFormat:  "PNG", // サムネイルの元画像は PNG / JPEG しか読めない
 	}
 	if res := db.Create(w); res.Error != nil {
-		return nil, xerrors.Errorf("CreateSystemWorkspace: %w", res.Error)
+		return nil, xerrors.Errorf("CreateThumbnailWorkspace: %w", res.Error)
 	}
 	return w, nil
 }
@@ -261,18 +262,6 @@ func UpdateWorkspaceProcessedAt(id string, t *time.Time) error {
 		return xerrors.Errorf("UpdateWorkspaceProcessedAt: %w", res.Error)
 	}
 	return nil
-}
-
-func GetSystemWorkspaceByFile(projectFileID string) (*Workspace, error) {
-	var w Workspace
-	res := db.Where("project_file_id = ? AND is_system = ?", projectFileID, true).First(&w)
-	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
-		return nil, nil
-	}
-	if res.Error != nil {
-		return nil, xerrors.Errorf("GetSystemWorkspaceByFile: %w", res.Error)
-	}
-	return &w, nil
 }
 
 func SelectWorkspace(pId string, wId string) (*Workspace, error) {

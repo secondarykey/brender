@@ -133,6 +133,9 @@ function WorkspaceRail({ projectID, fileID, fileName, selectedID, onSelect, onEn
 
   useEffect(() => { load(sort, dir) }, [projectID, fileID, reloadTrigger])
 
+  // ファイル登録直後はサムネイル用のワークスペースがあとから作られる（作られるとキューが変わる）
+  useEffect(() => onAppEvent('queue:changed', () => load(sort, dir)), [projectID, fileID, sort, dir])
+
   const handleCreated = (newWorkspaces) => {
     load(sort, dir)
     if (newWorkspaces.length === 1) {

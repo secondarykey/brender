@@ -91,7 +91,6 @@ type BlenderReference struct {
 	FileName      string `json:"file_name"`
 	WorkspaceID   string `json:"workspace_id"`
 	WorkspaceName string `json:"workspace_name"`
-	IsSystem      bool   `json:"is_system"`
 }
 
 // ListBlenderReferences は指定 Blender を参照しているワークスペース・ファイルを
@@ -109,8 +108,7 @@ SELECT 'workspace' AS kind,
        w.project_file_id AS file_id,
        COALESCE(f.name, '') AS file_name,
        w.id              AS workspace_id,
-       w.name            AS workspace_name,
-       w.is_system       AS is_system
+       w.name            AS workspace_name
   FROM workspaces w
   LEFT JOIN projects p      ON p.id = w.project_id      AND p.deleted_at IS NULL
   LEFT JOIN project_files f ON f.id = w.project_file_id AND f.deleted_at IS NULL
@@ -129,8 +127,7 @@ SELECT 'file' AS kind,
        f.id         AS file_id,
        f.name       AS file_name,
        ''           AS workspace_id,
-       ''           AS workspace_name,
-       0            AS is_system
+       ''           AS workspace_name
   FROM project_files f
   LEFT JOIN projects p ON p.id = f.project_id AND p.deleted_at IS NULL
  WHERE f.blender_install_id = ? AND f.deleted_at IS NULL

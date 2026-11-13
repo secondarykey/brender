@@ -19,6 +19,7 @@ const (
 	JobTypeRender            = "render"              // 通常レンダリング
 	JobTypeTest              = "test"                // テストレンダリング
 	JobTypeSamplesComparison = "samples_comparison"  // サンプル比較
+	JobTypeThumbnail         = "thumbnail"           // ファイル登録時のサムネイル生成
 )
 
 const (
@@ -62,7 +63,7 @@ type Job struct {
 	Status        string     `json:"status"`      // completed / error / cancelled
 	ErrorMsg      string     `json:"error_msg"`
 	DataStatus    int        `json:"data_status"` // 0=なし 1=なしロック 2=あり 3=ありロック 4=削除 5=削除ロック
-	JobType       string     `json:"job_type"`      // "" = 通常, "samples_comparison"
+	JobType       string     `json:"job_type"`      // render / test / samples_comparison / thumbnail
 	SamplesList   string     `json:"samples_list"`  // カンマ区切りサンプル数
 	DiskSize      int64      `json:"disk_size"`     // 出力フォルダの容量（バイト）
 	StartedAt      *time.Time `json:"started_at"`
@@ -296,6 +297,21 @@ func GetLatestJobForThumbnail(workspaceID string) (*Job, error) {
 	}
 	if res.Error != nil {
 		return nil, xerrors.Errorf("GetLatestJobForThumbnail: %w", res.Error)
+	}
+	return &j, nil
+}
+
+// GetLatestThumbnailJobByFile はファイルのサムネイル生成ジョブのうち、最新の完了ジョブを返す。
+// ファイルのサムネイル（thumbnail.jpg）が無いときの元画像に使う。
+func GetLatestThumbnailJobByFile(projectFileID string) (*Job, error) {
+	var j Job
+	res := db.Where("project_file_id = ? AND job_type = ? AND status = ?", projectFileID, JobTypeThumbnail, JobCompleted).
+		Order("enqueued_at desc").First(&j)
+	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if res.Error != nil {
+		return nil, xerrors.Errorf("GetLatestThumbnailJobByFile: %w", res.Error)
 	}
 	return &j, nil
 }

@@ -321,7 +321,6 @@ function BlenderSettings({ navigate }) {
                       >
                         {r.kind === 'workspace' ? r.workspace_name : r.file_name}
                       </button>
-                      {r.is_system && <span className="missing-badge">system</span>}
                     </li>
                   ))}
                 </ul>

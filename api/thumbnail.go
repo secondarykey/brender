@@ -15,7 +15,6 @@ import (
 	"strings"
 
 	"github.com/anthonynsimon/bild/blur"
-	"github.com/secondarykey/brender/exec"
 	"github.com/secondarykey/brender/model"
 	xdraw "golang.org/x/image/draw"
 	"golang.org/x/xerrors"
@@ -53,11 +52,7 @@ func thumbnailPath(projectID, fileID, workspaceID string) (string, bool) {
 		if _, err := os.Stat(p); err == nil {
 			return p, true
 		}
-		ws, err := model.GetSystemWorkspaceByFile(fileID)
-		if err != nil || ws == nil {
-			return "", false
-		}
-		job, err := model.GetLatestJobForThumbnail(ws.ID)
+		job, err := model.GetLatestThumbnailJobByFile(fileID)
 		if err != nil || job == nil {
 			return "", false
 		}
@@ -141,35 +136,39 @@ func ServeThumbnailPath(ctx context.Context, projectID, fileID, workspaceID stri
 	return p, nil
 }
 
+// thumbnailSamples はサムネイル生成のサンプル数。
+const thumbnailSamples = 8
+
+// CreateThumbnailWorkspace はファイル登録時に、サムネイル用のワークスペース「ファイル名 Thumbnail」を作り、
+// その下にサムネイル生成のジョブ（中間フレーム1枚）を投入する。
+// ワークスペースは普通のワークスペースとして一覧に出るので、ジョブも履歴から辿れる。
+// ファイルのサムネイルは、このジョブ（JobTypeThumbnail）の出力から作る（thumbnailPath）。
 func CreateThumbnailWorkspace(ctx context.Context, projectID string, file *model.ProjectFile) error {
-	blenderPath, err := resolveBlenderPath(file.BlenderInstallID, 0)
+	base, err := resolveRenderBase(projectID, file.ID, 0, "", "", "")
 	if err != nil {
 		return err
 	}
-
-	st, err := exec.ResolveScene(blenderPath, file.Path, "")
-	if err != nil {
-		return err
-	}
-
+	st := base.Scene
 	mid := (st.Start + st.End) / 2
-	name := file.Name + " Thumbnail"
 
-	ws, err := model.CreateSystemWorkspace(projectID, file.ID, name, mid, mid, 8)
+	ws, err := model.CreateThumbnailWorkspace(projectID, file.ID, file.Name+" Thumbnail", mid, thumbnailSamples)
 	if err != nil {
 		return err
 	}
 
-	_, err = TestEnqueue(ctx, projectID, ws.ID, TestRenderParams{
-		StartFrame: mid,
-		EndFrame:   mid,
-	})
+	preview, err := PreviewRender(projectID, ws.ID)
+	if err != nil {
+		return err
+	}
+	preview.JobType = model.JobTypeThumbnail
+
+	_, err = EnqueueWithPreview(ctx, projectID, ws.ID, preview)
 	return err
 }
 
 // GetFileThumbnail はファイルのサムネイル画像を base64 データURIで返す。
 // {baseDir}/{projectID}/{fileID}/thumbnail.jpg が存在すればそれを返す。
-// 存在しない場合は IsSystem ワークスペースの完了済みジョブ出力から JPEG を生成して保存する。
+// 存在しない場合はサムネイル生成ジョブ（JobTypeThumbnail）の完了済み出力から JPEG を生成して保存する。
 // サムネイルが作れない場合は空文字を返す（エラーなし）。
 func GetFileThumbnail(projectID string, fileID string) (string, error) {
 	p, ok := thumbnailPath(projectID, fileID, "")
@@ -378,11 +377,7 @@ func SetProjectThumbnailFromFile(projectID, fileID string) (string, error) {
 	if _, err := os.Stat(fileThumbPath); err == nil {
 		srcPath = fileThumbPath
 	} else {
-		ws, err := model.GetSystemWorkspaceByFile(fileID)
-		if err != nil || ws == nil {
-			return "", xerrors.New("サムネイルにする画像が見つかりません")
-		}
-		job, err := model.GetLatestJobForThumbnail(ws.ID)
+		job, err := model.GetLatestThumbnailJobByFile(fileID)
 		if err != nil || job == nil {
 			return "", xerrors.New("サムネイルにする画像が見つかりません")
 		}

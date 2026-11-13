@@ -7,6 +7,7 @@ import (
 	"github.com/secondarykey/brender/log"
 
 	"github.com/glebarez/sqlite"
+	"golang.org/x/xerrors"
 	"gorm.io/gorm"
 )
 
@@ -115,6 +116,11 @@ func Init(dsn string) error {
 	db.AutoMigrate(&PasswordResetToken{})
 	db.AutoMigrate(&Session{})
 
+	// 失敗しても起動は止めない（次の起動でやり直す）
+	if err := migrateSystemWorkspaces(); err != nil {
+		log.Error("migrateSystemWorkspaces", "error", err)
+	}
+
 	db.Exec("DROP INDEX IF EXISTS idx_tags_name")
 	db.Exec("DROP INDEX IF EXISTS uni_tags_name")
 
@@ -123,6 +129,25 @@ func Init(dsn string) error {
 		return err
 	}
 
+	return nil
+}
+
+// migrateSystemWorkspaces は、サムネイル用に隠していたワークスペース（is_system=1）を
+// 普通のワークスペースに戻し、is_system 列を消す。
+// 隠していた頃のサムネイルのジョブは test として作られていたので thumbnail に直す
+// （ファイルのサムネイルは thumbnail のジョブから探すため）。列が無ければ何もしない。
+func migrateSystemWorkspaces() error {
+	if !db.Migrator().HasColumn(&Workspace{}, "is_system") {
+		return nil
+	}
+	if res := db.Exec(`UPDATE jobs SET job_type = ?
+		WHERE job_type = ? AND workspace_id IN (SELECT id FROM workspaces WHERE is_system = 1)`,
+		JobTypeThumbnail, JobTypeTest); res.Error != nil {
+		return xerrors.Errorf("migrateSystemWorkspaces jobs: %w", res.Error)
+	}
+	if res := db.Exec("ALTER TABLE workspaces DROP COLUMN is_system"); res.Error != nil {
+		return xerrors.Errorf("migrateSystemWorkspaces drop column: %w", res.Error)
+	}
 	return nil
 }
 
