@@ -38,9 +38,9 @@ wails3 generate bindings   # Regenerate Go<->JS bindings after adding/changing s
 #### ローカルデプロイ（`local:deploy` / `local:install`、任意）
 
 `_cmd/brender/Taskfile.local.yml`（**git 管理外**。各自が作る）を置くと、次のタスクが使える。
-`Taskfile.yml` が `optional: true` で include しているので、ファイルが無ければ何も起きない（worktree には無いので、使うならメインのチェックアウトから写す）。中身は Skill `wails3` の `references/local-deploy.md` の標準テンプレートから、タグ打ちを外して install を分けたもの（`APP_NAME` は `brender`、製品名は `brender`）。
+`Taskfile.yml` が `optional: true` で include しているので、ファイルが無ければ何も起きない（worktree には無いので、使うならメインのチェックアウトから写す）。中身は Skill `wails3` の `references/local-deploy.md` の標準テンプレート（`APP_NAME` は `brender`、製品名は `brender`。CI がタグを打つので `TAG_VERSION` の既定は `"false"`）。
 
-- `local:deploy`: パッチの自動 bump → バージョン・アプリ情報の反映 → `wails3 build` → ビルド情報だけのコミット → 起動中の brender を止めて `bin/*` を常用の場所へコピー。**タグは打たない**
+- `local:deploy`: パッチの自動 bump → バージョン・アプリ情報の反映 → `wails3 build` → ビルド情報だけのコミット → 起動中の brender を止めて `bin/*` を常用の場所へコピー。**タグは打たない**（`TAG_VERSION` が `"false"` なので。`TAG_VERSION=true` を渡すと打つ）
 - `local:install`: `wails3 build` → 起動中の brender を止めて `bin/*` を常用の場所へコピー。版上げ・ビルド情報の反映・コミットはしない（焼き込まれるのは `build/config.yml` などに今ある版。build 中の `npm install` が `package-lock.json` を変えたら、その変更は手元に残る）
 - `local:build-info`: バージョン・アプリ情報の反映だけ
 
