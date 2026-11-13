@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/secondarykey/brender/api"
@@ -127,7 +126,7 @@ func run() error {
 		log.Warnf("startLog: %v", logErr)
 	}
 
-	log.Noticef("= Brender Version: %s", strings.TrimSpace(appVersion))
+	log.Noticef("= Brender Version: %s", services.RunVersion(appVersion, isDev))
 
 	err := initDB()
 	if err != nil {
@@ -197,8 +196,8 @@ func run() error {
 		Transport: transport,
 	})
 
-	services.AppVersion = strings.TrimSpace(appVersion)
 	dev := app.Env.Info().Debug
+	services.AppVersion = services.RunVersion(appVersion, dev)
 	services.DevMode = dev
 	if dev {
 		log.Info("Develop Mode")
@@ -274,10 +273,10 @@ func run() error {
 		emit("system:stats", stats)
 	}
 
-	// フック設定後にスケジューラ・モニタ・検証を開始する
+	// フック設定後にスケジューラ・検証を開始する
+	// （システムモニタは起動時には動かさない。画面が KeepSystemMonitor を呼んでいるあいだだけ動く）
 	api.StartRecoveredQueues()
 	go api.VerifyBlenderInstalls()
-	api.StartSystemMonitor()
 
 	// サーバモードの状態は起動のたびに必ず出す（オフでも出す。設定の変更は再起動で反映されるため）
 	if restServer == nil {

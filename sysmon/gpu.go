@@ -23,10 +23,12 @@ func collectGPU() (available bool, gpus []GPUStats) {
 		return false, nil
 	}
 
-	out, err := exec.Command(nvidiaSmiPath,
+	cmd := exec.Command(nvidiaSmiPath,
 		"--query-gpu=index,name,utilization.gpu,memory.total,memory.used,temperature.gpu",
 		"--format=csv,noheader,nounits",
-	).Output()
+	)
+	hideConsole(cmd)
+	out, err := cmd.Output()
 	if err != nil {
 		return false, nil
 	}

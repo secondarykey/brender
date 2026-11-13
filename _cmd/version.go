@@ -107,7 +107,7 @@ var auto bool
 func main() {
 
 	flag.BoolVar(&bump, "bump", false, "対話的にバージョンを選択して更新")
-	flag.BoolVar(&auto, "auto", false, "現在のバージョンのタグがあれば patch を上げる（local:deploy 用）")
+	flag.BoolVar(&auto, "auto", false, "現在のバージョンのタグ（CI がリリース済み）があれば patch を上げる（local:deploy 用）")
 	flag.Parse()
 
 	args := flag.Args()
@@ -131,7 +131,7 @@ func run(args []string) error {
 	var rtn *ver
 
 	if auto {
-		// タグがある = そのバージョンはデプロイ済みなのに version が更新されていない
+		// タグがある = そのバージョンは CI がリリース済みなのに version が更新されていない（タグは CI だけが打つ）
 		rtn, err = autoVersion(now)
 		if err != nil {
 			return err

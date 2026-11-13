@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { onAppEvent } from '../lib/appEvents'
+import { SysMonApi } from '../lib/api'
+
+// バックエンドは Keep が 15 秒来なければ収集を止める。それより短い間隔で呼び続ける
+const KEEP_INTERVAL_MS = 10000
 
 function Bar({ label, pct, detail, color }) {
   const p = Math.min(100, Math.max(0, pct || 0))
@@ -21,6 +25,23 @@ function SystemStats() {
   const [stats, setStats] = useState(null)
 
   useEffect(() => onAppEvent('system:stats', setStats), [])
+
+  // 表示しているあいだだけシステムモニタを動かす。画面が隠れているあいだ（最小化・別タブ）は呼ばない
+  useEffect(() => {
+    const keep = () => {
+      if (document.hidden) return
+      SysMonApi.keep()
+        .then(s => { if (s) setStats(s) })
+        .catch(() => {}) // 数秒後にまた呼ぶので、失敗しても表示は出さない
+    }
+    keep()
+    const id = setInterval(keep, KEEP_INTERVAL_MS)
+    document.addEventListener('visibilitychange', keep)
+    return () => {
+      clearInterval(id)
+      document.removeEventListener('visibilitychange', keep)
+    }
+  }, [])
 
   if (!stats) return null
 
