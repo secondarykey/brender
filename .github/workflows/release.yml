@@ -93,7 +93,8 @@ jobs:
           fi
 
       # CLI の brender-tool も同じ zip に入れる。wails3 に依存しないので、ルートのモジュールで go build する。
-      # cgo を使うのは標準ライブラリだけなので CGO_ENABLED=0 で作る（macOS のアーキ違いのビルドも C コンパイラが要らない）
+      # cgo を使うのは標準ライブラリだけなので CGO_ENABLED=0 で作る（macOS のアーキ違いのビルドも C コンパイラが要らない）。
+      # 版（-version で出る）は _cmd/brender/version を読んだ VERSION を -X で渡す（別モジュールなので go:embed できない）
       - name: Build brender-tool
         shell: bash
         env:
@@ -103,15 +104,16 @@ jobs:
           if [ "${{ runner.os }}" = "macOS" ]; then
             # .app と同じく universal にする。lipo でまとめると署名が外れるので、アドホック署名を付け直す
             # （署名の無い arm64 のバイナリは起動できない）
-            GOARCH=arm64 go build -trimpath -buildvcs=false -ldflags="-s -w" -o "$BIN/brender-tool-arm64" ./_cmd/brender-tool
-            GOARCH=amd64 go build -trimpath -buildvcs=false -ldflags="-s -w" -o "$BIN/brender-tool-amd64" ./_cmd/brender-tool
+            GOARCH=arm64 go build -trimpath -buildvcs=false -ldflags="-s -w -X main.version=${VERSION}" -o "$BIN/brender-tool-arm64" ./_cmd/brender-tool
+            GOARCH=amd64 go build -trimpath -buildvcs=false -ldflags="-s -w -X main.version=${VERSION}" -o "$BIN/brender-tool-amd64" ./_cmd/brender-tool
             lipo -create -output "$BIN/brender-tool" "$BIN/brender-tool-arm64" "$BIN/brender-tool-amd64"
             rm "$BIN/brender-tool-arm64" "$BIN/brender-tool-amd64"
             codesign --force --sign - "$BIN/brender-tool"
           else
-            go build -trimpath -buildvcs=false -ldflags="-s -w" -o "$BIN/brender-tool$(go env GOEXE)" ./_cmd/brender-tool
+            go build -trimpath -buildvcs=false -ldflags="-s -w -X main.version=${VERSION}" -o "$BIN/brender-tool$(go env GOEXE)" ./_cmd/brender-tool
           fi
           ls -l "$BIN"
+          "$BIN/brender-tool$(go env GOEXE)" -version
 
       - name: Archive Build Results
         shell: bash

@@ -73,6 +73,7 @@ brender-tool [-b <blender>] [-S <scene>] [-E <engine>] [-s <start>] [-e <end>] [
 #   -v   Verbose: pipe all Blender stdout directly to terminal
 #   -a   Analysis mode: render a 3-frame sample to estimate time
 #   --engines / --scenes  List engines / scenes and exit
+#   -version  Print version and exit（リリースは -ldflags "-X main.version=X.Y.Z" で入る。無ければ dev (コミット)）
 ```
 
 ### Tests
