@@ -10,6 +10,7 @@ func resetState() {
 	mu.Lock()
 	defer mu.Unlock()
 	running = false
+	deadline = time.Time{}
 	latest = Stats{}
 	callback = nil
 	stopCh = nil
@@ -84,5 +85,60 @@ func TestCollectPopulatesMemory(t *testing.T) {
 	}
 	if s.MemUsage <= 0 {
 		t.Error("collect() should populate MemUsage > 0")
+	}
+}
+
+func isRunning() bool {
+	mu.Lock()
+	defer mu.Unlock()
+	return running
+}
+
+func TestKeepStopsAfterTTL(t *testing.T) {
+	resetState()
+	defer Stop()
+
+	if s := Keep(20*time.Millisecond, 60*time.Millisecond); s != nil {
+		t.Error("Keep should return nil when it starts the collection")
+	}
+	if !isRunning() {
+		t.Fatal("Keep should start the collection")
+	}
+	time.Sleep(200 * time.Millisecond)
+	if isRunning() {
+		t.Error("collection should stop after the ttl without another Keep")
+	}
+}
+
+func TestKeepExtends(t *testing.T) {
+	resetState()
+	defer Stop()
+
+	Keep(20*time.Millisecond, 80*time.Millisecond)
+	for i := 0; i < 5; i++ {
+		time.Sleep(40 * time.Millisecond)
+		if s := Keep(20*time.Millisecond, 80*time.Millisecond); s == nil {
+			t.Fatal("Keep should return the latest stats while running")
+		}
+	}
+	if !isRunning() {
+		t.Error("collection should keep running while Keep is called within the ttl")
+	}
+}
+
+func TestKeepRestartsAfterExpire(t *testing.T) {
+	resetState()
+	defer Stop()
+
+	Keep(20*time.Millisecond, 40*time.Millisecond)
+	time.Sleep(150 * time.Millisecond)
+	if isRunning() {
+		t.Fatal("collection should have stopped")
+	}
+	if s := Keep(20*time.Millisecond, 40*time.Millisecond); s != nil {
+		t.Error("Keep should start again and return nil")
+	}
+	if !isRunning() {
+		t.Error("Keep should restart the collection")
 	}
 }

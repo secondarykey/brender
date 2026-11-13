@@ -274,10 +274,10 @@ func run() error {
 		emit("system:stats", stats)
 	}
 
-	// フック設定後にスケジューラ・モニタ・検証を開始する
+	// フック設定後にスケジューラ・検証を開始する
+	// （システムモニタは起動時には動かさない。画面が KeepSystemMonitor を呼んでいるあいだだけ動く）
 	api.StartRecoveredQueues()
 	go api.VerifyBlenderInstalls()
-	api.StartSystemMonitor()
 
 	// サーバモードの状態は起動のたびに必ず出す（オフでも出す。設定の変更は再起動で反映されるため）
 	if restServer == nil {

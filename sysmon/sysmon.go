@@ -33,6 +33,7 @@ var (
 	mu       sync.Mutex
 	stopCh   chan struct{}
 	running  bool
+	deadline time.Time // Keep で動かしているときの期限。ゼロなら期限なし（Start）
 	latest   Stats
 	callback func(Stats)
 )
@@ -45,12 +46,37 @@ func SetCallback(fn func(Stats)) {
 }
 
 // Start begins periodic stats collection at the given interval.
+// Keep と違い、Stop を呼ぶまで止まらない。
 func Start(interval time.Duration) {
 	mu.Lock()
 	defer mu.Unlock()
+	deadline = time.Time{}
 	if running {
 		return
 	}
+	startLocked(interval)
+}
+
+// Keep は収集を ttl のあいだ続ける。止まっていれば interval で動かし始め、
+// 動いていれば期限を延ばすだけ（interval は動かし始めたときのものが使われる）。
+// ttl のあいだに次の Keep が来なければ、収集は自分で止まる。
+// 見ている人がいるあいだだけ動かすためのもので、見る側は ttl より短い間隔で呼び続ける。
+//
+// すでに動いていたときは直近の値を返す。動かし始めたときは nil を返す
+// （最初の値はすぐ collect され、callback で届く）。
+func Keep(interval, ttl time.Duration) *Stats {
+	mu.Lock()
+	defer mu.Unlock()
+	deadline = time.Now().Add(ttl)
+	if running {
+		s := latest
+		return &s
+	}
+	startLocked(interval)
+	return nil
+}
+
+func startLocked(interval time.Duration) {
 	stopCh = make(chan struct{})
 	running = true
 
@@ -63,6 +89,10 @@ func Start(interval time.Duration) {
 func Stop() {
 	mu.Lock()
 	defer mu.Unlock()
+	stopLocked()
+}
+
+func stopLocked() {
 	if !running {
 		return
 	}
@@ -88,9 +118,24 @@ func pollLoop(interval time.Duration, stop chan struct{}) {
 		case <-stop:
 			return
 		case <-ticker.C:
+			if expired(stop) {
+				return
+			}
 			collect()
 		}
 	}
+}
+
+// expired は Keep の期限が過ぎていれば収集を止めて true を返す。
+// stop が今の stopCh でない（すでに止められ、動かし直された）ときは何もしない。
+func expired(stop chan struct{}) bool {
+	mu.Lock()
+	defer mu.Unlock()
+	if stopCh != stop || deadline.IsZero() || time.Now().Before(deadline) {
+		return false
+	}
+	stopLocked()
+	return true
 }
 
 func collect() {

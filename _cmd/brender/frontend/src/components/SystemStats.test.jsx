@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, act } from '@testing-library/react'
 import { I18nextProvider } from 'react-i18next'
 import i18n from 'i18next'
@@ -22,11 +22,21 @@ vi.mock('../lib/appEvents', () => {
   }
 })
 
+vi.mock('../lib/api', () => ({
+  SysMonApi: {
+    keep: vi.fn().mockResolvedValue(null),
+  },
+}))
+
+import { SysMonApi } from '../lib/api'
+
 let testI18n
 
 beforeEach(async () => {
   const { __reset } = await import('../lib/appEvents')
   __reset()
+  vi.clearAllMocks()
+  SysMonApi.keep.mockResolvedValue(null)
 
   testI18n = i18n.createInstance()
   await testI18n.use(initReactI18next).init({
@@ -174,5 +184,53 @@ describe('SystemStats', () => {
     })
 
     expect(screen.queryByText(/°C/)).not.toBeInTheDocument()
+  })
+})
+
+describe('SystemStats keeps the monitor while shown', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('calls keep on mount and every 10 seconds, and stops on unmount', () => {
+    vi.useFakeTimers()
+    const { unmount } = renderWithI18n(<SystemStats />)
+    expect(SysMonApi.keep).toHaveBeenCalledTimes(1)
+
+    act(() => { vi.advanceTimersByTime(10000) })
+    expect(SysMonApi.keep).toHaveBeenCalledTimes(2)
+
+    unmount()
+    act(() => { vi.advanceTimersByTime(30000) })
+    expect(SysMonApi.keep).toHaveBeenCalledTimes(2)
+  })
+
+  it('does not call keep while the page is hidden', () => {
+    vi.useFakeTimers()
+    const hidden = vi.spyOn(document, 'hidden', 'get').mockReturnValue(true)
+    try {
+      renderWithI18n(<SystemStats />)
+      act(() => { vi.advanceTimersByTime(20000) })
+      expect(SysMonApi.keep).not.toHaveBeenCalled()
+
+      hidden.mockReturnValue(false)
+      act(() => { document.dispatchEvent(new Event('visibilitychange')) })
+      expect(SysMonApi.keep).toHaveBeenCalledTimes(1)
+    } finally {
+      hidden.mockRestore()
+    }
+  })
+
+  it('shows the stats returned by keep when the monitor was already running', async () => {
+    SysMonApi.keep.mockResolvedValue({
+      cpu_usage: 33,
+      mem_usage: 50,
+      mem_total_mb: 16384,
+      mem_used_mb: 8192,
+      gpu_available: false,
+      gpus: [],
+    })
+    renderWithI18n(<SystemStats />)
+    expect(await screen.findByText('33%')).toBeInTheDocument()
   })
 })
