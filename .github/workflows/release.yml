@@ -92,6 +92,27 @@ jobs:
             wails3 build
           fi
 
+      # CLI の brender-tool も同じ zip に入れる。wails3 に依存しないので、ルートのモジュールで go build する。
+      # cgo を使うのは標準ライブラリだけなので CGO_ENABLED=0 で作る（macOS のアーキ違いのビルドも C コンパイラが要らない）
+      - name: Build brender-tool
+        shell: bash
+        env:
+          CGO_ENABLED: '0'
+        run: |
+          BIN=_cmd/brender/bin
+          if [ "${{ runner.os }}" = "macOS" ]; then
+            # .app と同じく universal にする。lipo でまとめると署名が外れるので、アドホック署名を付け直す
+            # （署名の無い arm64 のバイナリは起動できない）
+            GOARCH=arm64 go build -trimpath -buildvcs=false -ldflags="-s -w" -o "$BIN/brender-tool-arm64" ./_cmd/brender-tool
+            GOARCH=amd64 go build -trimpath -buildvcs=false -ldflags="-s -w" -o "$BIN/brender-tool-amd64" ./_cmd/brender-tool
+            lipo -create -output "$BIN/brender-tool" "$BIN/brender-tool-arm64" "$BIN/brender-tool-amd64"
+            rm "$BIN/brender-tool-arm64" "$BIN/brender-tool-amd64"
+            codesign --force --sign - "$BIN/brender-tool"
+          else
+            go build -trimpath -buildvcs=false -ldflags="-s -w" -o "$BIN/brender-tool$(go env GOEXE)" ./_cmd/brender-tool
+          fi
+          ls -l "$BIN"
+
       - name: Archive Build Results
         shell: bash
         run: |
@@ -104,10 +125,14 @@ jobs:
           elif [ "${{ runner.os }}" = "macOS" ]; then
             # universal ビルドなのでアーキ名はランナーの GOARCH ではなく universal 固定
             ZIP_NAME="brender-${VERSION}_darwin_universal.zip"
-            # 配布物は .app のみ（bin/ には .app 内へコピーされた生バイナリも残っている）。
+            # 配布物は .app と brender-tool（bin/ には .app 内へコピーされた生バイナリも残っている）。
             # zip -r はシンボリックリンクを実体化し拡張属性を落とすためコード署名が壊れる。
-            # .app の圧縮は Apple 推奨の ditto を使う。
-            ditto -c -k --sequesterRsrc --keepParent brender.app ../../../${ZIP_NAME}
+            # .app の圧縮は Apple 推奨の ditto を使う。2 つを置いたフォルダを、親を付けずに包む
+            # （zip の直下に brender.app と brender-tool が並ぶ）
+            STAGE="$(mktemp -d)"
+            ditto brender.app "$STAGE/brender.app"
+            cp -p brender-tool "$STAGE/"
+            ditto -c -k --sequesterRsrc "$STAGE" ../../../${ZIP_NAME}
           else
             ZIP_NAME="brender-${VERSION}_${GOOS}_${GOARCH}.zip"
             zip -r ../../../${ZIP_NAME} ./*

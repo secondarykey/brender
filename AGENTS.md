@@ -60,6 +60,8 @@ go run _cmd/version.go -auto                       # （リポジトリルート
 The DB is stored at `~/.brender/brender.db` (SQLite, created automatically on first run). パスは `~/.brender/brender.ini` の `db_path` で上書き可（[起動設定ファイル](#起動設定ファイル-config-brenderini) 参照）。`model.Init` は DSN に `_pragma=journal_mode(WAL)` / `synchronous(NORMAL)` を付与し、サーバモードの同時アクセス時の `database is locked` を避ける（glebarez ドライバは接続ごとに `busy_timeout=5000ms` を既定で適用）。WAL 有効時は `brender.db-wal` / `-shm` が併設される。
 
 ### CLI tool
+リリースの zip（release.yml）にはデスクトップアプリと一緒に入る（`CGO_ENABLED=0` でビルド。macOS は arm64+amd64 を `lipo` で universal にしてアドホック署名）。
+
 ```bash
 go build -o brender-tool ./_cmd/brender-tool/
 
