@@ -38,11 +38,12 @@ wails3 generate bindings   # Regenerate Go<->JS bindings after adding/changing s
 #### ローカルデプロイ（`local:deploy` / `local:install`、任意）
 
 `_cmd/brender/Taskfile.local.yml`（**git 管理外**。各自が作る）を置くと、次のタスクが使える。
-`Taskfile.yml` が `optional: true` で include しているので、ファイルが無ければ何も起きない（worktree には無いので、使うならメインのチェックアウトから写す）。中身は Skill `wails3` の `references/local-deploy.md` の標準テンプレートから、タグ打ちを外して install を分けたもの（`APP_NAME` は `brender`、製品名は `brender`）。
+`Taskfile.yml` が `optional: true` で include しているので、ファイルが無ければ何も起きない（worktree には無いので、使うならメインのチェックアウトから写す）。中身は Skill `wails3` の `references/local-deploy.md` の標準テンプレート（`APP_NAME` は `brender`、製品名は `brender`。CI がタグを打つので `TAG_VERSION` の既定は `"false"`）。
 
-- `local:deploy`: パッチの自動 bump → バージョン・アプリ情報の反映 → `wails3 build` → ビルド情報だけのコミット → 起動中の brender を止めて `bin/*` を常用の場所へコピー。**タグは打たない**
+- `local:deploy`: パッチの自動 bump → バージョン・アプリ情報の反映 → `wails3 build` → ビルド情報だけのコミット → 起動中の brender を止めて `bin/*` を常用の場所へコピー。**タグは打たない**（`TAG_VERSION` が `"false"` なので。`TAG_VERSION=true` を渡すと打つ）
 - `local:install`: `wails3 build` → 起動中の brender を止めて `bin/*` を常用の場所へコピー。版上げ・ビルド情報の反映・コミットはしない（焼き込まれるのは `build/config.yml` などに今ある版。build 中の `npm install` が `package-lock.json` を変えたら、その変更は手元に残る）
 - `local:build-info`: バージョン・アプリ情報の反映だけ
+- brender だけの追加（テンプレートには無い `build-tool`）: deploy・install は `wails3 build` のあとに CLI の brender-tool も `bin/` へビルドし（release.yml と同じく `CGO_ENABLED=0`・`-X main.version=` に `version` の値）、デスクトップアプリと一緒にコピーする。止めるのは brender だけなので、brender-tool を動かしたままだとコピーが失敗する
 
 ```bash
 cd _cmd/brender
@@ -60,6 +61,8 @@ go run _cmd/version.go -auto                       # （リポジトリルート
 The DB is stored at `~/.brender/brender.db` (SQLite, created automatically on first run). パスは `~/.brender/brender.ini` の `db_path` で上書き可（[起動設定ファイル](#起動設定ファイル-config-brenderini) 参照）。`model.Init` は DSN に `_pragma=journal_mode(WAL)` / `synchronous(NORMAL)` を付与し、サーバモードの同時アクセス時の `database is locked` を避ける（glebarez ドライバは接続ごとに `busy_timeout=5000ms` を既定で適用）。WAL 有効時は `brender.db-wal` / `-shm` が併設される。
 
 ### CLI tool
+リリースの zip（release.yml）にはデスクトップアプリと一緒に入る（`CGO_ENABLED=0` でビルド。macOS は arm64+amd64 を `lipo` で universal にしてアドホック署名）。
+
 ```bash
 go build -o brender-tool ./_cmd/brender-tool/
 
@@ -71,6 +74,7 @@ brender-tool [-b <blender>] [-S <scene>] [-E <engine>] [-s <start>] [-e <end>] [
 #   -v   Verbose: pipe all Blender stdout directly to terminal
 #   -a   Analysis mode: render a 3-frame sample to estimate time
 #   --engines / --scenes  List engines / scenes and exit
+#   -version  Print version and exit（リリースは -ldflags "-X main.version=X.Y.Z" で入る。無ければ dev (コミット)）
 ```
 
 ### Tests
