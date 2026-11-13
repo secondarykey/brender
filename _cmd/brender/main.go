@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/secondarykey/brender/api"
@@ -127,7 +126,7 @@ func run() error {
 		log.Warnf("startLog: %v", logErr)
 	}
 
-	log.Noticef("= Brender Version: %s", strings.TrimSpace(appVersion))
+	log.Noticef("= Brender Version: %s", services.RunVersion(appVersion, isDev))
 
 	err := initDB()
 	if err != nil {
@@ -197,8 +196,8 @@ func run() error {
 		Transport: transport,
 	})
 
-	services.AppVersion = strings.TrimSpace(appVersion)
 	dev := app.Env.Info().Debug
+	services.AppVersion = services.RunVersion(appVersion, dev)
 	services.DevMode = dev
 	if dev {
 		log.Info("Develop Mode")
