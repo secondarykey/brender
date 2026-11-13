@@ -43,6 +43,7 @@ wails3 generate bindings   # Regenerate Go<->JS bindings after adding/changing s
 - `local:deploy`: パッチの自動 bump → バージョン・アプリ情報の反映 → `wails3 build` → ビルド情報だけのコミット → 起動中の brender を止めて `bin/*` を常用の場所へコピー。**タグは打たない**（`TAG_VERSION` が `"false"` なので。`TAG_VERSION=true` を渡すと打つ）
 - `local:install`: `wails3 build` → 起動中の brender を止めて `bin/*` を常用の場所へコピー。版上げ・ビルド情報の反映・コミットはしない（焼き込まれるのは `build/config.yml` などに今ある版。build 中の `npm install` が `package-lock.json` を変えたら、その変更は手元に残る）
 - `local:build-info`: バージョン・アプリ情報の反映だけ
+- brender だけの追加（テンプレートには無い `build-tool`）: deploy・install は `wails3 build` のあとに CLI の brender-tool も `bin/` へビルドし（release.yml と同じく `CGO_ENABLED=0`・`-X main.version=` に `version` の値）、デスクトップアプリと一緒にコピーする。止めるのは brender だけなので、brender-tool を動かしたままだとコピーが失敗する
 
 ```bash
 cd _cmd/brender
