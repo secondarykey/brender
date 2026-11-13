@@ -35,6 +35,8 @@ wails3 build               # Production build
 wails3 generate bindings   # Regenerate Go<->JS bindings after adding/changing services
 ```
 
+dev 実行（`-tags production` なし）では、画面とログの版を `version` の patch を 1 つ上げたものにする（画面は後ろに `+DEV`。例: `version` が 0.4.0 なら `0.4.1+DEV`）。`version` は出した版を指していて、dev で動かしているのはその次の版の作業中のため。計算は `services.RunVersion`（`_cmd/brender` はモジュール名が `main` で main パッケージのテストが動かないので services に置く）。
+
 #### ローカルデプロイ（`local:deploy` / `local:install`、任意）
 
 `_cmd/brender/Taskfile.local.yml`（**git 管理外**。各自が作る）を置くと、次のタスクが使える。
@@ -187,6 +189,8 @@ CI が使う wails3 CLI のバージョンは `.github/variables` の `WAILS_VER
 - **ProcessingWriter** (`exec/writer.go`): Blender stdout/stderr をリアルタイムパース。Blender 4.x/5.x 両対応、Cycles/EEVEE/Workbench のエンジン別検出、スレッドセーフ（`Result()` でスナップショット取得）。
 - **進捗トラッキング** (`exec/progress.go`): Queue ID キーの in-memory map。`ListQueueItems()` が進捗フィールドを `QueueItem` に付与してフロントエンドへ渡す。
 - **サムネイル自動生成** (`api/thumbnail.go`): `AddProjectFile` 時に非同期で `IsSystem=true` ワークスペースを作成し、中間フレームを 1 枚レンダリング → 640×360 JPEG で `thumbnail.jpg` に保存。取得は Wails=base64 データURI / サーバモード=URL 配信（`GET /thumbnail`）の 2 形態。
+- **システムモニタ** (`sysmon/`, `api/sysmon.go`): CPU・メモリ・GPU の使用率を `system:stats` イベントで配る。GPU は `nvidia-smi` で取る（NVIDIA のみ。見つからなければ GPU の行は出さず、起動もしない）。**キューページの `SystemStats` が表示しているあいだだけ動く**: 画面が 10 秒ごとに `SysMon.Keep` を呼び（隠れているあいだは呼ばない）、`sysmon.Keep` が 5 秒ごとに収集、15 秒 Keep が来なければ自分で止まる。期限で止まるので、サーバモードで複数のブラウザが見ていても数を数えずに済む。
+- **子プロセスはコンソールを隠す（Windows）**: 配る exe は `-H windowsgui` でコンソールを持たないので、コンソールアプリを素の `exec.Command` で起動すると、そのたびに窓が一瞬開く。`exec/` の `runCommand` を使うか `exec.HideConsole(cmd)` を通す（`sysmon/` は model に依存させないよう、同じ設定の `hideConsole` を自分で持つ）。`wails3 dev` は親のコンソールを共有するので窓が出ず、dev では気づけない。
 - **権限・アクセス制御**: `Environment.Server=true` かつ `ServerAuth=true` のときのみ有効（無効時は全員フルアクセス）。api 層の関数は第1引数 `ctx` の操作ユーザ（`model.WithUser` / `currentUser(ctx)`）で判定し、**`api/access.go` の共通ヘルパー（`fullAccess` / `requireProjectRole` / `requireAdmin` 等）を使う — 自前で `if userID != owner {...}` を書かない**。**サービスのメソッドは全部ブラウザからも呼べる**ため、admin 操作は api の関数の中で `requireAdmin(ctx)` を通し、ウィンドウを開く操作は `api.FromBrowser(ctx)` で断る。ロール体系・守り・フロント制御の詳細は Skill `brender-access-control` を参照。
 
 ### ログ (`log/`)

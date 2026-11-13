@@ -134,6 +134,10 @@ src/lib/api/
   queue.js        QueueApi
   work_dir.js     WorkDirApi
   codes.js        CodesApi  ← コード管理（フォーマット・解像度プリセット）
+  tag.js          TagApi
+  favorite.js     FavoriteApi
+  auth.js         AuthApi  ← ログイン前の認証の口（REST）
+  sysmon.js       SysMonApi  ← keep(): 表示中のシステムモニタを動かし続ける（SystemStats が 10 秒ごとに呼ぶ）
   index.js        re-export
 ```
 

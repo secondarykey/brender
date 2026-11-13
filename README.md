@@ -13,6 +13,13 @@ ZIPファイルでアップロードして利用するような実行方式に�
 > **サーバモードは Experimental（実験的機能）です。**
 > 検証が十分ではないため動作が不安定になる可能性があります。運用環境での利用は推奨しません。
 
+## 配布物
+
+リリースの zip には次の 2 つが入っています。
+
+- `brender`（デスクトップアプリ。macOS は `brender.app`）
+- `brender-tool`（コマンドラインからレンダリングする CLI。`brender-tool -version` で版を表示）
+
 ## macOS 版について
 
 macOS 版の `.app` は ad-hoc 署名のみで Apple の公証（notarization）を受けていません。
@@ -22,6 +29,7 @@ macOS 版の `.app` は ad-hoc 署名のみで Apple の公証（notarization）
 
 ```sh
 xattr -dr com.apple.quarantine /Applications/brender.app
+xattr -d com.apple.quarantine brender-tool   # brender-tool を使う場合
 ```
 
 ## Caution
@@ -31,9 +39,6 @@ xattr -dr com.apple.quarantine /Applications/brender.app
 
 ## Why "Brender"?
 
-The name is pronounced "B-RENDA".
-In Japanese, "Renda" (連打) means "rapid-fire" or "repeatedly hitting a button."
-It represents the idea of managing and triggering renders at a rapid-fire pace!Why "Brender"?
 The name is pronounced "B-RENDA".
 In Japanese, "Renda" (連打) means "rapid-fire" or "repeatedly hitting a button."
 It represents the idea of managing and triggering renders at a rapid-fire pace!
