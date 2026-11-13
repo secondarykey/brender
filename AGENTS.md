@@ -40,22 +40,22 @@ wails3 generate bindings   # Regenerate Go<->JS bindings after adding/changing s
 `_cmd/brender/Taskfile.local.yml`（**git 管理外**。各自が作る）を置くと、次のタスクが使える。
 `Taskfile.yml` が `optional: true` で include しているので、ファイルが無ければ何も起きない（worktree には無いので、使うならメインのチェックアウトから写す）。中身は Skill `wails3` の `references/local-deploy.md` の標準テンプレートから、タグ打ちを外して install を分けたもの（`APP_NAME` は `brender`、製品名は `brender`）。
 
-- `local:deploy`: パッチの自動 bump → バージョン・アプリ情報の反映 → `wails3 build` → ビルド情報だけのコミット → `local:install`。**タグは打たない**
-- `local:install`: 起動中の brender を止める → 今の `bin/*` を常用の場所へコピー。版上げ・ビルド・コミットはしない（`bin/` が空なら止まる）
+- `local:deploy`: パッチの自動 bump → バージョン・アプリ情報の反映 → `wails3 build` → ビルド情報だけのコミット → 起動中の brender を止めて `bin/*` を常用の場所へコピー。**タグは打たない**
+- `local:install`: `wails3 build` → 起動中の brender を止めて `bin/*` を常用の場所へコピー。版上げ・ビルド情報の反映・コミットはしない（焼き込まれるのは `build/config.yml` などに今ある版。build 中の `npm install` が `package-lock.json` を変えたら、その変更は手元に残る）
 - `local:build-info`: バージョン・アプリ情報の反映だけ
 
 ```bash
 cd _cmd/brender
 wails3 task local:deploy                           # Taskfile.local.yml の DEPLOY_DEST へ
 wails3 task local:deploy DEPLOY_DEST="D:/tmp/app"  # コピー先を指定
-wails3 task local:install                          # ビルド済みの bin/* を入れ直すだけ
+wails3 task local:install                          # ビルドして入れるだけ（版上げ・コミットなし）
 wails3 task local:build-info                       # ビルド情報の反映だけ
 go run _cmd/version.go -auto                       # （リポジトリルートで）v+現在の版のタグがあれば patch を上げる
 ```
 
 - **タグは CI だけが打つ**: `main` への PR マージで versionup.yml が `v`+版のタグを打つ（そのタグが無ければ版はそのまま、あれば patch を上げてから）。release.yml がそのタグでビルドする。手元の deploy で上げた版は、マージ後にそのまま CI のリリースの版になる
 - **版上げは「`v`+今の版のタグがある = CI がリリース済み」のときだけ**: CI のリリース前に deploy を繰り返しても版は変わらない。リリース後に `git fetch --tags` しておくと、次の deploy で patch が上がる
-- install はアプリを起動していなくても通る（停止に `ignore_error: true`）
+- deploy・install はアプリを起動していなくても通る（停止に `ignore_error: true`）
 
 The DB is stored at `~/.brender/brender.db` (SQLite, created automatically on first run). パスは `~/.brender/brender.ini` の `db_path` で上書き可（[起動設定ファイル](#起動設定ファイル-config-brenderini) 参照）。`model.Init` は DSN に `_pragma=journal_mode(WAL)` / `synchronous(NORMAL)` を付与し、サーバモードの同時アクセス時の `database is locked` を避ける（glebarez ドライバは接続ごとに `busy_timeout=5000ms` を既定で適用）。WAL 有効時は `brender.db-wal` / `-shm` が併設される。
 
