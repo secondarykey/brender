@@ -4,6 +4,7 @@ import { Dialogs } from '@wailsio/runtime'
 import { WorkspaceApi, BlenderApi, QueueApi, CodesApi, EnvironmentApi } from '../../lib/api'
 import { useToast, useMessage } from '../../lib/toast'
 import { onAppEvent } from '../../lib/appEvents'
+import { useThumbnail } from '../../lib/useThumbnail'
 import { formatDateShort } from '../../lib/dateFormat'
 import Pagination from '../../components/Pagination'
 import Dialog from '../../components/Dialog'
@@ -35,15 +36,11 @@ const IMAGE_FILTER = [{ DisplayName: 'Image', Pattern: '*.jpg;*.jpeg;*.png;*.bmp
 // ── ワークスペースサムネイル（クリックで画像を差し替える） ──
 function WorkspaceThumbnailPanel({ projectID, fileID, workspaceID }) {
   const { t } = useTranslation()
-  const [src, setSrc]             = useState(null)
+  const [src, setSrc] = useThumbnail(
+    () => (fileID ? WorkspaceApi.getThumbnail({ projectID, fileID, workspaceID }) : null),
+    [projectID, fileID, workspaceID],
+  )
   const [uploading, setUploading] = useState(false)
-
-  useEffect(() => {
-    if (!fileID) return
-    WorkspaceApi.getThumbnail({ projectID, fileID, workspaceID })
-      .then(data => setSrc(data || null))
-      .catch(() => setSrc(null))
-  }, [projectID, fileID, workspaceID])
 
   const handleClick = async () => {
     if (uploading || !fileID) return

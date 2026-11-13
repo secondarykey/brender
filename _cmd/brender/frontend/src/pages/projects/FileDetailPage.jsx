@@ -4,6 +4,7 @@ import { Dialogs } from '@wailsio/runtime'
 import { WorkspaceApi, QueueApi, ProjectApi, BlenderApi, WorkDirApi, TagApi, FavoriteApi } from '../../lib/api'
 import { useToast, useMessage } from '../../lib/toast'
 import { onAppEvent } from '../../lib/appEvents'
+import { useThumbnail } from '../../lib/useThumbnail'
 import { formatDateFull, formatDuration } from '../../lib/dateFormat'
 import Pagination from '../../components/Pagination'
 import SortSelect from '../../components/SortSelect'
@@ -26,13 +27,11 @@ import { MdPlayArrow } from 'react-icons/md'
 // ── ワークスペース一覧の1行 ────────────────────────────────
 function WorkspaceRailItem({ projectID, fileID, ws, selected, stale, thumbnailMode, canRun, runDisabled, onSelect, onRun }) {
   const { t } = useTranslation()
-  const [thumb, setThumb] = useState(null)
-
-  useEffect(() => {
-    WorkspaceApi.getThumbnail({ projectID, fileID, workspaceID: ws.id })
-      .then(src => setThumb(src || null))
-      .catch(() => {})
-  }, [projectID, fileID, ws.id])
+  // まだ無い間はキューの変化で取り直す（登録直後の Test 出力が終わると出る）
+  const [thumb] = useThumbnail(
+    () => WorkspaceApi.getThumbnail({ projectID, fileID, workspaceID: ws.id }),
+    [projectID, fileID, ws.id],
+  )
 
   return (
     <div
@@ -377,14 +376,11 @@ const IMAGE_FILTER = [{ DisplayName: 'Image', Pattern: '*.jpg;*.jpeg;*.png;*.bmp
 // ── サムネイルパネル ───────────────────────────────────────
 function ThumbnailPanel({ projectID, fileID }) {
   const { t } = useTranslation()
-  const [src, setSrc]           = useState(null)
+  const [src, setSrc] = useThumbnail(
+    () => ProjectApi.getFileThumbnail({ projectID, fileID }),
+    [projectID, fileID],
+  )
   const [uploading, setUploading] = useState(false)
-
-  useEffect(() => {
-    ProjectApi.getFileThumbnail({ projectID, fileID })
-      .then(data => setSrc(data || null))
-      .catch(() => setSrc(null))
-  }, [projectID, fileID])
 
   const handleClick = async () => {
     if (uploading) return

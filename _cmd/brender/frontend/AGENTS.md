@@ -97,6 +97,7 @@ QueuePage の進捗バー計算式・ProcessingWriter 由来の進捗フィー�
 - 「ディレクトリからファイルを追加」機能: プロジェクト設定タブ（SettingsTab）の作業ディレクトリセクション下に配置
 - タイルサイズ: 幅 320px、縦レイアウト（サムネイル上 180px + 名称のみ下）
 - サムネイル: `ProjectApi.getFileThumbnail({ projectID, fileID })` で取得（Wails は base64、サーバモードは配信URL）して `<img src>` に渡す（消費側コードはモード非依存）
+- サムネイルを出す画面は `useThumbnail(fetcher, deps)`（`src/lib/useThumbnail.js`）で取る。まだ無い間は `queue:changed` のたびに取り直すので、ファイル登録直後の Test 出力が終わると、ファイルのタイル・ワークスペース一覧の行・ワークスペース/ファイルのサムネイル欄にそのまま出る
 
 ### サイドバー
 - アイコンのみ表示（ラベルなし）、`title` 属性でツールチップ
