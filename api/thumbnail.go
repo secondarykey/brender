@@ -136,11 +136,14 @@ func ServeThumbnailPath(ctx context.Context, projectID, fileID, workspaceID stri
 	return p, nil
 }
 
-// CreateDefaultWorkspace はファイル登録時に、ファイル名のワークスペース（既定の設定）を作り、
+// defaultWorkspaceName はファイル登録時に作るワークスペースの名前。
+const defaultWorkspaceName = "Default"
+
+// CreateDefaultWorkspace はファイル登録時に、ワークスペース「Default」（既定の設定）を作り、
 // そこで Test 出力（中間フレーム1枚・サンプル8）を投入する。
 // ファイルのサムネイルは、このファイルの Test ジョブの出力から作る（thumbnailPath）。
 func CreateDefaultWorkspace(ctx context.Context, projectID string, file *model.ProjectFile) error {
-	ws, err := model.CreateWorkspace(projectID, file.ID, file.Name)
+	ws, err := model.CreateWorkspace(projectID, file.ID, defaultWorkspaceName)
 	if err != nil {
 		return err
 	}

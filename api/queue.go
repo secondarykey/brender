@@ -586,6 +586,16 @@ func TestEnqueue(ctx context.Context, projectID, workspaceID string, params Test
 	return EnqueueWithPreview(ctx, projectID, workspaceID, preview)
 }
 
+// jobName はジョブ名の頭「ファイル名 ワークスペース名」を返す。
+// ワークスペース名はファイルごとに同じ（登録時の「Default」など）になりやすいので、ファイル名を付けて見分ける。
+// ファイルが引けなければワークスペース名だけにする。
+func jobName(projectFileID, workspaceName string) string {
+	if f, err := model.GetProjectFile(projectFileID); err == nil && f != nil && f.Name != "" {
+		return f.Name + " " + workspaceName
+	}
+	return workspaceName
+}
+
 // EnqueueWithPreview は解決済みの RenderPreview を使ってジョブを作成・実行する。
 func EnqueueWithPreview(ctx context.Context, projectID, workspaceID string, preview *RenderPreview) (*model.Queue, error) {
 	// runner 以上の権限が必要
@@ -639,7 +649,7 @@ func EnqueueWithPreview(ctx context.Context, projectID, workspaceID string, prev
 
 	job := &model.Job{
 		ID:            id,
-		Name:          fmt.Sprintf("%s(%d-%d)", preview.WorkspaceName, preview.StartFrame, preview.EndFrame),
+		Name:          fmt.Sprintf("%s(%d-%d)", jobName(preview.ProjectFileID, preview.WorkspaceName), preview.StartFrame, preview.EndFrame),
 		ProjectID:     projectID,
 		WorkspaceID:   workspaceID,
 		ProjectFileID: preview.ProjectFileID,
@@ -790,7 +800,7 @@ func SamplesComparisonEnqueue(ctx context.Context, projectID, workspaceID string
 
 	job := &model.Job{
 		ID:            id,
-		Name:          fmt.Sprintf("%s(Samples Comparison)", preview.WorkspaceName),
+		Name:          fmt.Sprintf("%s(Samples Comparison)", jobName(preview.ProjectFileID, preview.WorkspaceName)),
 		ProjectID:     projectID,
 		WorkspaceID:   workspaceID,
 		ProjectFileID: preview.ProjectFileID,

@@ -20,8 +20,8 @@ Queue/Job のステータス一覧・データモデルはルートの `AGENTS.m
 ファイル登録時（`AddProjectFile`）に非同期で `CreateDefaultWorkspace` を呼び出す。サムネイル専用のものは作らず、「既定のワークスペースを作って、そこで Test 出力をした」形にする。
 
 **フロー**:
-1. ファイル名のワークスペースを既定の設定で作成（`model.CreateWorkspace`。画面の「新規作成」と同じもの）
-2. そこで `TestEnqueue`（開始 0・終了 -1 = シーンのフレーム範囲 → 中間フレーム `(start+end)/2` を 1 枚、サンプル 8）を投入。そのワークスペースの Test ジョブとして履歴に残る
+1. ワークスペース「Default」を既定の設定で作成（`model.CreateWorkspace`。画面の「新規作成」と同じもの）
+2. そこで `TestEnqueue`（開始 0・終了 -1 = シーンのフレーム範囲 → 中間フレーム `(start+end)/2` を 1 枚、サンプル 8）を投入。そのワークスペースの Test ジョブとして履歴に残る。ジョブ名は「ファイル名 Default (Test)(フレーム-フレーム)」（全ジョブ共通で `jobName` がファイル名を頭に付ける）
 3. ファイルのサムネイルが要るとき、`thumbnail.jpg` が無ければ `model.GetLatestTestJobByFile`（そのファイルの、どのワークスペースかを問わない最新の完了した Test ジョブ）の出力を `convertToJPEG` で 640×360 JPEG に変換して保存する
 4. エラーはログ出力のみ（ファイル登録をブロックしない）
 
