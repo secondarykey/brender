@@ -411,13 +411,16 @@ export function RenderResultTab({ job, role }) {
   }, [job.id, t, showToast, showError])
 
   const handleOpenMovieDialog = async () => {
+    // FPS の初期値: ジョブに記録したシーンの FPS（frame_step で間引いた分は割る。動画の FPS は整数）→ 設定の FPS → 30
+    const jobMovieFps = job?.fps > 0 ? Math.max(1, Math.round(job.fps / frameStep)) : 0
+    if (jobMovieFps > 0) setMovieFps(String(jobMovieFps))
     try {
       const [env, formats] = await Promise.all([
         EnvironmentApi.get(),
         CodesApi.getVideoFormats(),
       ])
       if (env) {
-        setMovieFps(String(env.ffmpeg_fps > 0 ? env.ffmpeg_fps : 30))
+        if (jobMovieFps === 0) setMovieFps(String(env.ffmpeg_fps > 0 ? env.ffmpeg_fps : 30))
         setMovieOutext(env.ffmpeg_out_ext || 'mp4')
         setMovieExtraArgs(env.ffmpeg_args || '')
       }

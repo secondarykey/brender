@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { screen, fireEvent, act } from '@testing-library/react'
+import { screen, fireEvent, act, waitFor } from '@testing-library/react'
 import { renderWithI18n } from '../../test/helpers'
 import { RenderResultTab } from './JobPage'
 import { QueueApi, EnvironmentApi } from '../../lib/api'
@@ -27,7 +27,7 @@ vi.mock('../../lib/api', () => ({
   EnvironmentApi: { get: vi.fn() },
   WorkspaceApi:   {},
   ProjectApi:     {},
-  CodesApi:       {},
+  CodesApi:       { getVideoFormats: vi.fn().mockResolvedValue([]) },
 }))
 
 vi.mock('../../lib/appEvents', () => ({ onAppEvent: () => () => {} }))
@@ -115,5 +115,31 @@ describe('RenderResultTab の再生', () => {
     expect(shown()).toBe('frame_0002.png')
     await advance(100)
     expect(shown()).toBe('frame_0003.png')
+  })
+})
+
+describe('RenderResultTab の動画作成ダイアログ', () => {
+  beforeEach(() => {
+    QueueApi.listJobImages.mockResolvedValue(IMAGES)
+    QueueApi.listJobFiles.mockResolvedValue([])
+    QueueApi.getImageBase64.mockImplementation(({ path }) => Promise.resolve(`data:${path}`))
+    EnvironmentApi.get.mockResolvedValue({ ffmpeg_fps: 60 })
+  })
+  afterEach(() => vi.clearAllMocks())
+
+  const openMovieDialog = async job => {
+    await renderWithI18n(<RenderResultTab job={{ id: 'j1', data_status: 2, ...job }} role="owner" />)
+    await screen.findByRole('img')
+    fireEvent.click(screen.getByRole('button', { name: 'Create Movie' }))
+    return screen.findByRole('spinbutton')
+  }
+
+  it.each([
+    ['ジョブの FPS（整数に丸める）', { fps: 29.97, frame_step: 1 }, '30'],
+    ['frame_step で間引いた分は割る', { fps: 24, frame_step: 2 }, '12'],
+    ['ジョブに FPS が無ければ設定の FPS', { fps: 0 }, '60'],
+  ])('FPS の初期値: %s', async (_, job, want) => {
+    const input = await openMovieDialog(job)
+    await waitFor(() => expect(input).toHaveValue(Number(want)))
   })
 })
