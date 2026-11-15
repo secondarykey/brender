@@ -132,6 +132,87 @@ func TestKillRunningQueuesByUser(t *testing.T) {
 	}
 }
 
+// 実行中のキューのキャンセルは、実行 goroutine の finishJob（kill されたのでエラーで呼ばれる）が
+// 後から走っても、先に走っても cancelled のまま残る。
+func TestCancelRunningQueue(t *testing.T) {
+	for _, finishFirst := range []bool{false, true} {
+		name := "キャンセルが先"
+		if finishFirst {
+			name = "finishJob が先"
+		}
+		t.Run(name, func(t *testing.T) {
+			initQueueTestDB(t)
+
+			cmd := startFakeBlender(t)
+			id := createRunningQueue(t, cmd.Process.Pid, cmd.Path)
+
+			if finishFirst {
+				// CancelQueue が kill した直後に finishJob が割り込んだ場合と同じ: 目印だけ先に置かれた状態
+				userKilledQueues.Store(id, struct{}{})
+				cmd.Process.Kill()
+				finishJob(id, false, cmd.Wait().Error(), 0)
+				// finishJob がキューを消しているので CancelQueue はエラーで返る（記録は cancelled のまま）
+				_ = CancelQueue(SystemContext(), id)
+			} else {
+				if err := CancelQueue(SystemContext(), id); err != nil {
+					t.Fatalf("CancelQueue: %v", err)
+				}
+				waitErr := cmd.Wait()
+				if waitErr == nil {
+					t.Fatal("process was not killed")
+				}
+				finishJob(id, false, waitErr.Error(), 0)
+			}
+
+			j, err := model.GetJob(id)
+			if err != nil {
+				t.Fatalf("GetJob: %v", err)
+			}
+			if j.Status != model.JobCancelled {
+				t.Errorf("Job.Status = %q, want %q", j.Status, model.JobCancelled)
+			}
+			if j.ErrorMsg != "" {
+				t.Errorf("Job.ErrorMsg = %q, want empty", j.ErrorMsg)
+			}
+			if q, _ := model.GetQueue(id); q != nil {
+				t.Errorf("Queue %s still exists", id)
+			}
+			if _, ok := userKilledQueues.Load(id); ok {
+				t.Error("cancel mark was not consumed by finishJob")
+			}
+		})
+	}
+}
+
+// 待機中のキューのキャンセルには実行 goroutine が無いので目印を置かない（残り続けないように）。
+func TestCancelWaitingQueue(t *testing.T) {
+	initQueueTestDB(t)
+
+	id, err := model.NewQueueID()
+	if err != nil {
+		t.Fatalf("NewQueueID: %v", err)
+	}
+	if err := model.CreateJob(&model.Job{ID: id}); err != nil {
+		t.Fatalf("CreateJob: %v", err)
+	}
+	if err := model.CreateQueue(&model.Queue{ID: id, Status: model.QueueWaiting}); err != nil {
+		t.Fatalf("CreateQueue: %v", err)
+	}
+	if err := CancelQueue(SystemContext(), id); err != nil {
+		t.Fatalf("CancelQueue: %v", err)
+	}
+	if _, ok := userKilledQueues.Load(id); ok {
+		t.Error("waiting queue must not leave a mark")
+	}
+	j, err := model.GetJob(id)
+	if err != nil {
+		t.Fatalf("GetJob: %v", err)
+	}
+	if j.Status != model.JobCancelled {
+		t.Errorf("Job.Status = %q, want %q", j.Status, model.JobCancelled)
+	}
+}
+
 // kill できなかったキューには目印を残さず、後で正常終了したら completed のまま記録される。
 func TestKillRunningQueuesByUserNotKilled(t *testing.T) {
 	initQueueTestDB(t)

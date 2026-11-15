@@ -183,8 +183,8 @@ func IsShuttingDown() bool {
 	return shuttingDown.Load()
 }
 
-// userKilledQueues は利用者の強制終了（KillRunningQueuesByUser）で kill したキュー ID の集合。
-// kill されたプロセスの後始末は実行 goroutine の finishJob が行うため、
+// userKilledQueues は利用者が止めた実行中キューの ID の集合（強制終了 KillRunningQueuesByUser と
+// キャンセル CancelQueue）。kill されたプロセスの後始末は実行 goroutine の finishJob が行うため、
 // そこで error ではなく cancelled として閉じるための目印にする。
 var userKilledQueues sync.Map
 
@@ -1378,6 +1378,12 @@ func CancelQueue(ctx context.Context, id string) error {
 	expectedPath := ""
 	if j != nil {
 		expectedPath = j.BlenderPath
+	}
+	if q.Status == model.QueueRunning {
+		// 実行 goroutine は kill されたプロセスの終了を見て finishJob を呼び、そのままだと error で
+		// 上書きする。cancelled のまま閉じさせる目印を kill より先に置く（kill 直後に finishJob が走り得る）。
+		// kill できなかったときも、ここで cancelled として記録してキューを消すので目印は残す。
+		userKilledQueues.Store(q.ID, struct{}{})
 	}
 	killQueueProcess(q.ProcessID, expectedPath)
 	var diskSize int64
