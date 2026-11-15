@@ -284,7 +284,8 @@ type RenderPreview struct {
 	FPS           float64             `json:"fps"`           // シーンのフレームレート（fps / fps_base）。0 = 不明
 	JobType       string              `json:"job_type"`
 	Previous      *PreviousRenderInfo `json:"previous"`
-	// FileNotModified は前回の実行（ワークスペースの processed_at）からファイルが更新されていないこと。
+	// FileNotModified は前回のレンダリング（Previous と同じ、最後に完了したジョブ）が動き始めてから
+	// ファイルが更新されていないこと。キャンセル・エラーで終わった実行は前回に数えない。
 	// 確認ダイアログを開いた時点のファイルの更新時刻で判定する（画面が持っている古い値を使わない）。
 	FileNotModified bool `json:"file_not_modified"`
 }
@@ -301,18 +302,30 @@ func resolveFPS(workspaceFPS, sceneFPS float64) float64 {
 	return 0
 }
 
-// fileNotModifiedSince は processedAt 以降に path のファイルが更新されていなければ true を返す。
-// まだ一度も実行していない（processedAt が nil）ときは false。ファイルが読めないときは
+// fileNotModifiedSince は since 以降に path のファイルが更新されていなければ true を返す。
+// 前回が無い（since が nil）ときは false。ファイルが読めないときは
 // 更新を確認できないので true（更新されていない側）に倒す。
-func fileNotModifiedSince(path string, processedAt *time.Time) bool {
-	if processedAt == nil {
+func fileNotModifiedSince(path string, since *time.Time) bool {
+	if since == nil {
 		return false
 	}
 	info, err := os.Stat(path)
 	if err != nil {
 		return true
 	}
-	return !info.ModTime().After(*processedAt)
+	return !info.ModTime().After(*since)
+}
+
+// renderReadAt は前回のレンダリングが .blend を読んだ時刻を返す。
+// Blender がファイルを読むのは動き始めたときなので StartedAt、無ければ EnqueuedAt。前回が無ければ nil。
+func renderReadAt(j *model.Job) *time.Time {
+	if j == nil {
+		return nil
+	}
+	if j.StartedAt != nil {
+		return j.StartedAt
+	}
+	return j.EnqueuedAt
 }
 
 type PreviousRenderInfo struct {
@@ -512,10 +525,10 @@ func PreviewRender(projectID, workspaceID string) (*RenderPreview, error) {
 		OutputFormat:    outputFormat,
 		FPS:             resolveFPS(w.FPS, st.FPS),
 		JobType:         model.JobTypeRender,
-		FileNotModified: fileNotModifiedSince(blenderFile, w.ProcessedAt),
 	}
 
 	if prev, err := model.GetLatestCompletedRenderJob(workspaceID); err == nil && prev != nil {
+		preview.FileNotModified = fileNotModifiedSince(blenderFile, renderReadAt(prev))
 		preview.Previous = &PreviousRenderInfo{
 			Scene:        prev.Scene,
 			Engine:       prev.Engine,

@@ -211,6 +211,22 @@ func TestFileNotModifiedSince(t *testing.T) {
 	}
 }
 
+// 前回のレンダリングがファイルを読んだ時刻は、動き始めた時刻（無ければキューに入れた時刻）。
+func TestRenderReadAt(t *testing.T) {
+	enq := time.Date(2026, 1, 2, 3, 0, 0, 0, time.Local)
+	start := enq.Add(time.Hour)
+
+	if got := renderReadAt(nil); got != nil {
+		t.Errorf("前回なし: got %v, want nil", got)
+	}
+	if got := renderReadAt(&model.Job{EnqueuedAt: &enq, StartedAt: &start}); got == nil || !got.Equal(start) {
+		t.Errorf("動き始めた時刻: got %v, want %v", got, start)
+	}
+	if got := renderReadAt(&model.Job{EnqueuedAt: &enq}); got == nil || !got.Equal(enq) {
+		t.Errorf("StartedAt なし: got %v, want %v", got, enq)
+	}
+}
+
 // ジョブ名はワークスペース名の前にファイル名を付ける（ワークスペース名「Default」はどのファイルにもあるため）。
 func TestJobName(t *testing.T) {
 	dsn := filepath.Join(t.TempDir(), "test.db")
