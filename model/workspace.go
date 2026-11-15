@@ -23,6 +23,7 @@ type Workspace struct {
 	StartFrame       int        `json:"start"`
 	EndFrame         int        `json:"end"`
 	FrameStep        int        `json:"frame_step"`          // 0,1 = 毎フレーム
+	FPS              float64    `json:"fps"`                 // 再生・動画の FPS。0 = Blender のシーンの値
 	Thread           int        `json:"thread"`              // 0 = 全コア自動
 	Samples          int        `json:"samples"`             // 0 = Blender デフォルト
 	ResolutionX      int        `json:"resolution_x"`        // 0 = Blender デフォルト
@@ -205,7 +206,7 @@ func CreateWorkspaceWithSettings(projectID, projectFileID, name, scene, camera, 
 	return w, nil
 }
 
-func UpdateWorkspace(projectID string, workspaceID string, name string, note string, blenderInstallID uint, scene, camera, engine string, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY int, outputFormat string, autoLock bool, autoLockMinSize int64, autoLockKeep int) (*WorkspaceDetail, error) {
+func UpdateWorkspace(projectID string, workspaceID string, name string, note string, blenderInstallID uint, scene, camera, engine string, startFrame, endFrame, frameStep int, fps float64, thread, samples, resolutionX, resolutionY int, outputFormat string, autoLock bool, autoLockMinSize int64, autoLockKeep int) (*WorkspaceDetail, error) {
 	var w Workspace
 	if res := db.First(&w, "id = ? AND project_id = ?", workspaceID, projectID); res.Error != nil {
 		return nil, xerrors.Errorf("UpdateWorkspace find: %w", res.Error)
@@ -219,6 +220,7 @@ func UpdateWorkspace(projectID string, workspaceID string, name string, note str
 	w.StartFrame = startFrame
 	w.EndFrame = endFrame
 	w.FrameStep = frameStep
+	w.FPS = fps
 	w.Thread = thread
 	w.Samples = samples
 	w.ResolutionX = resolutionX

@@ -227,6 +227,7 @@
     "startFrame": "開始",
     "endFrame": "終了",
     "frameStep": "ステップ",
+    "fps": "FPS",
     "frameStepHint": "1 = 毎フレーム",
     "frameRangeHint": "未指定の場合: .blend ファイルのフレーム設定が使用されます",
     "threads": "スレッド数",

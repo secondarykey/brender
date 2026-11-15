@@ -22,10 +22,11 @@ export const WorkspaceApi = {
   /** ワークスペースを更新
    * @param {{ projectID: string, workspaceID: string, name: string, note: string,
    *           blenderInstallID: number, scene: string, camera: string, engine: string,
-   *           startFrame: number, endFrame: number, frameStep: number, thread: number, samples: number }} args
+   *           startFrame: number, endFrame: number, frameStep: number, fps: number, thread: number, samples: number }} args
+   *   fps: 再生・動画の FPS。0 = Blender のシーンの値
    */
-  update: ({ projectID, workspaceID, name, note = '', blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY, outputFormat = '', autoLock = false, autoLockMinSize = 0, autoLockKeep = 1 }) =>
-    svc().then(s => s.Update(projectID, workspaceID, name, note, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY, outputFormat, autoLock, autoLockMinSize, autoLockKeep)),
+  update: ({ projectID, workspaceID, name, note = '', blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, fps = 0, thread, samples, resolutionX, resolutionY, outputFormat = '', autoLock = false, autoLockMinSize = 0, autoLockKeep = 1 }) =>
+    svc().then(s => s.Update(projectID, workspaceID, name, note, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, fps, thread, samples, resolutionX, resolutionY, outputFormat, autoLock, autoLockMinSize, autoLockKeep)),
 
   /** ワークスペースをコピーして新規作成
    * @param {{ projectID: string, workspaceID: string, newName: string }} args

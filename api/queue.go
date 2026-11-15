@@ -289,6 +289,18 @@ type RenderPreview struct {
 	FileNotModified bool `json:"file_not_modified"`
 }
 
+// resolveFPS は再生・動画に使う FPS を決める。ワークスペースの指定 → シーンの値。どちらも無ければ 0（不明）。
+// Blender のレンダリングには渡さない（画像の出力は FPS で変わらないため）。
+func resolveFPS(workspaceFPS, sceneFPS float64) float64 {
+	if workspaceFPS > 0 {
+		return workspaceFPS
+	}
+	if sceneFPS > 0 {
+		return sceneFPS
+	}
+	return 0
+}
+
 // fileNotModifiedSince は processedAt 以降に path のファイルが更新されていなければ true を返す。
 // まだ一度も実行していない（processedAt が nil）ときは false。ファイルが読めないときは
 // 更新を確認できないので true（更新されていない側）に倒す。
@@ -498,7 +510,7 @@ func PreviewRender(projectID, workspaceID string) (*RenderPreview, error) {
 		ResolutionY:     w.ResolutionY,
 		Camera:          camera,
 		OutputFormat:    outputFormat,
-		FPS:             st.FPS,
+		FPS:             resolveFPS(w.FPS, st.FPS),
 		JobType:         model.JobTypeRender,
 		FileNotModified: fileNotModifiedSince(blenderFile, w.ProcessedAt),
 	}

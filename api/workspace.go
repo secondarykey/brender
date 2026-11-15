@@ -115,7 +115,7 @@ func CopyWorkspace(ctx context.Context, projectID, workspaceID, newName string) 
 	}
 	if _, err := model.UpdateWorkspace(projectID, newWS.ID, newName, src.Note, src.BlenderInstallID,
 		src.Scene, src.Camera, src.Engine,
-		src.StartFrame, src.EndFrame, src.FrameStep,
+		src.StartFrame, src.EndFrame, src.FrameStep, src.FPS,
 		src.Thread, src.Samples, src.ResolutionX, src.ResolutionY, src.OutputFormat,
 		src.AutoLock, src.AutoLockMinSize, src.AutoLockKeep); err != nil {
 		return nil, err
@@ -133,7 +133,7 @@ func CopyWorkspace(ctx context.Context, projectID, workspaceID, newName string) 
 	return newWS, nil
 }
 
-func UpdateWorkspace(ctx context.Context, projectID string, workspaceID string, name string, note string, blenderInstallID uint, scene, camera, engine string, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY int, outputFormat string, autoLock bool, autoLockMinSize int64, autoLockKeep int) (*model.WorkspaceDetail, error) {
+func UpdateWorkspace(ctx context.Context, projectID string, workspaceID string, name string, note string, blenderInstallID uint, scene, camera, engine string, startFrame, endFrame, frameStep int, fps float64, thread, samples, resolutionX, resolutionY int, outputFormat string, autoLock bool, autoLockMinSize int64, autoLockKeep int) (*model.WorkspaceDetail, error) {
 	if name == "" {
 		return nil, xerrors.New("workspace name is required")
 	}
@@ -149,7 +149,7 @@ func UpdateWorkspace(ctx context.Context, projectID string, workspaceID string, 
 			}
 		}
 	}
-	return model.UpdateWorkspace(projectID, workspaceID, name, note, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY, outputFormat, autoLock, autoLockMinSize, autoLockKeep)
+	return model.UpdateWorkspace(projectID, workspaceID, name, note, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, fps, thread, samples, resolutionX, resolutionY, outputFormat, autoLock, autoLockMinSize, autoLockKeep)
 }
 
 func DeleteWorkspace(ctx context.Context, projectID, workspaceID string, force bool) error {

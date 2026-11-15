@@ -17,6 +17,9 @@ import { MdSwapHoriz, MdPlayArrow } from 'react-icons/md'
 
 
 const isFrameDefault      = (start, end) => start === 0 && end === -1
+// FPS 欄: 空・0・読めない値は 0（= Blender のシーンの値）
+const parseFps  = v => { const n = parseFloat(v); return n > 0 ? n : 0 }
+const formatFps = n => String(Math.round(n * 100) / 100)
 const isResolutionDefault = (x, y)       => x === 0 && y === 0
 
 // EngineFlags 相当: エンジン名の揺れを吸収して Samples マップから値を返す
@@ -302,6 +305,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
       startFrame:       start,
       endFrame:         end,
       frameStep:        detail.workspace.frame_step || 1,
+      fps:              detail.workspace.fps > 0 ? String(detail.workspace.fps) : '', // '' = Blender のシーンの値
       thread:           detail.workspace.thread || 0,
       samples:          detail.workspace.samples || 0,
       resolutionX:      detail.workspace.resolution_x || 0,
@@ -513,7 +517,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
         blenderInstallID: form.blenderInstallID,
         scene: form.scene, camera: form.camera, engine: form.engine,
         startFrame: form.startFrame, endFrame: form.endFrame,
-        frameStep: form.frameStep, thread: form.thread,
+        frameStep: form.frameStep, fps: parseFps(form.fps), thread: form.thread,
         samples: form.samples,
         resolutionX: form.resolutionX, resolutionY: form.resolutionY,
         outputFormat: form.outputFormat,
@@ -639,6 +643,7 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
   const frameDefault  = !specifyFrames && sceneInfo
     ? t('workspace.frameRangeDefault', { start: sceneInfo.Start, end: sceneInfo.End })
     : null
+  const fpsDefault    = !form.fps && sceneInfo?.FPS > 0 ? formatFps(sceneInfo.FPS) : null
   const threadsHint   = cpuCount
     ? t('workspace.threadsHintWithMax', { count: cpuCount })
     : t('workspace.threadsHint')
@@ -809,6 +814,15 @@ function SettingsTab({ projectID, projectName, fileID, fileName, workspaceID, de
             </div>
           </div>
         )}
+      </div>
+
+      <div className="form-field">
+        <FieldLabel text={t('workspace.fps')} defaultValue={fpsDefault} />
+        <input
+          className="form-input" style={{ width: 100, textAlign: 'right' }}
+          type="number" min={0} step="any" value={form.fps}
+          onChange={e => set('fps', e.target.value)} disabled={readOnly}
+        />
       </div>
 
       <div className="form-field">
