@@ -147,6 +147,7 @@ func RecoverStaleQueues() {
 			Camera:        oldJob.Camera,
 			OutputExt:     oldJob.OutputExt,
 			BlenderFormat: oldJob.BlenderFormat,
+			FPS:           oldJob.FPS,
 			JobType:       oldJob.JobType,
 			SamplesList:   oldJob.SamplesList,
 			EnqueuedAt:    &now,
@@ -280,6 +281,7 @@ type RenderPreview struct {
 	ResolutionY   int                 `json:"resolution_y"`
 	Camera        string              `json:"camera"`
 	OutputFormat  string              `json:"output_format"` // 解決済みフォーマット名（"PNG" / "JPEG"）
+	FPS           float64             `json:"fps"`           // シーンのフレームレート（fps / fps_base）。0 = 不明
 	JobType       string              `json:"job_type"`
 	Previous      *PreviousRenderInfo `json:"previous"`
 	// FileNotModified は前回の実行（ワークスペースの processed_at）からファイルが更新されていないこと。
@@ -496,6 +498,7 @@ func PreviewRender(projectID, workspaceID string) (*RenderPreview, error) {
 		ResolutionY:     w.ResolutionY,
 		Camera:          camera,
 		OutputFormat:    outputFormat,
+		FPS:             st.FPS,
 		JobType:         model.JobTypeRender,
 		FileNotModified: fileNotModifiedSince(blenderFile, w.ProcessedAt),
 	}
@@ -668,6 +671,7 @@ func EnqueueWithPreview(ctx context.Context, projectID, workspaceID string, prev
 		Camera:        preview.Camera,
 		OutputExt:     resolveOutputExt(preview.OutputFormat),
 		BlenderFormat: resolveBlenderFormat(preview.OutputFormat),
+		FPS:           preview.FPS,
 		JobType:       preview.JobType,
 		EnqueuedAt:    &now,
 	}

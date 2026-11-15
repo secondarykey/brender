@@ -59,6 +59,7 @@ type Job struct {
 	ResolutionY   int        `json:"resolution_y"` // 0 = Blender デフォルト
 	OutputExt     string     `json:"output_ext"`     // レンダリング出力拡張子（"png" / "jpg"）
 	BlenderFormat string     `json:"blender_format"` // Blender -F 引数に渡した値（"PNG" / "JPEG" / "OPEN_EXR" など）
+	FPS           float64    `json:"fps"`            // シーンのフレームレート（fps / fps_base）。0 = 不明（この項目より前のジョブ）
 	Status        string     `json:"status"`      // completed / error / cancelled
 	ErrorMsg      string     `json:"error_msg"`
 	DataStatus    int        `json:"data_status"` // 0=なし 1=なしロック 2=あり 3=ありロック 4=削除 5=削除ロック

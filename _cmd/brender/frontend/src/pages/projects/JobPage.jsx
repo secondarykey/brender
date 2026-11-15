@@ -16,6 +16,7 @@ import { MdLoop, MdFolder, MdPlayArrow, MdImage } from 'react-icons/md'
 const VIDEO_EXTS = new Set(['.mp4', '.mov', '.avi', '.mkv', '.webm', '.m4v'])
 const IMAGE_EXTS = new Set(['.png', '.jpg', '.jpeg', '.exr', '.tiff', '.tif', '.bmp', '.hdr', '.webp', '.tga'])
 const LOG_EXTS   = new Set(['.log'])
+const DEFAULT_PLAY_FPS = 30
 function isVideoFile(name) {
   const ext = name.lastIndexOf('.')
   return ext !== -1 && VIDEO_EXTS.has(name.slice(ext).toLowerCase())
@@ -253,7 +254,7 @@ function DetailTab({ job, onDeleted, onDataStatusChanged, role }) {
 }
 
 // ── レンダリング結果タブ ───────────────────────────────────
-function RenderResultTab({ job, role }) {
+export function RenderResultTab({ job, role }) {
   const { t } = useTranslation()
   const { showToast } = useToast()
   const { showError } = useMessage()
@@ -281,15 +282,29 @@ function RenderResultTab({ job, role }) {
   const [movieExtraArgs, setMovieExtraArgs] = useState('')
   const [videoFormats, setVideoFormats]     = useState([])
   const [moviePlayerPath, setMoviePlayerPath] = useState('')
-  const playingRef = useRef(false)
-  const loopRef    = useRef(false)
+  const [playFps, setPlayFps]               = useState(DEFAULT_PLAY_FPS)
+  const loopRef      = useRef(false)
+  const shownPathRef = useRef('') // いま imgSrc に出している画像のパス
+  const frameStep    = job?.frame_step || 1
 
-  const stopPlay = () => { playingRef.current = false; setPlaying(false) }
+  const stopPlay = () => setPlaying(false)
   const toggleLoop = () => { const v = !loopRef.current; loopRef.current = v; setLoop(v) }
+
+  // 再生のフレームレート: ジョブに記録したシーンの FPS → 設定（動画）の FPS → 30
+  useEffect(() => {
+    if (job?.fps > 0) { setPlayFps(job.fps); return }
+    setPlayFps(DEFAULT_PLAY_FPS)
+    let alive = true
+    EnvironmentApi.get()
+      .then(env => { if (alive && env?.ffmpeg_fps > 0) setPlayFps(env.ffmpeg_fps) })
+      .catch(() => {})
+    return () => { alive = false }
+  }, [job])
 
   useEffect(() => {
     if (!job) return
     stopPlay()
+    shownPathRef.current = ''
     setLoadingList(true); setImages([]); setIndex(0); setImgSrc(''); setMoviePath('')
     const hasData = [2, 3, 6, 7, 8, 9].includes(job.data_status)
     if (hasData) {
@@ -311,29 +326,60 @@ function RenderResultTab({ job, role }) {
       .catch(err => { console.error('[RenderResultTab] listJobFiles error:', err) })
   }, [job])
 
+  // 止まっている間: 選んだフレームを読み込んで出す
   useEffect(() => {
-    if (images.length === 0) return
+    if (playing || images.length === 0) return
+    const path = images[index]
+    if (!path || path === shownPathRef.current) return
+    let alive = true
     setLoadingImg(true)
-    QueueApi.getImageBase64({ path: images[index] })
+    QueueApi.getImageBase64({ path })
       .then(src => {
-        setImgSrc(src); setLoadingImg(false)
-        if (playingRef.current) {
-          setIndex(prev => {
-            if (prev < images.length - 1) return prev + 1
-            if (loopRef.current) return 0
-            playingRef.current = false; setPlaying(false)
-            return prev
-          })
-        }
+        if (!alive) return
+        setImgSrc(src); shownPathRef.current = path; setLoadingImg(false)
       })
-      .catch(err => { showError(String(err)); setLoadingImg(false); stopPlay() })
-  }, [images, index])
+      .catch(err => { if (alive) { showError(String(err)); setLoadingImg(false) } })
+    return () => { alive = false; setLoadingImg(false) }
+  }, [images, index, playing])
+
+  // 再生中: 次のフレームを読み込みながら、前のフレームを出してから 1 フレーム分経ったところで出す。
+  // frame_step が 2 以上なら 1 枚が step フレーム分なので、その分長く出す（実時間に合わせる）。
+  // 読み込みが 1 フレーム分より遅いときは、読み込めしだい出す（遅いぶんは追いつかない）。
+  useEffect(() => {
+    if (!playing || images.length <= 1) return
+    let alive = true
+    let timer = null
+    const frameMs = 1000 * Math.max(1, frameStep) / playFps
+    // 最後のフレームから再生したときは先頭からすぐ出す
+    let cur = index >= images.length - 1 ? -1 : index
+    let shownAt = performance.now() - (cur === -1 ? frameMs : 0)
+    const step = () => {
+      let next = cur + 1
+      if (next >= images.length) {
+        if (!loopRef.current) { stopPlay(); return }
+        next = 0
+      }
+      const path = images[next]
+      QueueApi.getImageBase64({ path })
+        .then(src => {
+          if (!alive) return
+          timer = setTimeout(() => {
+            if (!alive) return
+            setImgSrc(src); shownPathRef.current = path; setIndex(next)
+            cur = next; shownAt = performance.now()
+            step()
+          }, Math.max(0, shownAt + frameMs - performance.now()))
+        })
+        .catch(err => { if (alive) { showError(String(err)); stopPlay() } })
+    }
+    step()
+    return () => { alive = false; clearTimeout(timer) }
+    // index は再生を始めた位置としてだけ読む（再生中の setIndex で作り直さない）
+  }, [playing, images, playFps, frameStep])
 
   const handleTogglePlay = () => {
-    if (playing) { stopPlay(); return }
-    playingRef.current = true; setPlaying(true)
-    if (index >= images.length - 1) setIndex(0)
-    else if (!loadingImg) setIndex(prev => prev + 1)
+    if (images.length <= 1) return
+    setPlaying(p => !p)
   }
 
   const handleSetThumbnail = async () => {
@@ -446,7 +492,10 @@ function RenderResultTab({ job, role }) {
 
       <div className="dialog-actions" style={{ justifyContent: 'space-between', visibility: images.length > 0 || moviePath ? 'visible' : 'hidden', marginTop: 8 }}>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn btn-sm btn-ghost" onClick={handleTogglePlay} disabled={images.length <= 1}>
+          <button
+            className="btn btn-sm btn-ghost" onClick={handleTogglePlay} disabled={images.length <= 1}
+            title={`${Math.round(playFps * 100) / 100} fps`}
+          >
             {playing ? t('viewer.stop') : t('viewer.play')}
           </button>
           <button

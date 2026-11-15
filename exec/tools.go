@@ -156,6 +156,7 @@ type SceneTool struct {
 	Engine  string
 	Output  string
 	Samples map[string]int
+	FPS     float64 // fps / fps_base。0 = 不明（古いスクリプトの出力など）
 }
 
 type CameraTool struct {
@@ -325,6 +326,12 @@ func parseScene(line string) *SceneTool {
 	s.Y = v
 
 	s.Engine = csv[7]
+
+	if len(csv) >= 9 {
+		if f, err := strconv.ParseFloat(csv[8], 64); err == nil && f > 0 {
+			s.FPS = f
+		}
+	}
 
 	return s
 }
