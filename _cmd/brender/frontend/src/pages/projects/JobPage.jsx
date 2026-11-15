@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useLayoutEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Dialogs } from '@wailsio/runtime'
+import { saveFile } from '../../lib/dialogs'
 import { QueueApi, ProjectApi, WorkspaceApi, EnvironmentApi, CodesApi } from '../../lib/api'
 import { onAppEvent } from '../../lib/appEvents'
 import { useToast, useMessage } from '../../lib/toast'
@@ -628,13 +628,14 @@ function DataViewTab({ job, role }) {
   }
 
   const handleDownloadAll = async () => {
-    const savePath = await Dialogs.SaveFile({
-      DefaultFilename: job.id + '.zip',
-      Filters: [{ DisplayName: 'ZIP Archive', Pattern: '*.zip' }],
-    })
-    if (!savePath) return
-    setDownloading(true); showError('')
+    showError('')
     try {
+      const savePath = await saveFile({
+        DefaultFilename: job.id + '.zip',
+        Filters: [{ DisplayName: 'ZIP Archive', Pattern: '*.zip' }],
+      })
+      if (!savePath) return
+      setDownloading(true)
       await QueueApi.zipJobData({ id: job.id, savePath })
     } catch (err) {
       showError(String(err))
@@ -681,13 +682,14 @@ function DataViewTab({ job, role }) {
       }
       return
     }
-    const savePath = await Dialogs.SaveFile({
-      DefaultFilename: job.id + '_selected.zip',
-      Filters: [{ DisplayName: 'ZIP Archive', Pattern: '*.zip' }],
-    })
-    if (!savePath) return
-    setDownloading(true); showError('')
+    showError('')
     try {
+      const savePath = await saveFile({
+        DefaultFilename: job.id + '_selected.zip',
+        Filters: [{ DisplayName: 'ZIP Archive', Pattern: '*.zip' }],
+      })
+      if (!savePath) return
+      setDownloading(true)
       await QueueApi.zipJobSelectedFiles({ id: job.id, filePaths: [...selected], savePath })
     } catch (err) {
       showError(String(err))

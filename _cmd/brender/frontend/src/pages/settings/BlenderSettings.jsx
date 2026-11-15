@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Dialogs } from '@wailsio/runtime'
+import { openFile } from '../../lib/dialogs'
 import { BlenderApi, EnvironmentApi, CodesApi } from '../../lib/api'
 import { useToast } from '../../lib/toast'
 import ConfirmDialog from '../../components/ConfirmDialog'
@@ -66,7 +66,7 @@ function BlenderSettings({ navigate }) {
       ? [{ DisplayName: 'Blender Executable', Pattern: '*.exe' }]
       : []
     try {
-      const result = await Dialogs.OpenFile({ Filters: filters })
+      const result = await openFile({ Filters: filters })
       if (!result) return
       setLoading(true)
       await BlenderApi.register({ path: result })

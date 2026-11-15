@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Dialogs } from '@wailsio/runtime'
+import { openDirectory } from '../../lib/dialogs'
 import { WorkDirApi, ProjectApi, BlenderApi } from '../../lib/api'
 import { onAppEvent } from '../../lib/appEvents'
 import Dialog from '../../components/Dialog'
@@ -72,7 +72,7 @@ function EditDialog({ wd, onClose, onSaved }) {
 
   const handleBrowse = async () => {
     try {
-      const dir = await Dialogs.OpenFile({ CanChooseDirectories: true, CanChooseFiles: false })
+      const dir = await openDirectory()
       if (dir) setPath(dir)
     } catch (err) {
       setError(String(err))
@@ -357,7 +357,7 @@ function EnvironmentSettings() {
   const handleAdd = async () => {
     showError('')
     try {
-      const dir = await Dialogs.OpenFile({ CanChooseDirectories: true, CanChooseFiles: false })
+      const dir = await openDirectory()
       if (!dir) return
       await WorkDirApi.create({ path: dir, priority: dirs.length })
       load()

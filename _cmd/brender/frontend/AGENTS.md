@@ -174,6 +174,14 @@ return off  // useEffect cleanup
   - `queue:changed` (data: number — アクティブキュー件数)
   - `workdir:migrate` (data: `{ project_id, status, pct }` — 移行進捗。status: `running`/`done`/`error`)
 
+## ファイルダイアログ (`src/lib/dialogs.js`)
+
+OS のファイル・フォルダ選択と保存先の選択は `openFile(options)` / `openDirectory(options)` / `saveFile(options)` を通す。**`@wailsio/runtime` の `Dialogs.OpenFile` / `SaveFile` をページから直接呼ばない。**
+
+- 取り消しはどの OS でも `''` が返る。呼ぶ側は `if (!path) return` だけにし、`catch` に来るのは本当の失敗だけ（`showError` に出してよい）
+- Windows だけ、Wails（v3.0.0）は取り消しを reject で返す（`cancelled by user`）。直接呼ぶと取り消しただけで画面にこの文言が出るので、ラッパで空文字に揃えている
+- Wails を上げたら、Windows で一度ダイアログを取り消して文言が出ないか確かめる（文言が変わるとラッパが見分けられなくなる）
+
 ## 共通ダイアログ (`src/components/Dialog.jsx`, `ConfirmDialog.jsx`)
 
 モーダルは共通コンポーネント経由で作る。`.dialog-overlay`+`.dialog` を各ページに直接書かない。

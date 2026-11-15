@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Dialogs } from '@wailsio/runtime'
+import { openFile } from '../../../lib/dialogs'
 import { WorkspaceApi, ProjectApi, BlenderApi, FavoriteApi } from '../../../lib/api'
 import { useThumbnail } from '../../../lib/useThumbnail'
 import { useToast, useMessage } from '../../../lib/toast'
@@ -144,7 +144,7 @@ function WorkspaceTab({ projectID, navigate, projectName, role, onCountChange })
     showError('')
     if (isWails()) {
       try {
-        const path = await Dialogs.OpenFile({
+        const path = await openFile({
           Filters: [{ DisplayName: 'Blender File', Pattern: '*.blend' }],
         })
         if (!path) return

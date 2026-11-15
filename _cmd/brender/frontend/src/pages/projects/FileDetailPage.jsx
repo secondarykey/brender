@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Dialogs } from '@wailsio/runtime'
+import { openFile } from '../../lib/dialogs'
 import { WorkspaceApi, QueueApi, ProjectApi, BlenderApi, WorkDirApi, TagApi, FavoriteApi } from '../../lib/api'
 import { useToast, useMessage } from '../../lib/toast'
 import { onAppEvent } from '../../lib/appEvents'
@@ -385,7 +385,7 @@ function ThumbnailPanel({ projectID, fileID }) {
   const handleClick = async () => {
     if (uploading) return
     try {
-      const path = await Dialogs.OpenFile({ Filters: IMAGE_FILTER })
+      const path = await openFile({ Filters: IMAGE_FILTER })
       if (!path) return
       setUploading(true)
       const data = await ProjectApi.setFileThumbnail({ projectID, fileID, imagePath: path })
