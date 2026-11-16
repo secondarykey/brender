@@ -17,12 +17,23 @@ type sseEvent struct {
 type SSEBroker struct {
 	mu      sync.RWMutex
 	clients map[chan sseEvent]struct{}
+
+	// done は Close で閉じる。SSE の接続はクライアントが切るまで終わらないので、
+	// これが無いと http.Server.Shutdown がタイムアウトまで待つ
+	done      chan struct{}
+	closeOnce sync.Once
 }
 
 func NewSSEBroker() *SSEBroker {
 	return &SSEBroker{
 		clients: make(map[chan sseEvent]struct{}),
+		done:    make(chan struct{}),
 	}
+}
+
+// Close は配信中の SSE の接続を全部終わらせる。何度呼んでもよい。
+func (b *SSEBroker) Close() {
+	b.closeOnce.Do(func() { close(b.done) })
 }
 
 func (b *SSEBroker) Emit(name string, data any) {
@@ -65,6 +76,8 @@ func (b *SSEBroker) Handler() http.HandlerFunc {
 		for {
 			select {
 			case <-ctx.Done():
+				return
+			case <-b.done:
 				return
 			case ev := <-ch:
 				data, err := json.Marshal(ev)

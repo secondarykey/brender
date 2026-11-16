@@ -194,6 +194,9 @@ func run() error {
 			ApplicationShouldTerminateAfterLastWindowClosed: true,
 		},
 		Transport: transport,
+		// 後始末はウィンドウのフックではなくここに置く。メインのウィンドウを閉じたときだけでなく、
+		// macOS の Cmd+Q・OS のシャットダウン・シグナルなど、どの終わり方でも Wails が呼ぶ
+		OnShutdown: func() { shutdown(restServer) },
 	})
 
 	dev := app.Env.Info().Debug
@@ -219,11 +222,8 @@ func run() error {
 		BackgroundColour: application.NewRGB(26, 26, 26),
 		URL:              "/",
 	})
-	// メインウィンドウが閉じられたらアプリ全体を終了する（ログウィンドウも閉じる）
+	// メインウィンドウが閉じられたらアプリ全体を終了する（ログウィンドウも閉じる）。後始末は OnShutdown の shutdown
 	mainWin.RegisterHook(events.Common.WindowClosing, func(_ *application.WindowEvent) {
-		api.StopSystemMonitor()
-		api.KillRunningQueues()
-		model.Close()
 		application.Get().Quit()
 	})
 
@@ -299,12 +299,24 @@ func run() error {
 	if err := app.Run(); err != nil {
 		return xerrors.Errorf("app.Run() error: %w", err)
 	}
+	return nil
+}
 
+// shutdown は終わるときの後始末（application.Options.OnShutdown から呼ぶ）。
+// 外からの呼び出しを止めてから、レンダリングを止め、最後に DB を閉じる
+// （先に DB を閉じると、まだ受け付けているブラウザからの呼び出しが DB を使えずに失敗する）。
+func shutdown(restServer *rest.Server) {
+	log.Notice("= Brender shutdown")
 	if restServer != nil {
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
-		restServer.Shutdown(ctx)
+		if err := restServer.Shutdown(ctx); err != nil {
+			log.Warnf("shutdown: server: %v", err)
+		}
 	}
-
-	return nil
+	api.StopSystemMonitor()
+	api.KillRunningQueues()
+	if err := model.Close(); err != nil {
+		log.Warnf("shutdown: model.Close: %v", err)
+	}
 }

@@ -112,7 +112,7 @@ export const isWails = () => Boolean(window._wails) && !window.__brender_server_
 3. `frontend/dist` を作ってから `go build -tags production` し、`USERPROFILE=<仮のホーム>` で起動する（デスクトップにウィンドウも出る）。起動ログに `= Server mode: on, listening on ...` が出る
 4. curl で `POST /api/auth/login`（Cookie を保存）→ `POST /wails/runtime` に `{"object":0,"method":0,"args":{"call-id":"x","methodID":<ID>,"args":[...]}}`。`methodID` は生成されたバインディング（`frontend/bindings/main/services/*.js` の `$Call.ByID(<ID>, ...)`）から取る
 5. 確かめること: 未ログインは 401、creator の admin 操作は `access denied`、ウィンドウを開くメソッドは `not available from browser`、`{"object":2,"method":2}`（Quit）と `{"object":3,...}`（Emit）は 403。ブラウザで画面を開き、`/wails/runtime` が 200・SSE が届く・コンソールにエラーが無いこと
-6. 終わったら `taskkill /IM <exe>`（`/F` なしで WindowClosing フックを通す）
+6. 終わったら `taskkill /IM <exe>`（`/F` なしで終わらせる。`/F` だと後始末の `shutdown`（`main.go`、`application.Options.OnShutdown`）が走らない。走るとログに `= Brender shutdown` が出る）
 
 ## サーバモードで考慮すべきことチェックリスト
 

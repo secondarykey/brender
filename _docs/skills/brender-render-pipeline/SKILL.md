@@ -68,7 +68,7 @@ Queue/Job のステータス一覧・データモデルはルートの `AGENTS.m
 **実行中キューの強制終了は2種類あり、`shuttingDown` を立てるのは終了時だけ**:
 | 関数 | 呼び出し元 | `shuttingDown` | kill されたジョブの後始末 |
 |---|---|---|---|
-| `KillRunningQueues()` | アプリ終了時（`main.go` の `WindowClosing` フック） | 立てる | `finishJob` がスキップ → Queue が残り、次回起動時に `interrupted` + 再実行 |
+| `KillRunningQueues()` | アプリ終了時（`main.go` の `shutdown`。`application.Options.OnShutdown` から、どの終わり方でも呼ばれる） | 立てる | `finishJob` がスキップ → Queue が残り、次回起動時に `interrupted` + 再実行 |
 | `KillRunningQueuesByUser(ctx)` | 利用者の操作（サービス `Queue.KillRunning`。ブラウザからも同じメソッド、admin 限定） | 立てない | 実行 goroutine の `finishJob` が `cancelled`（`JobDataCorrupted`、エラー文なし。`CancelQueue` と同じ扱い）で閉じ、Queue 削除・次の待機キュー起動まで通常どおり |
 
 kill 部分は内部関数 `killRunningQueues()` に共通化している。利用者の強制終了では kill したキュー ID を `userKilledQueues`（`sync.Map`）に kill より先に記録し、`finishJob` がそれを見て `error` ではなく `cancelled` にする（kill できなかったキューは記録を外し、ジョブはそのまま走り続ける）。利用者の操作から `KillRunningQueues()` を呼ぶと `shuttingDown` が立ったままになり、再起動まで全ジョブの完了記録と次キューの起動が止まるので呼ばないこと。
