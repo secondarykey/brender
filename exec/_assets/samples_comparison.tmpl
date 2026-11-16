@@ -1,13 +1,13 @@
 import bpy
 import time
 
-scene = bpy.data.scenes["{{ .Scene }}"]
+scene = bpy.data.scenes[{{ py .Scene }}]
 sample_list = [{{ .SamplesList }}]
 frame_number = {{ .Frame }}
 scene.frame_set(frame_number)
 
 {{ if .Camera }}
-target_cam = bpy.data.objects.get("{{ .Camera }}")
+target_cam = bpy.data.objects.get({{ py .Camera }})
 if target_cam:
     scene.camera = target_cam
 {{ end }}
@@ -18,11 +18,11 @@ scene.render.resolution_y = {{ .ResolutionY }}
 {{ end }}
 
 {{ if .Engine }}
-scene.render.engine = '{{ .Engine }}'
+scene.render.engine = {{ py .Engine }}
 {{ end }}
 
 {{ if .Format }}
-scene.render.image_settings.file_format = '{{ .Format }}'
+scene.render.image_settings.file_format = {{ py .Format }}
 {{ end }}
 
 for s in sample_list:
@@ -34,7 +34,7 @@ for s in sample_list:
 {{ else if .IsWorkbench }}
     scene.display.render_aa = str(s)
 {{ end }}
-    scene.render.filepath = "{{ .OutputDir }}/frame_samples" + str(s).zfill(8)
+    scene.render.filepath = {{ py .OutputDir }} + "/frame_samples" + str(s).zfill(8)
     start = time.time()
     bpy.ops.render.render(write_still=True)
     elapsed = time.time() - start

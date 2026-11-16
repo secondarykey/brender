@@ -463,10 +463,14 @@ func resolveRenderBase(projectID, projectFileID string, reqBlenderID uint, reqSc
 
 // PreviewRender はToolを実行してレンダリングパラメータを解決・検証する。
 // シーン名が存在しない場合などはここでエラーを返す。
-func PreviewRender(projectID, workspaceID string) (*RenderPreview, error) {
+// レンダリングの前の確認なので runner 以上だけ（Blender でファイルを解析する）。
+func PreviewRender(ctx context.Context, projectID, workspaceID string) (*RenderPreview, error) {
 	w, err := model.SelectWorkspace(projectID, workspaceID)
 	if err != nil || w == nil {
 		return nil, xerrors.Errorf("workspace not found: %w", err)
+	}
+	if err := requireFileRole(ctx, w.ProjectFileID, rolesRunnerUp...); err != nil {
+		return nil, err
 	}
 	p, err := model.SelectProject(projectID)
 	if err != nil || p == nil {
@@ -611,7 +615,7 @@ func TestEnqueue(ctx context.Context, projectID, workspaceID string, params Test
 		JobType:       model.JobTypeTest,
 	}
 
-	return EnqueueWithPreview(ctx, projectID, workspaceID, preview)
+	return enqueuePreview(ctx, projectID, workspaceID, preview)
 }
 
 // jobName はジョブ名の頭「ファイル名 ワークスペース名」を返す。
@@ -624,13 +628,54 @@ func jobName(projectFileID, workspaceName string) string {
 	return workspaceName
 }
 
-// EnqueueWithPreview は解決済みの RenderPreview を使ってジョブを作成・実行する。
-func EnqueueWithPreview(ctx context.Context, projectID, workspaceID string, preview *RenderPreview) (*model.Queue, error) {
+// ErrPreviewChanged は確認ダイアログで見せたあとにレンダリングの設定が変わったことを表す。
+var ErrPreviewChanged = xerrors.New("確認のあとでレンダリングの設定が変わりました。もう一度確認してください")
+
+// EnqueueWithPreview は確認ダイアログで見せた RenderPreview（PreviewRender の結果）でジョブを作る。
+// confirmed は画面から戻ってくる値なので信用しない。サーバで解決し直し、確認した内容と違えば断る。
+// Blender の実行ファイルや .blend のパスを差し替えて、サーバで任意のプログラムを動かされないため。
+// 確認のあとでワークスペースが変わった場合も、確認していない内容では動かさない。
+func EnqueueWithPreview(ctx context.Context, projectID, workspaceID string, confirmed *RenderPreview) (*model.Queue, error) {
+	if confirmed == nil {
+		return nil, xerrors.New("EnqueueWithPreview: preview is required")
+	}
+	fresh, err := PreviewRender(ctx, projectID, workspaceID)
+	if err != nil {
+		return nil, err
+	}
+	if !sameRenderSettings(confirmed, fresh) {
+		return nil, ErrPreviewChanged
+	}
+	return enqueuePreview(ctx, projectID, workspaceID, fresh)
+}
+
+// sameRenderSettings はジョブに使う値（Job に入る値）が同じかを返す。
+// 名前や前回の情報など、表示のためだけの値は比べない。
+func sameRenderSettings(a, b *RenderPreview) bool {
+	return a.ProjectFileID == b.ProjectFileID &&
+		a.BlenderPath == b.BlenderPath &&
+		a.BlenderFile == b.BlenderFile &&
+		a.Scene == b.Scene &&
+		a.Engine == b.Engine &&
+		a.StartFrame == b.StartFrame &&
+		a.EndFrame == b.EndFrame &&
+		a.FrameStep == b.FrameStep &&
+		a.Thread == b.Thread &&
+		a.Samples == b.Samples &&
+		a.ResolutionX == b.ResolutionX &&
+		a.ResolutionY == b.ResolutionY &&
+		a.Camera == b.Camera &&
+		a.OutputFormat == b.OutputFormat &&
+		a.FPS == b.FPS &&
+		a.JobType == b.JobType
+}
+
+// enqueuePreview はサーバで解決した RenderPreview でジョブを作成・実行する。
+// preview は PreviewRender・TestEnqueue が作ったものだけを渡す（画面から来た値を渡さない）。
+func enqueuePreview(ctx context.Context, projectID, workspaceID string, preview *RenderPreview) (*model.Queue, error) {
 	// runner 以上の権限が必要
-	if preview != nil {
-		if err := requireFileRole(ctx, preview.ProjectFileID, rolesRunnerUp...); err != nil {
-			return nil, err
-		}
+	if err := requireFileRole(ctx, preview.ProjectFileID, rolesRunnerUp...); err != nil {
+		return nil, err
 	}
 
 	baseDir, err := GetProjectBaseDir(projectID)
@@ -743,13 +788,13 @@ func EnqueueWithPreview(ctx context.Context, projectID, workspaceID string, prev
 	return q, nil
 }
 
-// Enqueue は PreviewRender + EnqueueWithPreview のショートカット（後方互換用）
+// Enqueue は PreviewRender + 投入のショートカット（確認ダイアログなし）
 func Enqueue(ctx context.Context, projectID string, workspaceID string) (*model.Queue, error) {
-	preview, err := PreviewRender(projectID, workspaceID)
+	preview, err := PreviewRender(ctx, projectID, workspaceID)
 	if err != nil {
 		return nil, err
 	}
-	return EnqueueWithPreview(ctx, projectID, workspaceID, preview)
+	return enqueuePreview(ctx, projectID, workspaceID, preview)
 }
 
 // SamplesComparisonEnqueue はサンプル比較ジョブをキューに投入する。
@@ -759,17 +804,8 @@ func SamplesComparisonEnqueue(ctx context.Context, projectID, workspaceID string
 		return nil, xerrors.New("サンプル数リストが空です")
 	}
 
-	// runner 以上の権限が必要
-	if !fullAccess(ctx) {
-		w, wErr := model.SelectWorkspace(projectID, workspaceID)
-		if wErr == nil && w != nil {
-			if err := requireFileRole(ctx, w.ProjectFileID, rolesRunnerUp...); err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	preview, err := PreviewRender(projectID, workspaceID)
+	// runner 以上の権限が必要（PreviewRender が確かめる）
+	preview, err := PreviewRender(ctx, projectID, workspaceID)
 	if err != nil {
 		return nil, err
 	}
@@ -1345,14 +1381,6 @@ func ListQueueItems(ctx context.Context) ([]*QueueItem, error) {
 	return items, nil
 }
 
-func ListQueuesByWorkspace(projectID string, workspaceID string) ([]*model.Queue, error) {
-	return model.ListQueuesByWorkspace(projectID, workspaceID)
-}
-
-func GetQueue(id string) (*model.Queue, error) {
-	return model.GetQueue(id)
-}
-
 func CancelQueue(ctx context.Context, id string) error {
 	q, err := model.GetQueue(id)
 	if err != nil {
@@ -1402,10 +1430,6 @@ func CancelQueue(ctx context.Context, id string) error {
 	}
 	notifyQueueChanged()
 	return nil
-}
-
-func ListJobs() ([]*model.Job, error) {
-	return model.ListJobs()
 }
 
 func ListJobsPaged(ctx context.Context, filter *model.JobFilter, page, pageSize int) (*model.JobListResult, error) {
@@ -1669,7 +1693,7 @@ func ListJobFiles(ctx context.Context, id string) ([]*JobFileInfo, error) {
 // GetImageBase64 は指定パスの画像を base64 データ URI として返す。
 // 任意ファイル読み取りを防ぐため、パスは登録済み作業ディレクトリ配下に限定する。
 func GetImageBase64(ctx context.Context, path string) (string, error) {
-	if err := validateWorkDirPath(path); err != nil {
+	if err := requireWorkDirFileAccess(ctx, path); err != nil {
 		return "", err
 	}
 	data, err := os.ReadFile(path)
@@ -1926,7 +1950,11 @@ func resolveBlenderFormat(formatCode string) string {
 }
 
 // GetCleanableJobStats はフィルタ条件に合致するクリーンアップ対象のジョブ統計を返す。
-func GetCleanableJobStats(filter *model.CleanFilter) (*model.CleanableJobStats, error) {
+// GetCleanableJobStats はクリーンアップ対象のジョブの集計を返す。プロジェクト横断なので admin 限定（CleanJobData と同じ）。
+func GetCleanableJobStats(ctx context.Context, filter *model.CleanFilter) (*model.CleanableJobStats, error) {
+	if err := requireAdmin(ctx); err != nil {
+		return nil, err
+	}
 	return model.GetCleanableJobStats(filter)
 }
 
@@ -1952,7 +1980,11 @@ func CleanJobData(ctx context.Context, filter *model.CleanFilter) (int, error) {
 }
 
 // MeasureFilteredDiskSize はフィルタ条件に合致するジョブの OutputDir を実測して合計バイト数を返す。
-func MeasureFilteredDiskSize(filter *model.CleanFilter) (int64, error) {
+// プロジェクト横断なので admin 限定（CleanJobData と同じ）。
+func MeasureFilteredDiskSize(ctx context.Context, filter *model.CleanFilter) (int64, error) {
+	if err := requireAdmin(ctx); err != nil {
+		return 0, err
+	}
 	jobs, err := model.ListCleanableJobs(filter)
 	if err != nil {
 		return 0, xerrors.Errorf("MeasureFilteredDiskSize: %w", err)

@@ -167,26 +167,26 @@ func requireFileRole(ctx context.Context, fileID string, roles ...string) error 
 // ErrPathOutsideWorkDir はパスが作業ディレクトリ外を指しているエラー。
 var ErrPathOutsideWorkDir = xerrors.New("path is outside the work directories")
 
-// ValidateWorkDirPath は validateWorkDirPath の公開ラッパー。
+// RequireWorkDirFileAccess は requireWorkDirFileAccess の公開ラッパー。
 // サーバモードの /_movie など、生パスを配信するハンドラで使う。
-func ValidateWorkDirPath(path string) error {
-	return validateWorkDirPath(path)
+func RequireWorkDirFileAccess(ctx context.Context, path string) error {
+	return requireWorkDirFileAccess(ctx, path)
 }
 
-// validateWorkDirPath は path が登録済み作業ディレクトリのいずれかの配下にあることを検証する。
-// 生パスを受け取る API（画像プレビュー等）の任意ファイルアクセスを防ぐ。
-func validateWorkDirPath(path string) error {
+// workDirRel は path を、それを含む作業ディレクトリからの相対パスにして返す。
+// どの作業ディレクトリの配下でもなければ ErrPathOutsideWorkDir。作業ディレクトリ自身は ".".
+func workDirRel(path string) (string, error) {
 	if path == "" {
-		return ErrPathOutsideWorkDir
+		return "", ErrPathOutsideWorkDir
 	}
 	abs, err := filepath.Abs(path)
 	if err != nil {
-		return xerrors.Errorf("validateWorkDirPath: %w", err)
+		return "", xerrors.Errorf("workDirRel: %w", err)
 	}
 	abs = filepath.Clean(abs)
 	dirs, err := model.ListWorkDirs()
 	if err != nil {
-		return xerrors.Errorf("validateWorkDirPath: %w", err)
+		return "", xerrors.Errorf("workDirRel: %w", err)
 	}
 	for _, wd := range dirs {
 		base, err := filepath.Abs(wd.Path)
@@ -200,10 +200,77 @@ func validateWorkDirPath(path string) error {
 		}
 		// base 自身、または base 配下（".." で始まらない）なら許可
 		if rel == "." || (!strings.HasPrefix(rel, ".."+string(filepath.Separator)) && rel != "..") {
-			return nil
+			return rel, nil
 		}
 	}
-	return ErrPathOutsideWorkDir
+	return "", ErrPathOutsideWorkDir
+}
+
+// requireWorkDirFileAccess は作業ディレクトリの中のファイルを読む権限を確かめる。
+// 作業ディレクトリの外なら ErrPathOutsideWorkDir。中なら置き場所
+// （{workDir}/{projectID}/{fileID}/...、または {workDir}/{projectID}/thumbnail.jpg）から
+// どのファイル・プロジェクトのものかを決め、その参照権限を求める。
+// 置き場所の分からない（プロジェクトの外の）ファイルは owner だけが読める。
+func requireWorkDirFileAccess(ctx context.Context, path string) error {
+	rel, err := workDirRel(path)
+	if err != nil {
+		return err
+	}
+	if fullAccess(ctx) {
+		return nil
+	}
+	parts := strings.Split(rel, string(filepath.Separator))
+	switch {
+	case len(parts) >= 3:
+		return requireFileInProjectAccess(ctx, parts[0], parts[1])
+	case len(parts) == 2:
+		return requireProjectAccess(ctx, parts[0])
+	default:
+		return ErrAccessDenied
+	}
+}
+
+// requireImageSource はサムネイルの元にする画像のパスを読んでよいかを確かめる。
+// ウィンドウからは利用者がファイルのダイアログで選んだ手元の画像なので、どこでもよい。
+// ブラウザからのパスはサーバの上のパスなので、作業ディレクトリの中の読める画像だけにする
+// （サーバの任意の画像を JPEG にして受け取られないように）。
+func requireImageSource(ctx context.Context, path string) error {
+	if !FromBrowser(ctx) {
+		return nil
+	}
+	return requireWorkDirFileAccess(ctx, path)
+}
+
+// requireFileInProjectAccess は fileID がプロジェクト projectID のファイルであることと、その参照権限を求める。
+func requireFileInProjectAccess(ctx context.Context, projectID, fileID string) error {
+	if err := checkResourceIDs(projectID, fileID, ""); err != nil {
+		return err
+	}
+	return requireFileAccess(ctx, fileID)
+}
+
+// checkResourceIDs は別々に受け取った ID の組が正しいか（fileID がプロジェクト projectID のもの、
+// workspaceID がファイル fileID のもの）を確かめる。空の ID は確かめない。
+// 権限はファイル単位で見るため、権限のあるファイルの ID に別のファイルのワークスペースや
+// 別のプロジェクトを組み合わせて、見えないはずのものに届かないようにする。
+// ID はパスにもなるので、DB に無い ID（"../.." など）もここで断る。
+func checkResourceIDs(projectID, fileID, workspaceID string) error {
+	if fileID != "" {
+		f, err := model.GetProjectFile(fileID)
+		if err != nil {
+			return xerrors.Errorf("checkResourceIDs: %w", err)
+		}
+		if f == nil || f.ProjectID != projectID {
+			return ErrAccessDenied
+		}
+	}
+	if workspaceID != "" {
+		w, err := model.SelectWorkspace(projectID, workspaceID)
+		if err != nil || w == nil || (fileID != "" && w.ProjectFileID != fileID) {
+			return ErrAccessDenied
+		}
+	}
+	return nil
 }
 
 // SystemContext はシステムが自分で行う処理（サムネイルの自動生成など）の操作コンテキストを返す。

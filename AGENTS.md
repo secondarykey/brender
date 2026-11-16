@@ -184,7 +184,7 @@ CI が使う wails3 CLI のバージョンは `.github/variables` の `WAILS_VER
 
 詳細（実行フロー・パース仕様・ETA 計算・進捗バー計算式・リカバリ手順）は Skill `brender-render-pipeline` を参照。
 
-- **非同期レンダリング** (`api/queue.go`): `Enqueue()` → `PreviewRender()` → `EnqueueWithPreview()`。Blender/シーン/エンジン/カメラのフォールバック解決は `resolveRenderBase()` に集約（優先順位を変える場合はここ一箇所を直す）。`MaxConcurrentJobs`（デフォルト 1）で同時実行制御、`scheduleMu` でレース防止。同一ワークスペースの重複投入は禁止で、重複チェック〜`CreateQueue` は `enqueueMu` で直列化。
+- **非同期レンダリング** (`api/queue.go`): `Enqueue()` → `PreviewRender()` → `enqueuePreview()`（画面の確認からの `EnqueueWithPreview(preview)` は preview を信用せずサーバで解決し直して比べる）。Blender/シーン/エンジン/カメラのフォールバック解決は `resolveRenderBase()` に集約（優先順位を変える場合はここ一箇所を直す）。`MaxConcurrentJobs`（デフォルト 1）で同時実行制御、`scheduleMu` でレース防止。同一ワークスペースの重複投入は禁止で、重複チェック〜`CreateQueue` は `enqueueMu` で直列化。
 - **起動時キューリカバリ**: クラッシュ後に残った `running` Queue を `RecoverStaleQueues()` が検出。旧 Job を `interrupted` で閉じ、新 Job+Queue（`recovering`）を作成して `StartRecoveredQueues()` で再実行する。孤立プロセスの kill は `killQueueProcess()` が実行ファイルを検証してから行う（PID 再利用による誤殺防止）。
 - **イベント配信フック**: `api` 層は `var XxxHook func(...)` の関数変数でイベントを公開（`QueueChangedHook` / `BlenderWarningHook` / `MigrationHook` / `MovieCreatedHook` / `WorkDirChangeDirHook` / `SystemStatsHook`）。`main.go` は単一の `emit(name, data)` クロージャにまとめて Wails Event と SSE broker の両方へ配る。**新しいイベントも必ず `emit` を経由させる**（フックごとに SSE ラップを書くと漏れる）。
 - **Job deletion**: `DeleteJob(id)` は `OutputDir` を `os.RemoveAll` してから DB レコードを削除する。
@@ -232,7 +232,7 @@ db_path = D:\brender\brender.db
     run_*.py             ← レンダリング実行（毎回生成）
     samples_*.py         ← サンプル比較（毎回生成）
 ```
-スクリプトは生成のみで削除しない（クリーンアップ方針）。常駐するサーバモードでの無制限な蓄積を防ぐため、起動時に `api.ClearScripts()`（→ `exec.ClearScripts()`）が `scripts/` を一掃する。生成は `exec.createScript(tmplName, pattern, dto)` に集約。
+スクリプトは生成のみで削除しない（クリーンアップ方針）。常駐するサーバモードでの無制限な蓄積を防ぐため、起動時に `api.ClearScripts()`（→ `exec.ClearScripts()`）が `scripts/` を一掃する。生成は `exec.createScript(tmplName, pattern, dto)` に集約。テンプレートに文字列を埋めるときは `{{ py .X }}`（Python の文字列リテラルにする。シーン名・カメラ名でコードを差し込まれないように）。
 
 ### Scene / engine discovery
 - `BlenderApi.getScenes({ installID, fileID })` — runs `exec.RunTool()` (Python `--tool` script) on the `.blend` file to extract scene names.

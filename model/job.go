@@ -122,17 +122,6 @@ func GetJobsByIDs(ids []string) (map[string]*Job, error) {
 	return result, nil
 }
 
-func ListJobs() ([]*Job, error) {
-	var list []*Job
-	res := db.Select("jobs.*, project_files.name AS file_name").
-		Joins("LEFT JOIN project_files ON project_files.id = jobs.project_file_id").
-		Order("jobs.enqueued_at desc").Find(&list)
-	if res.Error != nil {
-		return nil, xerrors.Errorf("ListJobs: %w", res.Error)
-	}
-	return list, nil
-}
-
 type JobFilter struct {
 	DataStatuses []int  `json:"data_statuses"`
 	Days         int    `json:"days"`

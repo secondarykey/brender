@@ -42,7 +42,7 @@ func (s *Project) GetFile(ctx context.Context, fileID string) (*model.ProjectFil
 }
 
 func (s *Project) ListAllFiles(ctx context.Context) ([]*model.ProjectFile, error) {
-	return api.ListAllProjectFiles()
+	return api.ListAllProjectFiles(ctx)
 }
 
 func (s *Project) AddFile(ctx context.Context, projectID, path string) (*model.ProjectFile, error) {
@@ -51,10 +51,6 @@ func (s *Project) AddFile(ctx context.Context, projectID, path string) (*model.P
 
 func (s *Project) AddFilesFromDir(ctx context.Context, projectID, dir string) (*api.AddDirResult, error) {
 	return api.AddFilesFromDirectory(ctx, projectID, dir)
-}
-
-func (s *Project) RemoveFile(ctx context.Context, fileID string) error {
-	return api.RemoveProjectFile(fileID)
 }
 
 func (s *Project) DeleteFile(ctx context.Context, fileID string, force bool) error {
@@ -79,11 +75,11 @@ func (s *Project) GetProjectThumbnail(ctx context.Context, projectID string) (st
 }
 
 func (s *Project) SetProjectThumbnail(ctx context.Context, projectID string, imagePath string) (string, error) {
-	return api.SetProjectThumbnail(projectID, imagePath)
+	return api.SetProjectThumbnail(ctx, projectID, imagePath)
 }
 
 func (s *Project) SetFileThumbnail(ctx context.Context, projectID string, fileID string, imagePath string) (string, error) {
-	return api.SetFileThumbnail(projectID, fileID, imagePath)
+	return api.SetFileThumbnail(ctx, projectID, fileID, imagePath)
 }
 
 func (s *Project) SetFileThumbnailFromWorkspace(ctx context.Context, projectID string, fileID string, workspaceID string) (string, error) {
@@ -91,7 +87,7 @@ func (s *Project) SetFileThumbnailFromWorkspace(ctx context.Context, projectID s
 }
 
 func (s *Project) SetProjectThumbnailFromFile(ctx context.Context, projectID string, fileID string) (string, error) {
-	return api.SetProjectThumbnailFromFile(projectID, fileID)
+	return api.SetProjectThumbnailFromFile(ctx, projectID, fileID)
 }
 
 // ── Permission ────────────────────────────────────────────
@@ -105,11 +101,11 @@ func (s *Project) RemovePermission(ctx context.Context, projectID, targetID stri
 }
 
 func (s *Project) ListPermissions(ctx context.Context, projectID string) ([]*api.PermissionEntry, error) {
-	return api.ListProjectPermissions(projectID)
+	return api.ListProjectPermissions(ctx, projectID)
 }
 
 func (s *Project) GetUserRole(ctx context.Context, projectID, userID string) (string, error) {
-	return api.GetUserProjectRole(projectID, userID)
+	return api.GetUserProjectRole(ctx, projectID, userID)
 }
 
 // ── File Permission ───────────────────────────────────────
@@ -123,9 +119,9 @@ func (s *Project) RemoveFilePermission(ctx context.Context, fileID, targetID str
 }
 
 func (s *Project) ListFilePermissions(ctx context.Context, fileID string) ([]*api.PermissionEntry, error) {
-	return api.ListFilePermissions(fileID)
+	return api.ListFilePermissions(ctx, fileID)
 }
 
 func (s *Project) GetUserFileRole(ctx context.Context, fileID, userID string) (string, error) {
-	return api.GetUserFileRole(fileID, userID)
+	return api.GetUserFileRole(ctx, fileID, userID)
 }

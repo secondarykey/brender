@@ -21,7 +21,7 @@ func NewQueue() *Queue {
 }
 
 func (s *Queue) PreviewRender(ctx context.Context, projectID string, workspaceID string) (*api.RenderPreview, error) {
-	return api.PreviewRender(projectID, workspaceID)
+	return api.PreviewRender(ctx, projectID, workspaceID)
 }
 
 func (s *Queue) EnqueueWithPreview(ctx context.Context, projectID string, workspaceID string, preview *api.RenderPreview) (*model.Queue, error) {
@@ -40,6 +40,8 @@ func (s *Queue) SamplesComparisonEnqueue(ctx context.Context, projectID string, 
 	return api.SamplesComparisonEnqueue(ctx, projectID, workspaceID, sampleCounts, frame)
 }
 
+// List は全員に全部のキューを返す。キューは利用者みんなで分け合うもので、
+// ListItems（キューの画面）も権限で絞らずに全部見せている（取り消せるかは CanCancel で示す）。
 func (s *Queue) List(ctx context.Context) ([]*model.Queue, error) {
 	return api.ListQueues()
 }
@@ -48,24 +50,12 @@ func (s *Queue) ListItems(ctx context.Context) ([]*api.QueueItem, error) {
 	return api.ListQueueItems(ctx)
 }
 
-func (s *Queue) ListByWorkspace(ctx context.Context, projectID string, workspaceID string) ([]*model.Queue, error) {
-	return api.ListQueuesByWorkspace(projectID, workspaceID)
-}
-
-func (s *Queue) Get(ctx context.Context, id string) (*model.Queue, error) {
-	return api.GetQueue(id)
-}
-
 func (s *Queue) Cancel(ctx context.Context, id string) error {
 	return api.CancelQueue(ctx, id)
 }
 
 func (s *Queue) KillRunning(ctx context.Context) error {
 	return api.KillRunningQueuesByUser(ctx)
-}
-
-func (s *Queue) ListJobs(ctx context.Context) ([]*model.Job, error) {
-	return api.ListJobs()
 }
 
 func (s *Queue) ListJobsPaged(ctx context.Context, filter *model.JobFilter, page int, pageSize int) (*model.JobListResult, error) {
@@ -166,7 +156,7 @@ func (s *Queue) OpenMovieWindow(ctx context.Context, videoPath string) error {
 }
 
 func (s *Queue) GetCleanableJobStats(ctx context.Context, filter *model.CleanFilter) (*model.CleanableJobStats, error) {
-	return api.GetCleanableJobStats(filter)
+	return api.GetCleanableJobStats(ctx, filter)
 }
 
 func (s *Queue) CleanJobData(ctx context.Context, filter *model.CleanFilter) (int, error) {
@@ -174,7 +164,7 @@ func (s *Queue) CleanJobData(ctx context.Context, filter *model.CleanFilter) (in
 }
 
 func (s *Queue) MeasureFilteredDiskSize(ctx context.Context, filter *model.CleanFilter) (int64, error) {
-	return api.MeasureFilteredDiskSize(filter)
+	return api.MeasureFilteredDiskSize(ctx, filter)
 }
 
 func (s *Queue) OpenLogWindow(ctx context.Context, jobID string) error {

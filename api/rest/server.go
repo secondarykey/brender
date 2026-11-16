@@ -88,7 +88,7 @@ func NewServer(assets fs.FS, host string, port int) *Server {
 			http.Error(w, "invalid path", http.StatusBadRequest)
 			return
 		}
-		if err := api.ValidateWorkDirPath(p); err != nil {
+		if err := api.RequireWorkDirFileAccess(r.Context(), p); err != nil {
 			http.Error(w, "forbidden", http.StatusForbidden)
 			return
 		}

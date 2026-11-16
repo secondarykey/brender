@@ -66,7 +66,7 @@ Brender のベース機能（デスクトップ運用）に対し、サーバモ
 | `GET /events` | SSE（`broker.Handler()`） |
 | `POST /api/project/upload_file` | multipart アップロード（最大 512MB、`api.UploadProjectFile`）。進み具合を取るため REST のまま |
 | `GET /thumbnail` | サムネイル画像配信（`api.ServeThumbnailPath` が権限+パス解決、`http.ServeFile` が 304 処理） |
-| `GET /_movie` | ローカル動画配信（`api.ValidateWorkDirPath` で作業ディレクトリ配下に限定） |
+| `GET /_movie` | ローカル動画配信（`api.RequireWorkDirFileAccess` で作業ディレクトリ配下・見られるファイルに限定） |
 | `/`（その他） | SPA 配信（`frontend/dist`、実ファイルがなければ `index.html`） |
 
 **サーバモードフラグの注入**: SPA の `index.html` の `<head>` に `<script>window.__brender_server_mode=true</script>` を注入する。ビルド済み JS に `@wailsio/runtime` が含まれ `window._wails` がセットされてしまうため、フロントの判定は:
@@ -119,10 +119,11 @@ export const isWails = () => Boolean(window._wails) && !window.__brender_server_
 新機能を追加するとき、ベース機能に加えて以下を確認する:
 
 - [ ] **全メソッドがブラウザから呼べる**: サービスに足したメソッドは選別なしにブラウザへ出る。ウィンドウを開く操作は `api.FromBrowser(ctx)` で断ったか
-- [ ] **権限**: サービスは `ctx` を受けて api 層へ渡しているか。admin 操作は api の関数の中で `requireAdmin(ctx)` を通しているか（REST 側の守りは無い）。リソース権限は `require*` ヘルパーを通しているか（Skill `brender-access-control`）
+- [ ] **権限**: サービスは `ctx` を受けて api 層へ渡しているか（`services/ctx_test.go` が確かめる。渡さないなら理由を書いて許可リストへ）。admin 操作は api の関数の中で `requireAdmin(ctx)` を通しているか（REST 側の守りは無い）。リソース権限は `require*` ヘルパーを通しているか。ID を別々に受け取るなら `checkResourceIDs` で組を確かめたか（Skill `brender-access-control`）
+- [ ] **画面から戻ってくる値**: サーバで決めた値（パス・実行ファイルなど）を画面から受け取り直して使っていないか。使うならサーバで決め直して比べる（`EnqueueWithPreview` 方式）
 - [ ] **イベント**: 新イベントは `emit` 経由か（Wails のみに Emit すると SSE に届かない）
 - [ ] **ファイルパス**: ブラウザは OS のファイルダイアログ・ローカルパスを使えない。パス入力系 UI は `isWails()` で分岐し、ブラウザ側はアップロード（multipart）や登録済みディレクトリ選択にする
-- [ ] **生パスの検証**: ローカルパスを受け取る/配信する口は `ValidateWorkDirPath` で作業ディレクトリ配下に限定したか
+- [ ] **生パスの検証**: ローカルパスを受け取る/配信する口は `requireWorkDirFileAccess`（公開版 `RequireWorkDirFileAccess`）で作業ディレクトリ配下・見られるファイルに限定したか
 - [ ] **画像・大容量データ**: base64 で返すと 33% 肥大しキャッシュも効かない。サムネイルのように URL 配信 + `Last-Modified` を検討
 - [ ] **同時アクセス**: DB は WAL 設定済み（`model.Init`）だが、書き込み競合するフローは mutex（`enqueueMu` 方式）を検討
 - [ ] **常駐プロセス**: 無制限に増えるリソース（temp スクリプト等）は起動時クリーンアップに載せたか

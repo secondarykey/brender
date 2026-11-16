@@ -41,7 +41,9 @@ Queue/Job のステータス一覧・データモデルはルートの `AGENTS.m
 
 ## Async rendering flow (`api/queue.go`)
 
-`Enqueue()` → `PreviewRender()` でパラメータ解決 → `EnqueueWithPreview()` でジョブ作成・キュー投入。
+`Enqueue()` → `PreviewRender()` でパラメータ解決 → `enqueuePreview()` でジョブ作成・キュー投入。
+画面の確認ダイアログからは `PreviewRender()` → `EnqueueWithPreview(preview)`。`preview` は画面から戻ってくるので信用せず、サーバで `PreviewRender()` し直して確認した内容（`sameRenderSettings`）と違えば `ErrPreviewChanged` で断り、サーバで作った方で `enqueuePreview()` する（Skill `brender-access-control`）。
+スクリプトのテンプレート（`exec/_assets/*.tmpl`）へ文字列を埋めるときは `{{ py .X }}` を使う（シーン名・カメラ名で Python を差し込まれないように）。
 
 **パラメータ解決** (`resolveRenderBase` / `fileOverrides`):
 - Blender/シーン/エンジン/カメラの解決は「固定フラグ付きファイル指定 → 呼び出し側の指定（ワークスペース or テスト params）→ ファイル指定 → シーンのデフォルト」の優先順位。

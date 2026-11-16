@@ -24,6 +24,10 @@ import (
 // workspaceID != "" → ワークスペース、fileID != "" → ファイル、どちらも "" → プロジェクト。
 // 生成できない場合は ok=false。base64 版・URL 版・HTTP 配信で共用する。
 func thumbnailPath(projectID, fileID, workspaceID string) (string, bool) {
+	// 権限はファイル単位で見るので、ID の組が正しいことをここで確かめる（checkResourceIDs）
+	if checkResourceIDs(projectID, fileID, workspaceID) != nil {
+		return "", false
+	}
 	baseDir, err := GetProjectBaseDir(projectID)
 	if err != nil {
 		return "", false
@@ -267,7 +271,14 @@ func convertToJPEG(src, dstDir, dstPath string) error {
 }
 
 // SetProjectThumbnail は imagePath の画像を 640x360 JPEG に変換してプロジェクトサムネイルとして保存し、base64 データURIを返す。
-func SetProjectThumbnail(projectID, imagePath string) (string, error) {
+// プロジェクトの owner・editor だけ。
+func SetProjectThumbnail(ctx context.Context, projectID, imagePath string) (string, error) {
+	if err := requireProjectRole(ctx, projectID, model.RoleOwner, model.RoleEditor); err != nil {
+		return "", err
+	}
+	if err := requireImageSource(ctx, imagePath); err != nil {
+		return "", err
+	}
 	baseDir, err := GetProjectBaseDir(projectID)
 	if err != nil {
 		return "", xerrors.Errorf("SetProjectThumbnail: %w", err)
@@ -281,7 +292,17 @@ func SetProjectThumbnail(projectID, imagePath string) (string, error) {
 }
 
 // SetFileThumbnail は imagePath の画像を 640x360 JPEG に変換してファイルサムネイルとして保存し、base64 データURIを返す。
-func SetFileThumbnail(projectID, fileID, imagePath string) (string, error) {
+func SetFileThumbnail(ctx context.Context, projectID, fileID, imagePath string) (string, error) {
+	// editor 以上の権限が必要（サムネイル設定）
+	if err := requireFileRole(ctx, fileID, rolesEditorUp...); err != nil {
+		return "", err
+	}
+	if err := checkResourceIDs(projectID, fileID, ""); err != nil {
+		return "", err
+	}
+	if err := requireImageSource(ctx, imagePath); err != nil {
+		return "", err
+	}
 	baseDir, err := GetProjectBaseDir(projectID)
 	if err != nil {
 		return "", xerrors.Errorf("SetFileThumbnail: %w", err)
@@ -300,6 +321,12 @@ func SetWorkspaceThumbnail(ctx context.Context, projectID, fileID, workspaceID, 
 	if err := requireFileRole(ctx, fileID, rolesEditorUp...); err != nil {
 		return "", err
 	}
+	if err := checkResourceIDs(projectID, fileID, workspaceID); err != nil {
+		return "", err
+	}
+	if err := requireImageSource(ctx, imagePath); err != nil {
+		return "", err
+	}
 	baseDir, err := GetProjectBaseDir(projectID)
 	if err != nil {
 		return "", xerrors.Errorf("SetWorkspaceThumbnail: %w", err)
@@ -316,6 +343,9 @@ func SetWorkspaceThumbnail(ctx context.Context, projectID, fileID, workspaceID, 
 func SetFileThumbnailFromWorkspace(ctx context.Context, projectID, fileID, workspaceID string) (string, error) {
 	// editor 以上の権限が必要（サムネイル設定）
 	if err := requireFileRole(ctx, fileID, rolesEditorUp...); err != nil {
+		return "", err
+	}
+	if err := checkResourceIDs(projectID, fileID, workspaceID); err != nil {
 		return "", err
 	}
 	baseDir, err := GetProjectBaseDir(projectID)
@@ -349,7 +379,14 @@ func SetFileThumbnailFromWorkspace(ctx context.Context, projectID, fileID, works
 }
 
 // SetProjectThumbnailFromFile はファイルのサムネイル（またはジョブ出力）をプロジェクトサムネイルとして保存し、base64 データURIを返す。
-func SetProjectThumbnailFromFile(projectID, fileID string) (string, error) {
+// プロジェクトの owner・editor で、そのファイルを見られる人だけ。
+func SetProjectThumbnailFromFile(ctx context.Context, projectID, fileID string) (string, error) {
+	if err := requireProjectRole(ctx, projectID, model.RoleOwner, model.RoleEditor); err != nil {
+		return "", err
+	}
+	if err := requireFileInProjectAccess(ctx, projectID, fileID); err != nil {
+		return "", err
+	}
 	baseDir, err := GetProjectBaseDir(projectID)
 	if err != nil {
 		return "", xerrors.Errorf("SetProjectThumbnailFromFile: %w", err)

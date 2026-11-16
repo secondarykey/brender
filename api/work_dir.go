@@ -200,8 +200,11 @@ func StartMigrateProjectWorkDir(ctx context.Context, projectID string, newWorkDi
 	return nil
 }
 
-// GetWorkDirStats は指定 work_dir のプロジェクト数とデータサイズを返す。
-func GetWorkDirStats(id uint) (map[string]interface{}, error) {
+// GetWorkDirStats は指定 work_dir のプロジェクト数とデータサイズを返す。admin 限定（作業ディレクトリの設定）。
+func GetWorkDirStats(ctx context.Context, id uint) (map[string]interface{}, error) {
+	if err := requireAdmin(ctx); err != nil {
+		return nil, err
+	}
 	wd, err := model.GetWorkDir(id)
 	if err != nil || wd == nil {
 		return nil, xerrors.New("work dir not found")
@@ -226,7 +229,10 @@ func GetWorkDirStats(id uint) (map[string]interface{}, error) {
 }
 
 // GetProjectDiskSize はプロジェクトのデータサイズ（作業ディレクトリ内の {projectID}/ 以下）をバイトで返す。
-func GetProjectDiskSize(projectID string) (int64, error) {
+func GetProjectDiskSize(ctx context.Context, projectID string) (int64, error) {
+	if err := requireProjectAccess(ctx, projectID); err != nil {
+		return 0, err
+	}
 	baseDir, err := GetProjectBaseDir(projectID)
 	if err != nil {
 		return 0, xerrors.Errorf("GetProjectDiskSize: %w", err)

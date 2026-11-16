@@ -176,7 +176,10 @@ func MissingBlenderPaths() ([]uint, error) {
 	return missing, nil
 }
 
-func GetScenes(installID uint, fileID string) ([]string, error) {
+func GetScenes(ctx context.Context, installID uint, fileID string) ([]string, error) {
+	if err := requireFileAccess(ctx, fileID); err != nil {
+		return nil, err
+	}
 	var blenderPath string
 	if installID != 0 {
 		install, err := model.GetBlenderInstall(installID)
@@ -235,7 +238,11 @@ func OpenBlenderFile(ctx context.Context, installID uint, filePath string) error
 	return cmd.Start()
 }
 
-func GetToolData(installID uint, fileID string) (*exec.Tool, error) {
+// GetToolData はファイルを Blender で解析する（シーン・カメラ・Pack 状態など）。ファイルを見られる人だけ。
+func GetToolData(ctx context.Context, installID uint, fileID string) (*exec.Tool, error) {
+	if err := requireFileAccess(ctx, fileID); err != nil {
+		return nil, err
+	}
 	var blenderPath string
 	if installID != 0 {
 		install, err := model.GetBlenderInstall(installID)
@@ -271,7 +278,10 @@ func GetToolData(installID uint, fileID string) (*exec.Tool, error) {
 	return tool, nil
 }
 
-func GetCameras(installID uint, fileID string) ([]*exec.CameraTool, error) {
+func GetCameras(ctx context.Context, installID uint, fileID string) ([]*exec.CameraTool, error) {
+	if err := requireFileAccess(ctx, fileID); err != nil {
+		return nil, err
+	}
 	var blenderPath string
 	if installID != 0 {
 		install, err := model.GetBlenderInstall(installID)

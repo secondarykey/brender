@@ -4,15 +4,15 @@ def setCamera():
 
     print("== Call setCamera()")
 
-    scene = bpy.data.scenes["{{ .Camera.Scene }}"]
-    target_cam = bpy.data.objects.get("{{ .Camera.Name }}")
+    scene = bpy.data.scenes[{{ py .Camera.Scene }}]
+    target_cam = bpy.data.objects.get({{ py .Camera.Name }})
     scene.camera = target_cam
-    print("== set Camera [{{ .Camera.Name }}]")
+    print("== set Camera [" + {{ py .Camera.Name }} + "]")
 
 
 def setSamples():
     print("== Call setSamples()")
-    scene = bpy.data.scenes["{{ .Samples.Scene }}"]
+    scene = bpy.data.scenes[{{ py .Samples.Scene }}]
 {{ if .Samples.IsCycles }}
     scene.cycles.samples = {{ .Samples.Value }}
 {{ else if .Samples.IsEevee }}
@@ -25,7 +25,7 @@ def setSamples():
 def setResolution():
 
     print("== Call setResolution()")
-    scene = bpy.data.scenes["{{ .Resolution.Scene }}"]
+    scene = bpy.data.scenes[{{ py .Resolution.Scene }}]
 
     scene.render.resolution_x = {{.Resolution.X}}
     scene.render.resolution_y = {{.Resolution.Y}}

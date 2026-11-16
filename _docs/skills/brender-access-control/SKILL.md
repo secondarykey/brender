@@ -124,4 +124,20 @@ model.UserFromContext(ctx)       // ctx からユーザを取り出す
 - **ブラウザからは断る操作**: ウィンドウを開く・サーバの画面を使うメソッド（`Queue.Open*Window`・`OpenMiniMonitor`・`CloseMiniMonitor`・`Environment.OpenSystemLogWindow`）は `api.FromBrowser(ctx)` なら `api.ErrNotAvailableFromBrowser`。**ヘッダー（`x-wails-window-id`）や `application.WindowKey` で判定しない**（ブラウザが偽れる）
 - **Wails の決まった API**: `Application.Quit`・`Events.Emit` などはウィンドウ無しでも通るため、`POST /wails/runtime` の守りで `object` を 0（呼び出し）と 10（取り消し）に絞っている
 - **リソースの認証**: `/_movie`（ローカルファイル配信）・`/events`（SSE）・`/wails/*`（バインディング呼び出し）は SPA ではなくリソースのため、未認証時は SPA を返さず 401 を返す（`handleUnauthorized`）。
-- **生パスの検証**: 生ファイルパスを受け取る口は登録済み作業ディレクトリ配下に限定する。`queue/get_image_base64` は `validateWorkDirPath`、サーバモード `/_movie` は `api.ValidateWorkDirPath` で検証。`zip_job_selected_files` は OutputDir 外のパスを無視する。
+- **生パスの検証**: 生ファイルパスを受け取る口は `requireWorkDirFileAccess(ctx, path)`（公開版 `api.RequireWorkDirFileAccess`）を通す。作業ディレクトリの外は `ErrPathOutsideWorkDir`、中なら置き場所（`{workDir}/{projectID}/{fileID}/...`）からファイル・プロジェクトを決めてその参照権限を求める（作業ディレクトリの中でも他人のプロジェクトの画像は読めない）。`Queue.GetImageBase64`・サーバモードの `/_movie` がこれを使う。サムネイルの元画像（`Set*Thumbnail` の `imagePath`）は `requireImageSource`: ウィンドウはダイアログで選んだ手元の画像なのでどこでもよく、ブラウザからは同じ確かめ方をする。`zip_job_selected_files` は OutputDir 外のパスを無視する。
+- **ID の組を確かめる**: プロジェクト・ファイル・ワークスペースの ID を別々に受け取る口は `checkResourceIDs(projectID, fileID, workspaceID)` で「ファイルがそのプロジェクトのもの、ワークスペースがそのファイルのもの」を確かめる。権限はファイル単位で見るので、権限のあるファイルの ID に別のファイルのワークスペースを組み合わせると、見えないはずの画像に届くため。ID はパスにもなるので、DB に無い ID（`../..` など）もここで断る。サムネイルは `thumbnailPath` の中で確かめている。
+- **画面から戻ってくる値を信用しない**: `Queue.EnqueueWithPreview` の `preview`（Blender の実行ファイル・.blend のパスを含む）は、サーバで `PreviewRender` し直し、確認した内容と違えば `ErrPreviewChanged` で断る（差し替えるとサーバで任意のプログラムを動かせるため）。サーバで作った preview でジョブを作るのは内部の `enqueuePreview` だけ。
+- **スクリプトへの埋め込み**: シーン名・カメラ名・エンジン名などを Python のスクリプト（`exec/_assets/*.tmpl`）へ埋めるときは `{{ py .X }}` で文字列リテラルにする（`"{{ .X }}"` と書かない）。引用符を含む名前で Python のコードを差し込まれるため。
+- **歯止めのテスト**: `_cmd/brender/services/ctx_test.go` がサービスのソースを読み、全メソッドが ctx を使い、api の関数へ ctx を渡していることを確かめる。ctx を使わなくてよいもの（選択肢・タグの一覧など）は、理由を書いて許可リストへ足す。`api/access_resource_test.go` は、見られない・変えられないプロジェクトやファイルを断ることを確かめる。
+
+**誰がどこまでできるか（主なもの）**:
+
+| 操作 | 求める権限 |
+|---|---|
+| `PreviewRender`・`EnqueueWithPreview`・`TestEnqueue`・`SamplesComparisonEnqueue` | ファイルの runner 以上 |
+| `GetScenes`・`GetCameras`・`GetToolData`・`GetFileTags`・権限の一覧（`ListFilePermissions`・`GetUserFileRole`） | ファイルの参照 |
+| `SetFileThumbnail`・`SetWorkspaceThumbnail`・`SetFileThumbnailFromWorkspace`・タグの付け外し（`AddTagToFile`・`RemoveTagFromFile`・`AssignTagByInput`） | ファイルの editor 以上 |
+| `SetProjectThumbnail`・`SetProjectThumbnailFromFile` | プロジェクトの owner・editor（後者はファイルの参照も） |
+| `ListProjectPermissions`・`GetUserProjectRole`・`GetProjectDiskSize` | プロジェクトの参照 |
+| タグ・カテゴリの作成・変更・削除・統合・並べ替え、`ListAllProjectFiles`・`GetCleanableJobStats`・`MeasureFilteredDiskSize`・`GetWorkDirStats` | admin |
+| キューの一覧（`Queue.List`・`ListItems`）・タグの一覧・Blender の一覧・作業ディレクトリの一覧 | だれでも（理由は `ctx_test.go` の許可リスト） |

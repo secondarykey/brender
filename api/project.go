@@ -89,8 +89,11 @@ func GetFile(ctx context.Context, fileID string) (*model.ProjectFile, error) {
 	return f, nil
 }
 
-// ListAllProjectFiles は全プロジェクトの全ファイルを返す（設定画面の一括確認用）。
-func ListAllProjectFiles() ([]*model.ProjectFile, error) {
+// ListAllProjectFiles は全プロジェクトの全ファイルを返す（設定画面の一括確認用）。admin 限定。
+func ListAllProjectFiles(ctx context.Context) ([]*model.ProjectFile, error) {
+	if err := requireAdmin(ctx); err != nil {
+		return nil, err
+	}
 	return model.ListAllProjectFiles()
 }
 
@@ -148,7 +151,7 @@ func UploadProjectFile(ctx context.Context, projectID string, filename string, r
 // checkPackAndThumbnail はツール実行でPack状態を検査し、DB に保存する。
 // Pack 済みの場合は既定のワークスペースを作り、Test 出力（サムネイル）を始める。
 func checkPackAndThumbnail(ctx context.Context, projectID string, f *model.ProjectFile) {
-	tool, err := GetToolData(0, f.ID)
+	tool, err := GetToolData(ctx, 0, f.ID)
 	if err != nil {
 		log.Error("checkPackAndThumbnail: GetToolData", "fileID", f.ID, "error", err)
 		return
@@ -243,10 +246,6 @@ func AddFilesFromDirectory(ctx context.Context, projectID, dir string) (*AddDirR
 		return nil
 	})
 	return result, nil
-}
-
-func RemoveProjectFile(fileID string) error {
-	return model.RemoveProjectFile(fileID)
 }
 
 func DeleteProjectFile(ctx context.Context, fileID string, force bool) error {

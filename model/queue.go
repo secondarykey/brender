@@ -145,12 +145,3 @@ func ExistsQueueByWorkspace(projectID, workspaceID string) (bool, error) {
 	}
 	return count > 0, nil
 }
-
-func ListQueuesByWorkspace(projectID string, workspaceID string) ([]*Queue, error) {
-	var list []*Queue
-	if res := db.Where("project_id = ? AND workspace_id = ?", projectID, workspaceID).
-		Order("id desc").Find(&list); res.Error != nil {
-		return nil, xerrors.Errorf("ListQueuesByWorkspace: %w", res.Error)
-	}
-	return list, nil
-}
