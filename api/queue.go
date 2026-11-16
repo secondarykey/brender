@@ -247,6 +247,30 @@ func StartRecoveredQueues() {
 // scheduleMu はキューの起動判定と DB 更新をアトミックに行うためのミューテックス。
 var scheduleMu sync.Mutex
 
+// writableProjectBaseDir は、プロジェクトに出力してよいか（移動中でない・作業ディレクトリがロックされていない）を
+// 確かめて、出力先の基底パスを返す。投入では enqueueMu を取ったあとに呼ぶ。
+func writableProjectBaseDir(projectID string) (string, error) {
+	if err := checkProjectNotMoving(projectID); err != nil {
+		return "", err
+	}
+	baseDir, err := GetProjectBaseDir(projectID)
+	if err != nil {
+		return "", xerrors.Errorf("GetProjectBaseDir: %w", err)
+	}
+	p, err := model.SelectProject(projectID)
+	if err != nil || p == nil {
+		return "", xerrors.Errorf("project not found: %w", err)
+	}
+	wd, err := model.GetWorkDir(p.WorkDirID)
+	if err != nil || wd == nil {
+		return "", xerrors.New("作業ディレクトリが設定されていません")
+	}
+	if wd.Status == model.WorkDirStatusLock {
+		return "", xerrors.New("作業ディレクトリがロックされています。移行後に実行してください")
+	}
+	return baseDir, nil
+}
+
 // enqueueMu は投入時の重複チェック（ExistsQueueByWorkspace）からキュー作成（CreateQueue）
 // までをアトミックにし、ダブルクリック等での同一ワークスペース二重投入を防ぐ。
 var enqueueMu sync.Mutex
@@ -678,27 +702,15 @@ func enqueuePreview(ctx context.Context, projectID, workspaceID string, preview 
 		return nil, err
 	}
 
-	baseDir, err := GetProjectBaseDir(projectID)
-	if err != nil {
-		return nil, xerrors.Errorf("GetProjectBaseDir: %w", err)
-	}
-
-	// Lock チェック
-	p, err := model.SelectProject(projectID)
-	if err != nil || p == nil {
-		return nil, xerrors.Errorf("project not found: %w", err)
-	}
-	wd, err := model.GetWorkDir(p.WorkDirID)
-	if err != nil || wd == nil {
-		return nil, xerrors.New("作業ディレクトリが設定されていません")
-	}
-	if wd.Status == model.WorkDirStatusLock {
-		return nil, xerrors.New("作業ディレクトリがロックされています。移行後に実行してください")
-	}
-
 	// 重複チェックからキュー作成までを直列化し、二重投入を防ぐ
 	enqueueMu.Lock()
 	defer enqueueMu.Unlock()
+
+	// 出力先は移動中でないことを確かめてから読む（読んだあとに移動が終わると旧パスに出力してしまう）
+	baseDir, err := writableProjectBaseDir(projectID)
+	if err != nil {
+		return nil, err
+	}
 
 	exists, err := model.ExistsQueueByWorkspace(projectID, workspaceID)
 	if err != nil {
@@ -822,26 +834,15 @@ func SamplesComparisonEnqueue(ctx context.Context, projectID, workspaceID string
 	}
 	samplesList := strings.Join(sampleStrs, ",")
 
-	baseDir, err := GetProjectBaseDir(projectID)
-	if err != nil {
-		return nil, xerrors.Errorf("GetProjectBaseDir: %w", err)
-	}
-
-	p, err := model.SelectProject(projectID)
-	if err != nil || p == nil {
-		return nil, xerrors.Errorf("project not found: %w", err)
-	}
-	wd, err := model.GetWorkDir(p.WorkDirID)
-	if err != nil || wd == nil {
-		return nil, xerrors.New("作業ディレクトリが設定されていません")
-	}
-	if wd.Status == model.WorkDirStatusLock {
-		return nil, xerrors.New("作業ディレクトリがロックされています。移行後に実行してください")
-	}
-
 	// 重複チェックからキュー作成までを直列化し、二重投入を防ぐ
 	enqueueMu.Lock()
 	defer enqueueMu.Unlock()
+
+	// 出力先は移動中でないことを確かめてから読む（読んだあとに移動が終わると旧パスに出力してしまう）
+	baseDir, err := writableProjectBaseDir(projectID)
+	if err != nil {
+		return nil, err
+	}
 
 	exists, err := model.ExistsQueueByWorkspace(projectID, workspaceID)
 	if err != nil {

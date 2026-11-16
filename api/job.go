@@ -18,6 +18,10 @@ func CreateMovie(ctx context.Context, projectID string, fileID string, workspace
 		return "", nil, err
 	}
 
+	// 移動中に作ると、動画が旧パスに残って消える
+	if err := checkProjectNotMoving(projectID); err != nil {
+		return "", nil, err
+	}
 	baseDir, err := GetProjectBaseDir(projectID)
 	if err != nil {
 		return "", nil, xerrors.Errorf("GetProjectBaseDir error: %w", err)

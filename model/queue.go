@@ -134,6 +134,18 @@ func ListQueues() ([]*Queue, error) {
 	return list, nil
 }
 
+// CountQueuesByProjects は指定プロジェクトのキュー（待ち・実行中）の数を返す。
+func CountQueuesByProjects(projectIDs []string) (int64, error) {
+	if len(projectIDs) == 0 {
+		return 0, nil
+	}
+	var count int64
+	if res := db.Model(&Queue{}).Where("project_id IN ?", projectIDs).Count(&count); res.Error != nil {
+		return 0, xerrors.Errorf("CountQueuesByProjects: %w", res.Error)
+	}
+	return count, nil
+}
+
 // ExistsQueueByWorkspace は同一ワークスペースのキューが存在するか返す。
 func ExistsQueueByWorkspace(projectID, workspaceID string) (bool, error) {
 	var count int64

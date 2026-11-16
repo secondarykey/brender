@@ -148,7 +148,7 @@ CI が使う wails3 CLI のバージョンは `.github/variables` の `WAILS_VER
 
 ### Key model notes
 - `Environment`: `ProjectRoot string`, `Server bool`, `MaxConcurrentJobs int` (デフォルト 1). No `BlenderCmd`/`BlenderVersion`/`Hash` fields (removed).
-- `WorkDir`: `ID uint`, `Path string`, `Priority int`, `Status string` (`active`/`inactive`/`lock`). `GetDefaultWorkDir()` は `active` かつ `Priority` 最小を返す。
+- `WorkDir`: `ID uint`, `Path string`, `Priority int`, `Status string` (`active`/`inactive`/`lock`). `GetDefaultWorkDir()` は `active` かつ `Priority` 最小を返す。データの移動（プロジェクトを別の作業ディレクトリへ・作業ディレクトリのパス変更）は `api/work_dir_move.go`。全部コピーしてから DB を1つのトランザクションで切り替え、最後に旧パスを消す。移動中のプロジェクトへの投入・動画作成は断り、キューにジョブがあるプロジェクトは移動しない（決まりはファイルの頭のコメント）。
 - `Project`: `ID string` (UUID v4), `Name`, `BlenderInstallID uint`, `Scene string`, `WorkDirID uint`. No `Archive` or `ThumbnailFrame` fields (removed).
 - `ProjectFile`: `ID string` (UUID v4), `ProjectID`, `Path`, `Name`, `BlenderInstallID uint`, `Scene string`, `FileModifiedAt *time.Time`. `FileModifiedAt` is set from `os.Stat().ModTime()` on add.
 - `Workspace`: `ID string` (UUID v4), `ProjectFileID string` (固定、Update では変更不可), `BlenderInstallID=0` means use project default。ファイル登録時に既定の設定のワークスペース「Default」が作られる（以前の隠しワークスペースの `IsSystem` は廃止。起動時の `migrateSystemWorkspaces` が列を消して既存分を一覧に出す）。

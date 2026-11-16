@@ -54,7 +54,7 @@ Queue/Job のステータス一覧・データモデルはルートの `AGENTS.m
 - `scheduleMu sync.Mutex` でスケジューラのレース防止
 - 投入時: 実行中キュー数が上限未満なら `MarkQueueStarting()`（DB で status を running に変更）してから `go executeQueue()` を起動。上限以上なら `waiting` のまま保留。
 - 完了・キャンセル時: `startNextWaiting()` を呼び出し、最古の `waiting` ジョブを昇格して起動。
-- 同一ワークスペースの重複投入禁止: `ExistsQueueByWorkspace` で事前チェック。ダブルクリック等の競合を防ぐため、この重複チェックから `CreateQueue` までを `enqueueMu sync.Mutex` で直列化する（`scheduleMu` とは別ロック、順序が交差しないためデッドロックしない）。
+- 同一ワークスペースの重複投入禁止: `ExistsQueueByWorkspace` で事前チェック。ダブルクリック等の競合を防ぐため、この重複チェックから `CreateQueue` までを `enqueueMu sync.Mutex` で直列化する（`scheduleMu` とは別ロック、順序が交差しないためデッドロックしない）。出力先の基底パスは `enqueueMu` を取ったあとに `writableProjectBaseDir` で読む（データの移動中・作業ディレクトリのロック中は断る。取る前に読むと、読んだあとに移動が終わって旧パスへ出力してしまう）。移動の側も `enqueueMu` を取ってから「キューが無いこと」を確かめて移動中の印を付ける（`api/work_dir_move.go`）。
 
 **`executeQueue` の流れ**:
 1. `ProcessingWriter` 作成、`exec.RegisterProgress` 登録
