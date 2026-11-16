@@ -187,15 +187,5 @@ func GetProjectDiskSize(ctx context.Context, projectID string) (int64, error) {
 	if err != nil {
 		return 0, xerrors.Errorf("GetProjectDiskSize: %w", err)
 	}
-	dir := filepath.Join(baseDir, projectID)
-	var total int64
-	filepath.WalkDir(dir, func(_ string, d os.DirEntry, err error) error {
-		if err == nil && !d.IsDir() {
-			if info, e := d.Info(); e == nil {
-				total += info.Size()
-			}
-		}
-		return nil
-	})
-	return total, nil
+	return dirSize(filepath.Join(baseDir, projectID)), nil
 }

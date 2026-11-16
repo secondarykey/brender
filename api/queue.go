@@ -173,7 +173,7 @@ func CancelQueue(ctx context.Context, id string) error {
 	killQueueProcess(q.ProcessID, expectedPath)
 	var diskSize int64
 	if j != nil {
-		diskSize = calcDirSize(j.OutputDir)
+		diskSize = dirSize(j.OutputDir)
 	}
 	if err := model.UpdateJobDone(q.ID, model.JobCancelled, "", &now, diskSize, model.JobDataCorrupted); err != nil {
 		log.Errorf("UpdateJobDone(cancelled) error: %v", err)

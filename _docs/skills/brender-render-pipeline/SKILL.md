@@ -66,7 +66,7 @@ Queue/Job のステータス一覧・データモデルはルートの `AGENTS.m
 4. `model.UpdateQueueRunning(id, pid)` で PID・開始時刻を記録
 5. `errCh` から完了を待ち、`finishJob()` を呼ぶ
 
-`finishJob()` は完了時に `calcDirSize()` で出力ディレクトリ容量を計算して `Job.DiskSize` に保存、Queue レコードを削除後 `schedule()` → `notifyQueueChanged()` を呼ぶ。`shuttingDown` が立っているときは何もせずに戻る（Queue を `running` のまま残し、次回起動時のリカバリに任せる）。
+`finishJob()` は完了時に `dirSize()` で出力ディレクトリ容量を計算して `Job.DiskSize` に保存、Queue レコードを削除後 `schedule()` → `notifyQueueChanged()` を呼ぶ。`shuttingDown` が立っているときは何もせずに戻る（Queue を `running` のまま残し、次回起動時のリカバリに任せる）。
 
 **実行中キューの強制終了は2種類あり、`shuttingDown` を立てるのは終了時だけ**:
 | 関数 | 呼び出し元 | `shuttingDown` | kill されたジョブの後始末 |

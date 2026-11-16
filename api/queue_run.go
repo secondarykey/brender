@@ -3,10 +3,8 @@ package api
 import (
 	"context"
 	"io"
-	"io/fs"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/secondarykey/brender/exec"
@@ -80,7 +78,7 @@ func executeSamplesComparison(q *model.Queue, job *model.Job) {
 	}
 
 	blenderErr := <-errCh
-	diskSize := calcDirSize(job.OutputDir)
+	diskSize := dirSize(job.OutputDir)
 	if blenderErr != nil {
 		finishJob(q.ID, false, blenderErr.Error(), diskSize)
 	} else {
@@ -202,37 +200,12 @@ func executeQueue(q *model.Queue, job *model.Job) {
 	}
 
 	blenderErr := <-errCh
-	diskSize := calcDirSize(job.OutputDir)
+	diskSize := dirSize(job.OutputDir)
 	if blenderErr != nil {
 		finishJob(q.ID, false, blenderErr.Error(), diskSize)
 	} else {
 		finishJob(q.ID, true, "", diskSize)
 	}
-}
-
-// calcDirSize はディレクトリ以下の画像・動画ファイルのサイズ合計をバイトで返す。
-func calcDirSize(dir string) int64 {
-	imageExts := map[string]bool{
-		".png": true, ".jpg": true, ".jpeg": true, ".exr": true,
-		".tiff": true, ".tif": true, ".bmp": true, ".hdr": true,
-		".webp": true, ".tga": true,
-	}
-	var total int64
-	filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
-		if err != nil || d.IsDir() {
-			return nil
-		}
-		ext := strings.ToLower(filepath.Ext(path))
-		if !imageExts[ext] {
-			return nil
-		}
-		info, err := d.Info()
-		if err == nil {
-			total += info.Size()
-		}
-		return nil
-	})
-	return total
 }
 
 // finishJob updates the Job status, sets CompletedAt, then deletes the Queue record.

@@ -45,7 +45,7 @@ func RecoverStaleQueues() {
 		}
 
 		now := time.Now()
-		diskSize := calcDirSize(oldJob.OutputDir)
+		diskSize := dirSize(oldJob.OutputDir)
 		if err := model.UpdateJobDone(q.ID, model.JobInterrupted, "", &now, diskSize, model.JobDataCorrupted); err != nil {
 			log.Errorf("RecoverStaleQueues: UpdateJobDone: %v", err)
 		}

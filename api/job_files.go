@@ -16,6 +16,23 @@ import (
 	"golang.org/x/xerrors"
 )
 
+// dirSize はディレクトリ以下の全ファイルのサイズ合計をバイトで返す（読めないものは飛ばす）。
+// ジョブの DiskSize・掃除の前の実測・プロジェクトの容量を同じ数え方にするため、容量はここだけで数える。
+// 画像だけでなくログや動画も足す（ジョブを消したときに空く量と合わせる）。
+func dirSize(dir string) int64 {
+	var total int64
+	filepath.WalkDir(dir, func(_ string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return nil
+		}
+		if info, e := d.Info(); e == nil {
+			total += info.Size()
+		}
+		return nil
+	})
+	return total
+}
+
 // removeOutputDirs は出力フォルダ一覧を存在確認の上で削除する。
 func removeOutputDirs(dirs []string) {
 	for _, dir := range dirs {

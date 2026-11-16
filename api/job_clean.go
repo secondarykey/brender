@@ -2,8 +2,6 @@ package api
 
 import (
 	"context"
-	"io/fs"
-	"path/filepath"
 
 	"github.com/secondarykey/brender/log"
 	"github.com/secondarykey/brender/model"
@@ -55,21 +53,7 @@ func MeasureFilteredDiskSize(ctx context.Context, filter *model.CleanFilter) (in
 		if j.OutputDir == "" {
 			continue
 		}
-		total += measureDirSize(j.OutputDir)
+		total += dirSize(j.OutputDir)
 	}
 	return total, nil
-}
-
-func measureDirSize(dir string) int64 {
-	var total int64
-	filepath.WalkDir(dir, func(_ string, d fs.DirEntry, err error) error {
-		if err != nil || d.IsDir() {
-			return nil
-		}
-		if info, e := d.Info(); e == nil {
-			total += info.Size()
-		}
-		return nil
-	})
-	return total
 }
