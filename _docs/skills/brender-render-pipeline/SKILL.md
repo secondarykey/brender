@@ -68,6 +68,8 @@ Queue/Job のステータス一覧・データモデルはルートの `AGENTS.m
 
 `finishJob()` は完了時に `dirSize()` で出力ディレクトリ容量を計算して `Job.DiskSize` に保存、Queue レコードを削除後 `schedule()` → `notifyQueueChanged()` を呼ぶ。`shuttingDown` が立っているときは何もせずに戻る（Queue を `running` のまま残し、次回起動時のリカバリに任せる）。
 
+容量はどこでも `dirSize()`（`api/job_files.go`）で数える。ログや動画も含めた全ファイルの合計で、ジョブを消したときに空く量と合う。ジョブの `DiskSize`・掃除の前の実測（`MeasureFilteredDiskSize`）・プロジェクトの容量（`GetProjectDiskSize`）が同じ数え方になるよう、自前で `WalkDir` しないこと。2026-11-17 より前に完了したジョブの `DiskSize` は画像だけの合計のまま。
+
 **実行中キューの強制終了は2種類あり、`shuttingDown` を立てるのは終了時だけ**:
 | 関数 | 呼び出し元 | `shuttingDown` | kill されたジョブの後始末 |
 |---|---|---|---|
