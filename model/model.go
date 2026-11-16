@@ -96,25 +96,10 @@ func Init(dsn string) error {
 		}
 	})
 
-	db.AutoMigrate(&WorkDir{})
-	db.AutoMigrate(&Environment{})
-	db.AutoMigrate(&BlenderInstall{})
-	db.AutoMigrate(&Project{})
-	db.AutoMigrate(&ProjectFile{})
-	db.AutoMigrate(&Workspace{})
-	db.AutoMigrate(&Job{})
-	db.AutoMigrate(&Queue{})
-	db.AutoMigrate(&TagCategory{})
-	db.AutoMigrate(&Tag{})
-	db.AutoMigrate(&ProjectFileTag{})
-	db.AutoMigrate(&FileFavorite{})
-	db.AutoMigrate(&User{})
-	db.AutoMigrate(&Group{})
-	db.AutoMigrate(&UserGroup{})
-	db.AutoMigrate(&ProjectPermission{})
-	db.AutoMigrate(&FilePermission{})
-	db.AutoMigrate(&PasswordResetToken{})
-	db.AutoMigrate(&Session{})
+	// 表が古い形のまま動くと、あとで分かりにくい壊れ方をするので、失敗したら起動を止める
+	if err := migrateTables(); err != nil {
+		return err
+	}
 
 	// 失敗しても起動は止めない（次の起動でやり直す）
 	if err := migrateSystemWorkspaces(); err != nil {
@@ -129,6 +114,38 @@ func Init(dsn string) error {
 		return err
 	}
 
+	return nil
+}
+
+// migrateTables は全モデルの表を AutoMigrate する。
+// どの表で失敗したか分かるように、1つずつ流してモデルの型をエラーに付ける。
+func migrateTables() error {
+	models := []any{
+		&WorkDir{},
+		&Environment{},
+		&BlenderInstall{},
+		&Project{},
+		&ProjectFile{},
+		&Workspace{},
+		&Job{},
+		&Queue{},
+		&TagCategory{},
+		&Tag{},
+		&ProjectFileTag{},
+		&FileFavorite{},
+		&User{},
+		&Group{},
+		&UserGroup{},
+		&ProjectPermission{},
+		&FilePermission{},
+		&PasswordResetToken{},
+		&Session{},
+	}
+	for _, m := range models {
+		if err := db.AutoMigrate(m); err != nil {
+			return xerrors.Errorf("AutoMigrate(%T): %w", m, err)
+		}
+	}
 	return nil
 }
 

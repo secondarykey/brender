@@ -4,6 +4,7 @@ go 1.27
 
 require (
 	github.com/anthonynsimon/bild v0.15.0
+	github.com/glebarez/go-sqlite v1.21.2
 	github.com/glebarez/sqlite v1.11.0
 	github.com/google/uuid v1.6.0
 	github.com/shirou/gopsutil/v4 v4.26.5
@@ -19,7 +20,6 @@ require (
 require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/ebitengine/purego v0.10.0 // indirect
-	github.com/glebarez/go-sqlite v1.21.2 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
