@@ -128,7 +128,7 @@ _cmd/brender-tool/  (CLI, uses exec/ + api/ directly)
 | `services/environment.go` | `Environment` | `api/environment.go` |
 | `services/project.go` | `Project` | `api/project.go` + `api/thumbnail.go` |
 | `services/workspace.go` | `Workspace` | `api/workspace.go` |
-| `services/queue.go` | `Queue` | `api/queue.go` |
+| `services/queue.go` | `Queue` | `api/queue*.go` + `api/schedule.go` + `api/job*.go` |
 | `services/work_dir.go` | `WorkDir` | `api/work_dir.go` |
 | `services/codes.go` | `Codes` | `code/`（Skill `brender-codes` 参照） |
 
@@ -184,7 +184,7 @@ CI が使う wails3 CLI のバージョンは `.github/variables` の `WAILS_VER
 
 詳細（実行フロー・パース仕様・ETA 計算・進捗バー計算式・リカバリ手順）は Skill `brender-render-pipeline` を参照。
 
-- **非同期レンダリング** (`api/queue.go`): `Enqueue()` → `PreviewRender()` → `enqueuePreview()`（画面の確認からの `EnqueueWithPreview(preview)` は preview を信用せずサーバで解決し直して比べる）。Blender/シーン/エンジン/カメラのフォールバック解決は `resolveRenderBase()` に集約（優先順位を変える場合はここ一箇所を直す）。`MaxConcurrentJobs`（デフォルト 1）で同時実行制御。キューを起動する入口は `schedule()` だけ（投入・終了・キャンセル・上限の変更・lock の解除から呼ぶ。`scheduleMu` でレース防止）。同一ワークスペースの重複投入は禁止で、重複チェック〜`CreateQueue` は `enqueueMu` で直列化。
+- **非同期レンダリング** (`api/queue*.go`・`api/schedule.go`。ファイルの分け方は Skill `brender-render-pipeline`): `Enqueue()` → `PreviewRender()` → `enqueuePreview()`（画面の確認からの `EnqueueWithPreview(preview)` は preview を信用せずサーバで解決し直して比べる）。Blender/シーン/エンジン/カメラのフォールバック解決は `resolveRenderBase()` に集約（優先順位を変える場合はここ一箇所を直す）。`MaxConcurrentJobs`（デフォルト 1）で同時実行制御。キューを起動する入口は `schedule()` だけ（投入・終了・キャンセル・上限の変更・lock の解除から呼ぶ。`scheduleMu` でレース防止）。同一ワークスペースの重複投入は禁止で、重複チェック〜`CreateQueue` は `enqueueMu` で直列化。
 - **起動時キューリカバリ**: クラッシュ後に残った `running` Queue を `RecoverStaleQueues()` が検出。旧 Job を `interrupted` で閉じ、新 Job+Queue（`recovering`）を作成して `StartRecoveredQueues()` で再実行する。孤立プロセスの kill は `killQueueProcess()` が実行ファイルを検証してから行う（PID 再利用による誤殺防止）。
 - **イベント配信フック**: `api` 層は `var XxxHook func(...)` の関数変数でイベントを公開（`QueueChangedHook` / `BlenderWarningHook` / `MigrationHook` / `MovieCreatedHook` / `WorkDirChangeDirHook` / `SystemStatsHook`）。`main.go` は単一の `emit(name, data)` クロージャにまとめて Wails Event と SSE broker の両方へ配る。**新しいイベントも必ず `emit` を経由させる**（フックごとに SSE ラップを書くと漏れる）。
 - **Job deletion**: `DeleteJob(id)` は `OutputDir` を `os.RemoveAll` してから DB レコードを削除する。

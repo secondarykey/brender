@@ -6,7 +6,7 @@ description: >
   ProcessingWriter による Blender 標準出力のリアルタイムパース（Blender 4.x/5.x、Cycles/EEVEE/Workbench
   のエンジン別フレーム検出・タイル/サンプル進捗・ETA 計算）、進捗トラッキング（exec/progress.go）、
   QueuePage の進捗バー計算式、サムネイル自動生成（api/thumbnail.go）、CLI ターミナル表示を扱う。
-  api/queue.go・api/thumbnail.go・exec/writer.go・exec/progress.go・_cmd/brender-tool/・
+  api/queue*.go・api/schedule.go・api/job*.go・api/thumbnail.go・exec/writer.go・exec/progress.go・_cmd/brender-tool/・
   QueuePage.jsx を変更するとき、またはキュー・レンダリング進捗・ジョブステータス・リカバリ・
   サムネイルに関する作業のときは必ずこのSkillを参照すること。
 ---
@@ -40,7 +40,9 @@ Queue/Job のステータス一覧・データモデルはルートの `AGENTS.m
 
 **隠しワークスペース（`is_system`）は廃止**: 以前はサムネイル用のワークスペースを `IsSystem=true` で作って一覧から隠していたため、ワークスペースもジョブも画面から辿れず浮いていた。起動時の `model.migrateSystemWorkspaces` が `workspaces.is_system` 列を消し、既存分を普通のワークスペースとして一覧に出す（列が無ければ何もしない）。そこにあったのも Test ジョブなので、ファイルのサムネイルはそのまま辿れる。
 
-## Async rendering flow (`api/queue.go`)
+## Async rendering flow (`api/queue*.go`・`api/schedule.go`)
+
+ファイルの分け方: 一覧・キャンセルは `queue.go`、設定の解決と確認（`RenderPreview`・`fileOverrides`・`resolveRenderBase`・`PreviewRender`）は `queue_preview.go`、投入は `queue_enqueue.go`、実行と終了（`executeQueue`・`finishJob`・`applyAutoLock`）は `queue_run.go`、起動の判定（`schedule`・`runQueue`）は `schedule.go`、Blender の kill と `shuttingDown` は `queue_process.go`、起動時のリカバリは `queue_recover.go`。ジョブの側は、一覧・更新・削除・ロックが `job.go`、出力ファイル（画像・zip・ログ・削除）が `job_files.go`、出力データの掃除と容量の実測が `job_clean.go`（動画作成は `movie.go`）。
 
 `Enqueue()` → `PreviewRender()` でパラメータ解決 → `enqueuePreview()` でジョブ作成・キュー投入。
 画面の確認ダイアログからは `PreviewRender()` → `EnqueueWithPreview(preview)`。`preview` は画面から戻ってくるので信用せず、サーバで `PreviewRender()` し直して確認した内容（`sameRenderSettings`）と違えば `ErrPreviewChanged` で断り、サーバで作った方で `enqueuePreview()` する（Skill `brender-access-control`）。
@@ -74,7 +76,7 @@ Queue/Job のステータス一覧・データモデルはルートの `AGENTS.m
 
 kill 部分は内部関数 `killRunningQueues()` に共通化している。利用者の強制終了では kill したキュー ID を `userKilledQueues`（`sync.Map`）に kill より先に記録し、`finishJob` がそれを見て `error` ではなく `cancelled` にする（kill できなかったキューは記録を外し、ジョブはそのまま走り続ける）。利用者の操作から `KillRunningQueues()` を呼ぶと `shuttingDown` が立ったままになり、再起動まで全ジョブの完了記録と次キューの起動が止まるので呼ばないこと。
 
-## 起動時キューリカバリ (`api/queue.go`)
+## 起動時キューリカバリ (`api/queue_recover.go`)
 
 アプリがクラッシュや強制終了した場合、Queue テーブルに `running` 状態のレコードが残る。次回起動時に `RecoverStaleQueues()` がこれを検出してリカバリする。
 
@@ -110,7 +112,7 @@ api.QueueChangedHook = func(count int64) { emit("queue:changed", count) }
 ```
 新しいイベントを足すときも `emit` を経由すれば、Wails と SSE の両トランスポートへ確実に届く（フックごとに SSE ラップを書くと漏れる）。`broker` はフック設定より前に生成しておく。
 
-## Job deletion (`api/queue.go`)
+## Job deletion (`api/job.go`)
 
 `DeleteJob(id)` — ジョブの `OutputDir` を `os.RemoveAll` で削除してから DB レコードを削除する（ディレクトリが存在する場合のみ）。
 
