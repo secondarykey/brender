@@ -52,9 +52,9 @@ Queue/Job のステータス一覧・データモデルはルートの `AGENTS.m
 
 **同時実行制御**:
 - `getMaxConcurrentJobs()` が `model.GetEnv().MaxConcurrentJobs` を読む（デフォルト 1、0 以下も 1 扱い）。設定画面の Blender タブで変更可能。
-- `scheduleMu sync.Mutex` でスケジューラのレース防止
-- 投入時: 実行中キュー数が上限未満なら `MarkQueueStarting()`（DB で status を running に変更）してから `go executeQueue()` を起動。上限以上なら `waiting` のまま保留。
-- 完了・キャンセル時: `startNextWaiting()` を呼び出し、最古の `waiting` ジョブを昇格して起動。
+- **キューを起動する入口は `schedule()` だけ**。実行上限の空きの数だけ、待ち（`waiting`/`recovering`）を古い順（キュー ID = UUID v7 の順）に `MarkQueueStarting()`（DB で status を running に変更）してから、`scheduleMu` を放して `go runQueue()`（= `dispatchQueue`。テストで差し替える）で起動する。`shuttingDown` 中は何もしない
+- 呼ぶところ: 投入（待ちに入れてから呼ぶので、空きがあっても先に待っているジョブを追い越さない）・`finishJob`・`CancelQueue`・`SetMaxConcurrentJobs`（上限を上げたらすぐ起動）・`UpdateWorkDir`（lock を外したらすぐ起動）・`StartRecoveredQueues`。空きが増える・起動できるジョブが増える処理を足したら、そこからも呼ぶ
+- lock 中の作業ディレクトリのジョブは飛ばして後ろを起動する（先頭で全部を止めない）
 - 同一ワークスペースの重複投入禁止: `ExistsQueueByWorkspace` で事前チェック。ダブルクリック等の競合を防ぐため、この重複チェックから `CreateQueue` までを `enqueueMu sync.Mutex` で直列化する（`scheduleMu` とは別ロック、順序が交差しないためデッドロックしない）。出力先の基底パスは `enqueueMu` を取ったあとに `writableProjectBaseDir` で読む（データの移動中・作業ディレクトリのロック中は断る。取る前に読むと、読んだあとに移動が終わって旧パスへ出力してしまう）。移動の側も `enqueueMu` を取ってから「キューが無いこと」を確かめて移動中の印を付ける（`api/work_dir_move.go`）。
 
 **`executeQueue` の流れ**:
@@ -64,7 +64,7 @@ Queue/Job のステータス一覧・データモデルはルートの `AGENTS.m
 4. `model.UpdateQueueRunning(id, pid)` で PID・開始時刻を記録
 5. `errCh` から完了を待ち、`finishJob()` を呼ぶ
 
-`finishJob()` は完了時に `calcDirSize()` で出力ディレクトリ容量を計算して `Job.DiskSize` に保存、Queue レコードを削除後 `startNextWaiting()` → `notifyQueueChanged()` を呼ぶ。`shuttingDown` が立っているときは何もせずに戻る（Queue を `running` のまま残し、次回起動時のリカバリに任せる）。
+`finishJob()` は完了時に `calcDirSize()` で出力ディレクトリ容量を計算して `Job.DiskSize` に保存、Queue レコードを削除後 `schedule()` → `notifyQueueChanged()` を呼ぶ。`shuttingDown` が立っているときは何もせずに戻る（Queue を `running` のまま残し、次回起動時のリカバリに任せる）。
 
 **実行中キューの強制終了は2種類あり、`shuttingDown` を立てるのは終了時だけ**:
 | 関数 | 呼び出し元 | `shuttingDown` | kill されたジョブの後始末 |

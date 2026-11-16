@@ -98,6 +98,9 @@ func UpdateWorkDir(ctx context.Context, id uint, path string, priority int, stat
 	if err := model.UpdateWorkDir(wd); err != nil {
 		return nil, err
 	}
+	// lock を外したら、止めていた待ちのジョブを起動する
+	schedule()
+	notifyQueueChanged()
 	return wd, nil
 }
 

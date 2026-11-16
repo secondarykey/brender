@@ -93,5 +93,11 @@ func SetMaxConcurrentJobs(ctx context.Context, n int) error {
 		env = &model.Environment{}
 	}
 	env.MaxConcurrentJobs = n
-	return model.SetEnvironment(env)
+	if err := model.SetEnvironment(env); err != nil {
+		return err
+	}
+	// 上限を上げたら、すぐに待ちを起動する（次の終了や投入を待たない）
+	schedule()
+	notifyQueueChanged()
+	return nil
 }

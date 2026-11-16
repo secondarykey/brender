@@ -1,11 +1,9 @@
 package model
 
 import (
-	"errors"
 	"time"
 
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 	"golang.org/x/xerrors"
 )
 
@@ -89,18 +87,13 @@ func CountRunningQueues() (int64, error) {
 	return count, nil
 }
 
-// GetOldestWaitingQueue は待機中（waiting/recovering）のキューを登録順（id asc）で1件返す。
-// 存在しない場合は nil, nil を返す。
-func GetOldestWaitingQueue() (*Queue, error) {
-	var q Queue
-	res := db.Where("status IN ?", []string{QueueWaiting, QueueRecovering}).Order("id asc").First(&q)
-	if res.Error != nil {
-		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
-			return nil, nil
-		}
-		return nil, xerrors.Errorf("GetOldestWaitingQueue: %w", res.Error)
+// ListWaitingQueues は待機中（waiting/recovering）のキューを登録順（id asc。UUID v7 なので投入順）で返す。
+func ListWaitingQueues() ([]*Queue, error) {
+	var list []*Queue
+	if res := db.Where("status IN ?", []string{QueueWaiting, QueueRecovering}).Order("id asc").Find(&list); res.Error != nil {
+		return nil, xerrors.Errorf("ListWaitingQueues: %w", res.Error)
 	}
-	return &q, nil
+	return list, nil
 }
 
 func DeleteQueue(id string) error {

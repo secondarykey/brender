@@ -233,18 +233,14 @@ func killRunningQueues(marks *sync.Map) {
 	}
 }
 
-// StartRecoveredQueues はリカバリされた waiting キューのスケジューリングを開始する。
-// MaxConcurrentJobs の上限まで複数件を起動する。
+// StartRecoveredQueues は起動時に、リカバリしたキューと前回から残っていた待ちのキューを起動する。
 // QueueChangedHook 設定後に呼ぶこと。
 func StartRecoveredQueues() {
-	max := getMaxConcurrentJobs()
-	for i := int64(0); i < max; i++ {
-		startNextWaiting()
-	}
+	schedule()
 	notifyQueueChanged()
 }
 
-// scheduleMu はキューの起動判定と DB 更新をアトミックに行うためのミューテックス。
+// scheduleMu はキューの起動判定と DB 更新をアトミックに行うためのミューテックス（schedule が使う）。
 var scheduleMu sync.Mutex
 
 // writableProjectBaseDir は、プロジェクトに出力してよいか（移動中でない・作業ディレクトリがロックされていない）を
@@ -783,18 +779,8 @@ func enqueuePreview(ctx context.Context, projectID, workspaceID string, preview 
 		return nil, xerrors.Errorf("CreateQueue: %w", err)
 	}
 
-	// 同時実行数が上限未満なら即時起動、超えていれば待機キューのまま
-	scheduleMu.Lock()
-	running, _ := model.CountRunningQueues()
-	shouldStart := running < getMaxConcurrentJobs()
-	if shouldStart {
-		_ = model.MarkQueueStarting(id)
-	}
-	scheduleMu.Unlock()
-
-	if shouldStart {
-		go executeQueue(q, job)
-	}
+	// 待ちに入れてから起動の判断を schedule に任せる（空きがあっても先に待っているジョブを追い越さない）
+	schedule()
 	notifyQueueChanged()
 
 	return q, nil
@@ -902,17 +888,8 @@ func SamplesComparisonEnqueue(ctx context.Context, projectID, workspaceID string
 		return nil, xerrors.Errorf("CreateQueue: %w", err)
 	}
 
-	scheduleMu.Lock()
-	running, _ := model.CountRunningQueues()
-	shouldStart := running < getMaxConcurrentJobs()
-	if shouldStart {
-		_ = model.MarkQueueStarting(id)
-	}
-	scheduleMu.Unlock()
-
-	if shouldStart {
-		go executeSamplesComparison(q, job)
-	}
+	// 待ちに入れてから起動の判断を schedule に任せる（空きがあっても先に待っているジョブを追い越さない）
+	schedule()
 	notifyQueueChanged()
 
 	return q, nil
@@ -1180,7 +1157,7 @@ func finishJob(id string, success bool, errMsg string, diskSize int64) {
 	if success {
 		applyAutoLock(id, diskSize)
 	}
-	startNextWaiting()
+	schedule()
 	notifyQueueChanged()
 }
 
@@ -1226,37 +1203,82 @@ func applyAutoLock(jobID string, diskSize int64) {
 	}
 }
 
-// startNextWaiting は実行上限に空きがあれば待機中の最古ジョブを起動する。
-// scheduleMu でレースを防ぎ、DB 更新後にロックを解放してから goroutine を起動する。
-func startNextWaiting() {
+// schedule は実行上限の空きの数だけ、待ちのキューを古い順（キュー ID = UUID v7 の順）に起動する。
+// キューを起動する入口はここだけにする。空きが変わるとき・起動できるジョブが増えるときに呼ぶ:
+// 投入・ジョブの終了・キャンセル・同時実行数の変更・作業ディレクトリの更新（lock の解除）・起動時のリカバリ。
+// lock 中の作業ディレクトリのジョブは飛ばして後ろを起動する（先頭で全部を止めない）。
+// scheduleMu の中で DB を running にしてから、ロックを放して実行の goroutine を起動する。
+func schedule() {
+	if shuttingDown.Load() {
+		return
+	}
+	type start struct {
+		q *model.Queue
+		j *model.Job
+	}
+	var starts []start
+
 	scheduleMu.Lock()
-	running, _ := model.CountRunningQueues()
-	if running >= getMaxConcurrentJobs() {
+	running, err := model.CountRunningQueues()
+	if err != nil {
 		scheduleMu.Unlock()
+		log.Errorf("schedule: CountRunningQueues: %v", err)
 		return
 	}
-	q, err := model.GetOldestWaitingQueue()
-	if err != nil || q == nil {
-		scheduleMu.Unlock()
-		return
-	}
-	j, err := model.GetJob(q.ID)
-	if err != nil || j == nil {
-		scheduleMu.Unlock()
-		return
-	}
-	// 待機中にロックされた場合はジョブを起動しない
-	if p, pErr := model.SelectProject(j.ProjectID); pErr == nil && p != nil {
-		if wd, wErr := model.GetWorkDir(p.WorkDirID); wErr == nil && wd != nil && wd.Status == model.WorkDirStatusLock {
-			scheduleMu.Unlock()
-			return
+	free := getMaxConcurrentJobs() - running
+	if free > 0 {
+		waiting, err := model.ListWaitingQueues()
+		if err != nil {
+			log.Errorf("schedule: ListWaitingQueues: %v", err)
+		}
+		locked := map[string]bool{} // プロジェクトごとの、作業ディレクトリが lock 中か
+		for _, q := range waiting {
+			if free <= 0 {
+				break
+			}
+			j, err := model.GetJob(q.ID)
+			if err != nil || j == nil {
+				log.Errorf("schedule: job of queue %s not found: %v", q.ID, err)
+				continue
+			}
+			isLocked, seen := locked[j.ProjectID]
+			if !seen {
+				isLocked = workDirLocked(j.ProjectID)
+				locked[j.ProjectID] = isLocked
+			}
+			if isLocked {
+				continue
+			}
+			if err := model.MarkQueueStarting(q.ID); err != nil {
+				log.Errorf("schedule: MarkQueueStarting %s: %v", q.ID, err)
+				continue
+			}
+			starts = append(starts, start{q, j})
+			free--
 		}
 	}
-	_ = model.MarkQueueStarting(q.ID)
 	scheduleMu.Unlock()
 
-	go dispatchQueue(q, j)
+	for _, s := range starts {
+		go runQueue(s.q, s.j)
+	}
 }
+
+// workDirLocked はプロジェクトの作業ディレクトリが lock 中かを返す。
+func workDirLocked(projectID string) bool {
+	p, err := model.SelectProject(projectID)
+	if err != nil || p == nil {
+		return false
+	}
+	wd, err := model.GetWorkDir(p.WorkDirID)
+	return err == nil && wd != nil && wd.Status == model.WorkDirStatusLock
+}
+
+// runQueue はキューを実行する。テストでは差し替えて Blender を起動しない。
+// （宣言で dispatchQueue を入れると、dispatchQueue → finishJob → schedule → runQueue で初期化が循環する）
+var runQueue func(q *model.Queue, j *model.Job)
+
+func init() { runQueue = dispatchQueue }
 
 func dispatchQueue(q *model.Queue, j *model.Job) {
 	if j.JobType == model.JobTypeSamplesComparison {
@@ -1422,13 +1444,10 @@ func CancelQueue(ctx context.Context, id string) error {
 	if err := model.UpdateJobDone(q.ID, model.JobCancelled, "", &now, diskSize, model.JobDataCorrupted); err != nil {
 		log.Errorf("UpdateJobDone(cancelled) error: %v", err)
 	}
-	wasRunning := q.Status == model.QueueRunning
 	if err := model.DeleteQueue(q.ID); err != nil {
 		return err
 	}
-	if wasRunning {
-		startNextWaiting()
-	}
+	schedule()
 	notifyQueueChanged()
 	return nil
 }
