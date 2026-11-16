@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { screen, fireEvent, act, waitFor } from '@testing-library/react'
-import { renderWithI18n } from '../../test/helpers'
-import { RenderResultTab } from './JobPage'
-import { QueueApi, EnvironmentApi } from '../../lib/api'
+import { renderWithI18n } from '../../../test/helpers'
+import RenderResultTab from './RenderResultTab'
+import { QueueApi, EnvironmentApi } from '../../../lib/api'
 
 // 実行結果の「再生」が FPS に合わせてフレームを進めることを守るテスト:
 //   1 フレーム分（1000 / fps ms。frame_step が 2 以上ならその倍）経つまで次のフレームを出さない。
@@ -16,9 +16,9 @@ vi.hoisted(() => {
   }
 })
 
-vi.mock('../../lib/api/_client', () => ({ isWails: () => true }))
+vi.mock('../../../lib/api/_client', () => ({ isWails: () => true }))
 
-vi.mock('../../lib/api', () => ({
+vi.mock('../../../lib/api', () => ({
   QueueApi: {
     listJobImages:  vi.fn(),
     listJobFiles:   vi.fn(),
@@ -30,9 +30,9 @@ vi.mock('../../lib/api', () => ({
   CodesApi:       { getVideoFormats: vi.fn().mockResolvedValue([]) },
 }))
 
-vi.mock('../../lib/appEvents', () => ({ onAppEvent: () => () => {} }))
+vi.mock('../../../lib/appEvents', () => ({ onAppEvent: () => () => {} }))
 
-vi.mock('../../lib/toast', () => {
+vi.mock('../../../lib/toast', () => {
   const message = { showError: () => {}, clearError: () => {}, error: '' }
   const toast   = { showToast: () => {} }
   return { useToast: () => toast, useMessage: () => message }
