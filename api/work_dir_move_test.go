@@ -359,3 +359,78 @@ func TestChangeWorkDirSamePlace(t *testing.T) {
 		t.Errorf("work dir = %+v, want the path %s", wd, newPath)
 	}
 }
+
+// 動画を作っているプロジェクトは移動しない。移動中のプロジェクトでは動画を作らせない。
+func TestMoveAndMovieExcludeEachOther(t *testing.T) {
+	fx := newMoveFixture(t)
+
+	if err := beginMovie(fx.projectID); err != nil {
+		t.Fatalf("beginMovie: %v", err)
+	}
+	if err := StartMigrateProjectWorkDir(context.Background(), fx.projectID, fx.newWd.ID); !errors.Is(err, errMovieInProgress) {
+		t.Errorf("StartMigrateProjectWorkDir = %v, want errMovieInProgress", err)
+	}
+	if _, err := beginWorkDirChange(fx.oldWd.ID); !errors.Is(err, errMovieInProgress) {
+		t.Errorf("beginWorkDirChange = %v, want errMovieInProgress", err)
+	}
+	endMovie(fx.projectID)
+
+	if err := beginProjectMove(fx.projectID, fx.oldWd.ID, fx.newWd.ID); err != nil {
+		t.Fatalf("beginProjectMove after the movie: %v", err)
+	}
+	if err := beginMovie(fx.projectID); !errors.Is(err, errProjectMoving) {
+		t.Errorf("beginMovie while moving = %v, want errProjectMoving", err)
+	}
+	endProjectMove(fx.projectID, fx.oldWd.ID, fx.newWd.ID)
+	if len(moviesInProgress) != 0 {
+		t.Errorf("moviesInProgress = %v, want empty", moviesInProgress)
+	}
+}
+
+// CreateMovie は ffmpeg が終わったら数を戻す。起動できなかったときも戻す。
+func TestCreateMovieReleasesCount(t *testing.T) {
+	fx := newMoveFixture(t)
+	wait := waitMigration(t)
+	ctx := context.Background()
+
+	// 起動できない（ffmpeg が無い）
+	if err := model.SetEnvironment(&model.Environment{FfmpegCmd: filepath.Join(t.TempDir(), "no-ffmpeg")}); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := CreateMovie(ctx, fx.projectID, "file", "ws", fx.jobID, 30, "mp4", ""); err == nil {
+		t.Fatal("CreateMovie with a missing ffmpeg: err = nil")
+	}
+	if n := moviesInProgress[fx.projectID]; n != 0 {
+		t.Errorf("count after a failed start = %d, want 0", n)
+	}
+
+	// 起動して終わる（テストの実行ファイルを ffmpeg の代わりにする。知らない引数ですぐ終わる）
+	self, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := model.SetEnvironment(&model.Environment{FfmpegCmd: self}); err != nil {
+		t.Fatal(err)
+	}
+	_, ch, err := CreateMovie(ctx, fx.projectID, "file", "ws", fx.jobID, 30, "mp4", "")
+	if err != nil {
+		t.Fatalf("CreateMovie: %v", err)
+	}
+	select {
+	case <-ch:
+	case <-time.After(30 * time.Second):
+		t.Fatal("the movie did not finish")
+	}
+	movingMu.Lock()
+	n := moviesInProgress[fx.projectID]
+	movingMu.Unlock()
+	if n != 0 {
+		t.Errorf("count after the movie = %d, want 0", n)
+	}
+	if err := StartMigrateProjectWorkDir(ctx, fx.projectID, fx.newWd.ID); err != nil {
+		t.Fatalf("StartMigrateProjectWorkDir after the movie: %v", err)
+	}
+	if s := wait(); s != "done" {
+		t.Errorf("status = %q, want done", s)
+	}
+}

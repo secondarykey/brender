@@ -18,10 +18,17 @@ func CreateMovie(ctx context.Context, projectID string, fileID string, workspace
 		return "", nil, err
 	}
 
-	// 移動中に作ると、動画が旧パスに残って消える
-	if err := checkProjectNotMoving(projectID); err != nil {
+	// 移動中に作ると動画が旧パスに残って消えるので断る。作っているあいだはプロジェクトを移動させない
+	if err := beginMovie(projectID); err != nil {
 		return "", nil, err
 	}
+	started := false
+	defer func() {
+		if !started {
+			endMovie(projectID)
+		}
+	}()
+
 	baseDir, err := GetProjectBaseDir(projectID)
 	if err != nil {
 		return "", nil, xerrors.Errorf("GetProjectBaseDir error: %w", err)
@@ -69,5 +76,13 @@ func CreateMovie(ctx context.Context, projectID string, fileID string, workspace
 	if err != nil {
 		return "", nil, xerrors.Errorf("ffmpeg.CreateMovie() error: %w", err)
 	}
-	return mvFile, ch, nil
+	// ffmpeg が終わったら数を減らす（終わりは ch に1回だけ来る）
+	started = true
+	done := make(chan error, 1)
+	go func() {
+		err := <-ch
+		endMovie(projectID)
+		done <- err
+	}()
+	return mvFile, done, nil
 }

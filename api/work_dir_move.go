@@ -5,8 +5,8 @@ package api
 // データを失わないための決まり:
 //   - 先に全部コピーし、全部できてから DB を1つのトランザクションで切り替え、最後に旧パスを消す。
 //     コピーか DB の書き換えに失敗したら、作ったコピーだけを消す（DB と旧パスはそのまま）
-//   - 移動中のプロジェクトには書き込ませない（投入・動画作成を断る。checkProjectNotMoving）。
-//     キューにジョブ（待ち・実行中）があるプロジェクトは移動しない
+//   - 移動中のプロジェクトには書き込ませない（投入・動画作成を断る。checkProjectNotMoving・beginMovie）。
+//     キューにジョブ（待ち・実行中）があるプロジェクト・動画を作っているプロジェクトは移動しない
 //   - 同じプロジェクト・同じ作業ディレクトリにかかわる移動を同時に走らせない
 //   - 移動先が同じ場所・元の中・元を含む場所なら移動しない。移動先に同じプロジェクトのフォルダがあれば移動しない
 
@@ -25,17 +25,18 @@ import (
 )
 
 var (
-	// movingMu は下の 3 つを守る。enqueueMu と一緒に取るときは enqueueMu を先に取る
+	// movingMu は下の 4 つを守る。enqueueMu と一緒に取るときは enqueueMu を先に取る
 	movingMu         sync.Mutex
 	movingProjects   = map[string]bool{} // 移動中のプロジェクト
 	movingWorkDirs   = map[uint]int{}    // 作業ディレクトリごとの、そこから・そこへ移しているプロジェクトの数
 	changingWorkDirs = map[uint]bool{}   // パスを変えている作業ディレクトリ
+	moviesInProgress = map[string]int{}  // プロジェクトごとの、作っている動画の数（beginMovie・endMovie）
 )
 
 var errProjectMoving = errors.New("プロジェクトのデータを移動中です。移動が終わってから実行してください")
 
 // checkProjectNotMoving は、プロジェクトのデータを移動中ならエラーを返す。
-// 投入（enqueueMu を取ったあと）と動画作成から呼ぶ。
+// 投入（enqueueMu を取ったあと）から呼ぶ。動画作成は数えるので beginMovie を使う。
 func checkProjectNotMoving(projectID string) error {
 	p, err := model.SelectProject(projectID)
 	if err != nil || p == nil {
@@ -45,6 +46,43 @@ func checkProjectNotMoving(projectID string) error {
 	defer movingMu.Unlock()
 	if movingProjects[projectID] || changingWorkDirs[p.WorkDirID] {
 		return errProjectMoving
+	}
+	return nil
+}
+
+// beginMovie は動画を作り始めることを記録する。プロジェクトのデータを移動中ならエラーを返す。
+// 確かめることと数えることを movingMu の中で一緒に行う（間に移動が始まらないように）。
+// 作り終えたら endMovie を呼ぶ。数えているあいだ、そのプロジェクトは移動しない。
+func beginMovie(projectID string) error {
+	p, err := model.SelectProject(projectID)
+	if err != nil || p == nil {
+		return xerrors.Errorf("project not found: %w", err)
+	}
+	movingMu.Lock()
+	defer movingMu.Unlock()
+	if movingProjects[projectID] || changingWorkDirs[p.WorkDirID] {
+		return errProjectMoving
+	}
+	moviesInProgress[projectID]++
+	return nil
+}
+
+func endMovie(projectID string) {
+	movingMu.Lock()
+	defer movingMu.Unlock()
+	if moviesInProgress[projectID]--; moviesInProgress[projectID] <= 0 {
+		delete(moviesInProgress, projectID)
+	}
+}
+
+var errMovieInProgress = errors.New("動画を作っているため移動できません。動画ができてから実行してください")
+
+// checkNoMovies は、プロジェクトのどれかで動画を作っていればエラーを返す。movingMu を取ってから呼ぶ。
+func checkNoMovies(projectIDs []string) error {
+	for _, pid := range projectIDs {
+		if moviesInProgress[pid] > 0 {
+			return errMovieInProgress
+		}
 	}
 	return nil
 }
@@ -73,6 +111,9 @@ func beginProjectMove(projectID string, from, to uint) error {
 		return xerrors.New("作業ディレクトリのパスを変更中です。終わってから実行してください")
 	}
 	if err := checkNoQueues([]string{projectID}); err != nil {
+		return err
+	}
+	if err := checkNoMovies([]string{projectID}); err != nil {
 		return err
 	}
 	movingProjects[projectID] = true
@@ -110,6 +151,9 @@ func beginWorkDirChange(id uint) ([]string, error) {
 		ids = append(ids, p.ID)
 	}
 	if err := checkNoQueues(ids); err != nil {
+		return nil, err
+	}
+	if err := checkNoMovies(ids); err != nil {
 		return nil, err
 	}
 	changingWorkDirs[id] = true
