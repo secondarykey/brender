@@ -22,7 +22,7 @@ import (
 
 // thumbnailPath はサムネイル種別ごとの thumbnail.jpg のパスを返す（必要なら生成する）。
 // workspaceID != "" → ワークスペース、fileID != "" → ファイル、どちらも "" → プロジェクト。
-// 生成できない場合は ok=false。base64 版・URL 版・HTTP 配信で共用する。
+// 生成できない場合は ok=false。取得・設定・HTTP 配信で共用する。
 func thumbnailPath(projectID, fileID, workspaceID string) (string, bool) {
 	// 権限はファイル単位で見るので、ID の組が正しいことをここで確かめる（checkResourceIDs）
 	if checkResourceIDs(projectID, fileID, workspaceID) != nil {
@@ -75,13 +75,12 @@ func thumbnailPath(projectID, fileID, workspaceID string) (string, bool) {
 	}
 }
 
-// thumbnailURL はサーバモードでサムネイルを配信する相対URLを返す。
-// 生成できない場合は "" を返す（フロントは空ならプレースホルダ表示・再取得する）。
-// mtime を v クエリに付けて再生成時にブラウザキャッシュを更新する。
-func thumbnailURL(projectID, fileID, workspaceID string) string {
-	p, ok := thumbnailPath(projectID, fileID, workspaceID)
-	if !ok {
-		return ""
+// thumbnailRef は path のサムネイルを画面へ渡す形にする。ウィンドウには base64 のデータ URI、
+// ブラウザには URL（GET /thumbnail）。URL ならブラウザのキャッシュ（304）が効く。
+// 返す形はここだけで決める（取得・設定のどの関数もここを通す）。
+func thumbnailRef(ctx context.Context, path, projectID, fileID, workspaceID string) (string, error) {
+	if !FromBrowser(ctx) {
+		return imageToBase64(path)
 	}
 	q := url.Values{}
 	q.Set("project_id", projectID)
@@ -91,34 +90,46 @@ func thumbnailURL(projectID, fileID, workspaceID string) string {
 	if workspaceID != "" {
 		q.Set("workspace_id", workspaceID)
 	}
-	if info, err := os.Stat(p); err == nil {
-		q.Set("v", fmt.Sprintf("%d", info.ModTime().Unix()))
+	// 作り直したら URL を変えてキャッシュを使わせない。秒では、同じ秒に2回設定したときに古い画像が出る
+	if info, err := os.Stat(path); err == nil {
+		q.Set("v", fmt.Sprintf("%d", info.ModTime().UnixNano()))
 	}
-	return "/thumbnail?" + q.Encode()
+	return "/thumbnail?" + q.Encode(), nil
 }
 
-// GetFileThumbnailURL はファイルサムネイルの配信URLを返す（サーバモード用）。
-func GetFileThumbnailURL(ctx context.Context, projectID, fileID string) (string, error) {
+// getThumbnail はサムネイルを画面へ渡す形で返す（必要なら作る）。作れなければ空文字（エラーなし）。
+func getThumbnail(ctx context.Context, projectID, fileID, workspaceID string) (string, error) {
+	p, ok := thumbnailPath(projectID, fileID, workspaceID)
+	if !ok {
+		return "", nil
+	}
+	return thumbnailRef(ctx, p, projectID, fileID, workspaceID)
+}
+
+// GetFileThumbnail はファイルのサムネイルを返す（{baseDir}/{projectID}/{fileID}/thumbnail.jpg）。
+// 無ければそのファイルの最新の完了した Test ジョブの出力から作って保存する。作れなければ空文字（エラーなし）。
+func GetFileThumbnail(ctx context.Context, projectID, fileID string) (string, error) {
 	if err := requireFileAccess(ctx, fileID); err != nil {
 		return "", err
 	}
-	return thumbnailURL(projectID, fileID, ""), nil
+	return getThumbnail(ctx, projectID, fileID, "")
 }
 
-// GetProjectThumbnailURL はプロジェクトサムネイルの配信URLを返す（サーバモード用）。
-func GetProjectThumbnailURL(ctx context.Context, projectID string) (string, error) {
+// GetProjectThumbnail はプロジェクトのサムネイルを返す（{baseDir}/{projectID}/thumbnail.jpg）。無ければ空文字。
+func GetProjectThumbnail(ctx context.Context, projectID string) (string, error) {
 	if err := requireProjectAccess(ctx, projectID); err != nil {
 		return "", err
 	}
-	return thumbnailURL(projectID, "", ""), nil
+	return getThumbnail(ctx, projectID, "", "")
 }
 
-// GetWorkspaceThumbnailURL はワークスペースサムネイルの配信URLを返す（サーバモード用）。
-func GetWorkspaceThumbnailURL(ctx context.Context, projectID, fileID, workspaceID string) (string, error) {
+// GetWorkspaceThumbnail はワークスペースのサムネイルを返す（{baseDir}/{projectID}/{fileID}/{workspaceID}/thumbnail.jpg）。
+// 無ければそのワークスペースの完了済みジョブの出力から作って保存する。作れなければ空文字（エラーなし）。
+func GetWorkspaceThumbnail(ctx context.Context, projectID, fileID, workspaceID string) (string, error) {
 	if err := requireFileAccess(ctx, fileID); err != nil {
 		return "", err
 	}
-	return thumbnailURL(projectID, fileID, workspaceID), nil
+	return getThumbnail(ctx, projectID, fileID, workspaceID)
 }
 
 // ServeThumbnailPath は HTTP 配信用にサムネイルの実パスを返す（アクセス権限チェック込み）。
@@ -154,18 +165,6 @@ func CreateDefaultWorkspace(ctx context.Context, projectID string, file *model.P
 	// 開始 0・終了 -1 はシーンのフレーム範囲を使う（TestEnqueue がその中間の1枚を出す）
 	_, err = TestEnqueue(ctx, projectID, ws.ID, TestRenderParams{StartFrame: 0, EndFrame: -1})
 	return err
-}
-
-// GetFileThumbnail はファイルのサムネイル画像を base64 データURIで返す。
-// {baseDir}/{projectID}/{fileID}/thumbnail.jpg が存在すればそれを返す。
-// 存在しない場合はそのファイルの最新の完了した Test ジョブの出力から JPEG を生成して保存する。
-// サムネイルが作れない場合は空文字を返す（エラーなし）。
-func GetFileThumbnail(projectID string, fileID string) (string, error) {
-	p, ok := thumbnailPath(projectID, fileID, "")
-	if !ok {
-		return "", nil
-	}
-	return imageToBase64(p)
 }
 
 func findFirstImage(dir string) (string, error) {
@@ -270,7 +269,7 @@ func convertToJPEG(src, dstDir, dstPath string) error {
 	return jpeg.Encode(f, canvas, &jpeg.Options{Quality: 85})
 }
 
-// SetProjectThumbnail は imagePath の画像を 640x360 JPEG に変換してプロジェクトサムネイルとして保存し、base64 データURIを返す。
+// SetProjectThumbnail は imagePath の画像を 640x360 JPEG に変換してプロジェクトサムネイルとして保存し、画面へ渡す形（thumbnailRef）で返す。
 // プロジェクトの owner・editor だけ。
 func SetProjectThumbnail(ctx context.Context, projectID, imagePath string) (string, error) {
 	if err := requireProjectRole(ctx, projectID, model.RoleOwner, model.RoleEditor); err != nil {
@@ -288,10 +287,10 @@ func SetProjectThumbnail(ctx context.Context, projectID, imagePath string) (stri
 	if err := convertToJPEG(imagePath, thumbDir, thumbPath); err != nil {
 		return "", xerrors.Errorf("SetProjectThumbnail: %w", err)
 	}
-	return imageToBase64(thumbPath)
+	return thumbnailRef(ctx, thumbPath, projectID, "", "")
 }
 
-// SetFileThumbnail は imagePath の画像を 640x360 JPEG に変換してファイルサムネイルとして保存し、base64 データURIを返す。
+// SetFileThumbnail は imagePath の画像を 640x360 JPEG に変換してファイルサムネイルとして保存し、画面へ渡す形（thumbnailRef）で返す。
 func SetFileThumbnail(ctx context.Context, projectID, fileID, imagePath string) (string, error) {
 	// editor 以上の権限が必要（サムネイル設定）
 	if err := requireFileRole(ctx, fileID, rolesEditorUp...); err != nil {
@@ -312,10 +311,10 @@ func SetFileThumbnail(ctx context.Context, projectID, fileID, imagePath string) 
 	if err := convertToJPEG(imagePath, thumbDir, thumbPath); err != nil {
 		return "", xerrors.Errorf("SetFileThumbnail: %w", err)
 	}
-	return imageToBase64(thumbPath)
+	return thumbnailRef(ctx, thumbPath, projectID, fileID, "")
 }
 
-// SetWorkspaceThumbnail は imagePath の画像を 640x360 JPEG に変換してワークスペースサムネイルとして保存し、base64 データURIを返す。
+// SetWorkspaceThumbnail は imagePath の画像を 640x360 JPEG に変換してワークスペースサムネイルとして保存し、画面へ渡す形（thumbnailRef）で返す。
 func SetWorkspaceThumbnail(ctx context.Context, projectID, fileID, workspaceID, imagePath string) (string, error) {
 	// editor 以上の権限が必要（サムネイル設定）
 	if err := requireFileRole(ctx, fileID, rolesEditorUp...); err != nil {
@@ -336,10 +335,10 @@ func SetWorkspaceThumbnail(ctx context.Context, projectID, fileID, workspaceID, 
 	if err := convertToJPEG(imagePath, thumbDir, thumbPath); err != nil {
 		return "", xerrors.Errorf("SetWorkspaceThumbnail: %w", err)
 	}
-	return imageToBase64(thumbPath)
+	return thumbnailRef(ctx, thumbPath, projectID, fileID, workspaceID)
 }
 
-// SetFileThumbnailFromWorkspace はワークスペースのサムネイル（またはジョブ出力）をファイルサムネイルとして保存し、base64 データURIを返す。
+// SetFileThumbnailFromWorkspace はワークスペースのサムネイル（またはジョブ出力）をファイルサムネイルとして保存し、画面へ渡す形（thumbnailRef）で返す。
 func SetFileThumbnailFromWorkspace(ctx context.Context, projectID, fileID, workspaceID string) (string, error) {
 	// editor 以上の権限が必要（サムネイル設定）
 	if err := requireFileRole(ctx, fileID, rolesEditorUp...); err != nil {
@@ -353,32 +352,20 @@ func SetFileThumbnailFromWorkspace(ctx context.Context, projectID, fileID, works
 		return "", xerrors.Errorf("SetFileThumbnailFromWorkspace: %w", err)
 	}
 
-	wsThumbPath := filepath.Join(baseDir, projectID, fileID, workspaceID, "thumbnail.jpg")
+	// ワークスペースのサムネイル（無ければジョブの出力から作る）を元にする
+	srcPath, ok := thumbnailPath(projectID, fileID, workspaceID)
+	if !ok {
+		return "", xerrors.New("サムネイルにする画像が見つかりません")
+	}
 	fileThumbDir := filepath.Join(baseDir, projectID, fileID)
 	fileThumbPath := filepath.Join(fileThumbDir, "thumbnail.jpg")
-
-	srcPath := ""
-	if _, err := os.Stat(wsThumbPath); err == nil {
-		srcPath = wsThumbPath
-	} else {
-		job, err := model.GetLatestJobForThumbnail(workspaceID)
-		if err != nil || job == nil {
-			return "", xerrors.New("サムネイルにする画像が見つかりません")
-		}
-		imagePath, err := findFirstImage(job.OutputDir)
-		if err != nil || imagePath == "" {
-			return "", xerrors.New("サムネイルにする画像が見つかりません")
-		}
-		srcPath = imagePath
-	}
-
 	if err := convertToJPEG(srcPath, fileThumbDir, fileThumbPath); err != nil {
 		return "", xerrors.Errorf("SetFileThumbnailFromWorkspace: %w", err)
 	}
-	return imageToBase64(fileThumbPath)
+	return thumbnailRef(ctx, fileThumbPath, projectID, fileID, "")
 }
 
-// SetProjectThumbnailFromFile はファイルのサムネイル（またはジョブ出力）をプロジェクトサムネイルとして保存し、base64 データURIを返す。
+// SetProjectThumbnailFromFile はファイルのサムネイル（またはジョブ出力）をプロジェクトサムネイルとして保存し、画面へ渡す形（thumbnailRef）で返す。
 // プロジェクトの owner・editor で、そのファイルを見られる人だけ。
 func SetProjectThumbnailFromFile(ctx context.Context, projectID, fileID string) (string, error) {
 	if err := requireProjectRole(ctx, projectID, model.RoleOwner, model.RoleEditor); err != nil {
@@ -392,51 +379,17 @@ func SetProjectThumbnailFromFile(ctx context.Context, projectID, fileID string) 
 		return "", xerrors.Errorf("SetProjectThumbnailFromFile: %w", err)
 	}
 
-	fileThumbPath := filepath.Join(baseDir, projectID, fileID, "thumbnail.jpg")
+	// ファイルのサムネイル（無ければ Test ジョブの出力から作る）を元にする
+	srcPath, ok := thumbnailPath(projectID, fileID, "")
+	if !ok {
+		return "", xerrors.New("サムネイルにする画像が見つかりません")
+	}
 	projectThumbDir := filepath.Join(baseDir, projectID)
 	projectThumbPath := filepath.Join(projectThumbDir, "thumbnail.jpg")
-
-	srcPath := ""
-	if _, err := os.Stat(fileThumbPath); err == nil {
-		srcPath = fileThumbPath
-	} else {
-		job, err := model.GetLatestTestJobByFile(fileID)
-		if err != nil || job == nil {
-			return "", xerrors.New("サムネイルにする画像が見つかりません")
-		}
-		imagePath, err := findFirstImage(job.OutputDir)
-		if err != nil || imagePath == "" {
-			return "", xerrors.New("サムネイルにする画像が見つかりません")
-		}
-		srcPath = imagePath
-	}
-
 	if err := convertToJPEG(srcPath, projectThumbDir, projectThumbPath); err != nil {
 		return "", xerrors.Errorf("SetProjectThumbnailFromFile: %w", err)
 	}
-	return imageToBase64(projectThumbPath)
-}
-
-// GetProjectThumbnail はプロジェクトのサムネイル画像を base64 データURIで返す。
-// {baseDir}/{projectID}/thumbnail.jpg が存在すればそれを返す。存在しない場合は空文字を返す。
-func GetProjectThumbnail(projectID string) (string, error) {
-	p, ok := thumbnailPath(projectID, "", "")
-	if !ok {
-		return "", nil
-	}
-	return imageToBase64(p)
-}
-
-// GetWorkspaceThumbnail はワークスペースのサムネイル画像を base64 データURIで返す。
-// {baseDir}/{projectID}/{fileID}/{workspaceID}/thumbnail.jpg が存在すればそれを返す。
-// 存在しない場合はそのワークスペースの完了済みジョブ出力から JPEG を生成して保存する。
-// サムネイルが作れない場合は空文字を返す（エラーなし）。
-func GetWorkspaceThumbnail(projectID, fileID, workspaceID string) (string, error) {
-	p, ok := thumbnailPath(projectID, fileID, workspaceID)
-	if !ok {
-		return "", nil
-	}
-	return imageToBase64(p)
+	return thumbnailRef(ctx, projectThumbPath, projectID, "", "")
 }
 
 func imageToBase64(path string) (string, error) {

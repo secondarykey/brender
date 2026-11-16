@@ -43,10 +43,7 @@ func (s *Workspace) Delete(ctx context.Context, projectID, workspaceID string, f
 
 // GetThumbnail はウィンドウには base64 のデータ URI、ブラウザには URL で返す（Project.GetFileThumbnail と同じ）。
 func (s *Workspace) GetThumbnail(ctx context.Context, projectID string, fileID string, workspaceID string) (string, error) {
-	if api.FromBrowser(ctx) {
-		return api.GetWorkspaceThumbnailURL(ctx, projectID, fileID, workspaceID)
-	}
-	return api.GetWorkspaceThumbnail(projectID, fileID, workspaceID)
+	return api.GetWorkspaceThumbnail(ctx, projectID, fileID, workspaceID)
 }
 
 func (s *Workspace) SetThumbnail(ctx context.Context, projectID string, fileID string, workspaceID string, imagePath string) (string, error) {

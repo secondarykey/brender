@@ -30,11 +30,12 @@ Queue/Job のステータス一覧・データモデルはルートの `AGENTS.m
 - 元画像をアスペクト比保持でキャンバスに収まる最大サイズに縮小（長辺基準 `min(W/srcW, H/srcH)`）
 - 中央配置、JPEG quality 85
 
-**パス解決** (`thumbnailPath`): サムネイル種別（プロジェクト/ファイル/ワークスペース）ごとの `thumbnail.jpg` のパスを返す共通ヘルパー。無ければ完了ジョブ出力から生成する。base64 版・URL 版・HTTP 配信で共用する。
+**パス解決** (`thumbnailPath`): サムネイル種別（プロジェクト/ファイル/ワークスペース）ごとの `thumbnail.jpg` のパスを返す共通ヘルパー。無ければ完了ジョブ出力から生成する。取得・設定（`Set*From*` の元の画像）・HTTP 配信で共用する。
 
-**取得の2形態**:
-- **base64**（Wails デスクトップ）: `GetFileThumbnail` / `GetProjectThumbnail` / `GetWorkspaceThumbnail` が `thumbnailPath` + `imageToBase64` でデータURIを返す。
-- **URL 配信**（サーバモード）: `GetFileThumbnailURL` 等が `/thumbnail?project_id=...&file_id=...&v={mtime}` を返し、実体は REST の `GET /thumbnail`（`api.ServeThumbnailPath`、認証+アクセス権限チェック+`Last-Modified` による 304）が配信する。base64 の 33% 肥大を避け、ブラウザキャッシュを効かせる。`v={mtime}` で再生成時にキャッシュを更新。存在しなければ空文字（フロントはプレースホルダ表示のまま `queue:changed` で再取得）。
+**返す形は2つ。決めるのは `thumbnailRef` だけ**（呼び出し元で分けない。サービスに分かれ道を書かない）:
+- `GetFileThumbnail` / `GetProjectThumbnail` / `GetWorkspaceThumbnail`（ctx で権限を見る）と `Set*Thumbnail*` は、どれも最後に `thumbnailRef(ctx, path, ...)` を通す
+- **base64**（ウィンドウ。`api.FromBrowser(ctx)` が false）: `imageToBase64` でデータURIを返す。
+- **URL 配信**（ブラウザ）: `/thumbnail?project_id=...&file_id=...&v={mtime の ns}` を返し、実体は REST の `GET /thumbnail`（`api.ServeThumbnailPath`、認証+アクセス権限チェック+`Last-Modified` による 304）が配信する。base64 の 33% 肥大を避け、ブラウザキャッシュを効かせる。`v` で再生成時にキャッシュを更新する（秒だと同じ秒に2回設定したときに古い画像が出るので ns）。存在しなければ空文字（フロントはプレースホルダ表示のまま `queue:changed` で再取得）。
 - フロントの `ProjectApi.getFileThumbnail` はどちらのモードでも文字列（データURI or URL）を返すため、`<img src>` にそのまま渡せる（消費側コードはモード非依存）。
 
 **隠しワークスペース（`is_system`）は廃止**: 以前はサムネイル用のワークスペースを `IsSystem=true` で作って一覧から隠していたため、ワークスペースもジョブも画面から辿れず浮いていた。起動時の `model.migrateSystemWorkspaces` が `workspaces.is_system` 列を消し、既存分を普通のワークスペースとして一覧に出す（列が無ければ何もしない）。そこにあったのも Test ジョブなので、ファイルのサムネイルはそのまま辿れる。

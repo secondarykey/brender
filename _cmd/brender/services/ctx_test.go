@@ -66,11 +66,6 @@ var ctxFreeMethods = map[string]string{
 
 // ctxFreeAPICalls は ctx を渡さなくてよい api の呼び出し（"型.メソッド→api.関数"）と、その理由。
 var ctxFreeAPICalls = map[string]string{
-	// ウィンドウ（owner）だけが通る分かれ道の先。ブラウザは api.FromBrowser(ctx) で URL 版へ行く
-	"Project.GetFileThumbnail→api.GetFileThumbnail":       "ウィンドウだけ",
-	"Project.GetProjectThumbnail→api.GetProjectThumbnail": "ウィンドウだけ",
-	"Workspace.GetThumbnail→api.GetWorkspaceThumbnail":    "ウィンドウだけ",
-
 	"Auth.ListUsers→api.ListUsers":                  "ctxFreeMethods と同じ",
 	"Auth.GetUser→api.GetUser":                      "ctxFreeMethods と同じ",
 	"Auth.ListGroups→api.ListGroups":                "ctxFreeMethods と同じ",

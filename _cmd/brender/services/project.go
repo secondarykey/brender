@@ -57,21 +57,14 @@ func (s *Project) DeleteFile(ctx context.Context, fileID string, force bool) err
 	return api.DeleteProjectFile(ctx, fileID, force)
 }
 
-// サムネイルはウィンドウには base64 のデータ URI、ブラウザには URL（GET /thumbnail）で返す。
-// URL ならブラウザのキャッシュ（304）が効く。
+// サムネイルはウィンドウには base64 のデータ URI、ブラウザには URL で返る（api.thumbnailRef が決める）。
 
 func (s *Project) GetFileThumbnail(ctx context.Context, projectID string, fileID string) (string, error) {
-	if api.FromBrowser(ctx) {
-		return api.GetFileThumbnailURL(ctx, projectID, fileID)
-	}
-	return api.GetFileThumbnail(projectID, fileID)
+	return api.GetFileThumbnail(ctx, projectID, fileID)
 }
 
 func (s *Project) GetProjectThumbnail(ctx context.Context, projectID string) (string, error) {
-	if api.FromBrowser(ctx) {
-		return api.GetProjectThumbnailURL(ctx, projectID)
-	}
-	return api.GetProjectThumbnail(projectID)
+	return api.GetProjectThumbnail(ctx, projectID)
 }
 
 func (s *Project) SetProjectThumbnail(ctx context.Context, projectID string, imagePath string) (string, error) {

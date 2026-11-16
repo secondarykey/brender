@@ -98,6 +98,9 @@ func TestResourceFunctionsDenyWithoutRole(t *testing.T) {
 		"GetProjectDiskSize":     func() error { _, err := GetProjectDiskSize(ctx, hp); return err },
 		"GetFileTags":            func() error { _, err := GetFileTags(ctx, hf); return err },
 		"GetImageBase64":         func() error { _, err := GetImageBase64(ctx, hiddenImage); return err },
+		"GetFileThumbnail":       func() error { _, err := GetFileThumbnail(ctx, hp, hf); return err },
+		"GetProjectThumbnail":    func() error { _, err := GetProjectThumbnail(ctx, hp); return err },
+		"GetWorkspaceThumbnail":  func() error { _, err := GetWorkspaceThumbnail(ctx, hp, hf, hw); return err },
 
 		// 見られるが変えられないもの（viewer）
 		"PreviewRender(viewer)": func() error { _, err := PreviewRender(ctx, sp, sw); return err },
