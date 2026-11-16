@@ -245,11 +245,12 @@ func run() error {
 		emit("blender:warning", warnings)
 	}
 	// 移行進捗イベント
-	api.MigrationHook = func(projectID string, status string, pct float64) {
+	api.MigrationHook = func(projectID string, status string, pct float64, errMsg string) {
 		emit("workdir:migrate", map[string]interface{}{
 			"project_id": projectID,
 			"status":     status,
 			"pct":        pct,
+			"error":      errMsg,
 		})
 	}
 	// 動画作成完了イベント
@@ -261,11 +262,12 @@ func run() error {
 		})
 	}
 	// パス変更進捗イベント
-	api.WorkDirChangeDirHook = func(workDirID uint, status string, pct float64) {
+	api.WorkDirChangeDirHook = func(workDirID uint, status string, pct float64, errMsg string) {
 		emit("workdir:changedir", map[string]interface{}{
 			"work_dir_id": workDirID,
 			"status":      status,
 			"pct":         pct,
+			"error":       errMsg,
 		})
 	}
 	// システムモニタリング（CPU/GPU 使用率）

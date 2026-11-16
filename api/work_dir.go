@@ -10,11 +10,12 @@ import (
 )
 
 // MigrationHook はプロジェクト移行の進捗・完了時に呼ばれるフック。
-// 呼び出し元（Wails サービス層など）で設定する。
-var MigrationHook func(projectID string, status string, pct float64)
+// 呼び出し元（Wails サービス層など）で設定する。status が "error" のとき errMsg に失敗の理由が入る。
+var MigrationHook func(projectID string, status string, pct float64, errMsg string)
 
 // WorkDirChangeDirHook は作業ディレクトリのパス変更進捗・完了時に呼ばれるフック。
-var WorkDirChangeDirHook func(workDirID uint, status string, pct float64)
+// status が "error" のとき errMsg に失敗の理由が入る。
+var WorkDirChangeDirHook func(workDirID uint, status string, pct float64, errMsg string)
 
 // GetProjectBaseDir はプロジェクトの作業ディレクトリ基底パスを返す。
 // WorkDirID が未設定（0）の場合はデフォルト作業ディレクトリを自動割り当てする。

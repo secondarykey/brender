@@ -222,20 +222,20 @@ func StartMigrateProjectWorkDir(ctx context.Context, projectID string, newWorkDi
 	ok = true
 	go func() {
 		defer endProjectMove(projectID, from, newWorkDirID)
-		notify := func(status string, pct float64) {
+		notify := func(status string, pct float64, errMsg string) {
 			if MigrationHook != nil {
-				MigrationHook(projectID, status, pct)
+				MigrationHook(projectID, status, pct, errMsg)
 			}
 		}
-		err := runMove(items, func(pct float64) { notify("running", pct) }, func() error {
+		err := runMove(items, func(pct float64) { notify("running", pct, "") }, func() error {
 			return model.MoveProjectWorkDir(projectID, newWorkDirID, oldBase, newBase)
 		})
 		if err != nil {
 			log.Errorf("StartMigrateProjectWorkDir %s: %v", projectID, err)
-			notify("error", 0)
+			notify("error", 0, err.Error())
 			return
 		}
-		notify("done", 1.0)
+		notify("done", 1.0, "")
 	}()
 	return nil
 }
@@ -286,20 +286,20 @@ func StartChangeWorkDir(ctx context.Context, id uint, newPath string) error {
 	ok = true
 	go func() {
 		defer endWorkDirChange(id, projectIDs)
-		notify := func(status string, pct float64) {
+		notify := func(status string, pct float64, errMsg string) {
 			if WorkDirChangeDirHook != nil {
-				WorkDirChangeDirHook(id, status, pct)
+				WorkDirChangeDirHook(id, status, pct, errMsg)
 			}
 		}
-		err := runMove(items, func(pct float64) { notify("running", pct) }, func() error {
+		err := runMove(items, func(pct float64) { notify("running", pct, "") }, func() error {
 			return model.ChangeWorkDirPath(id, oldPath, newPath, projectIDs)
 		})
 		if err != nil {
 			log.Errorf("StartChangeWorkDir %d: %v", id, err)
-			notify("error", 0)
+			notify("error", 0, err.Error())
 			return
 		}
-		notify("done", 1.0)
+		notify("done", 1.0, "")
 	}()
 	return nil
 }

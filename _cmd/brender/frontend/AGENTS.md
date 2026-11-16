@@ -172,7 +172,8 @@ return off  // useEffect cleanup
   - 複数コンポーネントが `onAppEvent` を呼んでも接続は 1 本のみ
 - 現在使用しているイベント名:
   - `queue:changed` (data: number — アクティブキュー件数)
-  - `workdir:migrate` (data: `{ project_id, status, pct }` — 移行進捗。status: `running`/`done`/`error`)
+  - `workdir:migrate` (data: `{ project_id, status, pct, error }` — プロジェクトの作業ディレクトリの移動の進捗。status: `running`/`done`/`error`。`error` のとき `error` に失敗の理由。画面の文言は `lib/migrateError.js` の `migrateErrorMessage`)
+  - `workdir:changedir` (data: `{ work_dir_id, status, pct, error }` — 作業ディレクトリのパス変更の進捗。中身は `workdir:migrate` と同じ)
 
 ## ファイルダイアログ (`src/lib/dialogs.js`)
 

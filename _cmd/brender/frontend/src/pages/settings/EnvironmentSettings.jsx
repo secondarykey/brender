@@ -6,6 +6,7 @@ import { onAppEvent } from '../../lib/appEvents'
 import Dialog from '../../components/Dialog'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import { useMessage, useToast } from '../../lib/toast'
+import { migrateErrorMessage } from '../../lib/migrateError'
 
 function fmtGB(bytes) {
   if (!bytes) return null
@@ -61,7 +62,7 @@ function EditDialog({ wd, onClose, onSaved }) {
         onClose()
       } else if (data.status === 'error') {
         setChangeDirProgress(null)
-        setError(t('project.migrateError'))
+        setError(migrateErrorMessage(t, data.error))
         setSaving(false)
       } else {
         setChangeDirProgress({ pct: data.pct })

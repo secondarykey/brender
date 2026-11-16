@@ -10,6 +10,7 @@ import ConfirmDialog from '../../../components/ConfirmDialog'
 import NoteSection from '../../../components/NoteSection'
 import PermissionSection from '../../../components/PermissionSection'
 import { MdArrowDropDown, MdArrowRight } from 'react-icons/md'
+import { migrateErrorMessage } from '../../../lib/migrateError'
 
 const IMAGE_FILTER = [{ DisplayName: 'Image', Pattern: '*.jpg;*.jpeg;*.png;*.bmp;*.webp' }]
 
@@ -95,7 +96,7 @@ function WorkDirSection({ projectID, workDir, workDirs, onMigrated }) {
         setMigrateProgress(null)
         onMigrated()
       } else if (data.status === 'error') {
-        setMigrateError(t('project.migrateError'))
+        setMigrateError(migrateErrorMessage(t, data.error))
         setMigrating(false)
       }
     })

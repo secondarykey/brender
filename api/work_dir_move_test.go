@@ -61,7 +61,7 @@ func waitMigration(t *testing.T) func() string {
 	t.Helper()
 	ch := make(chan string, 16)
 	prev := MigrationHook
-	MigrationHook = func(_ string, status string, _ float64) {
+	MigrationHook = func(_ string, status string, _ float64, _ string) {
 		if status != "running" {
 			ch <- status
 		}
@@ -231,7 +231,7 @@ func TestChangeWorkDir(t *testing.T) {
 	fx := newMoveFixture(t)
 	ch := make(chan string, 16)
 	prev := WorkDirChangeDirHook
-	WorkDirChangeDirHook = func(_ uint, status string, _ float64) {
+	WorkDirChangeDirHook = func(_ uint, status string, _ float64, _ string) {
 		if status != "running" {
 			ch <- status
 		}
@@ -333,7 +333,7 @@ func TestChangeWorkDirSamePlace(t *testing.T) {
 	fx := newMoveFixture(t)
 	ch := make(chan string, 16)
 	prev := WorkDirChangeDirHook
-	WorkDirChangeDirHook = func(_ uint, status string, _ float64) {
+	WorkDirChangeDirHook = func(_ uint, status string, _ float64, _ string) {
 		if status != "running" {
 			ch <- status
 		}
