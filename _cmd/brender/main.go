@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/secondarykey/brender/api"
@@ -31,23 +32,19 @@ var assets embed.FS
 //go:embed version
 var appVersion string
 
-func initDB() error {
-
+// dbPath は DB のパスを返す。brender.ini の db_path を優先し、未設定なら ~/.brender/brender.db。
+func dbPath() (string, error) {
 	dir, err := config.Dir()
 	if err != nil {
-		return err
+		return "", err
 	}
 	if err := os.MkdirAll(dir, 0755); err != nil {
-		return err
+		return "", err
 	}
-
-	// DB パスは brender.ini の db_path を優先。未設定なら ~/.brender/brender.db。
-	dbPath := config.Get().DBPath
-	if dbPath == "" {
-		dbPath = filepath.Join(dir, "brender.db")
+	if p := config.Get().DBPath; p != "" {
+		return p, nil
 	}
-
-	return model.Init(dbPath)
+	return filepath.Join(dir, "brender.db"), nil
 }
 
 func initLocale() error {
@@ -127,47 +124,20 @@ func run() error {
 	}
 
 	log.Noticef("= Brender Version: %s", services.RunVersion(appVersion, isDev))
+	background := services.HasBackgroundArg(os.Args[1:])
 
-	err := initDB()
+	path, err := dbPath()
 	if err != nil {
-		return xerrors.Errorf("initDB() error: %w", err)
+		return xerrors.Errorf("dbPath() error: %w", err)
 	}
 
-	// 常駐中に溜まった生成済みスクリプトを起動時に一掃する
-	if err := api.ClearScripts(); err != nil {
-		log.Noticef("ClearScripts: %v", err)
-	}
-
-	// 前回終了時に running のまま残ったキューを waiting に戻す
-	api.RecoverStaleQueues()
-
-	//国際化関連の初期処理
-
-	//移行処理
-
-	// サーバモードなら先に HTTP サーバ（と SSE broker）を用意する。
-	// broker はイベント配信フックより前に確定させ、全イベントが SSE へ届くようにする。
-	// サーバは application.New より前に作り、自作の Transport（transport.go）に渡す。
-	// Transport がブラウザからのバインディング呼び出しをこのサーバへつなぐ。
-	var restServer *rest.Server
-	var broker *rest.SSEBroker
-	var serverPort int
-	var serverAuth bool
-	var transport application.Transport // nil なら Wails の既定（ウィンドウだけ）
-	env, err := model.GetEnv()
-	if err != nil {
-		log.Errorf("GetEnv: %v (server mode is treated as off)", err)
-	}
-	if err == nil && env != nil && env.Server {
-		serverAuth = env.ServerAuth
-		serverPort = env.ServerPort
-		if serverPort < 1 || serverPort > 65535 {
-			serverPort = 8080
-		}
-		restServer = rest.NewServer(assets, env.ServerHost, serverPort)
-		broker = restServer.Broker()
-		transport = newBrowserTransport(restServer, application.HTTPTransportWithLogger(log.Logger()))
-	}
+	// application.New（二重起動の確認がある）は、DB を開く・リカバリするより前に呼ぶ。
+	// 同じ DB で2つ目が起動したら、ここで1つ目にウィンドウを出させて終わる（DB には触らない）。
+	// そのため Transport はサーバモードかどうか分かる前に作り、サーバは DB を読んでからつなぐ。
+	transport := newBrowserTransport(application.HTTPTransportWithLogger(log.Logger()))
+	var restServer *rest.Server // サーバモードなら DB を読んだあとで入る（shutdown が使う）
+	var showMain func()         // メインのウィンドウを出す（無ければ作る）。ウィンドウの用意ができてから入る
+	var showMu sync.Mutex
 
 	app := application.New(application.Options{
 		Name:        "Brender",
@@ -197,7 +167,62 @@ func run() error {
 		// 後始末はウィンドウのフックではなくここに置く。メインのウィンドウを閉じたときだけでなく、
 		// macOS の Cmd+Q・OS のシャットダウン・シグナルなど、どの終わり方でも Wails が呼ぶ
 		OnShutdown: func() { shutdown(restServer) },
+		SingleInstance: &application.SingleInstanceOptions{
+			UniqueID: services.InstanceID(path),
+			// 2つ目の起動は、動いている方のウィンドウを出す合図にする（--background で起動したアプリを、
+			// 画面から操作・終了する入口）。2つ目も --background なら何もしない
+			OnSecondInstanceLaunch: func(data application.SecondInstanceData) {
+				if services.HasBackgroundArg(data.Args) {
+					log.Notice("second instance launched with " + services.BackgroundArg + ": already running")
+					return
+				}
+				log.Notice("second instance launched: showing the main window")
+				showMu.Lock()
+				show := showMain
+				showMu.Unlock()
+				if show != nil {
+					show()
+				}
+			},
+		},
 	})
+
+	if err := model.Init(path); err != nil {
+		return xerrors.Errorf("model.Init() error: %w", err)
+	}
+
+	// 常駐中に溜まった生成済みスクリプトを起動時に一掃する
+	if err := api.ClearScripts(); err != nil {
+		log.Noticef("ClearScripts: %v", err)
+	}
+
+	// 前回終了時に running のまま残ったキューを waiting に戻す
+	api.RecoverStaleQueues()
+
+	//国際化関連の初期処理
+
+	//移行処理
+
+	// サーバモードなら HTTP サーバ（と SSE broker）を用意して Transport につなぐ。
+	// broker はイベント配信フックより前に確定させ、全イベントが SSE へ届くようにする。
+	// Transport がブラウザからのバインディング呼び出しをこのサーバへつなぐ。
+	var broker *rest.SSEBroker
+	var serverPort int
+	var serverAuth bool
+	env, err := model.GetEnv()
+	if err != nil {
+		log.Errorf("GetEnv: %v (server mode is treated as off)", err)
+	}
+	if err == nil && env != nil && env.Server {
+		serverAuth = env.ServerAuth
+		serverPort = env.ServerPort
+		if serverPort < 1 || serverPort > 65535 {
+			serverPort = 8080
+		}
+		restServer = rest.NewServer(assets, env.ServerHost, serverPort)
+		broker = restServer.Broker()
+		transport.attach(restServer)
+	}
 
 	dev := app.Env.Info().Debug
 	services.AppVersion = services.RunVersion(appVersion, dev)
@@ -209,23 +234,49 @@ func run() error {
 	//サムネイル表示を３にした場合 1140x700 程度
 	//4 は 1450x850 程度？
 
-	mainWin := app.Window.NewWithOptions(application.WebviewWindowOptions{
-		Name:      "main",
-		Title:     "brender",
-		Width:     1460,
-		Height:    840,
-		Frameless: true,
-		Mac: application.MacWindow{
-			Backdrop: application.MacBackdropTranslucent,
-			TitleBar: application.MacTitleBarHidden,
-		},
-		BackgroundColour: application.NewRGB(26, 26, 26),
-		URL:              "/",
-	})
-	// メインウィンドウが閉じられたらアプリ全体を終了する（ログウィンドウも閉じる）。後始末は OnShutdown の shutdown
-	mainWin.RegisterHook(events.Common.WindowClosing, func(_ *application.WindowEvent) {
-		application.Get().Quit()
-	})
+	// メインのウィンドウ。--background で起動したときは、2つ目の起動の合図で初めて作る
+	var mainWin *application.WebviewWindow
+	newMainWindow := func() *application.WebviewWindow {
+		w := app.Window.NewWithOptions(application.WebviewWindowOptions{
+			Name:      "main",
+			Title:     "brender",
+			Width:     1460,
+			Height:    840,
+			Frameless: true,
+			Mac: application.MacWindow{
+				Backdrop: application.MacBackdropTranslucent,
+				TitleBar: application.MacTitleBarHidden,
+			},
+			BackgroundColour: application.NewRGB(26, 26, 26),
+			URL:              "/",
+		})
+		// メインウィンドウが閉じられたらアプリ全体を終了する（ログウィンドウも閉じる）。後始末は OnShutdown の shutdown。
+		// サーバモードでも同じ（閉じればブラウザから使っている人のレンダリングも止まる。閉じる前に画面が確かめる）
+		w.RegisterHook(events.Common.WindowClosing, func(_ *application.WindowEvent) {
+			application.Get().Quit()
+		})
+		return w
+	}
+	if background && restServer == nil {
+		// サーバモードでなければ、ウィンドウが無いと使う手立てが無い
+		startupLog(true, "= %s is ignored: server mode is off", services.BackgroundArg)
+		background = false
+	}
+	if !background {
+		mainWin = newMainWindow()
+	}
+	showMu.Lock()
+	showMain = func() {
+		showMu.Lock()
+		defer showMu.Unlock()
+		if mainWin == nil {
+			mainWin = newMainWindow()
+		}
+		mainWin.Show()
+		mainWin.Restore()
+		mainWin.Focus()
+	}
+	showMu.Unlock()
 
 	// イベント配信を一元化する。Wails Event へ送り、サーバモードなら SSE へも配る。
 	// 新しいイベントを足す場合もこの emit を通せば両トランスポートへ確実に届く。
@@ -296,6 +347,9 @@ func run() error {
 			auth = "on"
 		}
 		startupLog(false, "= Server mode: on, listening on %s%s, user management: %s [Experimental]", url, where, auth)
+	}
+	if background {
+		startupLog(false, "= Started without a window (%s). Launch brender again to open the window", services.BackgroundArg)
 	}
 
 	if err := app.Run(); err != nil {
