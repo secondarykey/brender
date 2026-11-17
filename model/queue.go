@@ -1,11 +1,10 @@
 package model
 
 import (
-	"errors"
+	"context"
 	"time"
 
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 	"golang.org/x/xerrors"
 )
 
@@ -34,8 +33,8 @@ func NewQueueID() (string, error) {
 	return id.String(), nil
 }
 
-func CreateQueue(q *Queue) error {
-	if res := db.Create(q); res.Error != nil {
+func CreateQueue(ctx context.Context, q *Queue) error {
+	if res := db.WithContext(ctx).Create(q); res.Error != nil {
 		return xerrors.Errorf("CreateQueue: %w", res.Error)
 	}
 	return nil
@@ -43,17 +42,17 @@ func CreateQueue(q *Queue) error {
 
 // MarkQueueStarting は status を waiting → running へ変更する。
 // PID 確定前に呼ぶことでスケジューラの二重起動を防ぐ。
-func MarkQueueStarting(id string) error {
-	if res := db.Model(&Queue{}).Where("id = ?", id).Update("status", QueueRunning); res.Error != nil {
+func MarkQueueStarting(ctx context.Context, id string) error {
+	if res := db.WithContext(ctx).Model(&Queue{}).Where("id = ?", id).Update("status", QueueRunning); res.Error != nil {
 		return xerrors.Errorf("MarkQueueStarting: %w", res.Error)
 	}
 	return nil
 }
 
 // UpdateQueueRunning は実際の PID と開始時刻を記録する（status は MarkQueueStarting で設定済み）。
-func UpdateQueueRunning(id string, pid int) error {
+func UpdateQueueRunning(ctx context.Context, id string, pid int) error {
 	now := time.Now()
-	if res := db.Model(&Queue{}).Where("id = ?", id).Updates(map[string]any{
+	if res := db.WithContext(ctx).Model(&Queue{}).Where("id = ?", id).Updates(map[string]any{
 		"process_id": pid,
 		"started_at": &now,
 	}); res.Error != nil {
@@ -70,8 +69,8 @@ func ListRunningQueues() ([]*Queue, error) {
 	return list, nil
 }
 
-func ResetQueueToRecovering(id string) error {
-	if res := db.Model(&Queue{}).Where("id = ?", id).Updates(map[string]any{
+func ResetQueueToRecovering(ctx context.Context, id string) error {
+	if res := db.WithContext(ctx).Model(&Queue{}).Where("id = ?", id).Updates(map[string]any{
 		"status":     QueueRecovering,
 		"process_id": 0,
 		"started_at": nil,
@@ -89,18 +88,13 @@ func CountRunningQueues() (int64, error) {
 	return count, nil
 }
 
-// GetOldestWaitingQueue は待機中（waiting/recovering）のキューを登録順（id asc）で1件返す。
-// 存在しない場合は nil, nil を返す。
-func GetOldestWaitingQueue() (*Queue, error) {
-	var q Queue
-	res := db.Where("status IN ?", []string{QueueWaiting, QueueRecovering}).Order("id asc").First(&q)
-	if res.Error != nil {
-		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
-			return nil, nil
-		}
-		return nil, xerrors.Errorf("GetOldestWaitingQueue: %w", res.Error)
+// ListWaitingQueues は待機中（waiting/recovering）のキューを登録順（id asc。UUID v7 なので投入順）で返す。
+func ListWaitingQueues() ([]*Queue, error) {
+	var list []*Queue
+	if res := db.Where("status IN ?", []string{QueueWaiting, QueueRecovering}).Order("id asc").Find(&list); res.Error != nil {
+		return nil, xerrors.Errorf("ListWaitingQueues: %w", res.Error)
 	}
-	return &q, nil
+	return list, nil
 }
 
 func DeleteQueue(id string) error {
@@ -134,6 +128,18 @@ func ListQueues() ([]*Queue, error) {
 	return list, nil
 }
 
+// CountQueuesByProjects は指定プロジェクトのキュー（待ち・実行中）の数を返す。
+func CountQueuesByProjects(projectIDs []string) (int64, error) {
+	if len(projectIDs) == 0 {
+		return 0, nil
+	}
+	var count int64
+	if res := db.Model(&Queue{}).Where("project_id IN ?", projectIDs).Count(&count); res.Error != nil {
+		return 0, xerrors.Errorf("CountQueuesByProjects: %w", res.Error)
+	}
+	return count, nil
+}
+
 // ExistsQueueByWorkspace は同一ワークスペースのキューが存在するか返す。
 func ExistsQueueByWorkspace(projectID, workspaceID string) (bool, error) {
 	var count int64
@@ -144,13 +150,4 @@ func ExistsQueueByWorkspace(projectID, workspaceID string) (bool, error) {
 		return false, xerrors.Errorf("ExistsQueueByWorkspace: %w", res.Error)
 	}
 	return count > 0, nil
-}
-
-func ListQueuesByWorkspace(projectID string, workspaceID string) ([]*Queue, error) {
-	var list []*Queue
-	if res := db.Where("project_id = ? AND workspace_id = ?", projectID, workspaceID).
-		Order("id desc").Find(&list); res.Error != nil {
-		return nil, xerrors.Errorf("ListQueuesByWorkspace: %w", res.Error)
-	}
-	return list, nil
 }

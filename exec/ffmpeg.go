@@ -114,11 +114,23 @@ func (ff *FFmpeg) CreateMovie(ctx context.Context, out string, fps int, p string
 
 	ch, err := ff.run(ctx, args...)
 	if err != nil {
+		fp.Close()
 		return nil, err
 	}
 
 	log.Infof("ffmpeg started: %s", out)
-	return ch, nil
+
+	// ffmpeg が終わったらログを閉じる。開いたままだと Windows ではジョブのフォルダを消せない
+	// （ジョブの削除・作業ディレクトリの移動が ffmpeg.log で失敗する）
+	done := make(chan error, 1)
+	go func() {
+		err := <-ch
+		if cerr := fp.Close(); cerr != nil {
+			log.Warnf("ffmpeg log close: %v", cerr)
+		}
+		done <- err
+	}()
+	return done, nil
 }
 
 func (ff *FFmpeg) run(ctx context.Context, args ...string) (chan error, error) {

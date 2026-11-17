@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"path/filepath"
 	"testing"
 )
@@ -15,27 +16,27 @@ func TestListBlenderReferences(t *testing.T) {
 	// Windows では接続を閉じないと TempDir のクリーンアップが失敗する。
 	t.Cleanup(func() { Close() })
 
-	install, err := AddBlenderInstall("/path/to/blender", "4.2.0", "blender-4.2")
+	install, err := AddBlenderInstall(context.Background(), "/path/to/blender", "4.2.0", "blender-4.2")
 	if err != nil {
 		t.Fatalf("AddBlenderInstall: %v", err)
 	}
-	other, err := AddBlenderInstall("/path/to/other", "5.0.0", "blender-5.0")
+	other, err := AddBlenderInstall(context.Background(), "/path/to/other", "5.0.0", "blender-5.0")
 	if err != nil {
 		t.Fatalf("AddBlenderInstall(other): %v", err)
 	}
 
-	detail, err := CreateProject("Proj", nil, 0)
+	detail, err := CreateProject(context.Background(), "Proj", nil, 0)
 	if err != nil {
 		t.Fatalf("CreateProject: %v", err)
 	}
 	projectID := detail.Project.ID
 
-	file, err := AddProjectFile(projectID, "/tmp/scene.blend")
+	file, err := AddProjectFile(context.Background(), projectID, "/tmp/scene.blend")
 	if err != nil {
 		t.Fatalf("AddProjectFile: %v", err)
 	}
 
-	ws, err := CreateWorkspace(projectID, file.ID, "本番用", false)
+	ws, err := CreateWorkspace(context.Background(), projectID, file.ID, "本番用")
 	if err != nil {
 		t.Fatalf("CreateWorkspace: %v", err)
 	}

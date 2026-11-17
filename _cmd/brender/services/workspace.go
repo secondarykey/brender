@@ -33,8 +33,8 @@ func (s *Workspace) Copy(ctx context.Context, projectID string, workspaceID stri
 	return api.CopyWorkspace(ctx, projectID, workspaceID, newName)
 }
 
-func (s *Workspace) Update(ctx context.Context, projectID string, workspaceID string, name string, note string, blenderInstallID uint, scene, camera, engine string, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY int, outputFormat string, autoLock bool, autoLockMinSize int64, autoLockKeep int) (*model.WorkspaceDetail, error) {
-	return api.UpdateWorkspace(ctx, projectID, workspaceID, name, note, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, thread, samples, resolutionX, resolutionY, outputFormat, autoLock, autoLockMinSize, autoLockKeep)
+func (s *Workspace) Update(ctx context.Context, projectID string, workspaceID string, name string, note string, blenderInstallID uint, scene, camera, engine string, startFrame, endFrame, frameStep int, fps float64, thread, samples, resolutionX, resolutionY int, outputFormat string, autoLock bool, autoLockMinSize int64, autoLockKeep int) (*model.WorkspaceDetail, error) {
+	return api.UpdateWorkspace(ctx, projectID, workspaceID, name, note, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, fps, thread, samples, resolutionX, resolutionY, outputFormat, autoLock, autoLockMinSize, autoLockKeep)
 }
 
 func (s *Workspace) Delete(ctx context.Context, projectID, workspaceID string, force bool) error {
@@ -43,10 +43,7 @@ func (s *Workspace) Delete(ctx context.Context, projectID, workspaceID string, f
 
 // GetThumbnail はウィンドウには base64 のデータ URI、ブラウザには URL で返す（Project.GetFileThumbnail と同じ）。
 func (s *Workspace) GetThumbnail(ctx context.Context, projectID string, fileID string, workspaceID string) (string, error) {
-	if api.FromBrowser(ctx) {
-		return api.GetWorkspaceThumbnailURL(ctx, projectID, fileID, workspaceID)
-	}
-	return api.GetWorkspaceThumbnail(projectID, fileID, workspaceID)
+	return api.GetWorkspaceThumbnail(ctx, projectID, fileID, workspaceID)
 }
 
 func (s *Workspace) SetThumbnail(ctx context.Context, projectID string, fileID string, workspaceID string, imagePath string) (string, error) {

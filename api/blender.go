@@ -53,7 +53,7 @@ func RegisterBlender(ctx context.Context, path string) (*model.BlenderInstall, e
 
 	name := filepath.Base(filepath.Dir(path))
 
-	install, err := model.AddBlenderInstall(path, version, name)
+	install, err := model.AddBlenderInstall(ctx, path, version, name)
 	if err != nil {
 		return nil, xerrors.Errorf("AddBlenderInstall error: %w", err)
 	}
@@ -111,7 +111,7 @@ func ReorderBlenders(ctx context.Context, ids []uint) error {
 	if err := requireAdmin(ctx); err != nil {
 		return err
 	}
-	return model.ReorderBlenders(ids)
+	return model.ReorderBlenders(ctx, ids)
 }
 
 // VerifyBlenderInstalls は登録済み Blender のパス存在とバージョンを検証する。
@@ -147,7 +147,7 @@ func VerifyBlenderInstalls() {
 		}
 		if newVersion != inst.Version {
 			log.Noticef("VerifyBlenderInstalls: %s バージョン更新 %s → %s", inst.Name, inst.Version, newVersion)
-			if err := model.UpdateBlenderVersion(inst.ID, newVersion); err != nil {
+			if err := model.UpdateBlenderVersion(SystemContext(), inst.ID, newVersion); err != nil {
 				log.Errorf("VerifyBlenderInstalls: UpdateBlenderVersion: %v", err)
 			}
 		}
@@ -176,7 +176,10 @@ func MissingBlenderPaths() ([]uint, error) {
 	return missing, nil
 }
 
-func GetScenes(installID uint, fileID string) ([]string, error) {
+func GetScenes(ctx context.Context, installID uint, fileID string) ([]string, error) {
+	if err := requireFileAccess(ctx, fileID); err != nil {
+		return nil, err
+	}
 	var blenderPath string
 	if installID != 0 {
 		install, err := model.GetBlenderInstall(installID)
@@ -235,7 +238,11 @@ func OpenBlenderFile(ctx context.Context, installID uint, filePath string) error
 	return cmd.Start()
 }
 
-func GetToolData(installID uint, fileID string) (*exec.Tool, error) {
+// GetToolData はファイルを Blender で解析する（シーン・カメラ・Pack 状態など）。ファイルを見られる人だけ。
+func GetToolData(ctx context.Context, installID uint, fileID string) (*exec.Tool, error) {
+	if err := requireFileAccess(ctx, fileID); err != nil {
+		return nil, err
+	}
 	var blenderPath string
 	if installID != 0 {
 		install, err := model.GetBlenderInstall(installID)
@@ -265,13 +272,16 @@ func GetToolData(installID uint, fileID string) (*exec.Tool, error) {
 		return nil, err
 	}
 	// Pack 状態を DB に保存
-	if updateErr := model.UpdateProjectFilePacked(fileID, tool.Pack); updateErr != nil {
+	if updateErr := model.UpdateProjectFilePacked(ctx, fileID, tool.Pack); updateErr != nil {
 		log.Errorf("GetToolData: UpdateProjectFilePacked fileID=%s error=%v", fileID, updateErr)
 	}
 	return tool, nil
 }
 
-func GetCameras(installID uint, fileID string) ([]*exec.CameraTool, error) {
+func GetCameras(ctx context.Context, installID uint, fileID string) ([]*exec.CameraTool, error) {
+	if err := requireFileAccess(ctx, fileID); err != nil {
+		return nil, err
+	}
 	var blenderPath string
 	if installID != 0 {
 		install, err := model.GetBlenderInstall(installID)

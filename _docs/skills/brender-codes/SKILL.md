@@ -71,9 +71,9 @@ CodesApi.getResolutionPresets() // Promise<ResolutionPreset[]>
 
 **利用箇所**:
 - `BlenderSettings.jsx` — システムデフォルト出力フォーマット（`image_formats`）
-- `WorkspacePanel.jsx` — ワークスペース出力フォーマット（`image_formats`）、解像度プリセット（`resolution_presets`）
+- `pages/projects/workspace/useRenderOptions.js` — ワークスペース出力フォーマット（`image_formats`）、解像度プリセット（`resolution_presets`）
 - `VideoSettings.jsx` — ffmpeg 出力拡張子（`video_formats`）
-- `JobPage.jsx` — 動画作成ダイアログの出力拡張子（`video_formats`）
+- `pages/projects/job/RenderResultTab.jsx` — 動画作成ダイアログの出力拡張子（`video_formats`）
 
 ## 新カテゴリの追加手順
 

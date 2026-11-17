@@ -36,7 +36,7 @@ func SetProjectPermission(ctx context.Context, projectID, targetID, role string)
 	if !valid {
 		return xerrors.Errorf("invalid role: %s", role)
 	}
-	return model.SetProjectPermission(projectID, targetID, role)
+	return model.SetProjectPermission(ctx, projectID, targetID, role)
 }
 
 func RemoveProjectPermission(ctx context.Context, projectID, targetID string) error {
@@ -52,7 +52,10 @@ func RemoveProjectPermission(ctx context.Context, projectID, targetID string) er
 }
 
 // ListProjectPermissions はプロジェクトの権限一覧を表示名付きで返す。
-func ListProjectPermissions(projectID string) ([]*PermissionEntry, error) {
+func ListProjectPermissions(ctx context.Context, projectID string) ([]*PermissionEntry, error) {
+	if err := requireProjectAccess(ctx, projectID); err != nil {
+		return nil, err
+	}
 	perms, err := model.ListProjectPermissions(projectID)
 	if err != nil {
 		return nil, err
@@ -107,7 +110,7 @@ func SetFilePermission(ctx context.Context, fileID, targetID, role string) error
 	if !valid {
 		return xerrors.Errorf("invalid role: %s", role)
 	}
-	return model.SetFilePermission(fileID, targetID, role)
+	return model.SetFilePermission(ctx, fileID, targetID, role)
 }
 
 func RemoveFilePermission(ctx context.Context, fileID, targetID string) error {
@@ -122,7 +125,10 @@ func RemoveFilePermission(ctx context.Context, fileID, targetID string) error {
 	return model.RemoveFilePermission(fileID, targetID)
 }
 
-func ListFilePermissions(fileID string) ([]*PermissionEntry, error) {
+func ListFilePermissions(ctx context.Context, fileID string) ([]*PermissionEntry, error) {
+	if err := requireFileAccess(ctx, fileID); err != nil {
+		return nil, err
+	}
 	perms, err := model.ListFilePermissions(fileID)
 	if err != nil {
 		return nil, err
@@ -161,7 +167,10 @@ func HasFileRole(fileID, userID string, roles []string) (bool, error) {
 	return model.HasFileRole(fileID, userID, roles)
 }
 
-func GetUserFileRole(fileID, userID string) (string, error) {
+func GetUserFileRole(ctx context.Context, fileID, userID string) (string, error) {
+	if err := requireFileAccess(ctx, fileID); err != nil {
+		return "", err
+	}
 	return model.GetUserFileRole(fileID, userID)
 }
 
@@ -175,6 +184,9 @@ func HasProjectRole(projectID, userID string, roles []string) (bool, error) {
 	return model.HasProjectRole(projectID, userID, roles)
 }
 
-func GetUserProjectRole(projectID, userID string) (string, error) {
+func GetUserProjectRole(ctx context.Context, projectID, userID string) (string, error) {
+	if err := requireProjectAccess(ctx, projectID); err != nil {
+		return "", err
+	}
 	return model.GetUserProjectRole(projectID, userID)
 }

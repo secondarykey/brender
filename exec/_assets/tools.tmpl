@@ -89,6 +89,9 @@ def printScenes():
         x     = value.render.resolution_x
         y     = value.render.resolution_y
         eng   = value.render.engine
+        fps   = 0.0
+        if value.render.fps_base > 0:
+            fps = value.render.fps / value.render.fps_base
 
         row.append(str(cur))
         row.append(str(start))
@@ -98,6 +101,7 @@ def printScenes():
         row.append(str(x))
         row.append(str(y))
         row.append(eng)
+        row.append(f"{fps:.3f}")
 
         print("\t".join(row))
 

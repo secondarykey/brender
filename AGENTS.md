@@ -33,16 +33,20 @@ cd _cmd/brender
 wails3 dev                 # Development (hot reload)
 wails3 build               # Production build
 wails3 generate bindings   # Regenerate Go<->JS bindings after adding/changing services
+bin/brender.exe --background  # ウィンドウを出さずに起動（サーバモードでブラウザから使う。もう一度起動するとウィンドウが出る）
 ```
+
+dev 実行（`-tags production` なし）では、画面とログの版を `version` の patch を 1 つ上げたものにする（画面は後ろに `+DEV`。例: `version` が 0.4.0 なら `0.4.1+DEV`）。`version` は出した版を指していて、dev で動かしているのはその次の版の作業中のため。計算は `services.RunVersion`（`_cmd/brender` はモジュール名が `main` で main パッケージのテストが動かないので services に置く）。
 
 #### ローカルデプロイ（`local:deploy` / `local:install`、任意）
 
 `_cmd/brender/Taskfile.local.yml`（**git 管理外**。各自が作る）を置くと、次のタスクが使える。
-`Taskfile.yml` が `optional: true` で include しているので、ファイルが無ければ何も起きない（worktree には無いので、使うならメインのチェックアウトから写す）。中身は Skill `wails3` の `references/local-deploy.md` の標準テンプレートから、タグ打ちを外して install を分けたもの（`APP_NAME` は `brender`、製品名は `brender`）。
+`Taskfile.yml` が `optional: true` で include しているので、ファイルが無ければ何も起きない（worktree には無いので、使うならメインのチェックアウトから写す）。中身は Skill `wails3` の `references/local-deploy.md` の標準テンプレート（`APP_NAME` は `brender`、製品名は `brender`。CI がタグを打つので `TAG_VERSION` の既定は `"false"`）。
 
-- `local:deploy`: パッチの自動 bump → バージョン・アプリ情報の反映 → `wails3 build` → ビルド情報だけのコミット → 起動中の brender を止めて `bin/*` を常用の場所へコピー。**タグは打たない**
+- `local:deploy`: パッチの自動 bump → バージョン・アプリ情報の反映 → `wails3 build` → ビルド情報だけのコミット → 起動中の brender を止めて `bin/*` を常用の場所へコピー。**タグは打たない**（`TAG_VERSION` が `"false"` なので。`TAG_VERSION=true` を渡すと打つ）
 - `local:install`: `wails3 build` → 起動中の brender を止めて `bin/*` を常用の場所へコピー。版上げ・ビルド情報の反映・コミットはしない（焼き込まれるのは `build/config.yml` などに今ある版。build 中の `npm install` が `package-lock.json` を変えたら、その変更は手元に残る）
 - `local:build-info`: バージョン・アプリ情報の反映だけ
+- brender だけの追加（テンプレートには無い `build-tool`）: deploy・install は `wails3 build` のあとに CLI の brender-tool も `bin/` へビルドし（release.yml と同じく `CGO_ENABLED=0`・`-X main.version=` に `version` の値）、デスクトップアプリと一緒にコピーする。止めるのは brender だけなので、brender-tool を動かしたままだとコピーが失敗する
 
 ```bash
 cd _cmd/brender
@@ -60,6 +64,8 @@ go run _cmd/version.go -auto                       # （リポジトリルート
 The DB is stored at `~/.brender/brender.db` (SQLite, created automatically on first run). パスは `~/.brender/brender.ini` の `db_path` で上書き可（[起動設定ファイル](#起動設定ファイル-config-brenderini) 参照）。`model.Init` は DSN に `_pragma=journal_mode(WAL)` / `synchronous(NORMAL)` を付与し、サーバモードの同時アクセス時の `database is locked` を避ける（glebarez ドライバは接続ごとに `busy_timeout=5000ms` を既定で適用）。WAL 有効時は `brender.db-wal` / `-shm` が併設される。
 
 ### CLI tool
+リリースの zip（release.yml）にはデスクトップアプリと一緒に入る（`CGO_ENABLED=0` でビルド。macOS は arm64+amd64 を `lipo` で universal にしてアドホック署名）。
+
 ```bash
 go build -o brender-tool ./_cmd/brender-tool/
 
@@ -71,6 +77,7 @@ brender-tool [-b <blender>] [-S <scene>] [-E <engine>] [-s <start>] [-e <end>] [
 #   -v   Verbose: pipe all Blender stdout directly to terminal
 #   -a   Analysis mode: render a 3-frame sample to estimate time
 #   --engines / --scenes  List engines / scenes and exit
+#   -version  Print version and exit（リリースは -ldflags "-X main.version=X.Y.Z" で入る。無ければ dev (コミット)）
 ```
 
 ### Tests
@@ -109,7 +116,10 @@ exec/          (Blender subprocess management + output parsing)
 _cmd/brender-tool/  (CLI, uses exec/ + api/ directly)
 ```
 
-**ヘッドレス運用は不可**: サーバモードの HTTP サーバは Wails アプリのプロセス内（`app.Run()` が前提）で起動する。GUI なしの純ヘッドレスサーバとしては動かせない（設計上の制約）。(今の実装はいつもメインのウィンドウを作り、閉じるとアプリが終わる。ウィンドウを作らなくても `app.Run()` は動き続けると分かったので、`TODO.md` の「ウィンドウを出さずに動かす」で変える予定)
+**ウィンドウなしで動かせる（`--background`）が、純ヘッドレスではない**: サーバモードの HTTP サーバは Wails アプリのプロセス内（`app.Run()` が前提）で動く。`brender --background` で起動するとメインのウィンドウを作らずに動き、ブラウザから使う（同じ exe。サーバモードでないときは引数を無視してウィンドウを出す）。トレイは置かない。
+- **二重起動はしない**: 同じ DB を使うアプリは1つ（Wails の `SingleInstance`。ID は DB のパスから作る `services.InstanceID`）。2つ目が同じ DB で起動したら、何も読まずに終わり、動いている方にメインのウィンドウを出させる（`--background` 付きの2つ目は何もしない）。ウィンドウなしで動いているアプリを画面から操作・終了する入口はこれ。DB が違えば並べて動かせる
+- そのため `application.New` を DB を開く・リカバリするより前に呼ぶ（2つ目が起動時のリカバリで1つ目のレンダリングを止めないように）。Transport はサーバモードか分かる前に作り、サーバは DB を読んでから `attach` でつなぐ（`transport.go`）
+- **メインのウィンドウを閉じればアプリは終わる**（サーバモードでも。ブラウザから使っている人のレンダリングも止まる）。閉じる前に、キューが動いている・サーバモードなら画面が確かめる（`TitleBar.jsx`）
 
 ### Module layout
 - Root モジュール `github.com/secondarykey/brender`（プロジェクトルートの `go.mod`）が正。`exec/`・`model/`・`api/`（`api/rest/` 含む）はwails3に依存しない。
@@ -122,7 +132,7 @@ _cmd/brender-tool/  (CLI, uses exec/ + api/ directly)
 | `services/environment.go` | `Environment` | `api/environment.go` |
 | `services/project.go` | `Project` | `api/project.go` + `api/thumbnail.go` |
 | `services/workspace.go` | `Workspace` | `api/workspace.go` |
-| `services/queue.go` | `Queue` | `api/queue.go` |
+| `services/queue.go` | `Queue` | `api/queue*.go` + `api/schedule.go` + `api/job*.go` |
 | `services/work_dir.go` | `WorkDir` | `api/work_dir.go` |
 | `services/codes.go` | `Codes` | `code/`（Skill `brender-codes` 参照） |
 
@@ -142,15 +152,17 @@ CI が使う wails3 CLI のバージョンは `.github/variables` の `WAILS_VER
 
 ### Key model notes
 - `Environment`: `ProjectRoot string`, `Server bool`, `MaxConcurrentJobs int` (デフォルト 1). No `BlenderCmd`/`BlenderVersion`/`Hash` fields (removed).
-- `WorkDir`: `ID uint`, `Path string`, `Priority int`, `Status string` (`active`/`inactive`/`lock`). `GetDefaultWorkDir()` は `active` かつ `Priority` 最小を返す。
+- `WorkDir`: `ID uint`, `Path string`, `Priority int`, `Status string` (`active`/`inactive`/`lock`). `GetDefaultWorkDir()` は `active` かつ `Priority` 最小を返す。データの移動（プロジェクトを別の作業ディレクトリへ・作業ディレクトリのパス変更）は `api/work_dir_move.go`。全部コピーしてから DB を1つのトランザクションで切り替え、最後に旧パスを消す。移動中のプロジェクトへの投入・動画作成は断り、キューにジョブがあるプロジェクトは移動しない（決まりはファイルの頭のコメント）。
 - `Project`: `ID string` (UUID v4), `Name`, `BlenderInstallID uint`, `Scene string`, `WorkDirID uint`. No `Archive` or `ThumbnailFrame` fields (removed).
 - `ProjectFile`: `ID string` (UUID v4), `ProjectID`, `Path`, `Name`, `BlenderInstallID uint`, `Scene string`, `FileModifiedAt *time.Time`. `FileModifiedAt` is set from `os.Stat().ModTime()` on add.
-- `Workspace`: `ID string` (UUID v4), `ProjectFileID string` (固定、Update では変更不可), `BlenderInstallID=0` means use project default, `IsSystem bool` (サムネイル自動生成ワークスペースは `true`)。
+- `Workspace`: `ID string` (UUID v4), `ProjectFileID string` (固定、Update では変更不可), `BlenderInstallID=0` means use project default。ファイル登録時に既定の設定のワークスペース「Default」が作られる（以前の隠しワークスペースの `IsSystem` は廃止。起動時の `migrateSystemWorkspaces` が列を消して既存分を一覧に出す）。
 - `Job`: permanent history record. Shares UUID v7 with its `Queue` record. Has `ProjectFileID string` for direct file-based query.
   - `Status`: `completed` / `error` / `cancelled` / `interrupted`（システム中断）
   - `DiskSize int64`: 完了時に出力ディレクトリの容量を保存
   - `DataStatus int`: `0`=none / `1`=none+locked / `2`=available / `3`=available+locked / `4`=deleted / `5`=deleted+locked
   - `OutputDir string`: 出力先ディレクトリパス
+  - `JobType`: `render` / `test` / `samples_comparison`
+  - `Name`: 「ファイル名 ワークスペース名」+ 種別やフレーム範囲（`api.jobName`。ワークスペース名「Default」はどのファイルにもあるため、ファイル名で見分ける）
 - `Queue`: ephemeral active-execution record. Deleted by `finishJob()` on completion/error/cancel.
   - `Status`: `waiting` / `recovering`（リカバリ再実行待ち） / `running`
 
@@ -176,14 +188,17 @@ CI が使う wails3 CLI のバージョンは `.github/variables` の `WAILS_VER
 
 詳細（実行フロー・パース仕様・ETA 計算・進捗バー計算式・リカバリ手順）は Skill `brender-render-pipeline` を参照。
 
-- **非同期レンダリング** (`api/queue.go`): `Enqueue()` → `PreviewRender()` → `EnqueueWithPreview()`。Blender/シーン/エンジン/カメラのフォールバック解決は `resolveRenderBase()` に集約（優先順位を変える場合はここ一箇所を直す）。`MaxConcurrentJobs`（デフォルト 1）で同時実行制御、`scheduleMu` でレース防止。同一ワークスペースの重複投入は禁止で、重複チェック〜`CreateQueue` は `enqueueMu` で直列化。
+- **非同期レンダリング** (`api/queue*.go`・`api/schedule.go`。ファイルの分け方は Skill `brender-render-pipeline`): `Enqueue()` → `PreviewRender()` → `enqueuePreview()`（画面の確認からの `EnqueueWithPreview(preview)` は preview を信用せずサーバで解決し直して比べる）。Blender/シーン/エンジン/カメラのフォールバック解決は `resolveRenderBase()` に集約（優先順位を変える場合はここ一箇所を直す）。`MaxConcurrentJobs`（デフォルト 1）で同時実行制御。キューを起動する入口は `schedule()` だけ（投入・終了・キャンセル・上限の変更・lock の解除から呼ぶ。`scheduleMu` でレース防止）。同一ワークスペースの重複投入は禁止で、重複チェック〜`CreateQueue` は `enqueueMu` で直列化。
 - **起動時キューリカバリ**: クラッシュ後に残った `running` Queue を `RecoverStaleQueues()` が検出。旧 Job を `interrupted` で閉じ、新 Job+Queue（`recovering`）を作成して `StartRecoveredQueues()` で再実行する。孤立プロセスの kill は `killQueueProcess()` が実行ファイルを検証してから行う（PID 再利用による誤殺防止）。
 - **イベント配信フック**: `api` 層は `var XxxHook func(...)` の関数変数でイベントを公開（`QueueChangedHook` / `BlenderWarningHook` / `MigrationHook` / `MovieCreatedHook` / `WorkDirChangeDirHook` / `SystemStatsHook`）。`main.go` は単一の `emit(name, data)` クロージャにまとめて Wails Event と SSE broker の両方へ配る。**新しいイベントも必ず `emit` を経由させる**（フックごとに SSE ラップを書くと漏れる）。
 - **Job deletion**: `DeleteJob(id)` は `OutputDir` を `os.RemoveAll` してから DB レコードを削除する。
 - **ProcessingWriter** (`exec/writer.go`): Blender stdout/stderr をリアルタイムパース。Blender 4.x/5.x 両対応、Cycles/EEVEE/Workbench のエンジン別検出、スレッドセーフ（`Result()` でスナップショット取得）。
 - **進捗トラッキング** (`exec/progress.go`): Queue ID キーの in-memory map。`ListQueueItems()` が進捗フィールドを `QueueItem` に付与してフロントエンドへ渡す。
-- **サムネイル自動生成** (`api/thumbnail.go`): `AddProjectFile` 時に非同期で `IsSystem=true` ワークスペースを作成し、中間フレームを 1 枚レンダリング → 640×360 JPEG で `thumbnail.jpg` に保存。取得は Wails=base64 データURI / サーバモード=URL 配信（`GET /thumbnail`）の 2 形態。
+- **サムネイル自動生成** (`api/thumbnail.go`): `AddProjectFile` 時に非同期でワークスペース「Default」（既定の設定）を作成し、そこで Test 出力（中間フレーム 1 枚・サンプル 8）を投入。ファイルのサムネイルは、そのファイルの最新の完了した Test ジョブの出力を 640×360 JPEG にして `thumbnail.jpg` に保存する。取得・設定の戻り値はウィンドウ=base64 データURI / ブラウザ=URL 配信（`GET /thumbnail`）の 2 形態で、どちらにするかは `thumbnailRef` だけが決める。
+- **システムモニタ** (`sysmon/`, `api/sysmon.go`): CPU・メモリ・GPU の使用率を `system:stats` イベントで配る。GPU は `nvidia-smi` で取る（NVIDIA のみ。見つからなければ GPU の行は出さず、起動もしない）。**キューページの `SystemStats` が表示しているあいだだけ動く**: 画面が 10 秒ごとに `SysMon.Keep` を呼び（隠れているあいだは呼ばない）、`sysmon.Keep` が 5 秒ごとに収集、15 秒 Keep が来なければ自分で止まる。期限で止まるので、サーバモードで複数のブラウザが見ていても数を数えずに済む。
+- **子プロセスはコンソールを隠す（Windows）**: 配る exe は `-H windowsgui` でコンソールを持たないので、コンソールアプリを素の `exec.Command` で起動すると、そのたびに窓が一瞬開く。`exec/` の `runCommand` を使うか `exec.HideConsole(cmd)` を通す（`sysmon/` は model に依存させないよう、同じ設定の `hideConsole` を自分で持つ）。`wails3 dev` は親のコンソールを共有するので窓が出ず、dev では気づけない。
 - **権限・アクセス制御**: `Environment.Server=true` かつ `ServerAuth=true` のときのみ有効（無効時は全員フルアクセス）。api 層の関数は第1引数 `ctx` の操作ユーザ（`model.WithUser` / `currentUser(ctx)`）で判定し、**`api/access.go` の共通ヘルパー（`fullAccess` / `requireProjectRole` / `requireAdmin` 等）を使う — 自前で `if userID != owner {...}` を書かない**。**サービスのメソッドは全部ブラウザからも呼べる**ため、admin 操作は api の関数の中で `requireAdmin(ctx)` を通し、ウィンドウを開く操作は `api.FromBrowser(ctx)` で断る。ロール体系・守り・フロント制御の詳細は Skill `brender-access-control` を参照。
+- **監査カラム（`CreatedBy` / `UpdatedBy`）は ctx のユーザで入る**: **書き込む model の関数は第1引数に `ctx` を取り、`db.WithContext(ctx)` を通す**（GORM のコールバックが `model.AuditUser(ctx)` で入れる。ctx を通さないと owner になる）。バックグラウンドへは呼び出しの ctx をそのまま渡さず（呼び出しが終わると取り消されることがある）、`backgroundContext(ctx)`・`jobContext(job)`（`api/access.go`）を渡す。詳細は Skill `brender-access-control` の「監査カラム」
 
 ### ログ (`log/`)
 
@@ -222,7 +237,7 @@ db_path = D:\brender\brender.db
     run_*.py             ← レンダリング実行（毎回生成）
     samples_*.py         ← サンプル比較（毎回生成）
 ```
-スクリプトは生成のみで削除しない（クリーンアップ方針）。常駐するサーバモードでの無制限な蓄積を防ぐため、起動時に `api.ClearScripts()`（→ `exec.ClearScripts()`）が `scripts/` を一掃する。生成は `exec.createScript(tmplName, pattern, dto)` に集約。
+スクリプトは生成のみで削除しない（クリーンアップ方針）。常駐するサーバモードでの無制限な蓄積を防ぐため、起動時に `api.ClearScripts()`（→ `exec.ClearScripts()`）が `scripts/` を一掃する。生成は `exec.createScript(tmplName, pattern, dto)` に集約。テンプレートに文字列を埋めるときは `{{ py .X }}`（Python の文字列リテラルにする。シーン名・カメラ名でコードを差し込まれないように）。
 
 ### Scene / engine discovery
 - `BlenderApi.getScenes({ installID, fileID })` — runs `exec.RunTool()` (Python `--tool` script) on the `.blend` file to extract scene names.

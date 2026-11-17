@@ -18,13 +18,19 @@ func randomColor() string {
 	return defaultColors[rand.Intn(len(defaultColors))]
 }
 
+// タグとカテゴリを作る・変える・消すのは admin だけ（設定の画面。ブラウザには出していない）。
+// ファイルへの付け外しは、そのファイルの editor 以上。一覧は全員が見られる。
+
 // ── TagCategory ──────────────────────────────────────────
 
 func ListTagCategories() ([]*model.TagCategory, error) {
 	return model.ListTagCategories()
 }
 
-func CreateTagCategory(name, color string) (*model.TagCategory, error) {
+func CreateTagCategory(ctx context.Context, name, color string) (*model.TagCategory, error) {
+	if err := requireAdmin(ctx); err != nil {
+		return nil, err
+	}
 	name = strings.TrimSpace(name)
 	if name == "" {
 		return nil, xerrors.New("category name is required")
@@ -32,37 +38,52 @@ func CreateTagCategory(name, color string) (*model.TagCategory, error) {
 	if color == "" {
 		color = randomColor()
 	}
-	return model.CreateTagCategory(name, color)
+	return model.CreateTagCategory(ctx, name, color)
 }
 
-func UpdateTagCategory(id uint, name, color string) (*model.TagCategory, error) {
+func UpdateTagCategory(ctx context.Context, id uint, name, color string) (*model.TagCategory, error) {
+	if err := requireAdmin(ctx); err != nil {
+		return nil, err
+	}
 	name = strings.TrimSpace(name)
 	if name == "" {
 		return nil, xerrors.New("category name is required")
 	}
-	return model.UpdateTagCategory(id, name, color)
+	return model.UpdateTagCategory(ctx, id, name, color)
 }
 
-func DeleteTagCategory(id uint) error {
-	return model.DeleteTagCategory(id)
+func DeleteTagCategory(ctx context.Context, id uint) error {
+	if err := requireAdmin(ctx); err != nil {
+		return err
+	}
+	return model.DeleteTagCategory(ctx, id)
 }
 
-func ReorderTagCategories(ids []uint) error {
-	return model.ReorderTagCategories(ids)
+func ReorderTagCategories(ctx context.Context, ids []uint) error {
+	if err := requireAdmin(ctx); err != nil {
+		return err
+	}
+	return model.ReorderTagCategories(ctx, ids)
 }
 
-func MergeTagCategories(sourceID, targetID uint) error {
+func MergeTagCategories(ctx context.Context, sourceID, targetID uint) error {
+	if err := requireAdmin(ctx); err != nil {
+		return err
+	}
 	if sourceID == targetID {
 		return xerrors.New("cannot merge a category into itself")
 	}
-	return model.MergeTagCategories(sourceID, targetID)
+	return model.MergeTagCategories(ctx, sourceID, targetID)
 }
 
-func MergeTags(sourceID, targetID uint) error {
+func MergeTags(ctx context.Context, sourceID, targetID uint) error {
+	if err := requireAdmin(ctx); err != nil {
+		return err
+	}
 	if sourceID == targetID {
 		return xerrors.New("cannot merge a tag into itself")
 	}
-	return model.MergeTags(sourceID, targetID)
+	return model.MergeTags(ctx, sourceID, targetID)
 }
 
 // ── Tag ──────────────────────────────────────────────────
@@ -71,47 +92,71 @@ func ListTags() ([]*model.TagWithCategory, error) {
 	return model.ListTags()
 }
 
-func CreateTag(name string, categoryID *uint, color string) (*model.Tag, error) {
+func CreateTag(ctx context.Context, name string, categoryID *uint, color string) (*model.Tag, error) {
+	if err := requireAdmin(ctx); err != nil {
+		return nil, err
+	}
 	name = strings.TrimSpace(name)
 	if name == "" {
 		return nil, xerrors.New("tag name is required")
 	}
-	return model.CreateTag(name, categoryID, color)
+	return model.CreateTag(ctx, name, categoryID, color)
 }
 
-func UpdateTag(id uint, name string, categoryID *uint, color string) (*model.Tag, error) {
+func UpdateTag(ctx context.Context, id uint, name string, categoryID *uint, color string) (*model.Tag, error) {
+	if err := requireAdmin(ctx); err != nil {
+		return nil, err
+	}
 	name = strings.TrimSpace(name)
 	if name == "" {
 		return nil, xerrors.New("tag name is required")
 	}
-	return model.UpdateTag(id, name, categoryID, color)
+	return model.UpdateTag(ctx, id, name, categoryID, color)
 }
 
-func DeleteTag(id uint) error {
+func DeleteTag(ctx context.Context, id uint) error {
+	if err := requireAdmin(ctx); err != nil {
+		return err
+	}
 	return model.DeleteTag(id)
 }
 
-func SetTagCategory(tagID uint, categoryID *uint) error {
-	return model.SetTagCategory(tagID, categoryID)
+func SetTagCategory(ctx context.Context, tagID uint, categoryID *uint) error {
+	if err := requireAdmin(ctx); err != nil {
+		return err
+	}
+	return model.SetTagCategory(ctx, tagID, categoryID)
 }
 
 // ── File tagging ─────────────────────────────────────────
 
-func AddTagToFile(projectFileID string, tagID uint) error {
-	return model.AddTagToFile(projectFileID, tagID)
+func AddTagToFile(ctx context.Context, projectFileID string, tagID uint) error {
+	if err := requireFileRole(ctx, projectFileID, rolesEditorUp...); err != nil {
+		return err
+	}
+	return model.AddTagToFile(ctx, projectFileID, tagID)
 }
 
-func RemoveTagFromFile(projectFileID string, tagID uint) error {
+func RemoveTagFromFile(ctx context.Context, projectFileID string, tagID uint) error {
+	if err := requireFileRole(ctx, projectFileID, rolesEditorUp...); err != nil {
+		return err
+	}
 	return model.RemoveTagFromFile(projectFileID, tagID)
 }
 
-func GetFileTags(projectFileID string) ([]*model.TagWithCategory, error) {
+func GetFileTags(ctx context.Context, projectFileID string) ([]*model.TagWithCategory, error) {
+	if err := requireFileAccess(ctx, projectFileID); err != nil {
+		return nil, err
+	}
 	return model.ListTagsByFile(projectFileID)
 }
 
 // AssignTagByInput はプレフィクス記法（"カテゴリ:タグ名" or "タグ名"）を解析し、
 // 必要に応じてカテゴリ・タグを自動作成してファイルに紐付ける。
-func AssignTagByInput(projectFileID, input string) (*model.TagWithCategory, error) {
+func AssignTagByInput(ctx context.Context, projectFileID, input string) (*model.TagWithCategory, error) {
+	if err := requireFileRole(ctx, projectFileID, rolesEditorUp...); err != nil {
+		return nil, err
+	}
 	input = strings.TrimSpace(input)
 	if input == "" {
 		return nil, xerrors.New("tag input is required")
@@ -137,7 +182,7 @@ func AssignTagByInput(projectFileID, input string) (*model.TagWithCategory, erro
 			return nil, xerrors.Errorf("AssignTagByInput category lookup: %w", err)
 		}
 		if cat == nil {
-			cat, err = model.CreateTagCategory(categoryName, randomColor())
+			cat, err = model.CreateTagCategory(ctx, categoryName, randomColor())
 			if err != nil {
 				return nil, xerrors.Errorf("AssignTagByInput category create: %w", err)
 			}
@@ -150,13 +195,13 @@ func AssignTagByInput(projectFileID, input string) (*model.TagWithCategory, erro
 		return nil, xerrors.Errorf("AssignTagByInput tag lookup: %w", err)
 	}
 	if tag == nil {
-		tag, err = model.CreateTag(tagName, categoryID, "")
+		tag, err = model.CreateTag(ctx, tagName, categoryID, "")
 		if err != nil {
 			return nil, xerrors.Errorf("AssignTagByInput tag create: %w", err)
 		}
 	}
 
-	if err := model.AddTagToFile(projectFileID, tag.ID); err != nil {
+	if err := model.AddTagToFile(ctx, projectFileID, tag.ID); err != nil {
 		return nil, xerrors.Errorf("AssignTagByInput add to file: %w", err)
 	}
 

@@ -21,9 +21,11 @@ Brender のベース機能（デスクトップ運用）に対し、サーバモ
 
 - 設定は `Environment` に持つ: `Server bool` / `ServerHost string` / `ServerPort int`（gorm default 8080）/ `ServerAuth bool`（モデルはファイル名 typo に注意: `model/enviroment.go`）
 - 変更 API: `Environment.SetServer`（admin 限定、`api.SetServer(ctx, enabled, host, port, auth)`）。設定画面から変更できるが、**サーバの起動は main.go の起動時のみ — 変更はアプリ再起動で反映**。
-- `main.go` の流れ: `env.Server == true` なら **`application.New` より前に** `rest.NewServer(assets, env.ServerHost, env.ServerPort)` → `broker = restServer.Broker()` → `newBrowserTransport(restServer)` を `application.Options.Transport` に渡す → `emit` クロージャに broker を接続 → フック設定後に `restServer.Start()`（goroutine で `Serve`）→ 終了時に `Shutdown(ctx)`。`env.Server == false` なら Transport は nil（Wails の既定。ウィンドウだけ）。
+- `main.go` の流れ: `newBrowserTransport()` を作って `application.New` に渡す（**二重起動の確認があるので、DB を開く・リカバリするより前**）→ `model.Init` → `RecoverStaleQueues` → `env.Server == true` なら `rest.NewServer(assets, env.ServerHost, env.ServerPort)` → `broker = restServer.Broker()` → `transport.attach(restServer)` → `emit` クロージャに broker を接続 → フック設定後に `restServer.Start()`（goroutine で `Serve`）→ 終了時に `Shutdown(ctx)`。Transport はサーバモードでなくても作る（サーバをつながなければ Wails の既定の HTTPTransport と同じ。`ServeAssets` は handler を預かるだけ）
 - **起動時のログ**: サーバモードの状態を起動のたびに必ず出す（`main.go` の `startupLog`。ログファイルに加えてターミナルにも出す）。`= Server mode: off` / `= Server mode: on, listening on http://…`（すべてのインターフェイスなら `localhost` と `(all interfaces)`、ユーザ管理のオン・オフ付き）/ 失敗は ERROR で `= Server mode: failed to start on …`。設定を変えたときは `api.SetServer` が `= Server settings changed: … (restart to apply)` を出す
-- **ヘッドレス運用は不可**: HTTP サーバは Wails アプリのプロセス内で動く（`app.Run()` 前提）。GUI なしでは起動できない。(今の実装はいつもメインのウィンドウを作り、閉じるとアプリが終わる。ウィンドウを作らなくても `app.Run()` は動き続けると分かったので、`TODO.md` の「ウィンドウを出さずに動かす」で変える予定)
+- **ウィンドウなしの起動（`--background`）**: メインのウィンドウを作らずに動き、ブラウザから使う（`= Started without a window (--background)…` をログに出す）。サーバモードでなければ引数を無視してウィンドウを出す（ERROR で `= --background is ignored: server mode is off`）。HTTP サーバは Wails アプリのプロセス内で動く（`app.Run()` 前提）ので、純ヘッドレスではない。トレイは置かない
+- **二重起動**: 同じ DB のアプリは1つ（`SingleInstance`、ID は `services.InstanceID(DB のパス)`）。2つ目は DB を開く前に終わり、動いている方にメインのウィンドウを出させる（`--background` 付きなら何もしない）。ウィンドウなしで動いているアプリを画面から操作・終了する入口はこれ
+- **メインのウィンドウを閉じればアプリは終わる**（サーバモードでも、ブラウザの利用者のレンダリングごと止まる。2026-11-17 にこの形に決めた）。閉じる前の確かめは画面（`TitleBar.jsx`: キューが動いている・サーバモードのとき）
 
 ## ブラウザからのバインディング呼び出し（Wails の Transport）
 
@@ -66,7 +68,7 @@ Brender のベース機能（デスクトップ運用）に対し、サーバモ
 | `GET /events` | SSE（`broker.Handler()`） |
 | `POST /api/project/upload_file` | multipart アップロード（最大 512MB、`api.UploadProjectFile`）。進み具合を取るため REST のまま |
 | `GET /thumbnail` | サムネイル画像配信（`api.ServeThumbnailPath` が権限+パス解決、`http.ServeFile` が 304 処理） |
-| `GET /_movie` | ローカル動画配信（`api.ValidateWorkDirPath` で作業ディレクトリ配下に限定） |
+| `GET /_movie` | ローカル動画配信（`api.RequireWorkDirFileAccess` で作業ディレクトリ配下・見られるファイルに限定） |
 | `/`（その他） | SPA 配信（`frontend/dist`、実ファイルがなければ `index.html`） |
 
 **サーバモードフラグの注入**: SPA の `index.html` の `<head>` に `<script>window.__brender_server_mode=true</script>` を注入する。ビルド済み JS に `@wailsio/runtime` が含まれ `window._wails` がセットされてしまうため、フロントの判定は:
@@ -90,7 +92,7 @@ export const isWails = () => Boolean(window._wails) && !window.__brender_server_
 ## 認証 (`api/rest/auth.go`)
 
 - セッション Cookie: `brender_session`（HttpOnly / SameSite=Lax / 30日 / `Secure` は HTTPS リクエスト時のみ — HTTP の LAN 運用でも動くように）
-- `authMiddleware` の流れ: 公開パス（login・reset 系・静的拡張子 — `/wails/runtime.js` を含む）はスキップ → `api.IsAuthEnabled()` が false なら Guest として続行 → Cookie のセッションを `api.ValidateSession` で検証 → 成功時 `model.WithUser(ctx)`（権限判定用）+ `model.SetGoroutineUser`（監査カラム用）
+- `authMiddleware` の流れ: 公開パス（login・reset 系・静的拡張子 — `/wails/runtime.js` を含む）はスキップ → `api.IsAuthEnabled()` が false なら Guest として続行 → Cookie のセッションを `api.ValidateSession` で検証 → 成功時 `model.WithUser(ctx)`（権限判定にも監査カラムにも使う）。ユーザ管理が無効でユーザを持たない呼び出しは、`POST /wails/runtime` とアップロードで記録だけ guest にする（`guestAuditContext`。Skill `brender-access-control` の「監査カラム」）
 - **未認証時の応答分岐** (`handleUnauthorized`): `/api/*`・`/wails/*`・`/_movie`・`/events`・`/thumbnail` は 401 JSON、ページリクエストは SPA を返す（React 側でログイン画面を表示）
 - フロント側: `serverCall`・ブラウザの呼び出し口が 401 を受けたら `window.location.reload()` → ログイン画面へ
 - パスワードリセット: `/user/reset/{token}` ページ + `auth/validate_reset_token` / `auth/reset_password` API（公開パス）
@@ -112,17 +114,18 @@ export const isWails = () => Boolean(window._wails) && !window.__brender_server_
 3. `frontend/dist` を作ってから `go build -tags production` し、`USERPROFILE=<仮のホーム>` で起動する（デスクトップにウィンドウも出る）。起動ログに `= Server mode: on, listening on ...` が出る
 4. curl で `POST /api/auth/login`（Cookie を保存）→ `POST /wails/runtime` に `{"object":0,"method":0,"args":{"call-id":"x","methodID":<ID>,"args":[...]}}`。`methodID` は生成されたバインディング（`frontend/bindings/main/services/*.js` の `$Call.ByID(<ID>, ...)`）から取る
 5. 確かめること: 未ログインは 401、creator の admin 操作は `access denied`、ウィンドウを開くメソッドは `not available from browser`、`{"object":2,"method":2}`（Quit）と `{"object":3,...}`（Emit）は 403。ブラウザで画面を開き、`/wails/runtime` が 200・SSE が届く・コンソールにエラーが無いこと
-6. 終わったら `taskkill /IM <exe>`（`/F` なしで WindowClosing フックを通す）
+6. 終わったら `taskkill /IM <exe>`（`/F` なしで終わらせる。`/F` だと後始末の `shutdown`（`main.go`、`application.Options.OnShutdown`）が走らない。走るとログに `= Brender shutdown` が出る）
 
 ## サーバモードで考慮すべきことチェックリスト
 
 新機能を追加するとき、ベース機能に加えて以下を確認する:
 
 - [ ] **全メソッドがブラウザから呼べる**: サービスに足したメソッドは選別なしにブラウザへ出る。ウィンドウを開く操作は `api.FromBrowser(ctx)` で断ったか
-- [ ] **権限**: サービスは `ctx` を受けて api 層へ渡しているか。admin 操作は api の関数の中で `requireAdmin(ctx)` を通しているか（REST 側の守りは無い）。リソース権限は `require*` ヘルパーを通しているか（Skill `brender-access-control`）
+- [ ] **権限**: サービスは `ctx` を受けて api 層へ渡しているか（`services/ctx_test.go` が確かめる。渡さないなら理由を書いて許可リストへ）。admin 操作は api の関数の中で `requireAdmin(ctx)` を通しているか（REST 側の守りは無い）。リソース権限は `require*` ヘルパーを通しているか。ID を別々に受け取るなら `checkResourceIDs` で組を確かめたか（Skill `brender-access-control`）
+- [ ] **画面から戻ってくる値**: サーバで決めた値（パス・実行ファイルなど）を画面から受け取り直して使っていないか。使うならサーバで決め直して比べる（`EnqueueWithPreview` 方式）
 - [ ] **イベント**: 新イベントは `emit` 経由か（Wails のみに Emit すると SSE に届かない）
 - [ ] **ファイルパス**: ブラウザは OS のファイルダイアログ・ローカルパスを使えない。パス入力系 UI は `isWails()` で分岐し、ブラウザ側はアップロード（multipart）や登録済みディレクトリ選択にする
-- [ ] **生パスの検証**: ローカルパスを受け取る/配信する口は `ValidateWorkDirPath` で作業ディレクトリ配下に限定したか
+- [ ] **生パスの検証**: ローカルパスを受け取る/配信する口は `requireWorkDirFileAccess`（公開版 `RequireWorkDirFileAccess`）で作業ディレクトリ配下・見られるファイルに限定したか
 - [ ] **画像・大容量データ**: base64 で返すと 33% 肥大しキャッシュも効かない。サムネイルのように URL 配信 + `Last-Modified` を検討
 - [ ] **同時アクセス**: DB は WAL 設定済み（`model.Init`）だが、書き込み競合するフローは mutex（`enqueueMu` 方式）を検討
 - [ ] **常駐プロセス**: 無制限に増えるリソース（temp スクリプト等）は起動時クリーンアップに載せたか

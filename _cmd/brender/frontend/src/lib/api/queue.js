@@ -44,10 +44,6 @@ export const QueueApi = {
   killRunning: () =>
     svc().then(s => s.KillRunning()),
 
-  /** ジョブ履歴一覧を取得 */
-  listJobs: () =>
-    svc().then(s => s.ListJobs()),
-
   /** ジョブ履歴をページング付きで取得
    * @param {{ filter: { data_statuses?: number[], days?: number, sort_by?: string }, page: number, pageSize: number }} args
    * @returns {Promise<{ jobs: Job[], total: number, total_size: number }>}

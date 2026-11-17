@@ -97,12 +97,6 @@ export const ProjectApi = {
   addFilesFromDir: ({ projectID, dir }) =>
     svc().then(s => s.AddFilesFromDir(projectID, dir)),
 
-  /** ファイルをプロジェクトから除外（履歴は残す）
-   * @param {{ fileID: number }} args
-   */
-  removeFile: ({ fileID }) =>
-    svc().then(s => s.RemoveFile(fileID)),
-
   /** ファイルを完全削除
    * @param {{ fileID: string, force?: boolean }} args
    */

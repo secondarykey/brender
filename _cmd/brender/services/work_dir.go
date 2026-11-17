@@ -39,7 +39,7 @@ func (w *WorkDir) StartMigration(ctx context.Context, projectID string, newWorkD
 }
 
 func (w *WorkDir) GetWorkDirStats(ctx context.Context, id uint) (map[string]interface{}, error) {
-	return api.GetWorkDirStats(id)
+	return api.GetWorkDirStats(ctx, id)
 }
 
 func (w *WorkDir) ChangeDir(ctx context.Context, id uint, newPath string) error {
@@ -47,5 +47,5 @@ func (w *WorkDir) ChangeDir(ctx context.Context, id uint, newPath string) error 
 }
 
 func (w *WorkDir) GetProjectDiskSize(ctx context.Context, projectID string) (int64, error) {
-	return api.GetProjectDiskSize(projectID)
+	return api.GetProjectDiskSize(ctx, projectID)
 }

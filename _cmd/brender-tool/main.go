@@ -31,6 +31,8 @@ var analysis bool
 var engines bool
 var scenes bool
 
+var showVersion bool
+
 func init() {
 
 	flag.StringVar(&cmd, "b", "", "Blender command")
@@ -52,11 +54,19 @@ func init() {
 
 	flag.BoolVar(&engines, "engines", false, "Print EngineList")
 	flag.BoolVar(&scenes, "scenes", false, "Print SceneList")
+
+	flag.BoolVar(&showVersion, "version", false, "Print version")
 }
 
 func main() {
 
 	flag.Parse()
+
+	// 版を出すだけなのでログは組まない
+	if showVersion {
+		fmt.Println("brender-tool", appVersion())
+		return
+	}
 
 	// ログはファイルだけ（ターミナルは進捗の表示に使う）。デスクトップアプリのログと混ざらないよう、頭を分ける。
 	// ファイルを作れないときは標準エラー出力に出して続ける
@@ -70,6 +80,8 @@ func main() {
 		fmt.Fprintf(os.Stderr, "log.Init() error: %v\n", logErr)
 	}
 	defer logs.Close()
+
+	log.Noticef("= brender-tool Version: %s", appVersion())
 
 	if engines {
 		err := printEngineList()

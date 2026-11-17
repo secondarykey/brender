@@ -88,7 +88,7 @@ func NewServer(assets fs.FS, host string, port int) *Server {
 			http.Error(w, "invalid path", http.StatusBadRequest)
 			return
 		}
-		if err := api.ValidateWorkDirPath(p); err != nil {
+		if err := api.RequireWorkDirFileAccess(r.Context(), p); err != nil {
 			http.Error(w, "forbidden", http.StatusForbidden)
 			return
 		}
@@ -144,7 +144,10 @@ func (s *Server) URL() (url string, all bool) {
 	return "http://" + net.JoinHostPort(host, port), all
 }
 
+// Shutdown は待ち受けをやめ、処理中のリクエストが終わるのを ctx の期限まで待つ。
+// SSE の接続は先に終わらせる（終わるのを待つ相手にしない）。
 func (s *Server) Shutdown(ctx context.Context) error {
+	s.broker.Close()
 	return s.httpServer.Shutdown(ctx)
 }
 

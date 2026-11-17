@@ -51,15 +51,15 @@ func (s *Blender) GetEngines(ctx context.Context, installID uint) ([]string, err
 }
 
 func (s *Blender) GetScenes(ctx context.Context, installID uint, fileID string) ([]string, error) {
-	return api.GetScenes(installID, fileID)
+	return api.GetScenes(ctx, installID, fileID)
 }
 
 func (s *Blender) GetCameras(ctx context.Context, installID uint, fileID string) ([]*exec.CameraTool, error) {
-	return api.GetCameras(installID, fileID)
+	return api.GetCameras(ctx, installID, fileID)
 }
 
 func (s *Blender) GetToolData(ctx context.Context, installID uint, fileID string) (*exec.Tool, error) {
-	return api.GetToolData(installID, fileID)
+	return api.GetToolData(ctx, installID, fileID)
 }
 
 // Warnings は起動時検証で検出した警告（パス消失など）を返す。

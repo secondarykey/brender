@@ -6,7 +6,7 @@ description: >
   ProcessingWriter による Blender 標準出力のリアルタイムパース（Blender 4.x/5.x、Cycles/EEVEE/Workbench
   のエンジン別フレーム検出・タイル/サンプル進捗・ETA 計算）、進捗トラッキング（exec/progress.go）、
   QueuePage の進捗バー計算式、サムネイル自動生成（api/thumbnail.go）、CLI ターミナル表示を扱う。
-  api/queue.go・api/thumbnail.go・exec/writer.go・exec/progress.go・_cmd/brender-tool/・
+  api/queue*.go・api/schedule.go・api/job*.go・api/thumbnail.go・exec/writer.go・exec/progress.go・_cmd/brender-tool/・
   QueuePage.jsx を変更するとき、またはキュー・レンダリング進捗・ジョブステータス・リカバリ・
   サムネイルに関する作業のときは必ずこのSkillを参照すること。
 ---
@@ -17,12 +17,12 @@ Queue/Job のステータス一覧・データモデルはルートの `AGENTS.m
 
 ## サムネイル自動生成 (`api/thumbnail.go`)
 
-ファイル登録時（`AddProjectFile`）に非同期で `CreateThumbnailWorkspace` を呼び出す。
+ファイル登録時（`AddProjectFile`）に非同期で `CreateDefaultWorkspace` を呼び出す。サムネイル専用のものは作らず、「既定のワークスペースを作って、そこで Test 出力をした」形にする。
 
 **フロー**:
-1. `IsSystem=true` のワークスペース「`ファイル名 Thumbnail`」を作成
-2. Blender で `.blend` のデフォルトシーンを解析し、中間フレーム（`(start+end)/2`）を1枚レンダリング
-3. 出力 PNG を `convertToJPEG` で 640×360 JPEG に変換して `thumbnail.jpg` として保存
+1. ワークスペース「Default」を既定の設定で作成（`model.CreateWorkspace`。画面の「新規作成」と同じもの）
+2. そこで `TestEnqueue`（開始 0・終了 -1 = シーンのフレーム範囲 → 中間フレーム `(start+end)/2` を 1 枚、サンプル 8）を投入。そのワークスペースの Test ジョブとして履歴に残る。ジョブ名は「ファイル名 Default (Test)(フレーム-フレーム)」（全ジョブ共通で `jobName` がファイル名を頭に付ける）
+3. ファイルのサムネイルが要るとき、`thumbnail.jpg` が無ければ `model.GetLatestTestJobByFile`（そのファイルの、どのワークスペースかを問わない最新の完了した Test ジョブ）の出力を `convertToJPEG` で 640×360 JPEG に変換して保存する
 4. エラーはログ出力のみ（ファイル登録をブロックしない）
 
 **変換ロジック** (`convertToJPEG`):
@@ -30,18 +30,23 @@ Queue/Job のステータス一覧・データモデルはルートの `AGENTS.m
 - 元画像をアスペクト比保持でキャンバスに収まる最大サイズに縮小（長辺基準 `min(W/srcW, H/srcH)`）
 - 中央配置、JPEG quality 85
 
-**パス解決** (`thumbnailPath`): サムネイル種別（プロジェクト/ファイル/ワークスペース）ごとの `thumbnail.jpg` のパスを返す共通ヘルパー。無ければ完了ジョブ出力から生成する。base64 版・URL 版・HTTP 配信で共用する。
+**パス解決** (`thumbnailPath`): サムネイル種別（プロジェクト/ファイル/ワークスペース）ごとの `thumbnail.jpg` のパスを返す共通ヘルパー。無ければ完了ジョブ出力から生成する。取得・設定（`Set*From*` の元の画像）・HTTP 配信で共用する。
 
-**取得の2形態**:
-- **base64**（Wails デスクトップ）: `GetFileThumbnail` / `GetProjectThumbnail` / `GetWorkspaceThumbnail` が `thumbnailPath` + `imageToBase64` でデータURIを返す。
-- **URL 配信**（サーバモード）: `GetFileThumbnailURL` 等が `/thumbnail?project_id=...&file_id=...&v={mtime}` を返し、実体は REST の `GET /thumbnail`（`api.ServeThumbnailPath`、認証+アクセス権限チェック+`Last-Modified` による 304）が配信する。base64 の 33% 肥大を避け、ブラウザキャッシュを効かせる。`v={mtime}` で再生成時にキャッシュを更新。存在しなければ空文字（フロントはプレースホルダ表示のまま `queue:changed` で再取得）。
+**返す形は2つ。決めるのは `thumbnailRef` だけ**（呼び出し元で分けない。サービスに分かれ道を書かない）:
+- `GetFileThumbnail` / `GetProjectThumbnail` / `GetWorkspaceThumbnail`（ctx で権限を見る）と `Set*Thumbnail*` は、どれも最後に `thumbnailRef(ctx, path, ...)` を通す
+- **base64**（ウィンドウ。`api.FromBrowser(ctx)` が false）: `imageToBase64` でデータURIを返す。
+- **URL 配信**（ブラウザ）: `/thumbnail?project_id=...&file_id=...&v={mtime の ns}` を返し、実体は REST の `GET /thumbnail`（`api.ServeThumbnailPath`、認証+アクセス権限チェック+`Last-Modified` による 304）が配信する。base64 の 33% 肥大を避け、ブラウザキャッシュを効かせる。`v` で再生成時にキャッシュを更新する（秒だと同じ秒に2回設定したときに古い画像が出るので ns）。存在しなければ空文字（フロントはプレースホルダ表示のまま `queue:changed` で再取得）。
 - フロントの `ProjectApi.getFileThumbnail` はどちらのモードでも文字列（データURI or URL）を返すため、`<img src>` にそのまま渡せる（消費側コードはモード非依存）。
 
-**IsSystem ワークスペース**: 現在はワークスペース一覧に表示したまま。将来 `ListWorkspacesByProject` の WHERE 句に `is_system = false` を追加して除外する予定。
+**隠しワークスペース（`is_system`）は廃止**: 以前はサムネイル用のワークスペースを `IsSystem=true` で作って一覧から隠していたため、ワークスペースもジョブも画面から辿れず浮いていた。起動時の `model.migrateSystemWorkspaces` が `workspaces.is_system` 列を消し、既存分を普通のワークスペースとして一覧に出す（列が無ければ何もしない）。そこにあったのも Test ジョブなので、ファイルのサムネイルはそのまま辿れる。
 
-## Async rendering flow (`api/queue.go`)
+## Async rendering flow (`api/queue*.go`・`api/schedule.go`)
 
-`Enqueue()` → `PreviewRender()` でパラメータ解決 → `EnqueueWithPreview()` でジョブ作成・キュー投入。
+ファイルの分け方: 一覧・キャンセルは `queue.go`、設定の解決と確認（`RenderPreview`・`fileOverrides`・`resolveRenderBase`・`PreviewRender`）は `queue_preview.go`、投入は `queue_enqueue.go`、実行と終了（`executeQueue`・`finishJob`・`applyAutoLock`）は `queue_run.go`、起動の判定（`schedule`・`runQueue`）は `schedule.go`、Blender の kill と `shuttingDown` は `queue_process.go`、起動時のリカバリは `queue_recover.go`。ジョブの側は、一覧・更新・削除・ロックが `job.go`、出力ファイル（画像・zip・ログ・削除）が `job_files.go`、出力データの掃除と容量の実測が `job_clean.go`（動画作成は `movie.go`）。
+
+`Enqueue()` → `PreviewRender()` でパラメータ解決 → `enqueuePreview()` でジョブ作成・キュー投入。
+画面の確認ダイアログからは `PreviewRender()` → `EnqueueWithPreview(preview)`。`preview` は画面から戻ってくるので信用せず、サーバで `PreviewRender()` し直して確認した内容（`sameRenderSettings`）と違えば `ErrPreviewChanged` で断り、サーバで作った方で `enqueuePreview()` する（Skill `brender-access-control`）。
+スクリプトのテンプレート（`exec/_assets/*.tmpl`）へ文字列を埋めるときは `{{ py .X }}` を使う（シーン名・カメラ名で Python を差し込まれないように）。
 
 **パラメータ解決** (`resolveRenderBase` / `fileOverrides`):
 - Blender/シーン/エンジン/カメラの解決は「固定フラグ付きファイル指定 → 呼び出し側の指定（ワークスペース or テスト params）→ ファイル指定 → シーンのデフォルト」の優先順位。
@@ -49,10 +54,10 @@ Queue/Job のステータス一覧・データモデルはルートの `AGENTS.m
 
 **同時実行制御**:
 - `getMaxConcurrentJobs()` が `model.GetEnv().MaxConcurrentJobs` を読む（デフォルト 1、0 以下も 1 扱い）。設定画面の Blender タブで変更可能。
-- `scheduleMu sync.Mutex` でスケジューラのレース防止
-- 投入時: 実行中キュー数が上限未満なら `MarkQueueStarting()`（DB で status を running に変更）してから `go executeQueue()` を起動。上限以上なら `waiting` のまま保留。
-- 完了・キャンセル時: `startNextWaiting()` を呼び出し、最古の `waiting` ジョブを昇格して起動。
-- 同一ワークスペースの重複投入禁止: `ExistsQueueByWorkspace` で事前チェック。ダブルクリック等の競合を防ぐため、この重複チェックから `CreateQueue` までを `enqueueMu sync.Mutex` で直列化する（`scheduleMu` とは別ロック、順序が交差しないためデッドロックしない）。
+- **キューを起動する入口は `schedule()` だけ**。実行上限の空きの数だけ、待ち（`waiting`/`recovering`）を古い順（キュー ID = UUID v7 の順）に `MarkQueueStarting()`（DB で status を running に変更）してから、`scheduleMu` を放して `go runQueue()`（= `dispatchQueue`。テストで差し替える）で起動する。`shuttingDown` 中は何もしない
+- 呼ぶところ: 投入（待ちに入れてから呼ぶので、空きがあっても先に待っているジョブを追い越さない）・`finishJob`・`CancelQueue`・`SetMaxConcurrentJobs`（上限を上げたらすぐ起動）・`UpdateWorkDir`（lock を外したらすぐ起動）・`StartRecoveredQueues`。空きが増える・起動できるジョブが増える処理を足したら、そこからも呼ぶ
+- lock 中の作業ディレクトリのジョブは飛ばして後ろを起動する（先頭で全部を止めない）
+- 同一ワークスペースの重複投入禁止: `ExistsQueueByWorkspace` で事前チェック。ダブルクリック等の競合を防ぐため、この重複チェックから `CreateQueue` までを `enqueueMu sync.Mutex` で直列化する（`scheduleMu` とは別ロック、順序が交差しないためデッドロックしない）。出力先の基底パスは `enqueueMu` を取ったあとに `writableProjectBaseDir` で読む（データの移動中・作業ディレクトリのロック中は断る。取る前に読むと、読んだあとに移動が終わって旧パスへ出力してしまう）。移動の側も `enqueueMu` を取ってから「キューが無いこと」を確かめて移動中の印を付ける（`api/work_dir_move.go`）。
 
 **`executeQueue` の流れ**:
 1. `ProcessingWriter` 作成、`exec.RegisterProgress` 登録
@@ -61,17 +66,19 @@ Queue/Job のステータス一覧・データモデルはルートの `AGENTS.m
 4. `model.UpdateQueueRunning(id, pid)` で PID・開始時刻を記録
 5. `errCh` から完了を待ち、`finishJob()` を呼ぶ
 
-`finishJob()` は完了時に `calcDirSize()` で出力ディレクトリ容量を計算して `Job.DiskSize` に保存、Queue レコードを削除後 `startNextWaiting()` → `notifyQueueChanged()` を呼ぶ。`shuttingDown` が立っているときは何もせずに戻る（Queue を `running` のまま残し、次回起動時のリカバリに任せる）。
+`finishJob()` は完了時に `dirSize()` で出力ディレクトリ容量を計算して `Job.DiskSize` に保存、Queue レコードを削除後 `schedule()` → `notifyQueueChanged()` を呼ぶ。`shuttingDown` が立っているときは何もせずに戻る（Queue を `running` のまま残し、次回起動時のリカバリに任せる）。
+
+容量はどこでも `dirSize()`（`api/job_files.go`）で数える。ログや動画も含めた全ファイルの合計で、ジョブを消したときに空く量と合う。ジョブの `DiskSize`・掃除の前の実測（`MeasureFilteredDiskSize`）・プロジェクトの容量（`GetProjectDiskSize`）が同じ数え方になるよう、自前で `WalkDir` しないこと。2026-11-17 より前に完了したジョブの `DiskSize` は画像だけの合計のまま。
 
 **実行中キューの強制終了は2種類あり、`shuttingDown` を立てるのは終了時だけ**:
 | 関数 | 呼び出し元 | `shuttingDown` | kill されたジョブの後始末 |
 |---|---|---|---|
-| `KillRunningQueues()` | アプリ終了時（`main.go` の `WindowClosing` フック） | 立てる | `finishJob` がスキップ → Queue が残り、次回起動時に `interrupted` + 再実行 |
+| `KillRunningQueues()` | アプリ終了時（`main.go` の `shutdown`。`application.Options.OnShutdown` から、どの終わり方でも呼ばれる） | 立てる | `finishJob` がスキップ → Queue が残り、次回起動時に `interrupted` + 再実行 |
 | `KillRunningQueuesByUser(ctx)` | 利用者の操作（サービス `Queue.KillRunning`。ブラウザからも同じメソッド、admin 限定） | 立てない | 実行 goroutine の `finishJob` が `cancelled`（`JobDataCorrupted`、エラー文なし。`CancelQueue` と同じ扱い）で閉じ、Queue 削除・次の待機キュー起動まで通常どおり |
 
 kill 部分は内部関数 `killRunningQueues()` に共通化している。利用者の強制終了では kill したキュー ID を `userKilledQueues`（`sync.Map`）に kill より先に記録し、`finishJob` がそれを見て `error` ではなく `cancelled` にする（kill できなかったキューは記録を外し、ジョブはそのまま走り続ける）。利用者の操作から `KillRunningQueues()` を呼ぶと `shuttingDown` が立ったままになり、再起動まで全ジョブの完了記録と次キューの起動が止まるので呼ばないこと。
 
-## 起動時キューリカバリ (`api/queue.go`)
+## 起動時キューリカバリ (`api/queue_recover.go`)
 
 アプリがクラッシュや強制終了した場合、Queue テーブルに `running` 状態のレコードが残る。次回起動時に `RecoverStaleQueues()` がこれを検出してリカバリする。
 
@@ -107,7 +114,7 @@ api.QueueChangedHook = func(count int64) { emit("queue:changed", count) }
 ```
 新しいイベントを足すときも `emit` を経由すれば、Wails と SSE の両トランスポートへ確実に届く（フックごとに SSE ラップを書くと漏れる）。`broker` はフック設定より前に生成しておく。
 
-## Job deletion (`api/queue.go`)
+## Job deletion (`api/job.go`)
 
 `DeleteJob(id)` — ジョブの `OutputDir` を `os.RemoveAll` で削除してから DB レコードを削除する（ディレクトリが存在する場合のみ）。
 
@@ -161,7 +168,7 @@ Progress displays with 2 decimal places. Log text (`q.log2`) is shown as-is from
 
 ## RunTool 結果キャッシュ (`exec/toolcache.go`)
 
-`RunTool()` の解析結果 `Tool` を `(cmd, filePath)` キー + ファイル更新時刻でインメモリキャッシュする。Blender 起動は数秒かかるため、同一 `.blend` への `ResolveScene` / `GetToolData` / `getScenes` 等の重複起動を排除する。特にファイル登録時のサムネイル生成（`GetToolData`（Packチェック）→ `CreateThumbnailWorkspace` の `ResolveScene` → `TestEnqueue` 内の `ResolveScene`）が1回の Blender 起動で済む。ファイルが編集されると mtime が変わり自動的にキャッシュミスになる。明示的な破棄は `exec.InvalidateToolCache(cmd, filePath)`。
+`RunTool()` の解析結果 `Tool` を `(cmd, filePath)` キー + ファイル更新時刻でインメモリキャッシュする。Blender 起動は数秒かかるため、同一 `.blend` への `ResolveScene` / `GetToolData` / `getScenes` 等の重複起動を排除する。特にファイル登録時のサムネイル生成（`GetToolData`（Packチェック）→ `CreateDefaultWorkspace` → `TestEnqueue` 内の `ResolveScene`）が1回の Blender 起動で済む。ファイルが編集されると mtime が変わり自動的にキャッシュミスになる。明示的な破棄は `exec.InvalidateToolCache(cmd, filePath)`。
 
 ## CLI terminal display (`_cmd/brender-tool/main.go`)
 

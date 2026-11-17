@@ -2,13 +2,14 @@ package api
 
 import (
 	"context"
-	"github.com/secondarykey/brender/log"
 	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/secondarykey/brender/log"
 
 	"github.com/secondarykey/brender/model"
 	"golang.org/x/xerrors"
@@ -54,7 +55,7 @@ func UpdateProject(ctx context.Context, id, name, note string) (*model.ProjectDe
 	if err := requireProjectRole(ctx, id, model.RoleOwner, model.RoleEditor); err != nil {
 		return nil, err
 	}
-	return model.UpdateProject(id, name, note)
+	return model.UpdateProject(ctx, id, name, note)
 }
 
 func UpdateProjectFile(ctx context.Context, fileID string, name string, note string, blenderInstallID uint, blenderFixed bool, scene string, sceneFixed bool, camera string, cameraFixed bool, engine string, engineFixed bool) (*model.ProjectFile, error) {
@@ -65,7 +66,7 @@ func UpdateProjectFile(ctx context.Context, fileID string, name string, note str
 	if err := requireFileRole(ctx, fileID, rolesEditorUp...); err != nil {
 		return nil, err
 	}
-	return model.UpdateProjectFile(fileID, name, note, blenderInstallID, blenderFixed, scene, sceneFixed, camera, cameraFixed, engine, engineFixed)
+	return model.UpdateProjectFile(ctx, fileID, name, note, blenderInstallID, blenderFixed, scene, sceneFixed, camera, cameraFixed, engine, engineFixed)
 }
 
 func GetFile(ctx context.Context, fileID string) (*model.ProjectFile, error) {
@@ -89,8 +90,11 @@ func GetFile(ctx context.Context, fileID string) (*model.ProjectFile, error) {
 	return f, nil
 }
 
-// ListAllProjectFiles は全プロジェクトの全ファイルを返す（設定画面の一括確認用）。
-func ListAllProjectFiles() ([]*model.ProjectFile, error) {
+// ListAllProjectFiles は全プロジェクトの全ファイルを返す（設定画面の一括確認用）。admin 限定。
+func ListAllProjectFiles(ctx context.Context) ([]*model.ProjectFile, error) {
+	if err := requireAdmin(ctx); err != nil {
+		return nil, err
+	}
 	return model.ListAllProjectFiles()
 }
 
@@ -128,37 +132,37 @@ func UploadProjectFile(ctx context.Context, projectID string, filename string, r
 	out.Close()
 
 	f.Path = savePath
-	if err := model.InsertProjectFile(f); err != nil {
+	if err := model.InsertProjectFile(ctx, f); err != nil {
 		return nil, err
 	}
 	now := time.Now()
-	if err := model.UpdateProjectFileProcessedAt(f.ID, &now); err != nil {
+	if err := model.UpdateProjectFileProcessedAt(ctx, f.ID, &now); err != nil {
 		log.Error("UploadProjectFile: UpdateProjectFileProcessedAt", "error", err)
 	}
-	touchProjectProcessedAt(projectID)
+	touchProjectProcessedAt(ctx, projectID)
 	// プロジェクトの権限をファイルにコピー
-	if err := model.CopyProjectPermissionsToFile(projectID, f.ID); err != nil {
+	if err := model.CopyProjectPermissionsToFile(ctx, projectID, f.ID); err != nil {
 		log.Error("UploadProjectFile: CopyProjectPermissionsToFile", "error", err)
 	}
-	// 非同期でPackチェック → Pack済みならサムネイル自動生成（バックグラウンドは owner 権限で実行）
-	go checkPackAndThumbnail(SystemContext(), projectID, f)
+	// 非同期でPackチェック → Pack済みなら既定のワークスペースを作って Test 出力（バックグラウンドは owner 権限で実行）
+	go checkPackAndThumbnail(backgroundContext(ctx), projectID, f)
 	return f, nil
 }
 
 // checkPackAndThumbnail はツール実行でPack状態を検査し、DB に保存する。
-// Pack 済みの場合はサムネイル自動生成を開始する。
+// Pack 済みの場合は既定のワークスペースを作り、Test 出力（サムネイル）を始める。
 func checkPackAndThumbnail(ctx context.Context, projectID string, f *model.ProjectFile) {
-	tool, err := GetToolData(0, f.ID)
+	tool, err := GetToolData(ctx, 0, f.ID)
 	if err != nil {
 		log.Error("checkPackAndThumbnail: GetToolData", "fileID", f.ID, "error", err)
 		return
 	}
-	if err := model.UpdateProjectFilePacked(f.ID, tool.Pack); err != nil {
+	if err := model.UpdateProjectFilePacked(ctx, f.ID, tool.Pack); err != nil {
 		log.Error("checkPackAndThumbnail: UpdateProjectFilePacked", "fileID", f.ID, "error", err)
 	}
 	if tool.Pack {
-		if err := CreateThumbnailWorkspace(ctx, projectID, f); err != nil {
-			log.Error("checkPackAndThumbnail: thumbnail creation failed", "fileID", f.ID, "error", err)
+		if err := CreateDefaultWorkspace(ctx, projectID, f); err != nil {
+			log.Error("checkPackAndThumbnail: default workspace creation failed", "fileID", f.ID, "error", err)
 		}
 	} else {
 		log.Warn("uploaded file is not packed", "fileID", f.ID, "name", f.Name)
@@ -173,24 +177,24 @@ func AddProjectFile(ctx context.Context, projectID, path string) (*model.Project
 	if _, err := os.Stat(path); err != nil {
 		return nil, xerrors.Errorf("file not found: %s", path)
 	}
-	f, err := model.AddProjectFile(projectID, path)
+	f, err := model.AddProjectFile(ctx, projectID, path)
 	if err != nil {
 		return nil, err
 	}
 	now := time.Now()
-	if err := model.UpdateProjectFileProcessedAt(f.ID, &now); err != nil {
+	if err := model.UpdateProjectFileProcessedAt(ctx, f.ID, &now); err != nil {
 		log.Error("AddProjectFile: UpdateProjectFileProcessedAt", "error", err)
 	}
-	touchProjectProcessedAt(projectID)
+	touchProjectProcessedAt(ctx, projectID)
 	// プロジェクトの権限をファイルにコピー
-	if err := model.CopyProjectPermissionsToFile(projectID, f.ID); err != nil {
+	if err := model.CopyProjectPermissionsToFile(ctx, projectID, f.ID); err != nil {
 		log.Error("AddProjectFile: CopyProjectPermissionsToFile", "error", err)
 	}
-	// サムネイル自動生成はバックグラウンドで owner 権限として実行する
-	bgCtx := SystemContext()
+	// 既定のワークスペースの作成と Test 出力（サムネイル）はバックグラウンドで owner 権限として実行する（記録には登録した人を残す）
+	bgCtx := backgroundContext(ctx)
 	go func() {
-		if err := CreateThumbnailWorkspace(bgCtx, projectID, f); err != nil {
-			log.Error("thumbnail workspace creation failed", "fileID", f.ID, "error", err)
+		if err := CreateDefaultWorkspace(bgCtx, projectID, f); err != nil {
+			log.Error("default workspace creation failed", "fileID", f.ID, "error", err)
 		}
 	}()
 	return f, nil
@@ -243,10 +247,6 @@ func AddFilesFromDirectory(ctx context.Context, projectID, dir string) (*AddDirR
 		return nil
 	})
 	return result, nil
-}
-
-func RemoveProjectFile(fileID string) error {
-	return model.RemoveProjectFile(fileID)
 }
 
 func DeleteProjectFile(ctx context.Context, fileID string, force bool) error {
@@ -362,25 +362,25 @@ func CreateProject(ctx context.Context, name string) (*model.ProjectDetail, erro
 	if err := AssignDefaultWorkDir(p); err != nil {
 		return nil, err
 	}
-	d, err := model.CreateProject(name, nil, p.WorkDirID)
+	d, err := model.CreateProject(ctx, name, nil, p.WorkDirID)
 	if err != nil {
 		return nil, err
 	}
 	now := time.Now()
-	if err := model.UpdateProjectProcessedAt(d.Project.ID, &now); err != nil {
+	if err := model.UpdateProjectProcessedAt(ctx, d.Project.ID, &now); err != nil {
 		log.Error("CreateProject: UpdateProjectProcessedAt", "error", err)
 	}
 	// デフォルト権限を設定（作成者 + BrenderOwner → owner, All → viewer）
 	creatorID := currentUser(ctx)
-	if err := model.SetDefaultProjectPermissions(d.Project.ID, creatorID); err != nil {
+	if err := model.SetDefaultProjectPermissions(ctx, d.Project.ID, creatorID); err != nil {
 		log.Error("CreateProject: SetDefaultProjectPermissions", "error", err)
 	}
 	return d, nil
 }
 
-func touchProjectProcessedAt(projectID string) {
+func touchProjectProcessedAt(ctx context.Context, projectID string) {
 	now := time.Now()
-	if err := model.UpdateProjectProcessedAt(projectID, &now); err != nil {
+	if err := model.UpdateProjectProcessedAt(ctx, projectID, &now); err != nil {
 		log.Error("touchProjectProcessedAt", "projectID", projectID, "error", err)
 	}
 }

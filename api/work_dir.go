@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"io"
 	"os"
 	"path/filepath"
 
@@ -11,11 +10,12 @@ import (
 )
 
 // MigrationHook はプロジェクト移行の進捗・完了時に呼ばれるフック。
-// 呼び出し元（Wails サービス層など）で設定する。
-var MigrationHook func(projectID string, status string, pct float64)
+// 呼び出し元（Wails サービス層など）で設定する。status が "error" のとき errMsg に失敗の理由が入る。
+var MigrationHook func(projectID string, status string, pct float64, errMsg string)
 
 // WorkDirChangeDirHook は作業ディレクトリのパス変更進捗・完了時に呼ばれるフック。
-var WorkDirChangeDirHook func(workDirID uint, status string, pct float64)
+// status が "error" のとき errMsg に失敗の理由が入る。
+var WorkDirChangeDirHook func(workDirID uint, status string, pct float64, errMsg string)
 
 // GetProjectBaseDir はプロジェクトの作業ディレクトリ基底パスを返す。
 // WorkDirID が未設定（0）の場合はデフォルト作業ディレクトリを自動割り当てする。
@@ -35,7 +35,8 @@ func GetProjectBaseDir(projectID string) (string, error) {
 		if wd == nil {
 			return "", xerrors.New("作業ディレクトリが設定されていません（システム設定で追加してください）")
 		}
-		if err := model.UpdateProjectWorkDir(projectID, wd.ID); err != nil {
+		// 既定の作業ディレクトリを割り当てるのはシステムの判断（呼び出しの ctx を持たない関数なので）
+		if err := model.UpdateProjectWorkDir(SystemContext(), projectID, wd.ID); err != nil {
 			return "", xerrors.Errorf("GetProjectBaseDir UpdateProjectWorkDir: %w", err)
 		}
 		return wd.Path, nil
@@ -79,7 +80,7 @@ func CreateWorkDir(ctx context.Context, path string, priority int) (*model.WorkD
 		Priority: priority,
 		Status:   model.WorkDirStatusActive,
 	}
-	if err := model.CreateWorkDir(wd); err != nil {
+	if err := model.CreateWorkDir(ctx, wd); err != nil {
 		return nil, err
 	}
 	return wd, nil
@@ -96,9 +97,12 @@ func UpdateWorkDir(ctx context.Context, id uint, path string, priority int, stat
 	wd.Path = path
 	wd.Priority = priority
 	wd.Status = status
-	if err := model.UpdateWorkDir(wd); err != nil {
+	if err := model.UpdateWorkDir(ctx, wd); err != nil {
 		return nil, err
 	}
+	// lock を外したら、止めていた待ちのジョブを起動する
+	schedule()
+	notifyQueueChanged()
 	return wd, nil
 }
 
@@ -106,7 +110,7 @@ func ReorderWorkDirs(ctx context.Context, ids []uint) error {
 	if err := requireAdmin(ctx); err != nil {
 		return err
 	}
-	return model.ReorderWorkDirs(ids)
+	return model.ReorderWorkDirs(ctx, ids)
 }
 
 func DeleteWorkDir(ctx context.Context, id uint) error {
@@ -147,61 +151,11 @@ func CheckWorkDir(ctx context.Context, path string) (map[string]interface{}, err
 	return result, nil
 }
 
-// StartMigrateProjectWorkDir はプロジェクトを別の作業ディレクトリへ非同期で移行する。
-func StartMigrateProjectWorkDir(ctx context.Context, projectID string, newWorkDirID uint) error {
-	// Owner のみ作業ディレクトリの変更が可能
-	if err := requireProjectRole(ctx, projectID, model.RoleOwner); err != nil {
-		return err
+// GetWorkDirStats は指定 work_dir のプロジェクト数とデータサイズを返す。admin 限定（作業ディレクトリの設定）。
+func GetWorkDirStats(ctx context.Context, id uint) (map[string]interface{}, error) {
+	if err := requireAdmin(ctx); err != nil {
+		return nil, err
 	}
-	oldBase, err := GetProjectBaseDir(projectID)
-	if err != nil {
-		return xerrors.Errorf("StartMigrateProjectWorkDir: %w", err)
-	}
-	newWd, err := model.GetWorkDir(newWorkDirID)
-	if err != nil || newWd == nil {
-		return xerrors.Errorf("StartMigrateProjectWorkDir: new work_dir not found")
-	}
-	newBase := newWd.Path
-
-	go func() {
-		notify := func(pct float64) {
-			if MigrationHook != nil {
-				MigrationHook(projectID, "running", pct)
-			}
-		}
-
-		if err := migrateProjectFiles(oldBase, newBase, projectID, notify); err != nil {
-			if MigrationHook != nil {
-				MigrationHook(projectID, "error", 0)
-			}
-			return
-		}
-
-		if err := model.UpdateProjectWorkDir(projectID, newWorkDirID); err != nil {
-			if MigrationHook != nil {
-				MigrationHook(projectID, "error", 0)
-			}
-			return
-		}
-
-		if err := model.UpdateJobOutputDirPrefix(projectID, oldBase, newBase); err != nil {
-			if MigrationHook != nil {
-				MigrationHook(projectID, "error", 0)
-			}
-			return
-		}
-
-		os.RemoveAll(filepath.Join(oldBase, projectID))
-
-		if MigrationHook != nil {
-			MigrationHook(projectID, "done", 1.0)
-		}
-	}()
-	return nil
-}
-
-// GetWorkDirStats は指定 work_dir のプロジェクト数とデータサイズを返す。
-func GetWorkDirStats(id uint) (map[string]interface{}, error) {
 	wd, err := model.GetWorkDir(id)
 	if err != nil || wd == nil {
 		return nil, xerrors.New("work dir not found")
@@ -226,139 +180,13 @@ func GetWorkDirStats(id uint) (map[string]interface{}, error) {
 }
 
 // GetProjectDiskSize はプロジェクトのデータサイズ（作業ディレクトリ内の {projectID}/ 以下）をバイトで返す。
-func GetProjectDiskSize(projectID string) (int64, error) {
+func GetProjectDiskSize(ctx context.Context, projectID string) (int64, error) {
+	if err := requireProjectAccess(ctx, projectID); err != nil {
+		return 0, err
+	}
 	baseDir, err := GetProjectBaseDir(projectID)
 	if err != nil {
 		return 0, xerrors.Errorf("GetProjectDiskSize: %w", err)
 	}
-	dir := filepath.Join(baseDir, projectID)
-	var total int64
-	filepath.WalkDir(dir, func(_ string, d os.DirEntry, err error) error {
-		if err == nil && !d.IsDir() {
-			if info, e := d.Info(); e == nil {
-				total += info.Size()
-			}
-		}
-		return nil
-	})
-	return total, nil
-}
-
-// StartChangeWorkDir は作業ディレクトリのパスを変更し、参照プロジェクトのファイルを非同期で移動する。
-func StartChangeWorkDir(ctx context.Context, id uint, newPath string) error {
-	if err := requireAdmin(ctx); err != nil {
-		return err
-	}
-	wd, err := model.GetWorkDir(id)
-	if err != nil || wd == nil {
-		return xerrors.New("作業ディレクトリが見つかりません")
-	}
-	if wd.Path == newPath {
-		return nil
-	}
-	if err := os.MkdirAll(newPath, 0755); err != nil {
-		return xerrors.Errorf("新しいパスの作成に失敗しました: %w", err)
-	}
-
-	go func() {
-		oldPath := wd.Path
-		projects, err := model.ListProjectsByWorkDir(id)
-		if err != nil || len(projects) == 0 {
-			// ファイル移動なし、パスだけ更新
-			wd.Path = newPath
-			model.UpdateWorkDir(wd)
-			if WorkDirChangeDirHook != nil {
-				WorkDirChangeDirHook(id, "done", 1.0)
-			}
-			return
-		}
-
-		total := len(projects)
-		for i, p := range projects {
-			idx := i
-			migrateProjectFiles(oldPath, newPath, p.ID, func(pct float64) {
-				overall := (float64(idx) + pct) / float64(total)
-				if WorkDirChangeDirHook != nil {
-					WorkDirChangeDirHook(id, "running", overall)
-				}
-			})
-			model.UpdateJobOutputDirPrefix(p.ID, oldPath, newPath)
-			os.RemoveAll(filepath.Join(oldPath, p.ID))
-		}
-
-		wd.Path = newPath
-		if err := model.UpdateWorkDir(wd); err != nil {
-			if WorkDirChangeDirHook != nil {
-				WorkDirChangeDirHook(id, "error", 0)
-			}
-			return
-		}
-
-		if WorkDirChangeDirHook != nil {
-			WorkDirChangeDirHook(id, "done", 1.0)
-		}
-	}()
-	return nil
-}
-
-func migrateProjectFiles(oldBase, newBase, projectID string, progress func(float64)) error {
-	src := filepath.Join(oldBase, projectID)
-	dst := filepath.Join(newBase, projectID)
-
-	// 総ファイル数をカウント（進捗計算用）
-	total := countFiles(src)
-	if total == 0 {
-		total = 1
-	}
-	done := 0
-
-	return filepath.WalkDir(src, func(path string, d os.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		rel, _ := filepath.Rel(src, path)
-		target := filepath.Join(dst, rel)
-
-		if d.IsDir() {
-			return os.MkdirAll(target, 0755)
-		}
-
-		if err := copyFile(path, target); err != nil {
-			return err
-		}
-		done++
-		progress(float64(done) / float64(total))
-		return nil
-	})
-}
-
-func countFiles(dir string) int {
-	count := 0
-	filepath.WalkDir(dir, func(_ string, d os.DirEntry, err error) error {
-		if err == nil && !d.IsDir() {
-			count++
-		}
-		return nil
-	})
-	return count
-}
-
-func copyFile(src, dst string) error {
-	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
-		return err
-	}
-	in, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer in.Close()
-
-	out, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	_, err = io.Copy(out, in)
-	return err
+	return dirSize(filepath.Join(baseDir, projectID)), nil
 }

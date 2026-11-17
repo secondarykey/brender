@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -36,7 +37,7 @@ func newRuntimeTestServer(t *testing.T, auth bool) (http.Handler, *runtimeSpy) {
 		t.Fatalf("Init: %v", err)
 	}
 	t.Cleanup(func() { model.Close() })
-	if err := model.SetEnvironment(&model.Environment{Server: true, ServerAuth: auth}); err != nil {
+	if err := model.SetEnvironment(context.Background(), &model.Environment{Server: true, ServerAuth: auth}); err != nil {
 		t.Fatalf("SetEnvironment: %v", err)
 	}
 

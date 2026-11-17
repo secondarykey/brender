@@ -59,7 +59,7 @@ beta.23 で、ウィンドウを作らない小さなアプリを作った(リ�
 | ウィンドウの API(`object` 6)・ダイアログ(5) | 断られる(`window '' not found`) |
 | **`Application.Quit`(`{"object":2,"method":2}`)** | **通る。アプリが終わった**(気をつけること 6) |
 | **`Events.Emit`(`object` 3)** | **通る**。好きな名前のイベントを出せる(気をつけること 6) |
-| メソッドが呼ばれる goroutine | HTTP の処理と同じ goroutine で、そのまま呼ばれる。監査用の goroutine ユーザ(`model.SetGoroutineUser`)もそのまま使える |
+| メソッドが呼ばれる goroutine | HTTP の処理と同じ goroutine で、そのまま呼ばれる。監査用の goroutine ユーザ(`model.SetGoroutineUser`)もそのまま使える(2026-11-17 に goroutine ユーザはやめ、監査カラムも ctx で渡すようにした) |
 | 本文の大きさの上限 | `maxRuntimeBodyBytes` = `maxAssembledBytes` = **64 MiB**(`transport_http.go`) |
 | ウィンドウを1つも作らずに `app.Run()` | 終わらずに動き続けた(Windows)。`TODO.md` の「ウィンドウを出さずに動かす」の見込みにもなる |
 
@@ -150,7 +150,7 @@ func (t *browserTransport) Stop() error {
    - チャンクで分けた送り方(`x-wails-chunk-id` のヘッダー。WebView2 の上限のための仕組み)は、1つ目のかけらしか中身を見られないので、ブラウザからは断る
 7. **`/wails/` は今ログイン無しで通る**(`api/rest/auth.go` の `isPublicPath`)。ダミーのための決まり。`/wails/runtime` はログイン必須にする(`/wails/runtime.js` は今のまま公開でよい)
 8. **`/_movie` が2つある**:Wails の配信(`main.go` の `movieAwareHandler`)には、パスを確かめない `/_movie` が入っている。
-   自前のサーバの `/_movie`(`api.ValidateWorkDirPath` で確かめる)を必ず先に当てる。assetHandler の鎖へ渡すパスは、決めたものだけにする
+   自前のサーバの `/_movie`(`api.RequireWorkDirFileAccess` で確かめる。2026-11-16 に `ValidateWorkDirPath` から変えた)を必ず先に当てる。assetHandler の鎖へ渡すパスは、決めたものだけにする
 9. **自作の Transport に `WailsEventListener` を持たせない**(調べたこと)。持たせるとウィンドウにイベントが届かなくなる。ブラウザへのイベントは今の SSE のまま
 10. **エラーの返し方が変わる**:Wails はエラーを 422(本文はテキストか JSON)で返す。今の `serverCall` の「401 ならページを読み直す」は、ラッパーの共通の受け口で作り直す
 11. **画面の `@wailsio/runtime` の版は Go の側と一致しない**:`package.json` は `"latest"`、入っているのは beta.16。Go の側は beta.23。

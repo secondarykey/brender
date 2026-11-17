@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Dialogs } from '@wailsio/runtime'
+import { openFile } from '../../lib/dialogs'
 import { EnvironmentApi, CodesApi } from '../../lib/api'
 import { useToast, useMessage } from '../../lib/toast'
 
@@ -64,9 +64,11 @@ function VideoSettings() {
             className="btn btn-outline btn-sm"
             onClick={async () => {
               try {
-                const path = await Dialogs.OpenFile({})
+                const path = await openFile()
                 if (path) setCmd(path)
-              } catch (_) {}
+              } catch (err) {
+                showError(String(err))
+              }
             }}
           >
             {t('settings.selectFile')}

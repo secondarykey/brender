@@ -7,6 +7,7 @@ import (
 	"github.com/secondarykey/brender/log"
 
 	"github.com/glebarez/sqlite"
+	"golang.org/x/xerrors"
 	"gorm.io/gorm"
 )
 
@@ -71,10 +72,10 @@ func Init(dsn string) error {
 		return err
 	}
 
-	// CreatedBy / UpdatedBy を自動設定するコールバック。
-	// クエリに紐付いた context のユーザを優先し、なければ goroutine-local にフォールバックする。
+	// CreatedBy / UpdatedBy を自動設定するコールバック。ユーザはクエリの ctx から決める（AuditUser）。
+	// ctx を通さない書き込み（db.WithContext を使わない）は owner になるので、書き込む関数は必ず ctx を受け取る。
 	db.Callback().Create().Before("gorm:create").Register("set_created_by", func(tx *gorm.DB) {
-		user := auditUser(tx.Statement.Context)
+		user := AuditUser(tx.Statement.Context)
 		if tx.Statement.Schema == nil {
 			return
 		}
@@ -86,7 +87,7 @@ func Init(dsn string) error {
 		}
 	})
 	db.Callback().Update().Before("gorm:update").Register("set_updated_by", func(tx *gorm.DB) {
-		user := auditUser(tx.Statement.Context)
+		user := AuditUser(tx.Statement.Context)
 		if tx.Statement.Schema == nil {
 			return
 		}
@@ -95,25 +96,15 @@ func Init(dsn string) error {
 		}
 	})
 
-	db.AutoMigrate(&WorkDir{})
-	db.AutoMigrate(&Environment{})
-	db.AutoMigrate(&BlenderInstall{})
-	db.AutoMigrate(&Project{})
-	db.AutoMigrate(&ProjectFile{})
-	db.AutoMigrate(&Workspace{})
-	db.AutoMigrate(&Job{})
-	db.AutoMigrate(&Queue{})
-	db.AutoMigrate(&TagCategory{})
-	db.AutoMigrate(&Tag{})
-	db.AutoMigrate(&ProjectFileTag{})
-	db.AutoMigrate(&FileFavorite{})
-	db.AutoMigrate(&User{})
-	db.AutoMigrate(&Group{})
-	db.AutoMigrate(&UserGroup{})
-	db.AutoMigrate(&ProjectPermission{})
-	db.AutoMigrate(&FilePermission{})
-	db.AutoMigrate(&PasswordResetToken{})
-	db.AutoMigrate(&Session{})
+	// 表が古い形のまま動くと、あとで分かりにくい壊れ方をするので、失敗したら起動を止める
+	if err := migrateTables(); err != nil {
+		return err
+	}
+
+	// 失敗しても起動は止めない（次の起動でやり直す）
+	if err := migrateSystemWorkspaces(); err != nil {
+		log.Error("migrateSystemWorkspaces", "error", err)
+	}
 
 	db.Exec("DROP INDEX IF EXISTS idx_tags_name")
 	db.Exec("DROP INDEX IF EXISTS uni_tags_name")
@@ -123,6 +114,51 @@ func Init(dsn string) error {
 		return err
 	}
 
+	return nil
+}
+
+// migrateTables は全モデルの表を AutoMigrate する。
+// どの表で失敗したか分かるように、1つずつ流してモデルの型をエラーに付ける。
+func migrateTables() error {
+	models := []any{
+		&WorkDir{},
+		&Environment{},
+		&BlenderInstall{},
+		&Project{},
+		&ProjectFile{},
+		&Workspace{},
+		&Job{},
+		&Queue{},
+		&TagCategory{},
+		&Tag{},
+		&ProjectFileTag{},
+		&FileFavorite{},
+		&User{},
+		&Group{},
+		&UserGroup{},
+		&ProjectPermission{},
+		&FilePermission{},
+		&PasswordResetToken{},
+		&Session{},
+	}
+	for _, m := range models {
+		if err := db.AutoMigrate(m); err != nil {
+			return xerrors.Errorf("AutoMigrate(%T): %w", m, err)
+		}
+	}
+	return nil
+}
+
+// migrateSystemWorkspaces は、サムネイル用に隠していたワークスペース（is_system=1）を
+// 普通のワークスペースとして一覧に出すため、is_system 列を消す。列が無ければ何もしない。
+// そこにあったサムネイルのジョブは Test ジョブなので、ファイルのサムネイルはそのまま辿れる。
+func migrateSystemWorkspaces() error {
+	if !db.Migrator().HasColumn(&Workspace{}, "is_system") {
+		return nil
+	}
+	if res := db.Exec("ALTER TABLE workspaces DROP COLUMN is_system"); res.Error != nil {
+		return xerrors.Errorf("migrateSystemWorkspaces: %w", res.Error)
+	}
 	return nil
 }
 

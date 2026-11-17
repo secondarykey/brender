@@ -34,7 +34,7 @@ func SetFfmpegSettings(ctx context.Context, s FfmpegSettings) error {
 	env.FfmpegFPS = s.FPS
 	env.FfmpegOutExt = s.OutExt
 	env.FfmpegArgs = s.Args
-	return model.SetEnvironment(env)
+	return model.SetEnvironment(ctx, env)
 }
 
 func SetOutputFormat(ctx context.Context, format string) error {
@@ -49,7 +49,7 @@ func SetOutputFormat(ctx context.Context, format string) error {
 		env = &model.Environment{}
 	}
 	env.OutputFormat = format
-	return model.SetEnvironment(env)
+	return model.SetEnvironment(ctx, env)
 }
 
 func SetServer(ctx context.Context, enabled bool, host string, port int, auth bool) error {
@@ -70,7 +70,7 @@ func SetServer(ctx context.Context, enabled bool, host string, port int, auth bo
 	env.ServerHost = host
 	env.ServerPort = port
 	env.ServerAuth = auth
-	if err := model.SetEnvironment(env); err != nil {
+	if err := model.SetEnvironment(ctx, env); err != nil {
 		return err
 	}
 	// サーバは起動時にしか立たないので、変えたことと再起動が要ることを残す
@@ -93,5 +93,11 @@ func SetMaxConcurrentJobs(ctx context.Context, n int) error {
 		env = &model.Environment{}
 	}
 	env.MaxConcurrentJobs = n
-	return model.SetEnvironment(env)
+	if err := model.SetEnvironment(ctx, env); err != nil {
+		return err
+	}
+	// 上限を上げたら、すぐに待ちを起動する（次の終了や投入を待たない）
+	schedule()
+	notifyQueueChanged()
+	return nil
 }

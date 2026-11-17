@@ -93,15 +93,9 @@ func (s *Server) handleRuntimeCall(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// 監査カラム用（認証無効時は Guest）。Wails はメソッドを同じ goroutine で呼ぶ
-	if !model.IsGoroutineUserSet() {
-		model.SetGoroutineUser(model.UserIDGuest)
-		defer model.ClearGoroutineUser()
-	}
-
 	r.Header.Del("x-wails-window-id")
 	r.Header.Del("x-wails-window-name")
 	r.Body = io.NopCloser(bytes.NewReader(body))
 	r.ContentLength = int64(len(body))
-	h.ServeHTTP(w, r.WithContext(api.WithBrowser(r.Context())))
+	h.ServeHTTP(w, r.WithContext(api.WithBrowser(guestAuditContext(r.Context()))))
 }

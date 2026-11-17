@@ -69,17 +69,19 @@ App.jsx
       tabs: ファイル一覧 / 設定
     FileDetailPage         (/file ・ /workspace も同じ画面)
       tab: ワークスペース → 左右分割（.file-split）
-        左: WorkspaceRail（一覧。各行にサムネイル・名称・「▶」。行を選ぶと右が切り替わる）
+        左: file/WorkspaceRail（一覧。各行にサムネイル・名称・「▶」。行を選ぶと右が切り替わる）
              新規作成: 「New Workspace」デフォルト値・全選択状態（作成後はその行を選ぶ）
-        右: WorkspacePanel（設定フォーム ＋ サムネイル・実行履歴）
+        右: WorkspacePanel（設定フォーム ＋ サムネイル・実行履歴。中身は workspace/）
              設定と「サムネイル・履歴」は横並びで別々にスクロールする（狭いときは縦に積む）
              設定フォーム末尾の操作行（削除・Test・実行・保存）は下端に固定（`.ws-pane-form .form-actions` の sticky）
              Test の説明はボタンの `title`（画面内に説明文を書かない）
-      tab: 実行履歴 → このファイル全体の履歴（HistoryTab）
-      tab: ファイル設定 → 左右分割
+      tab: 実行履歴 → このファイル全体の履歴（file/FileHistory）
+      tab: ファイル設定 → 左右分割（file/FileSettingsTab）
         左: ファイル設定フォーム
-        右: ThumbnailPanel（thumbnail.jpg 表示）
+        右: ThumbnailPicker（thumbnail.jpg 表示）
       ※ fileID が無く workspaceID だけで来た場合は、ワークスペースからファイルを引く
+    JobPage                (/job)
+      tabs: レンダリング結果 / データ表示 / 詳細（中身は job/）
     QueuePage              (/queue)
       tabs: キュー（waiting/running 一覧、登録順昇順） / 実行履歴
     SettingsPage           (/settings)
@@ -87,6 +89,17 @@ App.jsx
 ```
 
 After `Enqueue()` succeeds, the app navigates to the queue page (`navigate('queue')`).
+
+**ページのファイルは枠だけにし、タブ・欄・ダイアログはページ名のフォルダに分ける**（`pages/projects/file/`・`workspace/`・`job/`）。
+1 ファイルに全部入っていた頃は 1000 行を超え、useState が 50 個並んでどこを直せばよいか分からなかった。
+ページの間で同じものは共通にしてある（`src/components/` と `src/lib/`）:
+
+| 部品・関数 | 中身 |
+|---|---|
+| `components/RenderConfirmDialog` | レンダリングの確認（前回との比較・「同じ設定でもう一度」の警告）。ワークスペースの実行ボタンと一覧の「▶」の両方 |
+| `components/ThumbnailPicker` | クリックで差し替えるサムネイル欄（ファイル設定・ワークスペース） |
+| `lib/blendSelections.js` | 保存してあったシーン・カメラ・エンジンが .blend に今もあるか（ファイル設定・ワークスペース設定） |
+| `lib/roles.js` | ロールの強さ `roleAtLeast(role, 'runner')` など（下の「権限によるUI制御」） |
 
 QueuePage の進捗バー計算式・ProcessingWriter 由来の進捗フィールド（`now_tile` / `total_samples` / `frame_active` など）の意味は Skill `brender-render-pipeline` を参照。
 
@@ -97,6 +110,7 @@ QueuePage の進捗バー計算式・ProcessingWriter 由来の進捗フィー�
 - 「ディレクトリからファイルを追加」機能: プロジェクト設定タブ（SettingsTab）の作業ディレクトリセクション下に配置
 - タイルサイズ: 幅 320px、縦レイアウト（サムネイル上 180px + 名称のみ下）
 - サムネイル: `ProjectApi.getFileThumbnail({ projectID, fileID })` で取得（Wails は base64、サーバモードは配信URL）して `<img src>` に渡す（消費側コードはモード非依存）
+- サムネイルを出す画面は `useThumbnail(fetcher, deps)`（`src/lib/useThumbnail.js`）で取る。まだ無い間は `queue:changed` のたびに取り直すので、ファイル登録直後の Test 出力が終わると、ファイルのタイル・ワークスペース一覧の行・ワークスペース/ファイルのサムネイル欄にそのまま出る
 
 ### サイドバー
 - アイコンのみ表示（ラベルなし）、`title` 属性でツールチップ
@@ -113,6 +127,7 @@ QueuePage の進捗バー計算式・ProcessingWriter 由来の進捗フィー�
 サーバモード（`Server` + `ServerAuth` 有効時）のロール体系と UI 制御の詳細は Skill `brender-access-control` を参照。要点:
 - `PermissionSection.jsx`（`mode='project'` / `mode='file'`）— Wails モードでは `server && server_auth` が無効なら `return null`
 - `ProjectListPage.jsx` — ブラウザモードで `AuthApi.me()` のロールを確認（`viewer` は作成不可、`me()` が `null` = 認証無効ならフルアクセス）
+- ファイルに対するロール（viewer < runner < editor < workspace_creator < owner）で出し分けるときは `lib/roles.js` の `roleAtLeast(role, 'editor')` を使う（`role === 'owner' || role === ...` を並べない）。owner だけの操作は `role === 'owner'`
 - `QueuePage.jsx` / `JobManagement.jsx` — `has_file_access === false` のジョブは行クリック・ナビゲーションを抑制し、ファイル名を淡色テキスト表示
 
 ### Environment setup guard
@@ -134,6 +149,10 @@ src/lib/api/
   queue.js        QueueApi
   work_dir.js     WorkDirApi
   codes.js        CodesApi  ← コード管理（フォーマット・解像度プリセット）
+  tag.js          TagApi
+  favorite.js     FavoriteApi
+  auth.js         AuthApi  ← ログイン前の認証の口（REST）
+  sysmon.js       SysMonApi  ← keep(): 表示中のシステムモニタを動かし続ける（SystemStats が 10 秒ごとに呼ぶ）
   index.js        re-export
 ```
 
@@ -151,7 +170,7 @@ CodesApi.getImageFormats()      // Promise<ImageFormat[]>
 CodesApi.getVideoFormats()      // Promise<VideoFormat[]>
 CodesApi.getResolutionPresets() // Promise<ResolutionPreset[]>
 ```
-利用箇所: `BlenderSettings.jsx`（image_formats）、`WorkspacePanel.jsx`（image_formats + resolution_presets）、`VideoSettings.jsx` / `JobPage.jsx`（video_formats）。
+利用箇所: `BlenderSettings.jsx`（image_formats）、`workspace/useRenderOptions.js`（image_formats + resolution_presets）、`VideoSettings.jsx` / `job/RenderResultTab.jsx`（video_formats）。
 `code/` の仕組み・新カテゴリ追加手順は Skill `brender-codes` を参照。
 
 ## Event Bus (`src/lib/appEvents.js`)
@@ -167,7 +186,16 @@ return off  // useEffect cleanup
   - 複数コンポーネントが `onAppEvent` を呼んでも接続は 1 本のみ
 - 現在使用しているイベント名:
   - `queue:changed` (data: number — アクティブキュー件数)
-  - `workdir:migrate` (data: `{ project_id, status, pct }` — 移行進捗。status: `running`/`done`/`error`)
+  - `workdir:migrate` (data: `{ project_id, status, pct, error }` — プロジェクトの作業ディレクトリの移動の進捗。status: `running`/`done`/`error`。`error` のとき `error` に失敗の理由。画面の文言は `lib/migrateError.js` の `migrateErrorMessage`)
+  - `workdir:changedir` (data: `{ work_dir_id, status, pct, error }` — 作業ディレクトリのパス変更の進捗。中身は `workdir:migrate` と同じ)
+
+## ファイルダイアログ (`src/lib/dialogs.js`)
+
+OS のファイル・フォルダ選択と保存先の選択は `openFile(options)` / `openDirectory(options)` / `saveFile(options)` を通す。**`@wailsio/runtime` の `Dialogs.OpenFile` / `SaveFile` をページから直接呼ばない。**
+
+- 取り消しはどの OS でも `''` が返る。呼ぶ側は `if (!path) return` だけにし、`catch` に来るのは本当の失敗だけ（`showError` に出してよい）
+- Windows だけ、Wails（v3.0.0）は取り消しを reject で返す（`cancelled by user`）。直接呼ぶと取り消しただけで画面にこの文言が出るので、ラッパで空文字に揃えている
+- Wails を上げたら、Windows で一度ダイアログを取り消して文言が出ないか確かめる（文言が変わるとラッパが見分けられなくなる）
 
 ## 共通ダイアログ (`src/components/Dialog.jsx`, `ConfirmDialog.jsx`)
 
@@ -332,7 +360,7 @@ background: #1a1a1a;
 - `#app, #root` must both have `width/height: 100%` for the height chain to work
 
 ### フォームレイアウト
-設定フォームは以下のクラスを使う（`WorkspacePanel` 等が基準）：
+設定フォームは以下のクラスを使う（`workspace/WorkspaceSettingsForm` 等が基準）：
 
 ```jsx
 <div className="form" style={{ maxWidth: 640 }}>

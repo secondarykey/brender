@@ -1,6 +1,10 @@
 package model
 
-import "golang.org/x/xerrors"
+import (
+	"context"
+
+	"golang.org/x/xerrors"
+)
 
 type BlenderInstall struct {
 	ID        uint   `gorm:"primaryKey" json:"id"`
@@ -38,9 +42,9 @@ func ListBlenders() ([]*BlenderInstall, error) {
 	return list, nil
 }
 
-func AddBlenderInstall(path, version, name string) (*BlenderInstall, error) {
+func AddBlenderInstall(ctx context.Context, path, version, name string) (*BlenderInstall, error) {
 	var maxOrder int
-	db.Model(&BlenderInstall{}).Select("COALESCE(MAX(sort_order), 0)").Scan(&maxOrder)
+	db.WithContext(ctx).Model(&BlenderInstall{}).Select("COALESCE(MAX(sort_order), 0)").Scan(&maxOrder)
 
 	b := &BlenderInstall{
 		Path:      path,
@@ -48,15 +52,15 @@ func AddBlenderInstall(path, version, name string) (*BlenderInstall, error) {
 		Name:      name,
 		SortOrder: maxOrder + 1,
 	}
-	res := db.Create(b)
+	res := db.WithContext(ctx).Create(b)
 	if res.Error != nil {
 		return nil, xerrors.Errorf("AddBlenderInstall error: %w", res.Error)
 	}
 	return b, nil
 }
 
-func UpdateBlenderVersion(id uint, version string) error {
-	res := db.Model(&BlenderInstall{}).Where("id = ?", id).Update("version", version)
+func UpdateBlenderVersion(ctx context.Context, id uint, version string) error {
+	res := db.WithContext(ctx).Model(&BlenderInstall{}).Where("id = ?", id).Update("version", version)
 	if res.Error != nil {
 		return xerrors.Errorf("UpdateBlenderVersion error: %w", res.Error)
 	}
@@ -71,9 +75,9 @@ func RemoveBlenderInstall(id uint) error {
 	return nil
 }
 
-func ReorderBlenders(ids []uint) error {
+func ReorderBlenders(ctx context.Context, ids []uint) error {
 	for i, id := range ids {
-		res := db.Model(&BlenderInstall{}).Where("id = ?", id).Update("sort_order", i)
+		res := db.WithContext(ctx).Model(&BlenderInstall{}).Where("id = ?", id).Update("sort_order", i)
 		if res.Error != nil {
 			return xerrors.Errorf("ReorderBlenders error: %w", res.Error)
 		}
@@ -91,7 +95,6 @@ type BlenderReference struct {
 	FileName      string `json:"file_name"`
 	WorkspaceID   string `json:"workspace_id"`
 	WorkspaceName string `json:"workspace_name"`
-	IsSystem      bool   `json:"is_system"`
 }
 
 // ListBlenderReferences は指定 Blender を参照しているワークスペース・ファイルを
@@ -109,8 +112,7 @@ SELECT 'workspace' AS kind,
        w.project_file_id AS file_id,
        COALESCE(f.name, '') AS file_name,
        w.id              AS workspace_id,
-       w.name            AS workspace_name,
-       w.is_system       AS is_system
+       w.name            AS workspace_name
   FROM workspaces w
   LEFT JOIN projects p      ON p.id = w.project_id      AND p.deleted_at IS NULL
   LEFT JOIN project_files f ON f.id = w.project_file_id AND f.deleted_at IS NULL
@@ -129,8 +131,7 @@ SELECT 'file' AS kind,
        f.id         AS file_id,
        f.name       AS file_name,
        ''           AS workspace_id,
-       ''           AS workspace_name,
-       0            AS is_system
+       ''           AS workspace_name
   FROM project_files f
   LEFT JOIN projects p ON p.id = f.project_id AND p.deleted_at IS NULL
  WHERE f.blender_install_id = ? AND f.deleted_at IS NULL

@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"errors"
 	"os"
 	"path/filepath"
@@ -29,14 +30,14 @@ type ProjectFile struct {
 	Name             string     `json:"name"`
 	Note             string     `json:"note"`
 	BlenderInstallID uint       `json:"blender_install_id"`
-	BlenderFixed     bool       `json:"blender_fixed"`  // true = ワークスペースで変更不可
+	BlenderFixed     bool       `json:"blender_fixed"` // true = ワークスペースで変更不可
 	Scene            string     `json:"scene"`
-	SceneFixed       bool       `json:"scene_fixed"`    // true = ワークスペースで変更不可
+	SceneFixed       bool       `json:"scene_fixed"` // true = ワークスペースで変更不可
 	Camera           string     `json:"camera"`
-	CameraFixed      bool       `json:"camera_fixed"`   // true = ワークスペースで変更不可
+	CameraFixed      bool       `json:"camera_fixed"` // true = ワークスペースで変更不可
 	Engine           string     `json:"engine"`
-	EngineFixed      bool       `json:"engine_fixed"`   // true = ワークスペースで変更不可
-	Packed           *bool      `json:"packed"`          // nil=未検査, true=パック済み, false=未パック
+	EngineFixed      bool       `json:"engine_fixed"` // true = ワークスペースで変更不可
+	Packed           *bool      `json:"packed"`       // nil=未検査, true=パック済み, false=未パック
 	FileModifiedAt   *time.Time `gorm:"-" json:"file_modified_at"`
 	FileExists       bool       `gorm:"-" json:"file_exists"`
 	MyRole           string     `gorm:"-" json:"my_role,omitempty"` // API層で設定
@@ -71,8 +72,8 @@ func newFileID() string {
 func NewFileID() string { return newFileID() }
 
 // InsertProjectFile は既にフィールドが埋まった ProjectFile を DB に挿入する。
-func InsertProjectFile(f *ProjectFile) error {
-	if res := db.Create(f); res.Error != nil {
+func InsertProjectFile(ctx context.Context, f *ProjectFile) error {
+	if res := db.WithContext(ctx).Create(f); res.Error != nil {
 		return xerrors.Errorf("InsertProjectFile: %w", res.Error)
 	}
 	return nil
@@ -184,7 +185,6 @@ func SelectProject(id string) (*Project, error) {
 	return &p, nil
 }
 
-
 func GetProjectFile(fileID string) (*ProjectFile, error) {
 	var f ProjectFile
 	res := db.First(&f, "id = ?", fileID)
@@ -211,23 +211,22 @@ func FirstFile(projectID string) (*ProjectFile, error) {
 	return &f, nil
 }
 
-
-func UpdateProject(id, name, note string) (*ProjectDetail, error) {
+func UpdateProject(ctx context.Context, id, name, note string) (*ProjectDetail, error) {
 	var p Project
-	if res := db.First(&p, "id = ?", id); res.Error != nil {
+	if res := db.WithContext(ctx).First(&p, "id = ?", id); res.Error != nil {
 		return nil, xerrors.Errorf("UpdateProject find: %w", res.Error)
 	}
 	p.Name = name
 	p.Note = note
-	if res := db.Save(&p); res.Error != nil {
+	if res := db.WithContext(ctx).Save(&p); res.Error != nil {
 		return nil, xerrors.Errorf("UpdateProject save: %w", res.Error)
 	}
 	return loadProjectDetail(&p)
 }
 
-func UpdateProjectFile(fileID string, name string, note string, blenderInstallID uint, blenderFixed bool, scene string, sceneFixed bool, camera string, cameraFixed bool, engine string, engineFixed bool) (*ProjectFile, error) {
+func UpdateProjectFile(ctx context.Context, fileID string, name string, note string, blenderInstallID uint, blenderFixed bool, scene string, sceneFixed bool, camera string, cameraFixed bool, engine string, engineFixed bool) (*ProjectFile, error) {
 	var f ProjectFile
-	if res := db.First(&f, "id = ?", fileID); res.Error != nil {
+	if res := db.WithContext(ctx).First(&f, "id = ?", fileID); res.Error != nil {
 		return nil, xerrors.Errorf("UpdateProjectFile find: %w", res.Error)
 	}
 	f.Name = name
@@ -240,20 +239,20 @@ func UpdateProjectFile(fileID string, name string, note string, blenderInstallID
 	f.CameraFixed = cameraFixed
 	f.Engine = engine
 	f.EngineFixed = engineFixed
-	if res := db.Save(&f); res.Error != nil {
+	if res := db.WithContext(ctx).Save(&f); res.Error != nil {
 		return nil, xerrors.Errorf("UpdateProjectFile save: %w", res.Error)
 	}
 	return &f, nil
 }
 
-func AddProjectFile(projectID, path string) (*ProjectFile, error) {
+func AddProjectFile(ctx context.Context, projectID, path string) (*ProjectFile, error) {
 	f := &ProjectFile{
 		ID:        newFileID(),
 		ProjectID: projectID,
 		Path:      path,
 		Name:      filepath.Base(path),
 	}
-	if res := db.Create(f); res.Error != nil {
+	if res := db.WithContext(ctx).Create(f); res.Error != nil {
 		return nil, xerrors.Errorf("AddProjectFile: %w", res.Error)
 	}
 	return f, nil
@@ -276,15 +275,15 @@ func DeleteProject(id string) error {
 	return nil
 }
 
-func UpdateProjectProcessedAt(id string, t *time.Time) error {
-	if res := db.Model(&Project{}).Where("id = ?", id).Update("processed_at", t); res.Error != nil {
+func UpdateProjectProcessedAt(ctx context.Context, id string, t *time.Time) error {
+	if res := db.WithContext(ctx).Model(&Project{}).Where("id = ?", id).Update("processed_at", t); res.Error != nil {
 		return xerrors.Errorf("UpdateProjectProcessedAt: %w", res.Error)
 	}
 	return nil
 }
 
-func UpdateProjectFileProcessedAt(id string, t *time.Time) error {
-	if res := db.Model(&ProjectFile{}).Where("id = ?", id).Update("processed_at", t); res.Error != nil {
+func UpdateProjectFileProcessedAt(ctx context.Context, id string, t *time.Time) error {
+	if res := db.WithContext(ctx).Model(&ProjectFile{}).Where("id = ?", id).Update("processed_at", t); res.Error != nil {
 		return xerrors.Errorf("UpdateProjectFileProcessedAt: %w", res.Error)
 	}
 	return nil
@@ -302,8 +301,8 @@ func ListAllProjectFiles() ([]*ProjectFile, error) {
 	return files, nil
 }
 
-func UpdateProjectFilePacked(id string, packed bool) error {
-	if res := db.Model(&ProjectFile{}).Where("id = ?", id).Update("packed", packed); res.Error != nil {
+func UpdateProjectFilePacked(ctx context.Context, id string, packed bool) error {
+	if res := db.WithContext(ctx).Model(&ProjectFile{}).Where("id = ?", id).Update("packed", packed); res.Error != nil {
 		return xerrors.Errorf("UpdateProjectFilePacked: %w", res.Error)
 	}
 	return nil
@@ -319,13 +318,13 @@ func populateFileInfo(f *ProjectFile) {
 	f.FileModifiedAt = &modTime
 }
 
-func CreateProject(name string, paths []string, workDirID uint) (*ProjectDetail, error) {
+func CreateProject(ctx context.Context, name string, paths []string, workDirID uint) (*ProjectDetail, error) {
 	p := &Project{
 		ID:        newProjectID(),
 		Name:      name,
 		WorkDirID: workDirID,
 	}
-	if res := db.Create(p); res.Error != nil {
+	if res := db.WithContext(ctx).Create(p); res.Error != nil {
 		return nil, xerrors.Errorf("CreateProject: %w", res.Error)
 	}
 
@@ -336,7 +335,7 @@ func CreateProject(name string, paths []string, workDirID uint) (*ProjectDetail,
 			Path:      path,
 			Name:      filepath.Base(path),
 		}
-		if res := db.Create(f); res.Error != nil {
+		if res := db.WithContext(ctx).Create(f); res.Error != nil {
 			return nil, xerrors.Errorf("CreateProjectFile: %w", res.Error)
 		}
 	}
@@ -352,8 +351,8 @@ func ListProjectsByWorkDir(workDirID uint) ([]*Project, error) {
 	return projects, nil
 }
 
-func UpdateProjectWorkDir(projectID string, workDirID uint) error {
-	if res := db.Model(&Project{}).Where("id = ?", projectID).Update("work_dir_id", workDirID); res.Error != nil {
+func UpdateProjectWorkDir(ctx context.Context, projectID string, workDirID uint) error {
+	if res := db.WithContext(ctx).Model(&Project{}).Where("id = ?", projectID).Update("work_dir_id", workDirID); res.Error != nil {
 		return xerrors.Errorf("UpdateProjectWorkDir: %w", res.Error)
 	}
 	return nil

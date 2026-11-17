@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Dialogs } from '@wailsio/runtime'
+import { openDirectory } from '../../lib/dialogs'
 import { WorkDirApi, ProjectApi, BlenderApi } from '../../lib/api'
 import { onAppEvent } from '../../lib/appEvents'
 import Dialog from '../../components/Dialog'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import { useMessage, useToast } from '../../lib/toast'
+import { migrateErrorMessage } from '../../lib/migrateError'
 
 function fmtGB(bytes) {
   if (!bytes) return null
@@ -61,7 +62,7 @@ function EditDialog({ wd, onClose, onSaved }) {
         onClose()
       } else if (data.status === 'error') {
         setChangeDirProgress(null)
-        setError(t('project.migrateError'))
+        setError(migrateErrorMessage(t, data.error))
         setSaving(false)
       } else {
         setChangeDirProgress({ pct: data.pct })
@@ -72,7 +73,7 @@ function EditDialog({ wd, onClose, onSaved }) {
 
   const handleBrowse = async () => {
     try {
-      const dir = await Dialogs.OpenFile({ CanChooseDirectories: true, CanChooseFiles: false })
+      const dir = await openDirectory()
       if (dir) setPath(dir)
     } catch (err) {
       setError(String(err))
@@ -357,7 +358,7 @@ function EnvironmentSettings() {
   const handleAdd = async () => {
     showError('')
     try {
-      const dir = await Dialogs.OpenFile({ CanChooseDirectories: true, CanChooseFiles: false })
+      const dir = await openDirectory()
       if (!dir) return
       await WorkDirApi.create({ path: dir, priority: dirs.length })
       load()

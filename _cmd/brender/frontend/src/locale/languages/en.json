@@ -227,6 +227,7 @@
     "startFrame": "Start",
     "endFrame": "End",
     "frameStep": "Step",
+    "fps": "FPS",
     "frameStepHint": "1 = every frame",
     "frameRangeHint": "If not set: the frame settings in the .blend file will be used",
     "threads": "Thread Count",

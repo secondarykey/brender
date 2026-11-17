@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Dialogs } from '@wailsio/runtime'
+import { openFile, openDirectory } from '../../../lib/dialogs'
 import { ProjectApi, WorkDirApi } from '../../../lib/api'
 import { isWails } from '../../../lib/api/_client'
 import { onAppEvent } from '../../../lib/appEvents'
@@ -10,6 +10,7 @@ import ConfirmDialog from '../../../components/ConfirmDialog'
 import NoteSection from '../../../components/NoteSection'
 import PermissionSection from '../../../components/PermissionSection'
 import { MdArrowDropDown, MdArrowRight } from 'react-icons/md'
+import { migrateErrorMessage } from '../../../lib/migrateError'
 
 const IMAGE_FILTER = [{ DisplayName: 'Image', Pattern: '*.jpg;*.jpeg;*.png;*.bmp;*.webp' }]
 
@@ -27,7 +28,7 @@ function ProjectThumbnailPanel({ projectID }) {
   const handleClick = async () => {
     if (uploading) return
     try {
-      const path = await Dialogs.OpenFile({ Filters: IMAGE_FILTER })
+      const path = await openFile({ Filters: IMAGE_FILTER })
       if (!path) return
       setUploading(true)
       const data = await ProjectApi.setProjectThumbnail({ projectID, imagePath: path })
@@ -95,7 +96,7 @@ function WorkDirSection({ projectID, workDir, workDirs, onMigrated }) {
         setMigrateProgress(null)
         onMigrated()
       } else if (data.status === 'error') {
-        setMigrateError(t('project.migrateError'))
+        setMigrateError(migrateErrorMessage(t, data.error))
         setMigrating(false)
       }
     })
@@ -322,7 +323,7 @@ function SettingsTab({ detail, focusName, workDir, workDirs, role, onUpdated, on
               showError('')
               setDirMsg('')
               try {
-                const dir = await Dialogs.OpenFile({ CanChooseDirectories: true, CanChooseFiles: false })
+                const dir = await openDirectory()
                 if (!dir) return
                 setDirLoading(true)
                 const result = await ProjectApi.addFilesFromDir({ projectID: detail.project.id, dir })

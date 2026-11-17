@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
@@ -64,9 +65,9 @@ func NewGroupID() string {
 type User struct {
 	ID           string `gorm:"primaryKey" json:"id"`
 	Name         string `gorm:"uniqueIndex" json:"name"` // ログインID（ASCII限定）
-	DisplayName  string `json:"display_name"`             // 表示名
-	PasswordHash string `json:"-"`                        // bcrypt ハッシュ（APIレスポンスに含めない）
-	Role         string `gorm:"default:''" json:"role"`   // アプリレベルロール（admin/creator/viewer）
+	DisplayName  string `json:"display_name"`            // 表示名
+	PasswordHash string `json:"-"`                       // bcrypt ハッシュ（APIレスポンスに含めない）
+	Role         string `gorm:"default:''" json:"role"`  // アプリレベルロール（admin/creator/viewer）
 	IsSystem     bool   `gorm:"default:false" json:"is_system"`
 	MetaFields   `gorm:"embedded"`
 }
@@ -149,7 +150,7 @@ func GetUser(id string) (*User, error) {
 	return &u, nil
 }
 
-func CreateUser(name, displayName, role string) (*User, error) {
+func CreateUser(ctx context.Context, name, displayName, role string) (*User, error) {
 	id := NewUserID()
 	if name == "" {
 		name = id
@@ -163,15 +164,15 @@ func CreateUser(name, displayName, role string) (*User, error) {
 		DisplayName: displayName,
 		Role:        role,
 	}
-	if res := db.Create(u); res.Error != nil {
+	if res := db.WithContext(ctx).Create(u); res.Error != nil {
 		return nil, xerrors.Errorf("CreateUser: %w", res.Error)
 	}
 	return u, nil
 }
 
-func UpdateUser(id, name, displayName, role string) (*User, error) {
+func UpdateUser(ctx context.Context, id, name, displayName, role string) (*User, error) {
 	var u User
-	if res := db.First(&u, "id = ?", id); res.Error != nil {
+	if res := db.WithContext(ctx).First(&u, "id = ?", id); res.Error != nil {
 		return nil, xerrors.Errorf("UpdateUser find: %w", res.Error)
 	}
 	if u.IsSystem {
@@ -185,7 +186,7 @@ func UpdateUser(id, name, displayName, role string) (*User, error) {
 		u.DisplayName = displayName
 		u.Role = role
 	}
-	if res := db.Save(&u); res.Error != nil {
+	if res := db.WithContext(ctx).Save(&u); res.Error != nil {
 		return nil, xerrors.Errorf("UpdateUser save: %w", res.Error)
 	}
 	return &u, nil
@@ -236,24 +237,24 @@ func GetGroup(id string) (*Group, error) {
 	return &g, nil
 }
 
-func CreateGroup(displayName string) (*Group, error) {
+func CreateGroup(ctx context.Context, displayName string) (*Group, error) {
 	g := &Group{
 		ID:          NewGroupID(),
 		DisplayName: displayName,
 	}
-	if res := db.Create(g); res.Error != nil {
+	if res := db.WithContext(ctx).Create(g); res.Error != nil {
 		return nil, xerrors.Errorf("CreateGroup: %w", res.Error)
 	}
 	return g, nil
 }
 
-func UpdateGroup(id, displayName string) (*Group, error) {
+func UpdateGroup(ctx context.Context, id, displayName string) (*Group, error) {
 	var g Group
-	if res := db.First(&g, "id = ?", id); res.Error != nil {
+	if res := db.WithContext(ctx).First(&g, "id = ?", id); res.Error != nil {
 		return nil, xerrors.Errorf("UpdateGroup find: %w", res.Error)
 	}
 	g.DisplayName = displayName
-	if res := db.Save(&g); res.Error != nil {
+	if res := db.WithContext(ctx).Save(&g); res.Error != nil {
 		return nil, xerrors.Errorf("UpdateGroup save: %w", res.Error)
 	}
 	return &g, nil
@@ -278,8 +279,8 @@ func DeleteGroup(id string) error {
 // ── UserGroup（多対多） ──────────────────────────────────────
 
 type UserGroup struct {
-	UserID  string `gorm:"primaryKey" json:"user_id"`
-	GroupID string `gorm:"primaryKey" json:"group_id"`
+	UserID     string `gorm:"primaryKey" json:"user_id"`
+	GroupID    string `gorm:"primaryKey" json:"group_id"`
 	MetaFields `gorm:"embedded"`
 }
 
@@ -344,12 +345,12 @@ func ListUsersByGroup(groupID string) ([]*User, error) {
 }
 
 // AddUserToGroup はユーザをグループに追加する。
-func AddUserToGroup(userID, groupID string) error {
+func AddUserToGroup(ctx context.Context, userID, groupID string) error {
 	if groupID == GroupIDAll {
 		return xerrors.New("All グループへの手動追加は不要です（全ユーザが自動参加）")
 	}
 	ug := &UserGroup{UserID: userID, GroupID: groupID}
-	if res := db.FirstOrCreate(ug, "user_id = ? AND group_id = ?", userID, groupID); res.Error != nil {
+	if res := db.WithContext(ctx).FirstOrCreate(ug, "user_id = ? AND group_id = ?", userID, groupID); res.Error != nil {
 		return xerrors.Errorf("AddUserToGroup: %w", res.Error)
 	}
 	return nil
@@ -369,20 +370,20 @@ func RemoveUserFromGroup(userID, groupID string) error {
 // ── Password ─────────────────────────────────────────────
 
 // ClearPassword はユーザのパスワードをクリアする（ログイン不可状態にする）。
-func ClearPassword(userID string) error {
-	if res := db.Model(&User{}).Where("id = ?", userID).Update("password_hash", ""); res.Error != nil {
+func ClearPassword(ctx context.Context, userID string) error {
+	if res := db.WithContext(ctx).Model(&User{}).Where("id = ?", userID).Update("password_hash", ""); res.Error != nil {
 		return xerrors.Errorf("ClearPassword: %w", res.Error)
 	}
 	return nil
 }
 
 // SetPassword はユーザのパスワードを bcrypt ハッシュ化して保存する。
-func SetPassword(userID, password string) error {
+func SetPassword(ctx context.Context, userID, password string) error {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return xerrors.Errorf("SetPassword hash: %w", err)
 	}
-	if res := db.Model(&User{}).Where("id = ?", userID).Update("password_hash", string(hash)); res.Error != nil {
+	if res := db.WithContext(ctx).Model(&User{}).Where("id = ?", userID).Update("password_hash", string(hash)); res.Error != nil {
 		return xerrors.Errorf("SetPassword save: %w", res.Error)
 	}
 	return nil
@@ -456,9 +457,9 @@ func GetActiveResetTokenByUser(userID string) (*PasswordResetToken, error) {
 
 // CreatePasswordResetToken はパスワードリセットトークンを作成する。
 // 既存の未使用トークンは無効化する。
-func CreatePasswordResetToken(userID string, duration time.Duration) (*PasswordResetToken, error) {
+func CreatePasswordResetToken(ctx context.Context, userID string, duration time.Duration) (*PasswordResetToken, error) {
 	// 既存の未使用トークンを無効化
-	db.Model(&PasswordResetToken{}).
+	db.WithContext(ctx).Model(&PasswordResetToken{}).
 		Where("user_id = ? AND used = ?", userID, false).
 		Update("used", true)
 
@@ -472,7 +473,7 @@ func CreatePasswordResetToken(userID string, duration time.Duration) (*PasswordR
 		UserID:    userID,
 		ExpiresAt: time.Now().Add(duration),
 	}
-	if res := db.Create(t); res.Error != nil {
+	if res := db.WithContext(ctx).Create(t); res.Error != nil {
 		return nil, xerrors.Errorf("CreatePasswordResetToken save: %w", res.Error)
 	}
 	return t, nil
@@ -495,8 +496,8 @@ func GetPasswordResetToken(token string) (*PasswordResetToken, error) {
 }
 
 // MarkTokenUsed はトークンを使用済みにする。
-func MarkTokenUsed(token string) error {
-	if res := db.Model(&PasswordResetToken{}).Where("token = ?", token).Update("used", true); res.Error != nil {
+func MarkTokenUsed(ctx context.Context, token string) error {
+	if res := db.WithContext(ctx).Model(&PasswordResetToken{}).Where("token = ?", token).Update("used", true); res.Error != nil {
 		return xerrors.Errorf("MarkTokenUsed: %w", res.Error)
 	}
 	return nil
@@ -513,7 +514,7 @@ type Session struct {
 }
 
 // CreateSession はセッションを作成する。
-func CreateSession(userID string, duration time.Duration) (*Session, error) {
+func CreateSession(ctx context.Context, userID string, duration time.Duration) (*Session, error) {
 	token, err := generateSecureToken()
 	if err != nil {
 		return nil, xerrors.Errorf("CreateSession: %w", err)
@@ -523,7 +524,7 @@ func CreateSession(userID string, duration time.Duration) (*Session, error) {
 		UserID:    userID,
 		ExpiresAt: time.Now().Add(duration),
 	}
-	if res := db.Create(s); res.Error != nil {
+	if res := db.WithContext(ctx).Create(s); res.Error != nil {
 		return nil, xerrors.Errorf("CreateSession save: %w", res.Error)
 	}
 	return s, nil

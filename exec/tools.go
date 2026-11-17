@@ -3,6 +3,7 @@ package exec
 import (
 	"bufio"
 	"embed"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -36,10 +37,31 @@ func ClearScripts() error {
 	return nil
 }
 
+// scriptFuncs はスクリプトのテンプレートで使う関数。
+//
+//	py: 文字列を Python の文字列リテラル（引用符込み）にする。
+//
+// シーン名・カメラ名などは利用者が決められる値なので、テンプレートに素のまま埋めると
+// 引用符を含む名前で Python のコードを差し込まれる（サーバモードではサーバの上で動く）。
+// 文字列の値は必ず {{ py .X }} で埋める（"{{ .X }}" と書かない）。
+var scriptFuncs = template.FuncMap{
+	"py": pyString,
+}
+
+// pyString は s を Python の文字列リテラルにする。
+// JSON の文字列は Python の文字列リテラルとしてもそのまま読める（エスケープの書き方が共通）。
+func pyString(s string) (string, error) {
+	b, err := json.Marshal(s)
+	if err != nil {
+		return "", xerrors.Errorf("pyString: %w", err)
+	}
+	return string(b), nil
+}
+
 // createScript は _assets 内のテンプレートを dto で展開し、
 // scripts ディレクトリに pattern 名で書き出してファイルパスを返す。
 func createScript(tmplName, pattern string, dto any) (string, error) {
-	tmpl, err := template.ParseFS(assetsEmb, "_assets/"+tmplName)
+	tmpl, err := template.New(tmplName).Funcs(scriptFuncs).ParseFS(assetsEmb, "_assets/"+tmplName)
 	if err != nil {
 		return "", xerrors.Errorf("template.ParseFS() error: %w", err)
 	}
@@ -156,6 +178,7 @@ type SceneTool struct {
 	Engine  string
 	Output  string
 	Samples map[string]int
+	FPS     float64 // fps / fps_base。0 = 不明（古いスクリプトの出力など）
 }
 
 type CameraTool struct {
@@ -325,6 +348,12 @@ func parseScene(line string) *SceneTool {
 	s.Y = v
 
 	s.Engine = csv[7]
+
+	if len(csv) >= 9 {
+		if f, err := strconv.ParseFloat(csv[8], 64); err == nil && f > 0 {
+			s.FPS = f
+		}
+	}
 
 	return s
 }
