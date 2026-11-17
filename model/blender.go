@@ -1,6 +1,10 @@
 package model
 
-import "golang.org/x/xerrors"
+import (
+	"context"
+
+	"golang.org/x/xerrors"
+)
 
 type BlenderInstall struct {
 	ID        uint   `gorm:"primaryKey" json:"id"`
@@ -38,9 +42,9 @@ func ListBlenders() ([]*BlenderInstall, error) {
 	return list, nil
 }
 
-func AddBlenderInstall(path, version, name string) (*BlenderInstall, error) {
+func AddBlenderInstall(ctx context.Context, path, version, name string) (*BlenderInstall, error) {
 	var maxOrder int
-	db.Model(&BlenderInstall{}).Select("COALESCE(MAX(sort_order), 0)").Scan(&maxOrder)
+	db.WithContext(ctx).Model(&BlenderInstall{}).Select("COALESCE(MAX(sort_order), 0)").Scan(&maxOrder)
 
 	b := &BlenderInstall{
 		Path:      path,
@@ -48,15 +52,15 @@ func AddBlenderInstall(path, version, name string) (*BlenderInstall, error) {
 		Name:      name,
 		SortOrder: maxOrder + 1,
 	}
-	res := db.Create(b)
+	res := db.WithContext(ctx).Create(b)
 	if res.Error != nil {
 		return nil, xerrors.Errorf("AddBlenderInstall error: %w", res.Error)
 	}
 	return b, nil
 }
 
-func UpdateBlenderVersion(id uint, version string) error {
-	res := db.Model(&BlenderInstall{}).Where("id = ?", id).Update("version", version)
+func UpdateBlenderVersion(ctx context.Context, id uint, version string) error {
+	res := db.WithContext(ctx).Model(&BlenderInstall{}).Where("id = ?", id).Update("version", version)
 	if res.Error != nil {
 		return xerrors.Errorf("UpdateBlenderVersion error: %w", res.Error)
 	}
@@ -71,9 +75,9 @@ func RemoveBlenderInstall(id uint) error {
 	return nil
 }
 
-func ReorderBlenders(ids []uint) error {
+func ReorderBlenders(ctx context.Context, ids []uint) error {
 	for i, id := range ids {
-		res := db.Model(&BlenderInstall{}).Where("id = ?", id).Update("sort_order", i)
+		res := db.WithContext(ctx).Model(&BlenderInstall{}).Where("id = ?", id).Update("sort_order", i)
 		if res.Error != nil {
 			return xerrors.Errorf("ReorderBlenders error: %w", res.Error)
 		}

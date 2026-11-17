@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"io"
 	"os"
 	osexec "os/exec"
@@ -78,10 +79,10 @@ func createRunningQueue(t *testing.T, pid int, blenderPath string) string {
 	if err != nil {
 		t.Fatalf("NewQueueID: %v", err)
 	}
-	if err := model.CreateJob(&model.Job{ID: id, BlenderPath: blenderPath}); err != nil {
+	if err := model.CreateJob(context.Background(), &model.Job{ID: id, BlenderPath: blenderPath}); err != nil {
 		t.Fatalf("CreateJob: %v", err)
 	}
-	if err := model.CreateQueue(&model.Queue{ID: id, ProcessID: pid, Status: model.QueueRunning}); err != nil {
+	if err := model.CreateQueue(context.Background(), &model.Queue{ID: id, ProcessID: pid, Status: model.QueueRunning}); err != nil {
 		t.Fatalf("CreateQueue: %v", err)
 	}
 	return id
@@ -105,7 +106,7 @@ func TestCancelRunningQueue(t *testing.T) {
 				// CancelQueue が kill した直後に finishJob が割り込んだ場合と同じ: 目印だけ先に置かれた状態
 				userKilledQueues.Store(id, struct{}{})
 				cmd.Process.Kill()
-				finishJob(id, false, cmd.Wait().Error(), 0)
+				finishJob(SystemContext(), id, false, cmd.Wait().Error(), 0)
 				// finishJob がキューを消しているので CancelQueue はエラーで返る（記録は cancelled のまま）
 				_ = CancelQueue(SystemContext(), id)
 			} else {
@@ -116,7 +117,7 @@ func TestCancelRunningQueue(t *testing.T) {
 				if waitErr == nil {
 					t.Fatal("process was not killed")
 				}
-				finishJob(id, false, waitErr.Error(), 0)
+				finishJob(SystemContext(), id, false, waitErr.Error(), 0)
 			}
 
 			j, err := model.GetJob(id)
@@ -147,10 +148,10 @@ func TestCancelWaitingQueue(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewQueueID: %v", err)
 	}
-	if err := model.CreateJob(&model.Job{ID: id}); err != nil {
+	if err := model.CreateJob(context.Background(), &model.Job{ID: id}); err != nil {
 		t.Fatalf("CreateJob: %v", err)
 	}
-	if err := model.CreateQueue(&model.Queue{ID: id, Status: model.QueueWaiting}); err != nil {
+	if err := model.CreateQueue(context.Background(), &model.Queue{ID: id, Status: model.QueueWaiting}); err != nil {
 		t.Fatalf("CreateQueue: %v", err)
 	}
 	if err := CancelQueue(SystemContext(), id); err != nil {

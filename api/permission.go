@@ -36,7 +36,7 @@ func SetProjectPermission(ctx context.Context, projectID, targetID, role string)
 	if !valid {
 		return xerrors.Errorf("invalid role: %s", role)
 	}
-	return model.SetProjectPermission(projectID, targetID, role)
+	return model.SetProjectPermission(ctx, projectID, targetID, role)
 }
 
 func RemoveProjectPermission(ctx context.Context, projectID, targetID string) error {
@@ -110,7 +110,7 @@ func SetFilePermission(ctx context.Context, fileID, targetID, role string) error
 	if !valid {
 		return xerrors.Errorf("invalid role: %s", role)
 	}
-	return model.SetFilePermission(fileID, targetID, role)
+	return model.SetFilePermission(ctx, fileID, targetID, role)
 }
 
 func RemoveFilePermission(ctx context.Context, fileID, targetID string) error {

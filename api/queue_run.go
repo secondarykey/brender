@@ -14,9 +14,10 @@ import (
 )
 
 func executeSamplesComparison(q *model.Queue, job *model.Job) {
+	ctx := jobContext(job)
 	b, err := exec.NewBlender(job.BlenderPath)
 	if err != nil {
-		finishJob(q.ID, false, err.Error(), 0)
+		finishJob(ctx, q.ID, false, err.Error(), 0)
 		return
 	}
 
@@ -43,7 +44,7 @@ func executeSamplesComparison(q *model.Queue, job *model.Job) {
 
 	scriptPath, err := exec.GetSamplesComparisonPythonFile(dto)
 	if err != nil {
-		finishJob(q.ID, false, err.Error(), 0)
+		finishJob(ctx, q.ID, false, err.Error(), 0)
 		return
 	}
 	b.Python = scriptPath
@@ -65,24 +66,24 @@ func executeSamplesComparison(q *model.Queue, job *model.Job) {
 
 	pid, errCh, err := b.RunWithPID(context.Background())
 	if err != nil {
-		finishJob(q.ID, false, err.Error(), 0)
+		finishJob(ctx, q.ID, false, err.Error(), 0)
 		return
 	}
 
 	now := time.Now()
-	if updateErr := model.UpdateQueueRunning(q.ID, pid); updateErr != nil {
+	if updateErr := model.UpdateQueueRunning(ctx, q.ID, pid); updateErr != nil {
 		log.Errorf("UpdateQueueRunning error: %v", updateErr)
 	}
-	if updateErr := model.UpdateJobStarted(q.ID, &now); updateErr != nil {
+	if updateErr := model.UpdateJobStarted(ctx, q.ID, &now); updateErr != nil {
 		log.Errorf("UpdateJobStarted error: %v", updateErr)
 	}
 
 	blenderErr := <-errCh
 	diskSize := dirSize(job.OutputDir)
 	if blenderErr != nil {
-		finishJob(q.ID, false, blenderErr.Error(), diskSize)
+		finishJob(ctx, q.ID, false, blenderErr.Error(), diskSize)
 	} else {
-		finishJob(q.ID, true, "", diskSize)
+		finishJob(ctx, q.ID, true, "", diskSize)
 	}
 }
 
@@ -121,10 +122,11 @@ func resolveBlenderFile(projectFileID string, projectID string) (string, error) 
 }
 
 func executeQueue(q *model.Queue, job *model.Job) {
+	ctx := jobContext(job)
 
 	b, err := exec.NewBlender(job.BlenderPath)
 	if err != nil {
-		finishJob(q.ID, false, err.Error(), 0)
+		finishJob(ctx, q.ID, false, err.Error(), 0)
 		return
 	}
 
@@ -187,29 +189,30 @@ func executeQueue(q *model.Queue, job *model.Job) {
 
 	pid, errCh, err := b.RunWithPID(context.Background())
 	if err != nil {
-		finishJob(q.ID, false, err.Error(), 0)
+		finishJob(ctx, q.ID, false, err.Error(), 0)
 		return
 	}
 
 	now := time.Now()
-	if updateErr := model.UpdateQueueRunning(q.ID, pid); updateErr != nil {
+	if updateErr := model.UpdateQueueRunning(ctx, q.ID, pid); updateErr != nil {
 		log.Errorf("UpdateQueueRunning error: %v", updateErr)
 	}
-	if updateErr := model.UpdateJobStarted(q.ID, &now); updateErr != nil {
+	if updateErr := model.UpdateJobStarted(ctx, q.ID, &now); updateErr != nil {
 		log.Errorf("UpdateJobStarted error: %v", updateErr)
 	}
 
 	blenderErr := <-errCh
 	diskSize := dirSize(job.OutputDir)
 	if blenderErr != nil {
-		finishJob(q.ID, false, blenderErr.Error(), diskSize)
+		finishJob(ctx, q.ID, false, blenderErr.Error(), diskSize)
 	} else {
-		finishJob(q.ID, true, "", diskSize)
+		finishJob(ctx, q.ID, true, "", diskSize)
 	}
 }
 
 // finishJob updates the Job status, sets CompletedAt, then deletes the Queue record.
-func finishJob(id string, success bool, errMsg string, diskSize int64) {
+// ctx は jobContext（記録にはジョブを投入した人が残る）。
+func finishJob(ctx context.Context, id string, success bool, errMsg string, diskSize int64) {
 	if shuttingDown.Load() {
 		log.Noticef("finishJob: skipped (shutting down) id=%s", id)
 		return
@@ -227,21 +230,21 @@ func finishJob(id string, success bool, errMsg string, diskSize int64) {
 		status = model.JobError
 		dataStatus = model.JobDataCorrupted
 	}
-	if err := model.UpdateJobDone(id, status, errMsg, &now, diskSize, dataStatus); err != nil {
+	if err := model.UpdateJobDone(ctx, id, status, errMsg, &now, diskSize, dataStatus); err != nil {
 		log.Errorf("UpdateJobDone error: %v", err)
 	}
 	if err := model.DeleteQueue(id); err != nil {
 		log.Errorf("DeleteQueue error: %v", err)
 	}
 	if success {
-		applyAutoLock(id, diskSize)
+		applyAutoLock(ctx, id, diskSize)
 	}
 	schedule()
 	notifyQueueChanged()
 }
 
 // applyAutoLock は完了ジョブに対して自動ロック設定を適用する。
-func applyAutoLock(jobID string, diskSize int64) {
+func applyAutoLock(ctx context.Context, jobID string, diskSize int64) {
 	j, err := model.GetJob(jobID)
 	if err != nil || j == nil {
 		return
@@ -256,7 +259,7 @@ func applyAutoLock(jobID string, diskSize int64) {
 	if ws.AutoLockMinSize > 0 && diskSize < ws.AutoLockMinSize {
 		return
 	}
-	if err := model.UpdateJobDataStatus(jobID, model.JobDataAvailableLocked); err != nil {
+	if err := model.UpdateJobDataStatus(ctx, jobID, model.JobDataAvailableLocked); err != nil {
 		log.Errorf("applyAutoLock lock error: %v", err)
 		return
 	}
@@ -274,7 +277,7 @@ func applyAutoLock(jobID string, diskSize int64) {
 		if err != nil || oldest == nil {
 			break
 		}
-		if err := model.UpdateJobDataStatus(oldest.ID, model.JobDataAvailable); err != nil {
+		if err := model.UpdateJobDataStatus(ctx, oldest.ID, model.JobDataAvailable); err != nil {
 			log.Errorf("applyAutoLock unlock error: %v", err)
 			break
 		}

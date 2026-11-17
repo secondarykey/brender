@@ -33,38 +33,38 @@ func newResourceFixture(t *testing.T) *resourceFixture {
 	t.Cleanup(func() { model.Close() })
 
 	// アクセス制御はサーバモードかつユーザ管理オンのときだけ効く
-	if err := model.SetEnvironment(&model.Environment{Server: true, ServerAuth: true}); err != nil {
+	if err := model.SetEnvironment(context.Background(), &model.Environment{Server: true, ServerAuth: true}); err != nil {
 		t.Fatalf("SetEnvironment: %v", err)
 	}
 	fx := &resourceFixture{workDir: t.TempDir()}
 	wd := &model.WorkDir{Path: fx.workDir, Status: model.WorkDirStatusActive}
-	if err := model.CreateWorkDir(wd); err != nil {
+	if err := model.CreateWorkDir(context.Background(), wd); err != nil {
 		t.Fatalf("CreateWorkDir: %v", err)
 	}
-	u, err := model.CreateUser("creator", "Creator", model.UserRoleCreator)
+	u, err := model.CreateUser(context.Background(), "creator", "Creator", model.UserRoleCreator)
 	if err != nil {
 		t.Fatalf("CreateUser: %v", err)
 	}
 	fx.user = u.ID
 
 	mk := func(name string, viewer bool) (string, string, string) {
-		p, err := model.CreateProject(name, []string{filepath.Join(fx.workDir, name+".blend")}, wd.ID)
+		p, err := model.CreateProject(context.Background(), name, []string{filepath.Join(fx.workDir, name+".blend")}, wd.ID)
 		if err != nil {
 			t.Fatalf("CreateProject: %v", err)
 		}
 		pid, fid := p.Project.ID, p.Files[0].ID
-		if err := model.SetProjectPermission(pid, model.UserIDOwner, model.RoleOwner); err != nil {
+		if err := model.SetProjectPermission(context.Background(), pid, model.UserIDOwner, model.RoleOwner); err != nil {
 			t.Fatalf("SetProjectPermission: %v", err)
 		}
 		if viewer {
-			if err := model.SetProjectPermission(pid, fx.user, model.RoleViewer); err != nil {
+			if err := model.SetProjectPermission(context.Background(), pid, fx.user, model.RoleViewer); err != nil {
 				t.Fatalf("SetProjectPermission: %v", err)
 			}
 		}
-		if err := model.CopyProjectPermissionsToFile(pid, fid); err != nil {
+		if err := model.CopyProjectPermissionsToFile(context.Background(), pid, fid); err != nil {
 			t.Fatalf("CopyProjectPermissionsToFile: %v", err)
 		}
-		ws, err := model.CreateWorkspace(pid, fid, "Default")
+		ws, err := model.CreateWorkspace(context.Background(), pid, fid, "Default")
 		if err != nil {
 			t.Fatalf("CreateWorkspace: %v", err)
 		}

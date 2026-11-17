@@ -64,7 +64,7 @@ func schedule() {
 			if isLocked {
 				continue
 			}
-			if err := model.MarkQueueStarting(q.ID); err != nil {
+			if err := model.MarkQueueStarting(jobContext(j), q.ID); err != nil {
 				log.Errorf("schedule: MarkQueueStarting %s: %v", q.ID, err)
 				continue
 			}

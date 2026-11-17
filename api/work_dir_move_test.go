@@ -27,11 +27,11 @@ func newMoveFixture(t *testing.T) *moveFixture {
 		newWd: &model.WorkDir{Path: t.TempDir(), Status: model.WorkDirStatusActive},
 	}
 	for _, wd := range []*model.WorkDir{fx.oldWd, fx.newWd} {
-		if err := model.CreateWorkDir(wd); err != nil {
+		if err := model.CreateWorkDir(context.Background(), wd); err != nil {
 			t.Fatalf("CreateWorkDir: %v", err)
 		}
 	}
-	p, err := model.CreateProject("P", nil, fx.oldWd.ID)
+	p, err := model.CreateProject(context.Background(), "P", nil, fx.oldWd.ID)
 	if err != nil {
 		t.Fatalf("CreateProject: %v", err)
 	}
@@ -50,7 +50,7 @@ func newMoveFixture(t *testing.T) *moveFixture {
 	if err := os.WriteFile(fx.jobFile, []byte("frame"), 0644); err != nil {
 		t.Fatalf("WriteFile: %v", err)
 	}
-	if err := model.CreateJob(&model.Job{ID: id, ProjectID: fx.projectID, OutputDir: outDir, Status: model.JobCompleted}); err != nil {
+	if err := model.CreateJob(context.Background(), &model.Job{ID: id, ProjectID: fx.projectID, OutputDir: outDir, Status: model.JobCompleted}); err != nil {
 		t.Fatalf("CreateJob: %v", err)
 	}
 	return fx
@@ -128,7 +128,7 @@ func TestMigrateProjectWorkDirSamePath(t *testing.T) {
 	fx := newMoveFixture(t)
 	wait := waitMigration(t)
 	same := &model.WorkDir{Path: fx.oldWd.Path + string(filepath.Separator), Status: model.WorkDirStatusActive}
-	if err := model.CreateWorkDir(same); err != nil {
+	if err := model.CreateWorkDir(context.Background(), same); err != nil {
 		t.Fatalf("CreateWorkDir: %v", err)
 	}
 
@@ -168,7 +168,7 @@ func TestMigrateProjectWorkDirRefuses(t *testing.T) {
 	t.Run("queued job", func(t *testing.T) {
 		fx := newMoveFixture(t)
 		qid, _ := model.NewQueueID()
-		if err := model.CreateQueue(&model.Queue{ID: qid, ProjectID: fx.projectID, WorkspaceID: "ws", Status: "waiting"}); err != nil {
+		if err := model.CreateQueue(context.Background(), &model.Queue{ID: qid, ProjectID: fx.projectID, WorkspaceID: "ws", Status: "waiting"}); err != nil {
 			t.Fatalf("CreateQueue: %v", err)
 		}
 		if err := StartMigrateProjectWorkDir(context.Background(), fx.projectID, fx.newWd.ID); err == nil {
@@ -197,7 +197,7 @@ func TestMigrateProjectWorkDirRefuses(t *testing.T) {
 	t.Run("destination inside the source", func(t *testing.T) {
 		fx := newMoveFixture(t)
 		inner := &model.WorkDir{Path: filepath.Join(fx.oldWd.Path, fx.projectID, "inner"), Status: model.WorkDirStatusActive}
-		if err := model.CreateWorkDir(inner); err != nil {
+		if err := model.CreateWorkDir(context.Background(), inner); err != nil {
 			t.Fatal(err)
 		}
 		if err := StartMigrateProjectWorkDir(context.Background(), fx.projectID, inner.ID); err == nil {
@@ -394,7 +394,7 @@ func TestCreateMovieReleasesCount(t *testing.T) {
 	ctx := context.Background()
 
 	// 起動できない（ffmpeg が無い）
-	if err := model.SetEnvironment(&model.Environment{FfmpegCmd: filepath.Join(t.TempDir(), "no-ffmpeg")}); err != nil {
+	if err := model.SetEnvironment(ctx, &model.Environment{FfmpegCmd: filepath.Join(t.TempDir(), "no-ffmpeg")}); err != nil {
 		t.Fatal(err)
 	}
 	if _, _, err := CreateMovie(ctx, fx.projectID, "file", "ws", fx.jobID, 30, "mp4", ""); err == nil {
@@ -409,7 +409,7 @@ func TestCreateMovieReleasesCount(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := model.SetEnvironment(&model.Environment{FfmpegCmd: self}); err != nil {
+	if err := model.SetEnvironment(ctx, &model.Environment{FfmpegCmd: self}); err != nil {
 		t.Fatal(err)
 	}
 	_, ch, err := CreateMovie(ctx, fx.projectID, "file", "ws", fx.jobID, 30, "mp4", "")

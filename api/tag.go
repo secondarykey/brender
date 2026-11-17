@@ -38,7 +38,7 @@ func CreateTagCategory(ctx context.Context, name, color string) (*model.TagCateg
 	if color == "" {
 		color = randomColor()
 	}
-	return model.CreateTagCategory(name, color)
+	return model.CreateTagCategory(ctx, name, color)
 }
 
 func UpdateTagCategory(ctx context.Context, id uint, name, color string) (*model.TagCategory, error) {
@@ -49,21 +49,21 @@ func UpdateTagCategory(ctx context.Context, id uint, name, color string) (*model
 	if name == "" {
 		return nil, xerrors.New("category name is required")
 	}
-	return model.UpdateTagCategory(id, name, color)
+	return model.UpdateTagCategory(ctx, id, name, color)
 }
 
 func DeleteTagCategory(ctx context.Context, id uint) error {
 	if err := requireAdmin(ctx); err != nil {
 		return err
 	}
-	return model.DeleteTagCategory(id)
+	return model.DeleteTagCategory(ctx, id)
 }
 
 func ReorderTagCategories(ctx context.Context, ids []uint) error {
 	if err := requireAdmin(ctx); err != nil {
 		return err
 	}
-	return model.ReorderTagCategories(ids)
+	return model.ReorderTagCategories(ctx, ids)
 }
 
 func MergeTagCategories(ctx context.Context, sourceID, targetID uint) error {
@@ -73,7 +73,7 @@ func MergeTagCategories(ctx context.Context, sourceID, targetID uint) error {
 	if sourceID == targetID {
 		return xerrors.New("cannot merge a category into itself")
 	}
-	return model.MergeTagCategories(sourceID, targetID)
+	return model.MergeTagCategories(ctx, sourceID, targetID)
 }
 
 func MergeTags(ctx context.Context, sourceID, targetID uint) error {
@@ -83,7 +83,7 @@ func MergeTags(ctx context.Context, sourceID, targetID uint) error {
 	if sourceID == targetID {
 		return xerrors.New("cannot merge a tag into itself")
 	}
-	return model.MergeTags(sourceID, targetID)
+	return model.MergeTags(ctx, sourceID, targetID)
 }
 
 // ── Tag ──────────────────────────────────────────────────
@@ -100,7 +100,7 @@ func CreateTag(ctx context.Context, name string, categoryID *uint, color string)
 	if name == "" {
 		return nil, xerrors.New("tag name is required")
 	}
-	return model.CreateTag(name, categoryID, color)
+	return model.CreateTag(ctx, name, categoryID, color)
 }
 
 func UpdateTag(ctx context.Context, id uint, name string, categoryID *uint, color string) (*model.Tag, error) {
@@ -111,7 +111,7 @@ func UpdateTag(ctx context.Context, id uint, name string, categoryID *uint, colo
 	if name == "" {
 		return nil, xerrors.New("tag name is required")
 	}
-	return model.UpdateTag(id, name, categoryID, color)
+	return model.UpdateTag(ctx, id, name, categoryID, color)
 }
 
 func DeleteTag(ctx context.Context, id uint) error {
@@ -125,7 +125,7 @@ func SetTagCategory(ctx context.Context, tagID uint, categoryID *uint) error {
 	if err := requireAdmin(ctx); err != nil {
 		return err
 	}
-	return model.SetTagCategory(tagID, categoryID)
+	return model.SetTagCategory(ctx, tagID, categoryID)
 }
 
 // ── File tagging ─────────────────────────────────────────
@@ -134,7 +134,7 @@ func AddTagToFile(ctx context.Context, projectFileID string, tagID uint) error {
 	if err := requireFileRole(ctx, projectFileID, rolesEditorUp...); err != nil {
 		return err
 	}
-	return model.AddTagToFile(projectFileID, tagID)
+	return model.AddTagToFile(ctx, projectFileID, tagID)
 }
 
 func RemoveTagFromFile(ctx context.Context, projectFileID string, tagID uint) error {
@@ -182,7 +182,7 @@ func AssignTagByInput(ctx context.Context, projectFileID, input string) (*model.
 			return nil, xerrors.Errorf("AssignTagByInput category lookup: %w", err)
 		}
 		if cat == nil {
-			cat, err = model.CreateTagCategory(categoryName, randomColor())
+			cat, err = model.CreateTagCategory(ctx, categoryName, randomColor())
 			if err != nil {
 				return nil, xerrors.Errorf("AssignTagByInput category create: %w", err)
 			}
@@ -195,13 +195,13 @@ func AssignTagByInput(ctx context.Context, projectFileID, input string) (*model.
 		return nil, xerrors.Errorf("AssignTagByInput tag lookup: %w", err)
 	}
 	if tag == nil {
-		tag, err = model.CreateTag(tagName, categoryID, "")
+		tag, err = model.CreateTag(ctx, tagName, categoryID, "")
 		if err != nil {
 			return nil, xerrors.Errorf("AssignTagByInput tag create: %w", err)
 		}
 	}
 
-	if err := model.AddTagToFile(projectFileID, tag.ID); err != nil {
+	if err := model.AddTagToFile(ctx, projectFileID, tag.ID); err != nil {
 		return nil, xerrors.Errorf("AssignTagByInput add to file: %w", err)
 	}
 

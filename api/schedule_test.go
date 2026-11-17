@@ -28,7 +28,7 @@ func newScheduleFixture(t *testing.T, max int) *scheduleFixture {
 		locked: &model.WorkDir{Path: t.TempDir(), Status: model.WorkDirStatusLock},
 	}
 	for _, wd := range []*model.WorkDir{fx.free, fx.locked} {
-		if err := model.CreateWorkDir(wd); err != nil {
+		if err := model.CreateWorkDir(context.Background(), wd); err != nil {
 			t.Fatalf("CreateWorkDir: %v", err)
 		}
 	}
@@ -36,13 +36,13 @@ func newScheduleFixture(t *testing.T, max int) *scheduleFixture {
 		wd  *model.WorkDir
 		dst *string
 	}{{fx.free, &fx.freePrj}, {fx.locked, &fx.lockedPrj}} {
-		p, err := model.CreateProject("P", nil, x.wd.ID)
+		p, err := model.CreateProject(context.Background(), "P", nil, x.wd.ID)
 		if err != nil {
 			t.Fatalf("CreateProject: %v", err)
 		}
 		*x.dst = p.Project.ID
 	}
-	if err := model.SetEnvironment(&model.Environment{MaxConcurrentJobs: max}); err != nil {
+	if err := model.SetEnvironment(context.Background(), &model.Environment{MaxConcurrentJobs: max}); err != nil {
 		t.Fatalf("SetEnvironment: %v", err)
 	}
 
@@ -63,10 +63,10 @@ func (fx *scheduleFixture) add(t *testing.T, projectID string, status string) st
 	if err != nil {
 		t.Fatalf("NewQueueID: %v", err)
 	}
-	if err := model.CreateJob(&model.Job{ID: id, ProjectID: projectID, WorkspaceID: id, JobType: model.JobTypeRender}); err != nil {
+	if err := model.CreateJob(context.Background(), &model.Job{ID: id, ProjectID: projectID, WorkspaceID: id, JobType: model.JobTypeRender}); err != nil {
 		t.Fatalf("CreateJob: %v", err)
 	}
-	if err := model.CreateQueue(&model.Queue{ID: id, ProjectID: projectID, WorkspaceID: id, Status: status}); err != nil {
+	if err := model.CreateQueue(context.Background(), &model.Queue{ID: id, ProjectID: projectID, WorkspaceID: id, Status: status}); err != nil {
 		t.Fatalf("CreateQueue: %v", err)
 	}
 	return id
@@ -147,7 +147,7 @@ func TestScheduleSkipsLockedWorkDir(t *testing.T) {
 	fx.mu.Lock()
 	fx.started = nil
 	fx.mu.Unlock()
-	if err := model.SetEnvironment(&model.Environment{MaxConcurrentJobs: 2}); err != nil {
+	if err := model.SetEnvironment(context.Background(), &model.Environment{MaxConcurrentJobs: 2}); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := UpdateWorkDir(context.Background(), fx.locked.ID, fx.locked.Path, 0, model.WorkDirStatusActive); err != nil {

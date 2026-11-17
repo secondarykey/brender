@@ -220,6 +220,7 @@ func StartMigrateProjectWorkDir(ctx context.Context, projectID string, newWorkDi
 	}
 
 	ok = true
+	bg := backgroundContext(ctx)
 	go func() {
 		defer endProjectMove(projectID, from, newWorkDirID)
 		notify := func(status string, pct float64, errMsg string) {
@@ -228,7 +229,7 @@ func StartMigrateProjectWorkDir(ctx context.Context, projectID string, newWorkDi
 			}
 		}
 		err := runMove(items, func(pct float64) { notify("running", pct, "") }, func() error {
-			return model.MoveProjectWorkDir(projectID, newWorkDirID, oldBase, newBase)
+			return model.MoveProjectWorkDir(bg, projectID, newWorkDirID, oldBase, newBase)
 		})
 		if err != nil {
 			log.Errorf("StartMigrateProjectWorkDir %s: %v", projectID, err)
@@ -284,6 +285,7 @@ func StartChangeWorkDir(ctx context.Context, id uint, newPath string) error {
 	}
 
 	ok = true
+	bg := backgroundContext(ctx)
 	go func() {
 		defer endWorkDirChange(id, projectIDs)
 		notify := func(status string, pct float64, errMsg string) {
@@ -292,7 +294,7 @@ func StartChangeWorkDir(ctx context.Context, id uint, newPath string) error {
 			}
 		}
 		err := runMove(items, func(pct float64) { notify("running", pct, "") }, func() error {
-			return model.ChangeWorkDirPath(id, oldPath, newPath, projectIDs)
+			return model.ChangeWorkDirPath(bg, id, oldPath, newPath, projectIDs)
 		})
 		if err != nil {
 			log.Errorf("StartChangeWorkDir %d: %v", id, err)

@@ -273,10 +273,26 @@ func checkResourceIDs(projectID, fileID, workspaceID string) error {
 	return nil
 }
 
-// SystemContext はシステムが自分で行う処理（サムネイルの自動生成など）の操作コンテキストを返す。
-// owner として振る舞う。
+// SystemContext はシステムが自分で行う処理（起動時の確認など）の操作コンテキストを返す。
+// owner として振る舞う。監査カラムにも owner が残る。
 func SystemContext() context.Context {
 	return model.WithUser(context.Background(), model.UserIDOwner)
+}
+
+// backgroundContext は、利用者の操作から始まってバックグラウンドで続く処理（サムネイルの自動生成・
+// データの移動など）の ctx を返す。権限は owner（SystemContext）で、記録（監査カラム）には操作した人を残す。
+// 呼び出しの ctx は呼び出しが終わると取り消されることがあるので、goroutine にはそのまま渡さずこれを渡す。
+func backgroundContext(ctx context.Context) context.Context {
+	return model.WithAuditUser(SystemContext(), model.AuditUser(ctx))
+}
+
+// jobContext は、キューの実行・リカバリなど、ジョブについてシステムが行う処理の ctx を返す。
+// 権限は owner で、記録にはジョブを投入した人（Job.CreatedBy）を残す。
+func jobContext(j *model.Job) context.Context {
+	if j == nil || j.CreatedBy == "" {
+		return SystemContext()
+	}
+	return model.WithAuditUser(SystemContext(), j.CreatedBy)
 }
 
 // runner 以上（レンダリング実行・キャンセル・ジョブ操作）。

@@ -36,7 +36,7 @@ func CreateUser(ctx context.Context, name, displayName, role string) (*model.Use
 	if displayName == "" {
 		displayName = name
 	}
-	return model.CreateUser(name, displayName, role)
+	return model.CreateUser(ctx, name, displayName, role)
 }
 
 func UpdateUser(ctx context.Context, id, name, displayName, role string) (*model.User, error) {
@@ -46,7 +46,7 @@ func UpdateUser(ctx context.Context, id, name, displayName, role string) (*model
 	if name == "" {
 		return nil, xerrors.New("user name is required")
 	}
-	return model.UpdateUser(id, name, displayName, role)
+	return model.UpdateUser(ctx, id, name, displayName, role)
 }
 
 func DeleteUser(ctx context.Context, id string) error {
@@ -73,7 +73,7 @@ func CreateGroup(ctx context.Context, displayName string) (*model.Group, error) 
 	if displayName == "" {
 		return nil, xerrors.New("group display name is required")
 	}
-	return model.CreateGroup(displayName)
+	return model.CreateGroup(ctx, displayName)
 }
 
 func UpdateGroup(ctx context.Context, id, displayName string) (*model.Group, error) {
@@ -83,7 +83,7 @@ func UpdateGroup(ctx context.Context, id, displayName string) (*model.Group, err
 	if displayName == "" {
 		return nil, xerrors.New("group display name is required")
 	}
-	return model.UpdateGroup(id, displayName)
+	return model.UpdateGroup(ctx, id, displayName)
 }
 
 func DeleteGroup(ctx context.Context, id string) error {
@@ -107,7 +107,7 @@ func AddUserToGroup(ctx context.Context, userID, groupID string) error {
 	if err := requireAdmin(ctx); err != nil {
 		return err
 	}
-	return model.AddUserToGroup(userID, groupID)
+	return model.AddUserToGroup(ctx, userID, groupID)
 }
 
 func RemoveUserFromGroup(ctx context.Context, userID, groupID string) error {
@@ -190,7 +190,7 @@ func GenerateResetToken(ctx context.Context, userID string) (string, error) {
 	}
 
 	// パスワードをクリア（ログイン不可状態にする）
-	if err := model.ClearPassword(userID); err != nil {
+	if err := model.ClearPassword(ctx, userID); err != nil {
 		return "", err
 	}
 
@@ -199,7 +199,7 @@ func GenerateResetToken(ctx context.Context, userID string) (string, error) {
 		return "", err
 	}
 
-	token, err := model.CreatePasswordResetToken(userID, resetTokenDuration)
+	token, err := model.CreatePasswordResetToken(ctx, userID, resetTokenDuration)
 	if err != nil {
 		return "", err
 	}
@@ -246,12 +246,14 @@ func ResetPassword(token, password, confirmPassword string) error {
 		return xerrors.New("invalid or expired token")
 	}
 
-	if err := model.SetPassword(t.UserID, password); err != nil {
+	// ログイン前なので、記録にはトークンの持ち主を残す
+	ctx := model.WithAuditUser(context.Background(), t.UserID)
+	if err := model.SetPassword(ctx, t.UserID, password); err != nil {
 		return err
 	}
 
 	// トークンを使用済みにする
-	if err := model.MarkTokenUsed(token); err != nil {
+	if err := model.MarkTokenUsed(ctx, token); err != nil {
 		return err
 	}
 
@@ -286,7 +288,8 @@ func Login(name, password string) (*LoginResult, error) {
 		return nil, xerrors.New("invalid login ID or password")
 	}
 
-	session, err := model.CreateSession(user.ID, sessionDuration)
+	// ログイン前なので、記録にはログインした本人を残す
+	session, err := model.CreateSession(model.WithAuditUser(context.Background(), user.ID), user.ID, sessionDuration)
 	if err != nil {
 		return nil, err
 	}

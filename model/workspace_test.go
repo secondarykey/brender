@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"path/filepath"
 	"testing"
 	"time"
@@ -15,12 +16,12 @@ func TestMigrateSystemWorkspaces(t *testing.T) {
 	}
 	t.Cleanup(func() { Close() })
 
-	detail, err := CreateProject("Proj", nil, 0)
+	detail, err := CreateProject(context.Background(), "Proj", nil, 0)
 	if err != nil {
 		t.Fatalf("CreateProject: %v", err)
 	}
 	projectID := detail.Project.ID
-	file, err := AddProjectFile(projectID, "/tmp/scene.blend")
+	file, err := AddProjectFile(context.Background(), projectID, "/tmp/scene.blend")
 	if err != nil {
 		t.Fatalf("AddProjectFile: %v", err)
 	}
@@ -29,14 +30,14 @@ func TestMigrateSystemWorkspaces(t *testing.T) {
 	if res := db.Exec("ALTER TABLE `workspaces` ADD `is_system` numeric DEFAULT false"); res.Error != nil {
 		t.Fatalf("add column: %v", res.Error)
 	}
-	hidden, err := CreateWorkspace(projectID, file.ID, "scene.blend Thumbnail")
+	hidden, err := CreateWorkspace(context.Background(), projectID, file.ID, "scene.blend Thumbnail")
 	if err != nil {
 		t.Fatalf("CreateWorkspace(hidden): %v", err)
 	}
 	if res := db.Exec("UPDATE workspaces SET is_system = 1 WHERE id = ?", hidden.ID); res.Error != nil {
 		t.Fatalf("mark system: %v", res.Error)
 	}
-	normal, err := CreateWorkspace(projectID, file.ID, "本番用")
+	normal, err := CreateWorkspace(context.Background(), projectID, file.ID, "本番用")
 	if err != nil {
 		t.Fatalf("CreateWorkspace(normal): %v", err)
 	}
@@ -48,7 +49,7 @@ func TestMigrateSystemWorkspaces(t *testing.T) {
 	renderJob := &Job{ID: "job-render", ProjectID: projectID, WorkspaceID: normal.ID, ProjectFileID: file.ID,
 		Status: JobCompleted, JobType: JobTypeRender, EnqueuedAt: &later}
 	for _, j := range []*Job{thumbJob, renderJob} {
-		if err := CreateJob(j); err != nil {
+		if err := CreateJob(context.Background(), j); err != nil {
 			t.Fatalf("CreateJob: %v", err)
 		}
 	}

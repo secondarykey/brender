@@ -25,7 +25,7 @@ func TestKillRunningQueuesByUser(t *testing.T) {
 	if waitErr == nil {
 		t.Fatal("process was not killed")
 	}
-	finishJob(id, false, waitErr.Error(), 0)
+	finishJob(SystemContext(), id, false, waitErr.Error(), 0)
 
 	j, err := model.GetJob(id)
 	if err != nil {
@@ -64,7 +64,7 @@ func TestKillRunningQueuesByUserNotKilled(t *testing.T) {
 		t.Fatal("mark must be removed when the process was not killed")
 	}
 
-	finishJob(id, true, "", 0)
+	finishJob(SystemContext(), id, true, "", 0)
 	j, err := model.GetJob(id)
 	if err != nil {
 		t.Fatalf("GetJob: %v", err)
@@ -89,7 +89,7 @@ func TestKillRunningQueuesShutdown(t *testing.T) {
 	if waitErr == nil {
 		t.Fatal("process was not killed")
 	}
-	finishJob(id, false, waitErr.Error(), 0)
+	finishJob(SystemContext(), id, false, waitErr.Error(), 0)
 
 	q, err := model.GetQueue(id)
 	if err != nil || q == nil {

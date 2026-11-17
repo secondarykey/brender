@@ -57,7 +57,7 @@ func TestThumbnailRefByCaller(t *testing.T) {
 	checkThumbnailURL(t, got, fx.projectID)
 
 	// 無ければ空文字（エラーなし）
-	p, err := model.CreateProject("Empty", nil, fx.oldWd.ID)
+	p, err := model.CreateProject(context.Background(), "Empty", nil, fx.oldWd.ID)
 	if err != nil {
 		t.Fatal(err)
 	}

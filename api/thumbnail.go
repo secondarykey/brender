@@ -158,7 +158,7 @@ const defaultWorkspaceName = "Default"
 // そこで Test 出力（中間フレーム1枚・サンプル8）を投入する。
 // ファイルのサムネイルは、このファイルの Test ジョブの出力から作る（thumbnailPath）。
 func CreateDefaultWorkspace(ctx context.Context, projectID string, file *model.ProjectFile) error {
-	ws, err := model.CreateWorkspace(projectID, file.ID, defaultWorkspaceName)
+	ws, err := model.CreateWorkspace(ctx, projectID, file.ID, defaultWorkspaceName)
 	if err != nil {
 		return err
 	}

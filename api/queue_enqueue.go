@@ -226,18 +226,18 @@ func enqueuePreview(ctx context.Context, projectID, workspaceID string, preview 
 		JobType:       preview.JobType,
 		EnqueuedAt:    &now,
 	}
-	if err := model.CreateJob(job); err != nil {
+	if err := model.CreateJob(ctx, job); err != nil {
 		return nil, xerrors.Errorf("CreateJob: %w", err)
 	}
 
 	if preview.JobType == model.JobTypeRender {
-		if err := model.UpdateWorkspaceProcessedAt(workspaceID, &now); err != nil {
+		if err := model.UpdateWorkspaceProcessedAt(ctx, workspaceID, &now); err != nil {
 			log.Errorf("UpdateWorkspaceProcessedAt: %v", err)
 		}
-		if err := model.UpdateProjectFileProcessedAt(preview.ProjectFileID, &now); err != nil {
+		if err := model.UpdateProjectFileProcessedAt(ctx, preview.ProjectFileID, &now); err != nil {
 			log.Errorf("UpdateProjectFileProcessedAt: %v", err)
 		}
-		if err := model.UpdateProjectProcessedAt(projectID, &now); err != nil {
+		if err := model.UpdateProjectProcessedAt(ctx, projectID, &now); err != nil {
 			log.Errorf("UpdateProjectProcessedAt: %v", err)
 		}
 	}
@@ -248,7 +248,7 @@ func enqueuePreview(ctx context.Context, projectID, workspaceID string, preview 
 		WorkspaceID: workspaceID,
 		Status:      model.QueueWaiting,
 	}
-	if err := model.CreateQueue(q); err != nil {
+	if err := model.CreateQueue(ctx, q); err != nil {
 		return nil, xerrors.Errorf("CreateQueue: %w", err)
 	}
 
@@ -347,7 +347,7 @@ func SamplesComparisonEnqueue(ctx context.Context, projectID, workspaceID string
 		SamplesList:   samplesList,
 		EnqueuedAt:    &now,
 	}
-	if err := model.CreateJob(job); err != nil {
+	if err := model.CreateJob(ctx, job); err != nil {
 		return nil, xerrors.Errorf("CreateJob: %w", err)
 	}
 
@@ -357,7 +357,7 @@ func SamplesComparisonEnqueue(ctx context.Context, projectID, workspaceID string
 		WorkspaceID: workspaceID,
 		Status:      model.QueueWaiting,
 	}
-	if err := model.CreateQueue(q); err != nil {
+	if err := model.CreateQueue(ctx, q); err != nil {
 		return nil, xerrors.Errorf("CreateQueue: %w", err)
 	}
 

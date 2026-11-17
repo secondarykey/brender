@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"errors"
 	"path/filepath"
 	"strings"
@@ -56,23 +57,23 @@ func GetDefaultWorkDir() (*WorkDir, error) {
 	return &wd, nil
 }
 
-func CreateWorkDir(wd *WorkDir) error {
-	if res := db.Create(wd); res.Error != nil {
+func CreateWorkDir(ctx context.Context, wd *WorkDir) error {
+	if res := db.WithContext(ctx).Create(wd); res.Error != nil {
 		return xerrors.Errorf("CreateWorkDir: %w", res.Error)
 	}
 	return nil
 }
 
-func UpdateWorkDir(wd *WorkDir) error {
-	if res := db.Save(wd); res.Error != nil {
+func UpdateWorkDir(ctx context.Context, wd *WorkDir) error {
+	if res := db.WithContext(ctx).Save(wd); res.Error != nil {
 		return xerrors.Errorf("UpdateWorkDir: %w", res.Error)
 	}
 	return nil
 }
 
-func ReorderWorkDirs(ids []uint) error {
+func ReorderWorkDirs(ctx context.Context, ids []uint) error {
 	for i, id := range ids {
-		if res := db.Model(&WorkDir{}).Where("id = ?", id).Update("priority", i); res.Error != nil {
+		if res := db.WithContext(ctx).Model(&WorkDir{}).Where("id = ?", id).Update("priority", i); res.Error != nil {
 			return xerrors.Errorf("ReorderWorkDirs: %w", res.Error)
 		}
 	}
@@ -97,8 +98,8 @@ func CountProjectsByWorkDir(workDirID uint) (int64, error) {
 
 // MoveProjectWorkDir はプロジェクトの作業ディレクトリを workDirID に替え、
 // ジョブの出力先を oldBase から newBase の下へ書き換える。1つのトランザクションで行う。
-func MoveProjectWorkDir(projectID string, workDirID uint, oldBase, newBase string) error {
-	return db.Transaction(func(tx *gorm.DB) error {
+func MoveProjectWorkDir(ctx context.Context, projectID string, workDirID uint, oldBase, newBase string) error {
+	return db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Model(&Project{}).Where("id = ?", projectID).Update("work_dir_id", workDirID).Error; err != nil {
 			return xerrors.Errorf("MoveProjectWorkDir project: %w", err)
 		}
@@ -108,8 +109,8 @@ func MoveProjectWorkDir(projectID string, workDirID uint, oldBase, newBase strin
 
 // ChangeWorkDirPath は作業ディレクトリのパスを newPath に替え、projectIDs のジョブの出力先を
 // 旧パスから newPath の下へ書き換える。1つのトランザクションで行う。
-func ChangeWorkDirPath(id uint, oldPath, newPath string, projectIDs []string) error {
-	return db.Transaction(func(tx *gorm.DB) error {
+func ChangeWorkDirPath(ctx context.Context, id uint, oldPath, newPath string, projectIDs []string) error {
+	return db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Model(&WorkDir{}).Where("id = ?", id).Update("path", newPath).Error; err != nil {
 			return xerrors.Errorf("ChangeWorkDirPath work_dir: %w", err)
 		}

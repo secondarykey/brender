@@ -35,7 +35,8 @@ func GetProjectBaseDir(projectID string) (string, error) {
 		if wd == nil {
 			return "", xerrors.New("作業ディレクトリが設定されていません（システム設定で追加してください）")
 		}
-		if err := model.UpdateProjectWorkDir(projectID, wd.ID); err != nil {
+		// 既定の作業ディレクトリを割り当てるのはシステムの判断（呼び出しの ctx を持たない関数なので）
+		if err := model.UpdateProjectWorkDir(SystemContext(), projectID, wd.ID); err != nil {
 			return "", xerrors.Errorf("GetProjectBaseDir UpdateProjectWorkDir: %w", err)
 		}
 		return wd.Path, nil
@@ -79,7 +80,7 @@ func CreateWorkDir(ctx context.Context, path string, priority int) (*model.WorkD
 		Priority: priority,
 		Status:   model.WorkDirStatusActive,
 	}
-	if err := model.CreateWorkDir(wd); err != nil {
+	if err := model.CreateWorkDir(ctx, wd); err != nil {
 		return nil, err
 	}
 	return wd, nil
@@ -96,7 +97,7 @@ func UpdateWorkDir(ctx context.Context, id uint, path string, priority int, stat
 	wd.Path = path
 	wd.Priority = priority
 	wd.Status = status
-	if err := model.UpdateWorkDir(wd); err != nil {
+	if err := model.UpdateWorkDir(ctx, wd); err != nil {
 		return nil, err
 	}
 	// lock を外したら、止めていた待ちのジョブを起動する
@@ -109,7 +110,7 @@ func ReorderWorkDirs(ctx context.Context, ids []uint) error {
 	if err := requireAdmin(ctx); err != nil {
 		return err
 	}
-	return model.ReorderWorkDirs(ids)
+	return model.ReorderWorkDirs(ctx, ids)
 }
 
 func DeleteWorkDir(ctx context.Context, id uint) error {

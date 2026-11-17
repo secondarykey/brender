@@ -51,7 +51,7 @@ func UpdateJobMeta(ctx context.Context, id, name, note string) error {
 			return err
 		}
 	}
-	return model.UpdateJobMeta(id, name, note)
+	return model.UpdateJobMeta(ctx, id, name, note)
 }
 
 func DeleteJob(ctx context.Context, id string) error {
@@ -154,7 +154,7 @@ func DeleteJobData(ctx context.Context, id string) error {
 			}
 		}
 	}
-	return model.UpdateJobDataStatus(id, model.JobDataDeleted)
+	return model.UpdateJobDataStatus(ctx, id, model.JobDataDeleted)
 }
 
 func LockJob(ctx context.Context, id string) error {
@@ -169,7 +169,7 @@ func LockJob(ctx context.Context, id string) error {
 	if j.DataStatus%2 == 1 {
 		return nil // すでにロック済み
 	}
-	return model.UpdateJobDataStatus(id, j.DataStatus+1)
+	return model.UpdateJobDataStatus(ctx, id, j.DataStatus+1)
 }
 
 func UnlockJob(ctx context.Context, id string) error {
@@ -184,7 +184,7 @@ func UnlockJob(ctx context.Context, id string) error {
 	if j.DataStatus%2 == 0 {
 		return nil // ロックされていない
 	}
-	return model.UpdateJobDataStatus(id, j.DataStatus-1)
+	return model.UpdateJobDataStatus(ctx, id, j.DataStatus-1)
 }
 
 func GetJob(ctx context.Context, id string) (*model.Job, error) {

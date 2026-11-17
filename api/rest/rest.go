@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -9,6 +10,15 @@ import (
 	"github.com/secondarykey/brender/log"
 	"github.com/secondarykey/brender/model"
 )
+
+// guestAuditContext は、ユーザを持たないブラウザからの呼び出し（ユーザ管理が無効のとき）の記録（監査カラム）を
+// guest にする。権限のユーザは付けない（付けると、お気に入りなどユーザごとのものが guest のものになる）。
+func guestAuditContext(ctx context.Context) context.Context {
+	if _, ok := model.UserFromContext(ctx); ok {
+		return ctx
+	}
+	return model.WithAuditUser(ctx, model.UserIDGuest)
+}
 
 func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
@@ -19,11 +29,7 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 // handleUploadFile はブラウザからの .blend ファイルのアップロードを受ける（multipart）。
 // Wails のバインディングの本文には上限があり、進み具合も取れないため、この口だけは REST のまま。
 func handleUploadFile(w http.ResponseWriter, r *http.Request) {
-	// 認証ミドルウェアで goroutine ユーザが既にセットされている場合はそのまま使用
-	if !model.IsGoroutineUserSet() {
-		model.SetGoroutineUser(model.UserIDGuest)
-		defer model.ClearGoroutineUser()
-	}
+	ctx := guestAuditContext(r.Context())
 
 	start := time.Now()
 
@@ -47,7 +53,7 @@ func handleUploadFile(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	result, err := api.UploadProjectFile(r.Context(), projectID, header.Filename, file)
+	result, err := api.UploadProjectFile(ctx, projectID, header.Filename, file)
 	elapsed := time.Since(start)
 	if err != nil {
 		log.Warnf("REST upload error: %v (%s)", err, elapsed)

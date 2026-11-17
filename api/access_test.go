@@ -20,10 +20,10 @@ func TestAdminOnlyFunctions(t *testing.T) {
 	t.Cleanup(func() { model.Close() })
 
 	// アクセス制御はサーバモードかつユーザ管理オンのときだけ効く
-	if err := model.SetEnvironment(&model.Environment{Server: true, ServerAuth: true}); err != nil {
+	if err := model.SetEnvironment(context.Background(), &model.Environment{Server: true, ServerAuth: true}); err != nil {
 		t.Fatalf("SetEnvironment: %v", err)
 	}
-	creator, err := model.CreateUser("creator", "Creator", model.UserRoleCreator)
+	creator, err := model.CreateUser(context.Background(), "creator", "Creator", model.UserRoleCreator)
 	if err != nil {
 		t.Fatalf("CreateUser: %v", err)
 	}

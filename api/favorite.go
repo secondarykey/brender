@@ -18,7 +18,7 @@ func AddFavorite(ctx context.Context, fileID string) error {
 	if err := requireFileAccess(ctx, fileID); err != nil {
 		return err
 	}
-	return model.AddFavorite(currentUser(ctx), fileID)
+	return model.AddFavorite(ctx, currentUser(ctx), fileID)
 }
 
 func RemoveFavorite(ctx context.Context, fileID string) error {

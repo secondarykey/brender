@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"errors"
 	gosort "sort"
 	"time"
@@ -19,19 +20,19 @@ type Workspace struct {
 	Note             string     `json:"note"`
 	Scene            string     `json:"scene"`
 	Camera           string     `json:"camera"`
-	Engine           string     `json:"engine"`              // "" = Blender デフォルト
+	Engine           string     `json:"engine"` // "" = Blender デフォルト
 	StartFrame       int        `json:"start"`
 	EndFrame         int        `json:"end"`
-	FrameStep        int        `json:"frame_step"`          // 0,1 = 毎フレーム
-	FPS              float64    `json:"fps"`                 // 再生・動画の FPS。0 = Blender のシーンの値
-	Thread           int        `json:"thread"`              // 0 = 全コア自動
-	Samples          int        `json:"samples"`             // 0 = Blender デフォルト
-	ResolutionX      int        `json:"resolution_x"`        // 0 = Blender デフォルト
-	ResolutionY      int        `json:"resolution_y"`        // 0 = Blender デフォルト
-	OutputFormat     string     `json:"output_format"` // "PNG" / "JPEG"。空 = システムデフォルト委譲
-	AutoLock        bool       `gorm:"default:false" json:"auto_lock"`      // 完了時自動ロック
-	AutoLockMinSize int64      `gorm:"default:104857600" json:"auto_lock_min_size"` // 自動ロック対象の最小容量（バイト）。デフォルト100MB
-	AutoLockKeep    int        `gorm:"default:1" json:"auto_lock_keep"`     // ロック保持件数。0=無制限
+	FrameStep        int        `json:"frame_step"`                                  // 0,1 = 毎フレーム
+	FPS              float64    `json:"fps"`                                         // 再生・動画の FPS。0 = Blender のシーンの値
+	Thread           int        `json:"thread"`                                      // 0 = 全コア自動
+	Samples          int        `json:"samples"`                                     // 0 = Blender デフォルト
+	ResolutionX      int        `json:"resolution_x"`                                // 0 = Blender デフォルト
+	ResolutionY      int        `json:"resolution_y"`                                // 0 = Blender デフォルト
+	OutputFormat     string     `json:"output_format"`                               // "PNG" / "JPEG"。空 = システムデフォルト委譲
+	AutoLock         bool       `gorm:"default:false" json:"auto_lock"`              // 完了時自動ロック
+	AutoLockMinSize  int64      `gorm:"default:104857600" json:"auto_lock_min_size"` // 自動ロック対象の最小容量（バイト）。デフォルト100MB
+	AutoLockKeep     int        `gorm:"default:1" json:"auto_lock_keep"`             // ロック保持件数。0=無制限
 	DisplayOrder     int        `gorm:"default:99999" json:"display_order"`
 	ProcessedAt      *time.Time `json:"processed_at"`
 	MetaFields       `gorm:"embedded"`
@@ -165,7 +166,7 @@ func GetWorkspace(projectID string, workspaceID string) (*WorkspaceDetail, error
 	return &WorkspaceDetail{Workspace: &w, ProjectFiles: files}, nil
 }
 
-func CreateWorkspace(projectID string, projectFileID string, name string) (*Workspace, error) {
+func CreateWorkspace(ctx context.Context, projectID string, projectFileID string, name string) (*Workspace, error) {
 	id, err := newWorkspaceID()
 	if err != nil {
 		return nil, xerrors.Errorf("newWorkspaceID: %w", err)
@@ -178,13 +179,13 @@ func CreateWorkspace(projectID string, projectFileID string, name string) (*Work
 		StartFrame:    0,
 		EndFrame:      -1,
 	}
-	if res := db.Create(w); res.Error != nil {
+	if res := db.WithContext(ctx).Create(w); res.Error != nil {
 		return nil, xerrors.Errorf("CreateWorkspace: %w", res.Error)
 	}
 	return w, nil
 }
 
-func CreateWorkspaceWithSettings(projectID, projectFileID, name, scene, camera, engine string) (*Workspace, error) {
+func CreateWorkspaceWithSettings(ctx context.Context, projectID, projectFileID, name, scene, camera, engine string) (*Workspace, error) {
 	id, err := newWorkspaceID()
 	if err != nil {
 		return nil, xerrors.Errorf("newWorkspaceID: %w", err)
@@ -200,15 +201,15 @@ func CreateWorkspaceWithSettings(projectID, projectFileID, name, scene, camera, 
 		StartFrame:    0,
 		EndFrame:      -1,
 	}
-	if res := db.Create(w); res.Error != nil {
+	if res := db.WithContext(ctx).Create(w); res.Error != nil {
 		return nil, xerrors.Errorf("CreateWorkspaceWithSettings: %w", res.Error)
 	}
 	return w, nil
 }
 
-func UpdateWorkspace(projectID string, workspaceID string, name string, note string, blenderInstallID uint, scene, camera, engine string, startFrame, endFrame, frameStep int, fps float64, thread, samples, resolutionX, resolutionY int, outputFormat string, autoLock bool, autoLockMinSize int64, autoLockKeep int) (*WorkspaceDetail, error) {
+func UpdateWorkspace(ctx context.Context, projectID string, workspaceID string, name string, note string, blenderInstallID uint, scene, camera, engine string, startFrame, endFrame, frameStep int, fps float64, thread, samples, resolutionX, resolutionY int, outputFormat string, autoLock bool, autoLockMinSize int64, autoLockKeep int) (*WorkspaceDetail, error) {
 	var w Workspace
-	if res := db.First(&w, "id = ? AND project_id = ?", workspaceID, projectID); res.Error != nil {
+	if res := db.WithContext(ctx).First(&w, "id = ? AND project_id = ?", workspaceID, projectID); res.Error != nil {
 		return nil, xerrors.Errorf("UpdateWorkspace find: %w", res.Error)
 	}
 	w.Name = name
@@ -229,14 +230,14 @@ func UpdateWorkspace(projectID string, workspaceID string, name string, note str
 	w.AutoLock = autoLock
 	w.AutoLockMinSize = autoLockMinSize
 	w.AutoLockKeep = autoLockKeep
-	if res := db.Save(&w); res.Error != nil {
+	if res := db.WithContext(ctx).Save(&w); res.Error != nil {
 		return nil, xerrors.Errorf("UpdateWorkspace save: %w", res.Error)
 	}
 	return GetWorkspace(projectID, workspaceID)
 }
 
-func UpdateWorkspaceProcessedAt(id string, t *time.Time) error {
-	if res := db.Model(&Workspace{}).Where("id = ?", id).Update("processed_at", t); res.Error != nil {
+func UpdateWorkspaceProcessedAt(ctx context.Context, id string, t *time.Time) error {
+	if res := db.WithContext(ctx).Model(&Workspace{}).Where("id = ?", id).Update("processed_at", t); res.Error != nil {
 		return xerrors.Errorf("UpdateWorkspaceProcessedAt: %w", res.Error)
 	}
 	return nil

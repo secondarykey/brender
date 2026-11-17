@@ -310,5 +310,5 @@ func DeleteJobFiles(ctx context.Context, id string, filePaths []string) error {
 	if !hasFiles {
 		newStatus = model.JobDataDeleted
 	}
-	return model.UpdateJobDataStatus(id, newStatus)
+	return model.UpdateJobDataStatus(ctx, id, newStatus)
 }

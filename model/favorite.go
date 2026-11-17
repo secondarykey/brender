@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"time"
 
 	"golang.org/x/xerrors"
@@ -14,9 +15,9 @@ type FileFavorite struct {
 	CreatedAt     *time.Time `gorm:"autoCreateTime" json:"created_at"`
 }
 
-func AddFavorite(userID, projectFileID string) error {
+func AddFavorite(ctx context.Context, userID, projectFileID string) error {
 	fav := &FileFavorite{UserID: userID, ProjectFileID: projectFileID}
-	res := db.Where("user_id = ? AND project_file_id = ?", userID, projectFileID).FirstOrCreate(fav)
+	res := db.WithContext(ctx).Where("user_id = ? AND project_file_id = ?", userID, projectFileID).FirstOrCreate(fav)
 	if res.Error != nil {
 		return xerrors.Errorf("AddFavorite: %w", res.Error)
 	}

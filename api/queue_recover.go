@@ -44,9 +44,11 @@ func RecoverStaleQueues() {
 			continue
 		}
 
+		// 記録には、もとのジョブを投入した人を残す（作り直すジョブもその人のもの）
+		ctx := jobContext(oldJob)
 		now := time.Now()
 		diskSize := dirSize(oldJob.OutputDir)
-		if err := model.UpdateJobDone(q.ID, model.JobInterrupted, "", &now, diskSize, model.JobDataCorrupted); err != nil {
+		if err := model.UpdateJobDone(ctx, q.ID, model.JobInterrupted, "", &now, diskSize, model.JobDataCorrupted); err != nil {
 			log.Errorf("RecoverStaleQueues: UpdateJobDone: %v", err)
 		}
 		if err := model.DeleteQueue(q.ID); err != nil {
@@ -92,7 +94,7 @@ func RecoverStaleQueues() {
 			SamplesList:   oldJob.SamplesList,
 			EnqueuedAt:    &now,
 		}
-		if err := model.CreateJob(newJob); err != nil {
+		if err := model.CreateJob(ctx, newJob); err != nil {
 			log.Errorf("RecoverStaleQueues: CreateJob: %v", err)
 			continue
 		}
@@ -103,7 +105,7 @@ func RecoverStaleQueues() {
 			WorkspaceID: oldJob.WorkspaceID,
 			Status:      model.QueueRecovering,
 		}
-		if err := model.CreateQueue(newQueue); err != nil {
+		if err := model.CreateQueue(ctx, newQueue); err != nil {
 			log.Errorf("RecoverStaleQueues: CreateQueue: %v", err)
 			continue
 		}

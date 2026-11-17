@@ -43,18 +43,18 @@ func CreateWorkspace(ctx context.Context, projectID string, projectFileID string
 	if err := requireFileRole(ctx, projectFileID, rolesWorkspaceCreatorUp...); err != nil {
 		return nil, err
 	}
-	ws, err := model.CreateWorkspace(projectID, projectFileID, name)
+	ws, err := model.CreateWorkspace(ctx, projectID, projectFileID, name)
 	if err != nil {
 		return nil, err
 	}
 	now := time.Now()
-	if err := model.UpdateWorkspaceProcessedAt(ws.ID, &now); err != nil {
+	if err := model.UpdateWorkspaceProcessedAt(ctx, ws.ID, &now); err != nil {
 		log.Errorf("CreateWorkspace: UpdateWorkspaceProcessedAt: %v", err)
 	}
-	if err := model.UpdateProjectFileProcessedAt(projectFileID, &now); err != nil {
+	if err := model.UpdateProjectFileProcessedAt(ctx, projectFileID, &now); err != nil {
 		log.Errorf("CreateWorkspace: UpdateProjectFileProcessedAt: %v", err)
 	}
-	if err := model.UpdateProjectProcessedAt(projectID, &now); err != nil {
+	if err := model.UpdateProjectProcessedAt(ctx, projectID, &now); err != nil {
 		log.Errorf("CreateWorkspace: UpdateProjectProcessedAt: %v", err)
 	}
 	return ws, nil
@@ -78,19 +78,19 @@ func CreateWorkspaceBatch(ctx context.Context, projectID, projectFileID string, 
 	var results []*model.Workspace
 	now := time.Now()
 	for _, spec := range specs {
-		ws, err := model.CreateWorkspaceWithSettings(projectID, projectFileID, spec.Name, spec.Scene, spec.Camera, spec.Engine)
+		ws, err := model.CreateWorkspaceWithSettings(ctx, projectID, projectFileID, spec.Name, spec.Scene, spec.Camera, spec.Engine)
 		if err != nil {
 			return results, err
 		}
-		if err := model.UpdateWorkspaceProcessedAt(ws.ID, &now); err != nil {
+		if err := model.UpdateWorkspaceProcessedAt(ctx, ws.ID, &now); err != nil {
 			log.Errorf("CreateWorkspaceBatch: UpdateWorkspaceProcessedAt: %v", err)
 		}
 		results = append(results, ws)
 	}
-	if err := model.UpdateProjectFileProcessedAt(projectFileID, &now); err != nil {
+	if err := model.UpdateProjectFileProcessedAt(ctx, projectFileID, &now); err != nil {
 		log.Errorf("CreateWorkspaceBatch: UpdateProjectFileProcessedAt: %v", err)
 	}
-	if err := model.UpdateProjectProcessedAt(projectID, &now); err != nil {
+	if err := model.UpdateProjectProcessedAt(ctx, projectID, &now); err != nil {
 		log.Errorf("CreateWorkspaceBatch: UpdateProjectProcessedAt: %v", err)
 	}
 	return results, nil
@@ -109,11 +109,11 @@ func CopyWorkspace(ctx context.Context, projectID, workspaceID, newName string) 
 		return nil, err
 	}
 	src := detail.Workspace
-	newWS, err := model.CreateWorkspace(projectID, src.ProjectFileID, newName)
+	newWS, err := model.CreateWorkspace(ctx, projectID, src.ProjectFileID, newName)
 	if err != nil {
 		return nil, err
 	}
-	if _, err := model.UpdateWorkspace(projectID, newWS.ID, newName, src.Note, src.BlenderInstallID,
+	if _, err := model.UpdateWorkspace(ctx, projectID, newWS.ID, newName, src.Note, src.BlenderInstallID,
 		src.Scene, src.Camera, src.Engine,
 		src.StartFrame, src.EndFrame, src.FrameStep, src.FPS,
 		src.Thread, src.Samples, src.ResolutionX, src.ResolutionY, src.OutputFormat,
@@ -121,13 +121,13 @@ func CopyWorkspace(ctx context.Context, projectID, workspaceID, newName string) 
 		return nil, err
 	}
 	now := time.Now()
-	if err := model.UpdateWorkspaceProcessedAt(newWS.ID, &now); err != nil {
+	if err := model.UpdateWorkspaceProcessedAt(ctx, newWS.ID, &now); err != nil {
 		log.Errorf("CopyWorkspace: UpdateWorkspaceProcessedAt: %v", err)
 	}
-	if err := model.UpdateProjectFileProcessedAt(src.ProjectFileID, &now); err != nil {
+	if err := model.UpdateProjectFileProcessedAt(ctx, src.ProjectFileID, &now); err != nil {
 		log.Errorf("CopyWorkspace: UpdateProjectFileProcessedAt: %v", err)
 	}
-	if err := model.UpdateProjectProcessedAt(projectID, &now); err != nil {
+	if err := model.UpdateProjectProcessedAt(ctx, projectID, &now); err != nil {
 		log.Errorf("CopyWorkspace: UpdateProjectProcessedAt: %v", err)
 	}
 	return newWS, nil
@@ -149,7 +149,7 @@ func UpdateWorkspace(ctx context.Context, projectID string, workspaceID string, 
 			}
 		}
 	}
-	return model.UpdateWorkspace(projectID, workspaceID, name, note, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, fps, thread, samples, resolutionX, resolutionY, outputFormat, autoLock, autoLockMinSize, autoLockKeep)
+	return model.UpdateWorkspace(ctx, projectID, workspaceID, name, note, blenderInstallID, scene, camera, engine, startFrame, endFrame, frameStep, fps, thread, samples, resolutionX, resolutionY, outputFormat, autoLock, autoLockMinSize, autoLockKeep)
 }
 
 func DeleteWorkspace(ctx context.Context, projectID, workspaceID string, force bool) error {

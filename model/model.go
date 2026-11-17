@@ -72,10 +72,10 @@ func Init(dsn string) error {
 		return err
 	}
 
-	// CreatedBy / UpdatedBy を自動設定するコールバック。
-	// クエリに紐付いた context のユーザを優先し、なければ goroutine-local にフォールバックする。
+	// CreatedBy / UpdatedBy を自動設定するコールバック。ユーザはクエリの ctx から決める（AuditUser）。
+	// ctx を通さない書き込み（db.WithContext を使わない）は owner になるので、書き込む関数は必ず ctx を受け取る。
 	db.Callback().Create().Before("gorm:create").Register("set_created_by", func(tx *gorm.DB) {
-		user := auditUser(tx.Statement.Context)
+		user := AuditUser(tx.Statement.Context)
 		if tx.Statement.Schema == nil {
 			return
 		}
@@ -87,7 +87,7 @@ func Init(dsn string) error {
 		}
 	})
 	db.Callback().Update().Before("gorm:update").Register("set_updated_by", func(tx *gorm.DB) {
-		user := auditUser(tx.Statement.Context)
+		user := AuditUser(tx.Statement.Context)
 		if tx.Statement.Schema == nil {
 			return
 		}

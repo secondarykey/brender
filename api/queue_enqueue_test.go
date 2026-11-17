@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"path/filepath"
 	"testing"
 
@@ -15,11 +16,11 @@ func TestJobName(t *testing.T) {
 	}
 	t.Cleanup(func() { model.Close() })
 
-	detail, err := model.CreateProject("Proj", nil, 0)
+	detail, err := model.CreateProject(context.Background(), "Proj", nil, 0)
 	if err != nil {
 		t.Fatalf("CreateProject: %v", err)
 	}
-	file, err := model.AddProjectFile(detail.Project.ID, "/tmp/scene.blend")
+	file, err := model.AddProjectFile(context.Background(), detail.Project.ID, "/tmp/scene.blend")
 	if err != nil {
 		t.Fatalf("AddProjectFile: %v", err)
 	}

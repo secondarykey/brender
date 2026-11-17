@@ -70,10 +70,7 @@ func authMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		// 認証済み: 権限判定用に ctx へ、監査カラム用に goroutine-local へユーザを紐付け
-		model.SetGoroutineUser(user.ID)
-		defer model.ClearGoroutineUser()
-
+		// 認証済み: ctx へユーザを紐付ける（権限判定にも監査カラムにも使う）
 		next.ServeHTTP(w, r.WithContext(model.WithUser(r.Context(), user.ID)))
 	})
 }

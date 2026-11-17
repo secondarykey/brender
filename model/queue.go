@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"time"
 
 	"github.com/google/uuid"
@@ -32,8 +33,8 @@ func NewQueueID() (string, error) {
 	return id.String(), nil
 }
 
-func CreateQueue(q *Queue) error {
-	if res := db.Create(q); res.Error != nil {
+func CreateQueue(ctx context.Context, q *Queue) error {
+	if res := db.WithContext(ctx).Create(q); res.Error != nil {
 		return xerrors.Errorf("CreateQueue: %w", res.Error)
 	}
 	return nil
@@ -41,17 +42,17 @@ func CreateQueue(q *Queue) error {
 
 // MarkQueueStarting は status を waiting → running へ変更する。
 // PID 確定前に呼ぶことでスケジューラの二重起動を防ぐ。
-func MarkQueueStarting(id string) error {
-	if res := db.Model(&Queue{}).Where("id = ?", id).Update("status", QueueRunning); res.Error != nil {
+func MarkQueueStarting(ctx context.Context, id string) error {
+	if res := db.WithContext(ctx).Model(&Queue{}).Where("id = ?", id).Update("status", QueueRunning); res.Error != nil {
 		return xerrors.Errorf("MarkQueueStarting: %w", res.Error)
 	}
 	return nil
 }
 
 // UpdateQueueRunning は実際の PID と開始時刻を記録する（status は MarkQueueStarting で設定済み）。
-func UpdateQueueRunning(id string, pid int) error {
+func UpdateQueueRunning(ctx context.Context, id string, pid int) error {
 	now := time.Now()
-	if res := db.Model(&Queue{}).Where("id = ?", id).Updates(map[string]any{
+	if res := db.WithContext(ctx).Model(&Queue{}).Where("id = ?", id).Updates(map[string]any{
 		"process_id": pid,
 		"started_at": &now,
 	}); res.Error != nil {
@@ -68,8 +69,8 @@ func ListRunningQueues() ([]*Queue, error) {
 	return list, nil
 }
 
-func ResetQueueToRecovering(id string) error {
-	if res := db.Model(&Queue{}).Where("id = ?", id).Updates(map[string]any{
+func ResetQueueToRecovering(ctx context.Context, id string) error {
+	if res := db.WithContext(ctx).Model(&Queue{}).Where("id = ?", id).Updates(map[string]any{
 		"status":     QueueRecovering,
 		"process_id": 0,
 		"started_at": nil,

@@ -1,6 +1,8 @@
 package model
 
 import (
+	"context"
+
 	"golang.org/x/xerrors"
 )
 
@@ -27,23 +29,23 @@ var AllFileRoles = []string{RoleOwner, RoleWorkspaceCreator, RoleEditor, RoleRun
 // ProjectPermission はプロジェクトに対するユーザ/グループの権限。
 // TargetID は usr_* または grp_* のいずれか。
 type ProjectPermission struct {
-	ProjectID string `gorm:"primaryKey" json:"project_id"`
-	TargetID  string `gorm:"primaryKey" json:"target_id"` // usr_* or grp_*
-	Role      string `json:"role"`                         // owner, runner, editor, viewer
+	ProjectID  string `gorm:"primaryKey" json:"project_id"`
+	TargetID   string `gorm:"primaryKey" json:"target_id"` // usr_* or grp_*
+	Role       string `json:"role"`                        // owner, runner, editor, viewer
 	MetaFields `gorm:"embedded"`
 }
 
 // ── CRUD ──────────────────────────────────────────────────
 
 // SetProjectPermission は権限を設定する（存在すれば上書き）。
-func SetProjectPermission(projectID, targetID, role string) error {
+func SetProjectPermission(ctx context.Context, projectID, targetID, role string) error {
 	perm := ProjectPermission{
 		ProjectID: projectID,
 		TargetID:  targetID,
 		Role:      role,
 	}
 	// Upsert: 既存なら role を更新、なければ作成
-	res := db.Where("project_id = ? AND target_id = ?", projectID, targetID).
+	res := db.WithContext(ctx).Where("project_id = ? AND target_id = ?", projectID, targetID).
 		Assign(ProjectPermission{Role: role}).
 		FirstOrCreate(&perm)
 	if res.Error != nil {
@@ -52,7 +54,7 @@ func SetProjectPermission(projectID, targetID, role string) error {
 	// FirstOrCreate で見つかった場合は role が古いままなので Save
 	if perm.Role != role {
 		perm.Role = role
-		if res := db.Save(&perm); res.Error != nil {
+		if res := db.WithContext(ctx).Save(&perm); res.Error != nil {
 			return xerrors.Errorf("SetProjectPermission save: %w", res.Error)
 		}
 	}
@@ -165,21 +167,21 @@ func GetUserProjectRole(projectID, userID string) (string, error) {
 // ══════════════════════════════════════════════════════════
 
 type FilePermission struct {
-	FileID   string `gorm:"primaryKey" json:"file_id"`
-	TargetID string `gorm:"primaryKey" json:"target_id"` // usr_* or grp_*
-	Role     string `json:"role"`                         // owner, runner, editor, viewer
+	FileID     string `gorm:"primaryKey" json:"file_id"`
+	TargetID   string `gorm:"primaryKey" json:"target_id"` // usr_* or grp_*
+	Role       string `json:"role"`                        // owner, runner, editor, viewer
 	MetaFields `gorm:"embedded"`
 }
 
 // ── CRUD ──────────────────────────────────────────────────
 
-func SetFilePermission(fileID, targetID, role string) error {
+func SetFilePermission(ctx context.Context, fileID, targetID, role string) error {
 	perm := FilePermission{
 		FileID:   fileID,
 		TargetID: targetID,
 		Role:     role,
 	}
-	res := db.Where("file_id = ? AND target_id = ?", fileID, targetID).
+	res := db.WithContext(ctx).Where("file_id = ? AND target_id = ?", fileID, targetID).
 		Assign(FilePermission{Role: role}).
 		FirstOrCreate(&perm)
 	if res.Error != nil {
@@ -187,7 +189,7 @@ func SetFilePermission(fileID, targetID, role string) error {
 	}
 	if perm.Role != role {
 		perm.Role = role
-		if res := db.Save(&perm); res.Error != nil {
+		if res := db.WithContext(ctx).Save(&perm); res.Error != nil {
 			return xerrors.Errorf("SetFilePermission save: %w", res.Error)
 		}
 	}
@@ -272,13 +274,13 @@ func GetUserFileRole(fileID, userID string) (string, error) {
 }
 
 // CopyProjectPermissionsToFile はプロジェクトの権限をファイルにコピーする。
-func CopyProjectPermissionsToFile(projectID, fileID string) error {
+func CopyProjectPermissionsToFile(ctx context.Context, projectID, fileID string) error {
 	perms, err := ListProjectPermissions(projectID)
 	if err != nil {
 		return err
 	}
 	for _, p := range perms {
-		if err := SetFilePermission(fileID, p.TargetID, p.Role); err != nil {
+		if err := SetFilePermission(ctx, fileID, p.TargetID, p.Role); err != nil {
 			return err
 		}
 	}
@@ -323,19 +325,19 @@ func ListAccessibleProjectIDs(userID string) ([]string, error) {
 
 // SetDefaultProjectPermissions はプロジェクト作成時のデフォルト権限を設定する。
 // creatorID: 作成者のユーザID
-func SetDefaultProjectPermissions(projectID, creatorID string) error {
+func SetDefaultProjectPermissions(ctx context.Context, projectID, creatorID string) error {
 	// 作成者 → owner
-	if err := SetProjectPermission(projectID, creatorID, RoleOwner); err != nil {
+	if err := SetProjectPermission(ctx, projectID, creatorID, RoleOwner); err != nil {
 		return err
 	}
 	// BrenderOwner → owner（作成者と異なる場合）
 	if creatorID != UserIDOwner {
-		if err := SetProjectPermission(projectID, UserIDOwner, RoleOwner); err != nil {
+		if err := SetProjectPermission(ctx, projectID, UserIDOwner, RoleOwner); err != nil {
 			return err
 		}
 	}
 	// All グループ → viewer
-	if err := SetProjectPermission(projectID, GroupIDAll, RoleViewer); err != nil {
+	if err := SetProjectPermission(ctx, projectID, GroupIDAll, RoleViewer); err != nil {
 		return err
 	}
 	return nil

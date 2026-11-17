@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -16,22 +17,22 @@ const (
 )
 
 const (
-	JobTypeRender            = "render"              // 通常レンダリング
-	JobTypeTest              = "test"                // テストレンダリング
-	JobTypeSamplesComparison = "samples_comparison"  // サンプル比較
+	JobTypeRender            = "render"             // 通常レンダリング
+	JobTypeTest              = "test"               // テストレンダリング
+	JobTypeSamplesComparison = "samples_comparison" // サンプル比較
 )
 
 const (
-	JobDataNone             = 0 // データなし
-	JobDataNoneLocked       = 1 // データなし（ロック）
-	JobDataAvailable        = 2 // データあり
-	JobDataAvailableLocked  = 3 // データあり（ロック）
-	JobDataDeleted          = 4 // データ削除
-	JobDataDeletedLocked    = 5 // データ削除（ロック）
-	JobDataCorrupted        = 6 // データ破損（エラー・キャンセル時の不完全出力）
-	JobDataCorruptedLocked  = 7 // データ破損（ロック）
-	JobDataModified         = 8 // データ操作済（一部削除など）
-	JobDataModifiedLocked   = 9 // データ操作済（ロック）
+	JobDataNone            = 0 // データなし
+	JobDataNoneLocked      = 1 // データなし（ロック）
+	JobDataAvailable       = 2 // データあり
+	JobDataAvailableLocked = 3 // データあり（ロック）
+	JobDataDeleted         = 4 // データ削除
+	JobDataDeletedLocked   = 5 // データ削除（ロック）
+	JobDataCorrupted       = 6 // データ破損（エラー・キャンセル時の不完全出力）
+	JobDataCorruptedLocked = 7 // データ破損（ロック）
+	JobDataModified        = 8 // データ操作済（一部削除など）
+	JobDataModifiedLocked  = 9 // データ操作済（ロック）
 )
 
 // Job はレンダリング実行の完了済み履歴レコード。
@@ -54,35 +55,35 @@ type Job struct {
 	FrameStep     int        `json:"frame_step"`
 	Thread        int        `json:"thread"`
 	Camera        string     `json:"camera"`
-	Samples       int        `json:"samples"`      // 0 = Blender デフォルト
-	ResolutionX   int        `json:"resolution_x"` // 0 = Blender デフォルト
-	ResolutionY   int        `json:"resolution_y"` // 0 = Blender デフォルト
+	Samples       int        `json:"samples"`        // 0 = Blender デフォルト
+	ResolutionX   int        `json:"resolution_x"`   // 0 = Blender デフォルト
+	ResolutionY   int        `json:"resolution_y"`   // 0 = Blender デフォルト
 	OutputExt     string     `json:"output_ext"`     // レンダリング出力拡張子（"png" / "jpg"）
 	BlenderFormat string     `json:"blender_format"` // Blender -F 引数に渡した値（"PNG" / "JPEG" / "OPEN_EXR" など）
 	FPS           float64    `json:"fps"`            // シーンのフレームレート（fps / fps_base）。0 = 不明（この項目より前のジョブ）
-	Status        string     `json:"status"`      // completed / error / cancelled
+	Status        string     `json:"status"`         // completed / error / cancelled
 	ErrorMsg      string     `json:"error_msg"`
-	DataStatus    int        `json:"data_status"` // 0=なし 1=なしロック 2=あり 3=ありロック 4=削除 5=削除ロック
-	JobType       string     `json:"job_type"`      // render / test / samples_comparison
-	SamplesList   string     `json:"samples_list"`  // カンマ区切りサンプル数
-	DiskSize      int64      `json:"disk_size"`     // 出力フォルダの容量（バイト）
-	StartedAt      *time.Time `json:"started_at"`
-	CompletedAt    *time.Time `json:"completed_at"`
-	EnqueuedAt     *time.Time `json:"enqueued_at"` // キュー登録時刻
-	CreatedBy      string     `json:"created_by"`
-	HasFileAccess  bool       `gorm:"-" json:"has_file_access"` // API 層で設定（DB 非保存）
+	DataStatus    int        `json:"data_status"`  // 0=なし 1=なしロック 2=あり 3=ありロック 4=削除 5=削除ロック
+	JobType       string     `json:"job_type"`     // render / test / samples_comparison
+	SamplesList   string     `json:"samples_list"` // カンマ区切りサンプル数
+	DiskSize      int64      `json:"disk_size"`    // 出力フォルダの容量（バイト）
+	StartedAt     *time.Time `json:"started_at"`
+	CompletedAt   *time.Time `json:"completed_at"`
+	EnqueuedAt    *time.Time `json:"enqueued_at"` // キュー登録時刻
+	CreatedBy     string     `json:"created_by"`
+	HasFileAccess bool       `gorm:"-" json:"has_file_access"` // API 層で設定（DB 非保存）
 }
 
-func CreateJob(j *Job) error {
+func CreateJob(ctx context.Context, j *Job) error {
 	// DataStatus は int なのでゼロ値 0 = JobDataNone がデフォルト
-	if res := db.Create(j); res.Error != nil {
+	if res := db.WithContext(ctx).Create(j); res.Error != nil {
 		return xerrors.Errorf("CreateJob: %w", res.Error)
 	}
 	return nil
 }
 
-func UpdateJobMeta(id, name, note string) error {
-	if res := db.Model(&Job{}).Where("id = ?", id).Updates(map[string]interface{}{
+func UpdateJobMeta(ctx context.Context, id, name, note string) error {
+	if res := db.WithContext(ctx).Model(&Job{}).Where("id = ?", id).Updates(map[string]interface{}{
 		"name": name,
 		"note": note,
 	}); res.Error != nil {
@@ -396,15 +397,15 @@ func DeleteJobsByProject(projectID string) error {
 	return nil
 }
 
-func UpdateJobStarted(id string, startedAt *time.Time) error {
-	if res := db.Model(&Job{}).Where("id = ?", id).Update("started_at", startedAt); res.Error != nil {
+func UpdateJobStarted(ctx context.Context, id string, startedAt *time.Time) error {
+	if res := db.WithContext(ctx).Model(&Job{}).Where("id = ?", id).Update("started_at", startedAt); res.Error != nil {
 		return xerrors.Errorf("UpdateJobStarted: %w", res.Error)
 	}
 	return nil
 }
 
-func UpdateJobDone(id string, status string, errMsg string, completedAt *time.Time, diskSize int64, dataStatus int) error {
-	if res := db.Model(&Job{}).Where("id = ?", id).Updates(map[string]any{
+func UpdateJobDone(ctx context.Context, id string, status string, errMsg string, completedAt *time.Time, diskSize int64, dataStatus int) error {
+	if res := db.WithContext(ctx).Model(&Job{}).Where("id = ?", id).Updates(map[string]any{
 		"status":       status,
 		"error_msg":    errMsg,
 		"completed_at": completedAt,
@@ -416,8 +417,8 @@ func UpdateJobDone(id string, status string, errMsg string, completedAt *time.Ti
 	return nil
 }
 
-func UpdateJobDataStatus(id string, dataStatus int) error {
-	if res := db.Model(&Job{}).Where("id = ?", id).Update("data_status", dataStatus); res.Error != nil {
+func UpdateJobDataStatus(ctx context.Context, id string, dataStatus int) error {
+	if res := db.WithContext(ctx).Model(&Job{}).Where("id = ?", id).Update("data_status", dataStatus); res.Error != nil {
 		return xerrors.Errorf("UpdateJobDataStatus: %w", res.Error)
 	}
 	return nil
