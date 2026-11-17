@@ -59,7 +59,7 @@ beta.23 で、ウィンドウを作らない小さなアプリを作った(リ�
 | ウィンドウの API(`object` 6)・ダイアログ(5) | 断られる(`window '' not found`) |
 | **`Application.Quit`(`{"object":2,"method":2}`)** | **通る。アプリが終わった**(気をつけること 6) |
 | **`Events.Emit`(`object` 3)** | **通る**。好きな名前のイベントを出せる(気をつけること 6) |
-| メソッドが呼ばれる goroutine | HTTP の処理と同じ goroutine で、そのまま呼ばれる。監査用の goroutine ユーザ(`model.SetGoroutineUser`)もそのまま使える |
+| メソッドが呼ばれる goroutine | HTTP の処理と同じ goroutine で、そのまま呼ばれる。監査用の goroutine ユーザ(`model.SetGoroutineUser`)もそのまま使える(2026-11-17 に goroutine ユーザはやめ、監査カラムも ctx で渡すようにした) |
 | 本文の大きさの上限 | `maxRuntimeBodyBytes` = `maxAssembledBytes` = **64 MiB**(`transport_http.go`) |
 | ウィンドウを1つも作らずに `app.Run()` | 終わらずに動き続けた(Windows)。`TODO.md` の「ウィンドウを出さずに動かす」の見込みにもなる |
 

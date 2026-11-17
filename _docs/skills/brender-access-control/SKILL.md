@@ -95,9 +95,19 @@ model.UserFromContext(ctx)       // ctx からユーザを取り出す
 
 - **ブラウザ（サーバモード）から**: 認証ミドルウェア（`api/rest/auth.go`）がセッション検証後に `model.WithUser(...)` で ctx へ注入し、`POST /wails/runtime` の守り（`api/rest/runtime.go`）が `api.WithBrowser` の印を付けて Wails へ渡す。ユーザ管理が有効なのに ctx に利用者が無い呼び出しは 401 で通さない。
 - **デスクトップのウィンドウから**: ctx に利用者が無い → `currentUser` が `usr_owner` とみなす。デスクトップは単一ユーザ運用のため常にフルアクセス。
-- **バックグラウンド処理**: `api.SystemContext()`（owner）を使う（サムネイル自動生成など）。
+- **バックグラウンド処理**: 権限は owner で動かす。システムが自分で始める処理（起動時の確認など）は `api.SystemContext()`、利用者の操作から続く処理（サムネイルの自動生成・データの移動）は `backgroundContext(ctx)`、キューの実行とリカバリは `jobContext(job)`（どれも `api/access.go`）。呼び出しの ctx は呼び出しが終わると取り消されることがあるので、goroutine にそのまま渡さない。
 
-**`model.CurrentUser()` / goroutine-local storage** は監査カラム（`CreatedBy` / `UpdatedBy`）専用のベストエフォート機構に格下げされた。権限判定には使わない（そちらは ctx が唯一の情報源）。GORM の監査コールバックはクエリ ctx のユーザを優先し、なければ goroutine-local にフォールバックする（`model.auditUser`）。
+### 監査カラム（`CreatedBy` / `UpdatedBy`）
+
+記録に残すユーザも ctx だけで決まる（2026-11-17 に、goroutine ID で引く仕組みをやめた。`go func()` の中では owner に戻っていた）。
+
+- **書き込む model の関数は第1引数に `ctx` を取り、`db.WithContext(ctx)` を通す**。GORM のコールバック（`model/model.go`）が `model.AuditUser(tx.Statement.Context)` で入れる。ctx を通さない書き込みは owner になる
+- `model.AuditUser(ctx)` の順: `model.WithAuditUser` の値 → `model.WithUser` の値 → owner（デスクトップのウィンドウ）
+- `model.WithAuditUser(ctx, id)` は記録だけのユーザで、権限判定には使わない。権限と記録を分けたいときに使う:
+  - `backgroundContext(ctx)`: 権限は owner、記録は操作した人
+  - `jobContext(job)`: 権限は owner、記録はジョブを投入した人（`Job.CreatedBy`）。キューの実行で書く Job・Queue・自動ロックはこの人の記録になる
+  - 認証なしのブラウザ: 権限のユーザは付けず（付けるとお気に入りなどユーザごとのものが guest のものになる）、記録だけ guest（`api/rest` の `guestAuditContext`）
+  - ログイン前（ログイン・パスワードのリセット）: 記録はその本人
 
 ## フロントエンドの権限制御
 

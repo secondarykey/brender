@@ -90,7 +90,7 @@ export const isWails = () => Boolean(window._wails) && !window.__brender_server_
 ## 認証 (`api/rest/auth.go`)
 
 - セッション Cookie: `brender_session`（HttpOnly / SameSite=Lax / 30日 / `Secure` は HTTPS リクエスト時のみ — HTTP の LAN 運用でも動くように）
-- `authMiddleware` の流れ: 公開パス（login・reset 系・静的拡張子 — `/wails/runtime.js` を含む）はスキップ → `api.IsAuthEnabled()` が false なら Guest として続行 → Cookie のセッションを `api.ValidateSession` で検証 → 成功時 `model.WithUser(ctx)`（権限判定用）+ `model.SetGoroutineUser`（監査カラム用）
+- `authMiddleware` の流れ: 公開パス（login・reset 系・静的拡張子 — `/wails/runtime.js` を含む）はスキップ → `api.IsAuthEnabled()` が false なら Guest として続行 → Cookie のセッションを `api.ValidateSession` で検証 → 成功時 `model.WithUser(ctx)`（権限判定にも監査カラムにも使う）。ユーザ管理が無効でユーザを持たない呼び出しは、`POST /wails/runtime` とアップロードで記録だけ guest にする（`guestAuditContext`。Skill `brender-access-control` の「監査カラム」）
 - **未認証時の応答分岐** (`handleUnauthorized`): `/api/*`・`/wails/*`・`/_movie`・`/events`・`/thumbnail` は 401 JSON、ページリクエストは SPA を返す（React 側でログイン画面を表示）
 - フロント側: `serverCall`・ブラウザの呼び出し口が 401 を受けたら `window.location.reload()` → ログイン画面へ
 - パスワードリセット: `/user/reset/{token}` ページ + `auth/validate_reset_token` / `auth/reset_password` API（公開パス）

@@ -194,6 +194,7 @@ CI が使う wails3 CLI のバージョンは `.github/variables` の `WAILS_VER
 - **システムモニタ** (`sysmon/`, `api/sysmon.go`): CPU・メモリ・GPU の使用率を `system:stats` イベントで配る。GPU は `nvidia-smi` で取る（NVIDIA のみ。見つからなければ GPU の行は出さず、起動もしない）。**キューページの `SystemStats` が表示しているあいだだけ動く**: 画面が 10 秒ごとに `SysMon.Keep` を呼び（隠れているあいだは呼ばない）、`sysmon.Keep` が 5 秒ごとに収集、15 秒 Keep が来なければ自分で止まる。期限で止まるので、サーバモードで複数のブラウザが見ていても数を数えずに済む。
 - **子プロセスはコンソールを隠す（Windows）**: 配る exe は `-H windowsgui` でコンソールを持たないので、コンソールアプリを素の `exec.Command` で起動すると、そのたびに窓が一瞬開く。`exec/` の `runCommand` を使うか `exec.HideConsole(cmd)` を通す（`sysmon/` は model に依存させないよう、同じ設定の `hideConsole` を自分で持つ）。`wails3 dev` は親のコンソールを共有するので窓が出ず、dev では気づけない。
 - **権限・アクセス制御**: `Environment.Server=true` かつ `ServerAuth=true` のときのみ有効（無効時は全員フルアクセス）。api 層の関数は第1引数 `ctx` の操作ユーザ（`model.WithUser` / `currentUser(ctx)`）で判定し、**`api/access.go` の共通ヘルパー（`fullAccess` / `requireProjectRole` / `requireAdmin` 等）を使う — 自前で `if userID != owner {...}` を書かない**。**サービスのメソッドは全部ブラウザからも呼べる**ため、admin 操作は api の関数の中で `requireAdmin(ctx)` を通し、ウィンドウを開く操作は `api.FromBrowser(ctx)` で断る。ロール体系・守り・フロント制御の詳細は Skill `brender-access-control` を参照。
+- **監査カラム（`CreatedBy` / `UpdatedBy`）は ctx のユーザで入る**: **書き込む model の関数は第1引数に `ctx` を取り、`db.WithContext(ctx)` を通す**（GORM のコールバックが `model.AuditUser(ctx)` で入れる。ctx を通さないと owner になる）。バックグラウンドへは呼び出しの ctx をそのまま渡さず（呼び出しが終わると取り消されることがある）、`backgroundContext(ctx)`・`jobContext(job)`（`api/access.go`）を渡す。詳細は Skill `brender-access-control` の「監査カラム」
 
 ### ログ (`log/`)
 
