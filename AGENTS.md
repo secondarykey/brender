@@ -33,6 +33,7 @@ cd _cmd/brender
 wails3 dev                 # Development (hot reload)
 wails3 build               # Production build
 wails3 generate bindings   # Regenerate Go<->JS bindings after adding/changing services
+bin/brender.exe --background  # ウィンドウを出さずに起動（サーバモードでブラウザから使う。もう一度起動するとウィンドウが出る）
 ```
 
 dev 実行（`-tags production` なし）では、画面とログの版を `version` の patch を 1 つ上げたものにする（画面は後ろに `+DEV`。例: `version` が 0.4.0 なら `0.4.1+DEV`）。`version` は出した版を指していて、dev で動かしているのはその次の版の作業中のため。計算は `services.RunVersion`（`_cmd/brender` はモジュール名が `main` で main パッケージのテストが動かないので services に置く）。
@@ -115,7 +116,10 @@ exec/          (Blender subprocess management + output parsing)
 _cmd/brender-tool/  (CLI, uses exec/ + api/ directly)
 ```
 
-**ヘッドレス運用は不可**: サーバモードの HTTP サーバは Wails アプリのプロセス内（`app.Run()` が前提）で起動する。GUI なしの純ヘッドレスサーバとしては動かせない（設計上の制約）。(今の実装はいつもメインのウィンドウを作り、閉じるとアプリが終わる。ウィンドウを作らなくても `app.Run()` は動き続けると分かったので、`TODO.md` の「ウィンドウを出さずに動かす」で変える予定)
+**ウィンドウなしで動かせる（`--background`）が、純ヘッドレスではない**: サーバモードの HTTP サーバは Wails アプリのプロセス内（`app.Run()` が前提）で動く。`brender --background` で起動するとメインのウィンドウを作らずに動き、ブラウザから使う（同じ exe。サーバモードでないときは引数を無視してウィンドウを出す）。トレイは置かない。
+- **二重起動はしない**: 同じ DB を使うアプリは1つ（Wails の `SingleInstance`。ID は DB のパスから作る `services.InstanceID`）。2つ目が同じ DB で起動したら、何も読まずに終わり、動いている方にメインのウィンドウを出させる（`--background` 付きの2つ目は何もしない）。ウィンドウなしで動いているアプリを画面から操作・終了する入口はこれ。DB が違えば並べて動かせる
+- そのため `application.New` を DB を開く・リカバリするより前に呼ぶ（2つ目が起動時のリカバリで1つ目のレンダリングを止めないように）。Transport はサーバモードか分かる前に作り、サーバは DB を読んでから `attach` でつなぐ（`transport.go`）
+- **メインのウィンドウを閉じればアプリは終わる**（サーバモードでも。ブラウザから使っている人のレンダリングも止まる）。閉じる前に、キューが動いている・サーバモードなら画面が確かめる（`TitleBar.jsx`）
 
 ### Module layout
 - Root モジュール `github.com/secondarykey/brender`（プロジェクトルートの `go.mod`）が正。`exec/`・`model/`・`api/`（`api/rest/` 含む）はwails3に依存しない。

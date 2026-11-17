@@ -21,9 +21,11 @@ Brender のベース機能（デスクトップ運用）に対し、サーバモ
 
 - 設定は `Environment` に持つ: `Server bool` / `ServerHost string` / `ServerPort int`（gorm default 8080）/ `ServerAuth bool`（モデルはファイル名 typo に注意: `model/enviroment.go`）
 - 変更 API: `Environment.SetServer`（admin 限定、`api.SetServer(ctx, enabled, host, port, auth)`）。設定画面から変更できるが、**サーバの起動は main.go の起動時のみ — 変更はアプリ再起動で反映**。
-- `main.go` の流れ: `env.Server == true` なら **`application.New` より前に** `rest.NewServer(assets, env.ServerHost, env.ServerPort)` → `broker = restServer.Broker()` → `newBrowserTransport(restServer)` を `application.Options.Transport` に渡す → `emit` クロージャに broker を接続 → フック設定後に `restServer.Start()`（goroutine で `Serve`）→ 終了時に `Shutdown(ctx)`。`env.Server == false` なら Transport は nil（Wails の既定。ウィンドウだけ）。
+- `main.go` の流れ: `newBrowserTransport()` を作って `application.New` に渡す（**二重起動の確認があるので、DB を開く・リカバリするより前**）→ `model.Init` → `RecoverStaleQueues` → `env.Server == true` なら `rest.NewServer(assets, env.ServerHost, env.ServerPort)` → `broker = restServer.Broker()` → `transport.attach(restServer)` → `emit` クロージャに broker を接続 → フック設定後に `restServer.Start()`（goroutine で `Serve`）→ 終了時に `Shutdown(ctx)`。Transport はサーバモードでなくても作る（サーバをつながなければ Wails の既定の HTTPTransport と同じ。`ServeAssets` は handler を預かるだけ）
 - **起動時のログ**: サーバモードの状態を起動のたびに必ず出す（`main.go` の `startupLog`。ログファイルに加えてターミナルにも出す）。`= Server mode: off` / `= Server mode: on, listening on http://…`（すべてのインターフェイスなら `localhost` と `(all interfaces)`、ユーザ管理のオン・オフ付き）/ 失敗は ERROR で `= Server mode: failed to start on …`。設定を変えたときは `api.SetServer` が `= Server settings changed: … (restart to apply)` を出す
-- **ヘッドレス運用は不可**: HTTP サーバは Wails アプリのプロセス内で動く（`app.Run()` 前提）。GUI なしでは起動できない。(今の実装はいつもメインのウィンドウを作り、閉じるとアプリが終わる。ウィンドウを作らなくても `app.Run()` は動き続けると分かったので、`TODO.md` の「ウィンドウを出さずに動かす」で変える予定)
+- **ウィンドウなしの起動（`--background`）**: メインのウィンドウを作らずに動き、ブラウザから使う（`= Started without a window (--background)…` をログに出す）。サーバモードでなければ引数を無視してウィンドウを出す（ERROR で `= --background is ignored: server mode is off`）。HTTP サーバは Wails アプリのプロセス内で動く（`app.Run()` 前提）ので、純ヘッドレスではない。トレイは置かない
+- **二重起動**: 同じ DB のアプリは1つ（`SingleInstance`、ID は `services.InstanceID(DB のパス)`）。2つ目は DB を開く前に終わり、動いている方にメインのウィンドウを出させる（`--background` 付きなら何もしない）。ウィンドウなしで動いているアプリを画面から操作・終了する入口はこれ
+- **メインのウィンドウを閉じればアプリは終わる**（サーバモードでも、ブラウザの利用者のレンダリングごと止まる。2026-11-17 にこの形に決めた）。閉じる前の確かめは画面（`TitleBar.jsx`: キューが動いている・サーバモードのとき）
 
 ## ブラウザからのバインディング呼び出し（Wails の Transport）
 
